@@ -97,12 +97,14 @@ int main(int argc, char *argv[]) {
 	if(fp) {
 		if(!ecdsa_write_pem_private_key(key, fp)) {
 			fprintf(stderr, "Could not write ECDSA private key\n");
+			free(key);
 			return 1;
 		}
 
 		fclose(fp);
 	} else {
 		fprintf(stderr, "Could not open '%s' for writing: %s\n", argv[1], strerror(errno));
+		free(key);
 		return 1;
 	}
 
@@ -113,11 +115,12 @@ int main(int argc, char *argv[]) {
 			fprintf(stderr, "Could not write ECDSA public key\n");
 		}
 
+		free(key);
 		fclose(fp);
+		return 0;
 	} else {
 		fprintf(stderr, "Could not open '%s' for writing: %s\n", argv[2], strerror(errno));
+		free(key);
 		return 1;
 	}
-
-	return 0;
 }

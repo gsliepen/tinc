@@ -111,6 +111,9 @@ char *get_my_hostname() {
 		scan_for_hostname(tinc_conf, &hostname, &port);
 	}
 
+	free(name);
+	name = NULL;
+
 	if(hostname) {
 		goto done;
 	}
@@ -407,6 +410,7 @@ int cmd_invite(int argc, char *argv[]) {
 
 		if(!f) {
 			fprintf(stderr, "Could not write %s: %s\n", filename, strerror(errno));
+			free(key);
 			return 1;
 		}
 
@@ -415,6 +419,7 @@ int cmd_invite(int argc, char *argv[]) {
 		if(!ecdsa_write_pem_private_key(key, f)) {
 			fprintf(stderr, "Could not write ECDSA private key\n");
 			fclose(f);
+			free(key);
 			return 1;
 		}
 
@@ -444,6 +449,8 @@ int cmd_invite(int argc, char *argv[]) {
 	sha512(fingerprint, strlen(fingerprint), hash);
 	b64encode_urlsafe(hash, hash, 18);
 
+	free(key);
+
 	// Create a random cookie for this invitation.
 	char cookie[25];
 	randomize(cookie, 18);
@@ -455,6 +462,8 @@ int cmd_invite(int argc, char *argv[]) {
 	memcpy(buf + 18, fingerprint, sizeof(buf) - 18);
 	sha512(buf, sizeof(buf), cookiehash);
 	b64encode_urlsafe(cookiehash, cookiehash, 18);
+
+	free(fingerprint);
 
 	b64encode_urlsafe(cookie, cookie, 18);
 
@@ -1237,6 +1246,7 @@ int cmd_join(int argc, char *argv[]) {
 	struct addrinfo *ai = str2addrinfo(address, port, SOCK_STREAM);
 
 	if(!ai) {
+		free(b64key);
 		return 1;
 	}
 
@@ -1250,6 +1260,7 @@ next:
 
 		if(!aip) {
 			freeaddrinfo(ai);
+			free(b64key);
 			return 1;
 		}
 	}
@@ -1296,6 +1307,11 @@ next:
 	}
 
 	freeaddrinfo(ai);
+	ai = NULL;
+	aip = NULL;
+
+	free(b64key);
+	b64key = NULL;
 
 	// Check if the hash of the key he gave us matches the hash in the URL.
 	char *fingerprint = line + 2;

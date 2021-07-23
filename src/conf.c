@@ -35,7 +35,7 @@
 #include "utils.h"              /* for cp */
 #include "xalloc.h"
 
-splay_tree_t *config_tree;
+splay_tree_t *config_tree = NULL;
 
 int pinginterval = 0;           /* seconds between pings */
 int pingtimeout = 0;            /* seconds to wait for response */

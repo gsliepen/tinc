@@ -296,7 +296,6 @@ int main(int argc, char *argv[]) {
 	int packetloss = 0;
 	int r;
 	int option_index = 0;
-	ecdsa_t *mykey = NULL, *hiskey = NULL;
 	bool quit = false;
 
 	while((r = getopt_long(argc, argv, "dqrstwL:W:v46", long_options, &option_index)) != EOF) {
@@ -433,6 +432,7 @@ int main(int argc, char *argv[]) {
 
 	if(sock < 0) {
 		fprintf(stderr, "Could not create socket: %s\n", sockstrerror(sockerrno));
+		freeaddrinfo(ai);
 		return 1;
 	}
 
@@ -440,14 +440,24 @@ int main(int argc, char *argv[]) {
 	setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void *)&one, sizeof(one));
 
 	if(initiator) {
-		if(connect(sock, ai->ai_addr, ai->ai_addrlen)) {
+		int res = connect(sock, ai->ai_addr, ai->ai_addrlen);
+
+		freeaddrinfo(ai);
+		ai = NULL;
+
+		if(res) {
 			fprintf(stderr, "Could not connect to peer: %s\n", sockstrerror(sockerrno));
 			return 1;
 		}
 
 		fprintf(stderr, "Connected\n");
 	} else {
-		if(bind(sock, ai->ai_addr, ai->ai_addrlen)) {
+		int res = bind(sock, ai->ai_addr, ai->ai_addrlen);
+
+		freeaddrinfo(ai);
+		ai = NULL;
+
+		if(res) {
 			fprintf(stderr, "Could not bind socket: %s\n", sockstrerror(sockerrno));
 			return 1;
 		}
@@ -496,6 +506,8 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
+	ecdsa_t *mykey = NULL;
+
 	if(!(mykey = ecdsa_read_pem_private_key(fp))) {
 		return 1;
 	}
@@ -506,10 +518,14 @@ int main(int argc, char *argv[]) {
 
 	if(!fp) {
 		fprintf(stderr, "Could not open %s: %s\n", argv[2], strerror(errno));
+		free(mykey);
 		return 1;
 	}
 
+	ecdsa_t *hiskey = NULL;
+
 	if(!(hiskey = ecdsa_read_pem_public_key(fp))) {
+		free(mykey);
 		return 1;
 	}
 
@@ -522,6 +538,8 @@ int main(int argc, char *argv[]) {
 	sptps_t s;
 
 	if(!sptps_start(&s, &sock, initiator, datagram, mykey, hiskey, "sptps_test", 10, send_data, receive_record)) {
+		free(mykey);
+		free(hiskey);
 		return 1;
 	}
 
@@ -532,6 +550,8 @@ int main(int argc, char *argv[]) {
 
 		if(in < 0) {
 			fprintf(stderr, "Could not init stdin reader thread\n");
+			free(mykey);
+			free(hiskey);
 			return 1;
 		}
 	}
@@ -558,6 +578,8 @@ int main(int argc, char *argv[]) {
 		FD_SET(sock, &fds);
 
 		if(select(max_fd + 1, &fds, NULL, NULL, NULL) <= 0) {
+			free(mykey);
+			free(hiskey);
 			return 1;
 		}
 
@@ -570,6 +592,8 @@ int main(int argc, char *argv[]) {
 
 			if(len < 0) {
 				fprintf(stderr, "Could not read from stdin: %s\n", strerror(errno));
+				free(mykey);
+				free(hiskey);
 				return 1;
 			}
 
@@ -600,6 +624,8 @@ int main(int argc, char *argv[]) {
 					sptps_send_record(&s, 0, buf, len);
 				}
 			} else if(!sptps_send_record(&s, buf[0] == '!' ? 1 : 0, buf, (len == 1 && buf[0] == '\n') ? 0 : buf[0] == '*' ? sizeof(buf) : (size_t)len)) {
+				free(mykey);
+				free(hiskey);
 				return 1;
 			}
 		}
@@ -609,6 +635,8 @@ int main(int argc, char *argv[]) {
 
 			if(len < 0) {
 				fprintf(stderr, "Could not read from socket: %s\n", sockstrerror(sockerrno));
+				free(mykey);
+				free(hiskey);
 				return 1;
 			}
 
@@ -638,6 +666,8 @@ int main(int argc, char *argv[]) {
 
 				if(!done) {
 					if(!datagram) {
+						free(mykey);
+						free(hiskey);
 						return 1;
 					}
 				}
@@ -648,7 +678,12 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	if(!sptps_stop(&s)) {
+	bool stopped = sptps_stop(&s);
+
+	free(mykey);
+	free(hiskey);
+
+	if(!stopped) {
 		return 1;
 	}
 

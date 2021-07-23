@@ -190,11 +190,13 @@ static bool parse_options(int argc, char **argv) {
 			break;
 
 		case 'c': /* config file */
+			free(confbase);
 			confbase = xstrdup(optarg);
 			confbasegiven = true;
 			break;
 
 		case 'n': /* net name given */
+			free(netname);
 			netname = xstrdup(optarg);
 			break;
 
@@ -207,6 +209,7 @@ static bool parse_options(int argc, char **argv) {
 			break;
 
 		case 3:   /* open control socket here */
+			free(pidfilename);
 			pidfilename = xstrdup(optarg);
 			break;
 
@@ -216,6 +219,7 @@ static bool parse_options(int argc, char **argv) {
 
 		case '?': /* wrong options */
 			usage(true);
+			free_names();
 			return false;
 
 		default:
@@ -236,6 +240,7 @@ static bool parse_options(int argc, char **argv) {
 
 	if(netname && (strpbrk(netname, "\\/") || *netname == '.')) {
 		fprintf(stderr, "Invalid character in netname!\n");
+		free_names();
 		return false;
 	}
 
@@ -1000,10 +1005,12 @@ static int cmd_start(int argc, char *argv[]) {
 
 #endif
 
+	char *default_c = "tincd";
+
 	if(slash++) {
 		xasprintf(&c, "%.*stincd", (int)(slash - program_name), program_name);
 	} else {
-		c = "tincd";
+		c = default_c;
 	}
 
 	int nargc = 0;
@@ -1034,6 +1041,12 @@ static int cmd_start(int argc, char *argv[]) {
 #ifdef HAVE_MINGW
 	int status = spawnvp(_P_WAIT, c, nargv);
 
+	free(nargv);
+
+	if(c != default_c) {
+		free(c);
+	}
+
 	if(status == -1) {
 		fprintf(stderr, "Error starting %s: %s\n", c, strerror(errno));
 		return 1;
@@ -1046,6 +1059,11 @@ static int cmd_start(int argc, char *argv[]) {
 	if(socketpair(AF_UNIX, SOCK_STREAM, 0, pfd)) {
 		fprintf(stderr, "Could not create umbilical socket: %s\n", strerror(errno));
 		free(nargv);
+
+		if(c != default_c) {
+			free(c);
+		}
+
 		return 1;
 	}
 
@@ -1054,6 +1072,11 @@ static int cmd_start(int argc, char *argv[]) {
 	if(pid == -1) {
 		fprintf(stderr, "Could not fork: %s\n", strerror(errno));
 		free(nargv);
+
+		if(c != default_c) {
+			free(c);
+		}
+
 		return 1;
 	}
 
@@ -1103,12 +1126,17 @@ static int cmd_start(int argc, char *argv[]) {
 	signal(SIGINT, SIG_DFL);
 #endif
 
-	if(failure || result != pid || !WIFEXITED(status) || WEXITSTATUS(status)) {
+	bool failed = failure || result != pid || !WIFEXITED(status) || WEXITSTATUS(status);
+
+	if(failed) {
 		fprintf(stderr, "Error starting %s\n", c);
-		return 1;
 	}
 
-	return 0;
+	if(c != default_c) {
+		free(c);
+	}
+
+	return failed ? EXIT_FAILURE : EXIT_SUCCESS;
 #endif
 }
 
@@ -1963,6 +1991,11 @@ static int cmd_config(int argc, char *argv[]) {
 
 	if(node && !check_id(node)) {
 		fprintf(stderr, "Invalid name for node.\n");
+
+		if(node != line) {
+			free(node);
+		}
+
 		return 1;
 	}
 
@@ -1971,6 +2004,11 @@ static int cmd_config(int argc, char *argv[]) {
 			fprintf(stderr, "Warning: %s is not a known configuration variable!\n", variable);
 		} else {
 			fprintf(stderr, "%s: is not a known configuration variable! Use --force to use it anyway.\n", variable);
+
+			if(node && node != line) {
+				free(node);
+			}
+
 			return 1;
 		}
 	}
@@ -1980,6 +2018,11 @@ static int cmd_config(int argc, char *argv[]) {
 
 	if(node) {
 		snprintf(filename, sizeof(filename), "%s" SLASH "%s", hosts_dir, node);
+
+		if(node != line) {
+			free(node);
+			node = NULL;
+		}
 	} else {
 		snprintf(filename, sizeof(filename), "%s", tinc_conf);
 	}

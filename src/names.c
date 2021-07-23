@@ -50,6 +50,8 @@ void make_names(bool daemon) {
 		logger(DEBUG_ALWAYS, LOG_INFO, "Both netname and configuration directory given, using the latter...");
 	}
 
+	free(identname);
+
 	if(netname) {
 		xasprintf(&identname, "tinc.%s", netname);
 	} else {

@@ -159,6 +159,7 @@ static bool parse_options(int argc, char **argv) {
 			break;
 
 		case 'c': /* config file */
+			free(confbase);
 			confbase = xstrdup(optarg);
 			break;
 
@@ -169,7 +170,7 @@ static bool parse_options(int argc, char **argv) {
 		case 'L': /* no detach */
 #ifndef HAVE_MLOCKALL
 			logger(DEBUG_ALWAYS, LOG_ERR, "The %s option is not supported on this platform.", argv[optind - 1]);
-			return false;
+			goto exit_fail;
 #else
 			do_mlock = true;
 			break;
@@ -189,6 +190,7 @@ static bool parse_options(int argc, char **argv) {
 			break;
 
 		case 'n': /* net name given */
+			free(netname);
 			netname = xstrdup(optarg);
 			break;
 
@@ -201,7 +203,7 @@ static bool parse_options(int argc, char **argv) {
 			cfg = parse_config_line(optarg, NULL, ++lineno);
 
 			if(!cfg) {
-				return false;
+				goto exit_fail;
 			}
 
 			list_insert_tail(cmdline_conf, cfg);
@@ -212,7 +214,7 @@ static bool parse_options(int argc, char **argv) {
 		case 'R':
 		case 'U':
 			logger(DEBUG_ALWAYS, LOG_ERR, "The %s option is not supported on this platform.", argv[optind - 1]);
-			return false;
+			goto exit_fail;
 #else
 
 		case 'R': /* chroot to NETNAME dir */
@@ -245,18 +247,20 @@ static bool parse_options(int argc, char **argv) {
 			}
 
 			if(optarg) {
+				free(logfilename);
 				logfilename = xstrdup(optarg);
 			}
 
 			break;
 
 		case 5:   /* open control socket here */
+			free(pidfilename);
 			pidfilename = xstrdup(optarg);
 			break;
 
 		case '?': /* wrong options */
 			usage(true);
-			return false;
+			goto exit_fail;
 
 		default:
 			break;
@@ -266,7 +270,7 @@ static bool parse_options(int argc, char **argv) {
 	if(optind < argc) {
 		fprintf(stderr, "%s: unrecognized argument '%s'\n", argv[0], argv[optind]);
 		usage(true);
-		return false;
+		goto exit_fail;
 	}
 
 	if(!netname && (netname = getenv("NETNAME"))) {
@@ -282,7 +286,7 @@ static bool parse_options(int argc, char **argv) {
 
 	if(netname && !check_netname(netname, false)) {
 		fprintf(stderr, "Invalid character in netname!\n");
-		return false;
+		goto exit_fail;
 	}
 
 	if(netname && !check_netname(netname, true)) {
@@ -290,6 +294,12 @@ static bool parse_options(int argc, char **argv) {
 	}
 
 	return true;
+
+exit_fail:
+	free_names();
+	free(cmdline_conf);
+	cmdline_conf = NULL;
+	return false;
 }
 
 static bool drop_privs(void) {
@@ -372,6 +382,15 @@ static BOOL WINAPI console_ctrl_handler(DWORD type) {
 # define setpriority(level) (setpriority(PRIO_PROCESS, 0, (level)))
 #endif
 
+static void cleanup() {
+	if(config_tree) {
+		exit_configuration(&config_tree);
+	}
+
+	free(cmdline_conf);
+	free_names();
+}
+
 int main(int argc, char **argv) {
 	program_name = argv[0];
 
@@ -432,6 +451,8 @@ int main(int argc, char **argv) {
 	}
 
 	make_names(true);
+	atexit(cleanup);
+
 	chdir(confbase);
 
 #ifdef HAVE_MINGW
@@ -606,10 +627,6 @@ end:
 	free(priority);
 
 	crypto_exit();
-
-	exit_configuration(&config_tree);
-	free(cmdline_conf);
-	free_names();
 
 	return status;
 }
