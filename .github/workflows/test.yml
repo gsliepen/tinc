@@ -46,6 +46,7 @@ jobs:
       fail-fast: false
       matrix:
         sanitizer:
+          - address
           - thread
           - undefined
     env:
