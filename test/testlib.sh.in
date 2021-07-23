@@ -26,6 +26,8 @@ SPTPS_KEYPAIR=$(realdir "../src/sptps_keypair@EXEEXT@")
 
 # Exit status list
 # shellcheck disable=SC2034
+EXIT_FAILURE=1
+# shellcheck disable=SC2034
 EXIT_SKIP_TEST=77
 
 # The list of the environment variables that tinc injects into the scripts it calls.
@@ -95,6 +97,19 @@ rm_cr() {
 must_fail() {
   if "$@"; then
     bail "expected a non-zero exit code"
+  fi
+}
+
+# Executes whatever is passed to it, checking that the resulting exit code is equal to the first argument.
+expect_code() {
+  expected=$1
+  shift
+
+  code=0
+  "$@" || code=$?
+
+  if [ $code != "$expected" ]; then
+    bail "wrong exit code $code, expected $expected"
   fi
 }
 

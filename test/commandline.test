@@ -46,3 +46,19 @@ must_fail tinc foo -n foo get somethingreallyunknown
 must_fail tinc foo --net
 must_fail tinc foo --net get name
 must_fail tinc foo foo
+
+# Most of these should fail with ASAN. Some leaks are only detected by Valgrind.
+echo [STEP] Trigger previously known memory leaks
+
+tincd foo -c . -c . --help
+tincd foo -n net -n net --help
+tincd foo -n net -o FakeOpt=42 --help
+tincd foo --logfile=one --logfile=two --help
+tincd foo --pidfile=one --pidfile=two --help
+expect_code "$EXIT_FAILURE" tincd foo -n net -o Compression= --help
+expect_code "$EXIT_FAILURE" tincd foo -c fakedir -n 'n/e\t'
+
+tinc foo -c conf -c conf --help
+tinc foo -n net -n net --help
+tinc foo --pidfile=pid --pidfile=pid --help
+expect_code "$EXIT_FAILURE" tinc foo -c conf -n 'n/e\t'
