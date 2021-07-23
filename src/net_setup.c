@@ -231,7 +231,7 @@ static bool read_ecdsa_private_key(void) {
 		return false;
 	}
 
-	if(s.st_mode & ~0100700) {
+	if(s.st_mode & ~0100700u) {
 		logger(DEBUG_ALWAYS, LOG_WARNING, "Warning: insecure file permissions for Ed25519 private key file `%s'!", fname);
 	}
 
@@ -323,7 +323,7 @@ static bool read_rsa_private_key(void) {
 		return false;
 	}
 
-	if(s.st_mode & ~0100700) {
+	if(s.st_mode & ~0100700u) {
 		logger(DEBUG_ALWAYS, LOG_WARNING, "Warning: insecure file permissions for RSA private key file `%s'!", fname);
 	}
 

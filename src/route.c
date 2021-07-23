@@ -63,7 +63,7 @@ static timeout_t age_subnets_timeout;
 
 /* RFC 1071 */
 
-static uint16_t inet_checksum(void *vdata, int len, uint16_t prevsum) {
+static uint16_t inet_checksum(void *vdata, size_t len, uint16_t prevsum) {
 	uint8_t *data = vdata;
 	uint16_t word;
 	uint32_t checksum = prevsum ^ 0xFFFF;
@@ -83,7 +83,7 @@ static uint16_t inet_checksum(void *vdata, int len, uint16_t prevsum) {
 		checksum = (checksum & 0xFFFF) + (checksum >> 16);
 	}
 
-	return ~checksum;
+	return (uint16_t) ~checksum;
 }
 
 static bool ratelimit(int frequency) {
@@ -199,7 +199,7 @@ static void route_ipv4_unreachable(node_t *source, vpn_packet_t *packet, length_
 	ip.ip_src = ip_dst;
 	ip.ip_dst = ip_src;
 
-	ip.ip_sum = inet_checksum(&ip, ip_size, ~0);
+	ip.ip_sum = inet_checksum(&ip, ip_size, 0xFFFF);
 
 	/* Fill in ICMP header */
 
@@ -207,7 +207,7 @@ static void route_ipv4_unreachable(node_t *source, vpn_packet_t *packet, length_
 	icmp.icmp_code = code;
 	icmp.icmp_cksum = 0;
 
-	icmp.icmp_cksum = inet_checksum(&icmp, icmp_size, ~0);
+	icmp.icmp_cksum = inet_checksum(&icmp, icmp_size, 0xFFFF);
 	icmp.icmp_cksum = inet_checksum(DATA(packet) + ether_size + ip_size + icmp_size, oldlen, icmp.icmp_cksum);
 
 	/* Copy structs on stack back to packet */
@@ -312,7 +312,7 @@ static void route_ipv6_unreachable(node_t *source, vpn_packet_t *packet, length_
 
 	/* Generate checksum */
 
-	checksum = inet_checksum(&pseudo, sizeof(pseudo), ~0);
+	checksum = inet_checksum(&pseudo, sizeof(pseudo), 0xFFFF);
 	checksum = inet_checksum(&icmp6, icmp6_size, checksum);
 	checksum = inet_checksum(DATA(packet) + ether_size + ip6_size + icmp6_size, ntohl(pseudo.length) - icmp6_size, checksum);
 
@@ -401,7 +401,7 @@ static void clamp_mss(const node_t *source, const node_t *via, vpn_packet_t *pac
 	}
 
 	/* Find TCP header */
-	int start = ether_size;
+	size_t start = ether_size;
 	uint16_t type = DATA(packet)[12] << 8 | DATA(packet)[13];
 
 	if(type == ETH_P_8021Q) {
@@ -573,7 +573,7 @@ static void route_broadcast(node_t *source, vpn_packet_t *packet) {
 static void fragment_ipv4_packet(node_t *dest, vpn_packet_t *packet, length_t ether_size) {
 	struct ip ip;
 	vpn_packet_t fragment;
-	int maxlen, todo;
+	size_t maxlen, todo;
 	uint8_t *offset;
 	uint16_t ip_off, origf;
 
@@ -601,7 +601,7 @@ static void fragment_ipv4_packet(node_t *dest, vpn_packet_t *packet, length_t et
 	ip_off &= IP_OFFMASK;
 
 	while(todo) {
-		int len = todo > maxlen ? maxlen : todo;
+		size_t len = todo > maxlen ? maxlen : todo;
 		memcpy(DATA(&fragment) + ether_size + ip_size, offset, len);
 		todo -= len;
 		offset += len;
@@ -609,7 +609,7 @@ static void fragment_ipv4_packet(node_t *dest, vpn_packet_t *packet, length_t et
 		ip.ip_len = htons(ip_size + len);
 		ip.ip_off = htons(ip_off | origf | (todo ? IP_MF : 0));
 		ip.ip_sum = 0;
-		ip.ip_sum = inet_checksum(&ip, ip_size, ~0);
+		ip.ip_sum = inet_checksum(&ip, ip_size, 0xFFFF);
 		memcpy(DATA(&fragment), DATA(packet), ether_size);
 		memcpy(DATA(&fragment) + ether_size, &ip, ip_size);
 		fragment.len = ether_size + ip_size + len;
@@ -857,7 +857,7 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet) {
 
 	/* Generate checksum */
 
-	checksum = inet_checksum(&pseudo, sizeof(pseudo), ~0);
+	checksum = inet_checksum(&pseudo, sizeof(pseudo), 0xFFFF);
 	checksum = inet_checksum(&ns, ns_size, checksum);
 
 	if(has_opt) {
@@ -931,7 +931,7 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet) {
 
 	/* Generate checksum */
 
-	checksum = inet_checksum(&pseudo, sizeof(pseudo), ~0);
+	checksum = inet_checksum(&pseudo, sizeof(pseudo), 0xFFFF);
 	checksum = inet_checksum(&ns, ns_size, checksum);
 
 	if(has_opt) {

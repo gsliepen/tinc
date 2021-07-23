@@ -186,9 +186,7 @@ static int subnet_compare_ipv6(const subnet_t *a, const subnet_t *b) {
 }
 
 int subnet_compare(const subnet_t *a, const subnet_t *b) {
-	int result;
-
-	result = a->type - b->type;
+	int result = (int)a->type - (int)b->type;
 
 	if(result) {
 		return result;

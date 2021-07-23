@@ -50,7 +50,7 @@ typedef struct sptps {
 	bool datagram;
 	int state;
 
-	char *inbuf;
+	uint8_t *inbuf;
 	size_t buflen;
 	uint16_t reclen;
 

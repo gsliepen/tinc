@@ -54,7 +54,7 @@ static int charhex2bin(char c) {
 }
 
 size_t hex2bin(const char *src, void *vdst, size_t length) {
-	char *dst = vdst;
+	uint8_t *dst = vdst;
 	size_t i;
 
 	for(i = 0; i < length && isxdigit(src[i * 2]) && isxdigit(src[i * 2 + 1]); i++) {
@@ -67,7 +67,8 @@ size_t hex2bin(const char *src, void *vdst, size_t length) {
 size_t bin2hex(const void *vsrc, char *dst, size_t length) {
 	const char *src = vsrc;
 
-	for(size_t i = length; i-- > 0;) {
+	for(size_t i = length; i > 0;) {
+		--i;
 		dst[i * 2 + 1] = hexadecimals[(unsigned char) src[i] & 15];
 		dst[i * 2] = hexadecimals[(unsigned char) src[i] >> 4];
 	}
