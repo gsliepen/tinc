@@ -22,7 +22,7 @@ test "$(tinc foo get Mode)" = "Switch"
 
 echo [STEP] Test deletion
 
-must_fail tinc foo del Mode hub
+expect_code "$EXIT_FAILURE" tinc foo del Mode hub
 tinc foo del Mode switch
 test -z "$(tinc foo get Mode)"
 
@@ -52,7 +52,7 @@ test -z "$(tinc foo get Subnet)"
 echo [STEP] We should not be able to get/set server variables using node.variable syntax
 
 test -z "$(tinc foo get foo.Name)"
-must_fail tinc foo set foo.Name bar
+expect_code "$EXIT_FAILURE" tinc foo set foo.Name bar
 
 echo [STEP] Test getting/setting host variables for other nodes
 
@@ -80,11 +80,11 @@ test -z "$(tinc foo get bar.Subnet)"
 echo [STEP] We should not be able to get/set for nodes with invalid names
 
 touch "$DIR_FOO/hosts/qu-ux"
-must_fail tinc foo set qu-ux.Subnet 1
+expect_code "$EXIT_FAILURE" tinc foo set qu-ux.Subnet 1
 
 echo [STEP] We should not be able to set obsolete variables unless forced
 
-must_fail tinc foo set PrivateKey 12345
+expect_code "$EXIT_FAILURE" tinc foo set PrivateKey 12345
 tinc foo --force set PrivateKey 12345
 test "$(tinc foo get PrivateKey)" = "12345"
 

@@ -28,9 +28,9 @@ tincd foo -D --net foo
 
 echo [STEP] Test tincd command line options that should not work
 
-must_fail tincd foo foo
-must_fail tincd foo --pidfile
-must_fail tincd foo --foo
+expect_code "$EXIT_FAILURE" tincd foo foo
+expect_code "$EXIT_FAILURE" tincd foo --pidfile
+expect_code "$EXIT_FAILURE" tincd foo --foo
 
 echo [STEP] Test tinc command line options that should work
 
@@ -42,10 +42,10 @@ tinc foo --net foo get name
 
 echo [STEP] Test tinc command line options that should not work
 
-must_fail tinc foo -n foo get somethingreallyunknown
-must_fail tinc foo --net
-must_fail tinc foo --net get name
-must_fail tinc foo foo
+expect_code "$EXIT_FAILURE" tinc foo -n foo get somethingreallyunknown
+expect_code "$EXIT_FAILURE" tinc foo --net
+expect_code "$EXIT_FAILURE" tinc foo --net get name
+expect_code "$EXIT_FAILURE" tinc foo foo
 
 # Most of these should fail with ASAN. Some leaks are only detected by Valgrind.
 echo [STEP] Trigger previously known memory leaks

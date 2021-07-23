@@ -124,7 +124,7 @@ for level in $bogus_levels; do
   echo "[STEP] Testing bogus compression level $level"
   tinc foo set Compression "$level"
 
-  output=$(must_fail start_tinc foo 2>&1)
+  output=$(expect_code "$EXIT_FAILURE" start_tinc foo 2>&1)
 
   if ! echo "$output" | grep -q 'Bogus compression level'; then
     bail 'expected message about the wrong compression level'
