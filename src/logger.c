@@ -94,7 +94,7 @@ static void real_logger(int level, int priority, const char *message) {
 		}
 	}
 
-	if(logcontrol) {
+	if(logcontrol && connection_list) {
 		suppress = true;
 		logcontrol = false;
 
