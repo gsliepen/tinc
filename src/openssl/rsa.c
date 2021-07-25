@@ -102,7 +102,7 @@ rsa_t *rsa_read_pem_private_key(FILE *fp) {
 	return rsa;
 }
 
-size_t rsa_size(rsa_t *rsa) {
+size_t rsa_size(const rsa_t *rsa) {
 	return RSA_size(rsa);
 }
 
