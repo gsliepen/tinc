@@ -292,6 +292,7 @@ int cmd_invite(int argc, char *argv[]) {
 		return 1;
 	}
 
+	free(myname);
 	myname = get_my_name(true);
 
 	if(!myname) {

@@ -234,6 +234,7 @@ int fsck(const char *argv0) {
 			// Something is seriously wrong here. If we can access the directory with tinc.conf in it, we should certainly be able to stat() an existing file.
 			fprintf(stderr, "ERROR: cannot read %s: %s\n", fname, strerror(errno));
 			fprintf(stderr, "Please correct this error.\n");
+			free(name);
 			return 1;
 		}
 	} else {
@@ -241,6 +242,7 @@ int fsck(const char *argv0) {
 
 		if(!f) {
 			fprintf(stderr, "ERROR: could not open %s: %s\n", fname, strerror(errno));
+			free(name);
 			return 1;
 		}
 
@@ -251,6 +253,7 @@ int fsck(const char *argv0) {
 			fprintf(stderr, "ERROR: No key or unusable key found in %s.\n", fname);
 			fprintf(stderr, "You can generate a new RSA key with:\n\n");
 			print_tinc_cmd(argv0, "generate-rsa-keys");
+			free(name);
 			return 1;
 		}
 
@@ -283,6 +286,7 @@ int fsck(const char *argv0) {
 			// Something is seriously wrong here. If we can access the directory with tinc.conf in it, we should certainly be able to stat() an existing file.
 			fprintf(stderr, "ERROR: cannot read %s: %s\n", fname, strerror(errno));
 			fprintf(stderr, "Please correct this error.\n");
+			free(name);
 			return 1;
 		}
 	} else {
@@ -290,6 +294,7 @@ int fsck(const char *argv0) {
 
 		if(!f) {
 			fprintf(stderr, "ERROR: could not open %s: %s\n", fname, strerror(errno));
+			free(name);
 			return 1;
 		}
 
@@ -300,6 +305,7 @@ int fsck(const char *argv0) {
 			fprintf(stderr, "ERROR: No key or unusable key found in %s.\n", fname);
 			fprintf(stderr, "You can generate a new Ed25519 key with:\n\n");
 			print_tinc_cmd(argv0, "generate-ed25519-keys");
+			free(name);
 			return 1;
 		}
 
@@ -333,6 +339,7 @@ int fsck(const char *argv0) {
 #endif
 		fprintf(stderr, "You can generate new keys with:\n\n");
 		print_tinc_cmd(argv0, "generate-keys");
+		free(name);
 		return 1;
 	}
 
@@ -340,6 +347,8 @@ int fsck(const char *argv0) {
 	// TODO: use RSAPublicKeyFile variable if present.
 
 	snprintf(fname, sizeof(fname), "%s/hosts/%s", confbase, name);
+
+	free(name);
 
 	if(access(fname, R_OK)) {
 		fprintf(stderr, "WARNING: cannot read %s\n", fname);
@@ -382,6 +391,9 @@ int fsck(const char *argv0) {
 
 			if(len != rsa_size(rsa_pub)) {
 				fprintf(stderr, "ERROR: public and private RSA keys do not match.\n");
+				rsa_free(rsa_pub);
+				rsa_free(rsa_priv);
+				free(ecdsa_priv);
 				return 1;
 			}
 
@@ -409,18 +421,28 @@ int fsck(const char *argv0) {
 				fprintf(stderr, "ERROR: public RSA key does not work.\n");
 			}
 
+
+			rsa_free(rsa_pub);
+			rsa_pub = NULL;
+
 			free(buf3);
 			free(buf2);
 			free(buf1);
 
 			if(!result) {
+				rsa_free(rsa_priv);
+				free(ecdsa_priv);
 				return 1;
 			}
-
 		}
+
+		rsa_free(rsa_priv);
+		rsa_priv = NULL;
 	} else {
 		if(rsa_pub) {
 			fprintf(stderr, "WARNING: A public RSA key was found but no private key is known.\n");
+			rsa_free(rsa_pub);
+			rsa_pub = NULL;
 		}
 	}
 
@@ -464,16 +486,21 @@ int fsck(const char *argv0) {
 			// TODO: suggest remedies
 			char *key1 = ecdsa_get_base64_public_key(ecdsa_pub);
 
+			free(ecdsa_pub);
+			ecdsa_pub = NULL;
+
 			if(!key1) {
 				fprintf(stderr, "ERROR: public Ed25519 key does not work.\n");
+				free(ecdsa_priv);
 				return 1;
 			}
 
 			char *key2 = ecdsa_get_base64_public_key(ecdsa_priv);
 
 			if(!key2) {
-				free(key1);
 				fprintf(stderr, "ERROR: private Ed25519 key does not work.\n");
+				free(ecdsa_priv);
+				free(key1);
 				return 1;
 			}
 
@@ -483,12 +510,18 @@ int fsck(const char *argv0) {
 
 			if(result) {
 				fprintf(stderr, "ERROR: public and private Ed25519 keys do not match.\n");
+				free(ecdsa_priv);
 				return 1;
 			}
 		}
+
+		free(ecdsa_priv);
+		ecdsa_priv = NULL;
 	} else {
 		if(ecdsa_pub) {
 			fprintf(stderr, "WARNING: A public Ed25519 key was found but no private key is known.\n");
+			free(ecdsa_pub);
+			ecdsa_pub = NULL;
 		}
 	}
 

@@ -70,15 +70,16 @@ int main(int argc, char *argv[]) {
 	int sock[2];
 	char buf[1024];
 
-	struct addrinfo *ai, hint;
-	memset(&hint, 0, sizeof(hint));
-
-	hint.ai_family = AF_UNSPEC;
-	hint.ai_socktype = SOCK_STREAM;
-	hint.ai_protocol = IPPROTO_TCP;
-	hint.ai_flags = 0;
+	const struct addrinfo hint = {
+		.ai_family = AF_UNSPEC,
+		.ai_socktype = SOCK_STREAM,
+		.ai_protocol = IPPROTO_TCP,
+		.ai_flags = 0,
+	};
 
 	for(int i = 0; i < 2; i++) {
+		struct addrinfo *ai;
+
 		if(getaddrinfo(argv[2 + 3 * i], argv[3 + 3 * i], &hint, &ai) || !ai) {
 			fprintf(stderr, "getaddrinfo() failed: %s\n", sockstrerror(sockerrno));
 			return 1;
@@ -88,13 +89,17 @@ int main(int argc, char *argv[]) {
 
 		if(sock[i] == -1) {
 			fprintf(stderr, "Could not create socket: %s\n", sockstrerror(sockerrno));
+			freeaddrinfo(ai);
 			return 1;
 		}
 
 		if(connect(sock[i], ai->ai_addr, ai->ai_addrlen)) {
 			fprintf(stderr, "Could not connect to %s: %s\n", argv[i + 3 * i], sockstrerror(sockerrno));
+			freeaddrinfo(ai);
 			return 1;
 		}
+
+		freeaddrinfo(ai);
 
 		fprintf(stderr, "Connected to %s\n", argv[1 + 3 * i]);
 

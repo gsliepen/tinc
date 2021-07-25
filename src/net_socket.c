@@ -866,6 +866,8 @@ void try_outgoing_connections(void) {
 				node_add(n);
 			}
 
+			free(name);
+
 			outgoing->node = n;
 			list_insert_tail(outgoing_list, outgoing);
 			setup_outgoing_connection(outgoing, true);

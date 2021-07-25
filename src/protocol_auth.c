@@ -214,6 +214,9 @@ static bool finalize_invitation(connection_t *c, const char *data, uint16_t len)
 	environment_add(&env, "REMOTEADDRESS=%s", address);
 	environment_add(&env, "NAME=%s", myself->name);
 
+	free(address);
+	free(port);
+
 	execute_script("invitation-accepted", &env);
 
 	environment_exit(&env);

@@ -52,10 +52,11 @@ static io_t device_io;
 devops_t devops;
 bool device_standby = false;
 
-char *proxyhost;
-char *proxyport;
-char *proxyuser;
-char *proxypass;
+char *proxyhost = NULL;
+char *proxyport = NULL;
+char *proxyuser = NULL;
+char *proxypass = NULL;
+
 proxytype_t proxytype;
 bool autoconnect;
 bool disablebuggypeers;
@@ -435,18 +436,10 @@ char *get_name(void) {
 }
 
 bool setup_myself_reloadable(void) {
-	char *proxy = NULL;
-	char *rmode = NULL;
-	char *fmode = NULL;
-	char *bmode = NULL;
-	char *afname = NULL;
-	char *space;
-	bool choice;
-
 	free(scriptinterpreter);
 	scriptinterpreter = NULL;
-	get_config_string(lookup_config(config_tree, "ScriptsInterpreter"), &scriptinterpreter);
 
+	get_config_string(lookup_config(config_tree, "ScriptsInterpreter"), &scriptinterpreter);
 
 	free(scriptextension);
 
@@ -454,9 +447,13 @@ bool setup_myself_reloadable(void) {
 		scriptextension = xstrdup("");
 	}
 
+	char *proxy = NULL;
+
 	get_config_string(lookup_config(config_tree, "Proxy"), &proxy);
 
 	if(proxy) {
+		char *space;
+
 		if((space = strchr(proxy, ' '))) {
 			*space++ = 0;
 		}
@@ -475,8 +472,21 @@ bool setup_myself_reloadable(void) {
 			proxytype = PROXY_EXEC;
 		} else {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Unknown proxy type %s!", proxy);
+			free(proxy);
 			return false;
 		}
+
+		free(proxyhost);
+		proxyhost = NULL;
+
+		free(proxyport);
+		proxyport = NULL;
+
+		free(proxyuser);
+		proxyuser = NULL;
+
+		free(proxypass);
+		proxypass = NULL;
 
 		switch(proxytype) {
 		case PROXY_NONE:
@@ -486,10 +496,11 @@ bool setup_myself_reloadable(void) {
 		case PROXY_EXEC:
 			if(!space || !*space) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Argument expected for proxy type exec!");
+				free(proxy);
 				return false;
 			}
 
-			proxyhost =  xstrdup(space);
+			proxyhost = xstrdup(space);
 			break;
 
 		case PROXY_SOCKS4:
@@ -502,17 +513,20 @@ bool setup_myself_reloadable(void) {
 				*space++ = 0, proxyport = space;
 			}
 
+			if(!proxyhost || !*proxyhost || !proxyport || !*proxyport) {
+				logger(DEBUG_ALWAYS, LOG_ERR, "Host and port argument expected for proxy!");
+				proxyport = NULL;
+				proxyhost = NULL;
+				free(proxy);
+				return false;
+			}
+
 			if(space && (space = strchr(space, ' '))) {
 				*space++ = 0, proxyuser = space;
 			}
 
 			if(space && (space = strchr(space, ' '))) {
 				*space++ = 0, proxypass = space;
-			}
-
-			if(!proxyhost || !*proxyhost || !proxyport || !*proxyport) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "Host and port argument expected for proxy!");
-				return false;
 			}
 
 			proxyhost = xstrdup(proxyhost);
@@ -531,6 +545,8 @@ bool setup_myself_reloadable(void) {
 
 		free(proxy);
 	}
+
+	bool choice;
 
 	if(get_config_bool(lookup_config(config_tree, "IndirectData"), &choice) && choice) {
 		myself->options |= OPTION_INDIRECT;
@@ -555,6 +571,8 @@ bool setup_myself_reloadable(void) {
 	get_config_bool(lookup_config(config_tree, "DirectOnly"), &directonly);
 	get_config_bool(lookup_config(config_tree, "LocalDiscovery"), &localdiscovery);
 
+	char *rmode = NULL;
+
 	if(get_config_string(lookup_config(config_tree, "Mode"), &rmode)) {
 		if(!strcasecmp(rmode, "router")) {
 			routing_mode = RMODE_ROUTER;
@@ -564,11 +582,14 @@ bool setup_myself_reloadable(void) {
 			routing_mode = RMODE_HUB;
 		} else {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Invalid routing mode!");
+			free(rmode);
 			return false;
 		}
 
 		free(rmode);
 	}
+
+	char *fmode = NULL;
 
 	if(get_config_string(lookup_config(config_tree, "Forwarding"), &fmode)) {
 		if(!strcasecmp(fmode, "off")) {
@@ -579,6 +600,7 @@ bool setup_myself_reloadable(void) {
 			forwarding_mode = FMODE_KERNEL;
 		} else {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Invalid forwarding mode!");
+			free(fmode);
 			return false;
 		}
 
@@ -602,6 +624,8 @@ bool setup_myself_reloadable(void) {
 	get_config_bool(lookup_config(config_tree, "PriorityInheritance"), &priorityinheritance);
 	get_config_bool(lookup_config(config_tree, "DecrementTTL"), &decrement_ttl);
 
+	char *bmode = NULL;
+
 	if(get_config_string(lookup_config(config_tree, "Broadcast"), &bmode)) {
 		if(!strcasecmp(bmode, "no")) {
 			broadcast_mode = BMODE_NONE;
@@ -611,6 +635,7 @@ bool setup_myself_reloadable(void) {
 			broadcast_mode = BMODE_DIRECT;
 		} else {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Invalid broadcast mode!");
+			free(bmode);
 			return false;
 		}
 
@@ -626,7 +651,11 @@ bool setup_myself_reloadable(void) {
 			abort();
 		}
 
-		subnet_add(NULL, s);
+		if(splay_search(subnet_tree, s)) {
+			free(s);
+		} else {
+			subnet_add(NULL, s);
+		}
 	}
 
 	for(config_t *cfg = lookup_config(config_tree, "BroadcastSubnet"); cfg; cfg = lookup_config_next(config_tree, cfg)) {
@@ -636,7 +665,11 @@ bool setup_myself_reloadable(void) {
 			continue;
 		}
 
-		subnet_add(NULL, s);
+		if(splay_search(subnet_tree, s)) {
+			free(s);
+		} else {
+			subnet_add(NULL, s);
+		}
 	}
 
 #if !defined(IP_TOS)
@@ -668,6 +701,8 @@ bool setup_myself_reloadable(void) {
 		maxtimeout = 900;
 	}
 
+	char *afname = NULL;
+
 	if(get_config_string(lookup_config(config_tree, "AddressFamily"), &afname)) {
 		if(!strcasecmp(afname, "IPv4")) {
 			addressfamily = AF_INET;
@@ -677,6 +712,7 @@ bool setup_myself_reloadable(void) {
 			addressfamily = AF_UNSPEC;
 		} else {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Invalid address family!");
+			free(afname);
 			return false;
 		}
 
@@ -762,6 +798,7 @@ static bool add_listen_address(char *address, bool bindto) {
 
 		if(listen_sockets >= MAXSOCKETS) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Too many listening sockets");
+			freeaddrinfo(ai);
 			return false;
 		}
 

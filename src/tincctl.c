@@ -1884,7 +1884,7 @@ static int cmd_config(int argc, char *argv[]) {
 	char *node = NULL;
 	char *variable;
 	char *value;
-	int len;
+	size_t len;
 
 	len = strcspn(line, "\t =");
 	value = line + len;

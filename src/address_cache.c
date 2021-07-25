@@ -67,6 +67,7 @@ static struct addrinfo *get_known_addresses(node_t *n) {
 static void free_known_addresses(struct addrinfo *ai) {
 	for(struct addrinfo *aip = ai, *next; aip; aip = next) {
 		next = aip->ai_next;
+		free(aip->ai_addr);
 		free(aip);
 	}
 }
