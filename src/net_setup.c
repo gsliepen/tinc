@@ -642,6 +642,14 @@ bool setup_myself_reloadable(void) {
 		free(bmode);
 	}
 
+	/* Delete all broadcast subnets before re-adding them */
+
+	for splay_each(subnet_t, s, subnet_tree) {
+		if(!s->owner) {
+			splay_delete_node(subnet_tree, node);
+		}
+	}
+
 	const char *const DEFAULT_BROADCAST_SUBNETS[] = { "ff:ff:ff:ff:ff:ff", "255.255.255.255", "224.0.0.0/4", "ff00::/8" };
 
 	for(size_t i = 0; i < sizeof(DEFAULT_BROADCAST_SUBNETS) / sizeof(*DEFAULT_BROADCAST_SUBNETS); i++) {
@@ -651,11 +659,7 @@ bool setup_myself_reloadable(void) {
 			abort();
 		}
 
-		if(splay_search(subnet_tree, s)) {
-			free(s);
-		} else {
-			subnet_add(NULL, s);
-		}
+		subnet_add(NULL, s);
 	}
 
 	for(config_t *cfg = lookup_config(config_tree, "BroadcastSubnet"); cfg; cfg = lookup_config_next(config_tree, cfg)) {
@@ -665,11 +669,7 @@ bool setup_myself_reloadable(void) {
 			continue;
 		}
 
-		if(splay_search(subnet_tree, s)) {
-			free(s);
-		} else {
-			subnet_add(NULL, s);
-		}
+		subnet_add(NULL, s);
 	}
 
 #if !defined(IP_TOS)
