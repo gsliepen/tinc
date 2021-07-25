@@ -26,3 +26,12 @@ esac
 
 sudo --preserve-env=ASAN_OPTIONS,TSAN_OPTIONS,UBSAN_OPTIONS \
   make check VERBOSE=1
+
+# Check that the sanitizer has not created any log files.
+# If it has, fail the job to notify the developer.
+log_count=$(find "$logs" -type f -printf . | wc -c)
+
+if [ "$log_count" != 0 ]; then
+  echo "expected zero sanitizer logs, found $log_count"
+  exit 1
+fi
