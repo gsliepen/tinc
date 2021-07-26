@@ -306,6 +306,11 @@ bool str2net(subnet_t *subnet, const char *subnetstr) {
 
 	char *last_colon = strrchr(str, ':');
 
+	/* Check that the last colon is not further than possible in an IPv6 address */
+	if(last_colon >= str + 5 * 8) {
+		return false;
+	}
+
 	if(last_colon && sscanf(last_colon, ":%hu.%hu.%hu.%hu%n", &x[0], &x[1], &x[2], &x[3], &consumed) >= 4 && !last_colon[consumed]) {
 		/* Dotted quad suffix notation, convert to standard IPv6 notation */
 		for(int i = 0; i < 4; i++)
