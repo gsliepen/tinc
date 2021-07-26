@@ -107,20 +107,21 @@ jobs:
     container:
       image: ${{ matrix.os }}
       options: --privileged
-
+      env:
+        CI: 1
     steps:
       - name: Install deps (Alpine)
         run: >
           apk add git binutils make autoconf automake gcc linux-headers libtool
           diffutils texinfo procps openssl-dev zlib-dev lzo-dev ncurses-dev
-          readline-dev musl-dev lz4-dev socat
+          readline-dev musl-dev lz4-dev socat shadow sudo
         if: startsWith(matrix.os, 'alpine')
 
       - name: Install deps (Debian and Ubuntu)
         shell: bash
         run: |
           apt-get update
-          apt-get install -y git binutils make autoconf automake gcc diffutils \
+          apt-get install -y git binutils make autoconf automake gcc diffutils sudo \
             texinfo netcat procps socat zlib1g-dev lib{ssl,lzo2,lz4,ncurses,readline}-dev
         env:
           DEBIAN_FRONTEND: noninteractive
@@ -134,7 +135,7 @@ jobs:
             dnf config-manager --enable powertools
           fi
           yum install -y epel-release
-          yum install -y git binutils make autoconf automake gcc diffutils \
+          yum install -y git binutils make autoconf automake gcc diffutils sudo \
             texinfo netcat procps socat {lzo,zlib,lz4,ncurses,readline}-devel
           yum install -y openssl11-devel || yum install -y openssl-devel
         if: startsWith(matrix.os, 'centos') || startsWith(matrix.os, 'alma')
@@ -142,7 +143,7 @@ jobs:
       - name: Install deps (SUSE)
         shell: bash
         run: >
-          zypper install -y tar git binutils make autoconf automake gcc procps
+          zypper install -y tar git binutils make autoconf automake gcc procps sudo
           makeinfo diffutils gzip socat {openssl,zlib,lzo,liblz4,ncurses,readline}-devel
         if: startsWith(matrix.os, 'opensuse')
 
@@ -154,11 +155,17 @@ jobs:
       - name: Assign name for test results artifact
         run: echo TEST_ARTIFACT="$(echo '${{ matrix.os }}' | sed 's|[:/]|_|g')" >>"$GITHUB_ENV"
 
+      - name: Create a non-privileged user
+        run: |
+          useradd --user-group build
+          chown -R build:build .
+          echo 'build ALL=(ALL) NOPASSWD: ALL' >/etc/sudoers.d/build
+
       - name: Run tests with default settings
-        run: sh .github/workflows/test/run.sh default
+        run: sudo -u build CI=1 sh .github/workflows/test/run.sh default
 
       - name: Run tests without legacy protocol
-        run: sh .github/workflows/test/run.sh nolegacy
+        run: sudo -u build CI=1 sh .github/workflows/test/run.sh nolegacy
 
       - name: Upload test results
         uses: actions/upload-artifact@v2

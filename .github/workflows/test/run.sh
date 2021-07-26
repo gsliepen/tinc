@@ -20,11 +20,12 @@ run_tests() {
   header "Cleaning up leftovers from previous runs"
 
   for name in tinc tincd; do
-    pkill -TERM -x "$name" || true
-    pkill -KILL -x "$name" || true
+    sudo pkill -TERM -x "$name" || true
+    sudo pkill -KILL -x "$name" || true
   done
 
-  git clean -dfx
+  sudo git clean -dfx
+  sudo chown -R build:build .
 
   header "Running test flavor $flavor"
 
@@ -44,7 +45,7 @@ run_tests() {
   code=0
   make check -j2 VERBOSE=1 || code=$?
 
-  tar -c -z -f "/tmp/tests.$flavor.tar.gz" test/
+  sudo tar -c -z -f "/tmp/tests.$flavor.tar.gz" test/
 
   return $code
 }
