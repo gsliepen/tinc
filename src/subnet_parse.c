@@ -307,7 +307,7 @@ bool str2net(subnet_t *subnet, const char *subnetstr) {
 	char *last_colon = strrchr(str, ':');
 
 	/* Check that the last colon is not further than possible in an IPv6 address */
-	if(last_colon >= str + 5 * 8) {
+	if(last_colon && last_colon >= str + 5 * 8) {
 		return false;
 	}
 
