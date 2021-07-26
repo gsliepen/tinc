@@ -1936,6 +1936,7 @@ static int cmd_config(int argc, char *argv[]) {
 
 			if(!str2net(&s, value)) {
 				fprintf(stderr, "Malformed subnet definition %s\n", value);
+				return 1;
 			}
 
 			if(!subnetcheck(s)) {
