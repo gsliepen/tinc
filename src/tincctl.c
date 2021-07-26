@@ -1931,7 +1931,7 @@ static int cmd_config(int argc, char *argv[]) {
 		found = true;
 		variable = (char *)variables[i].name;
 
-		if(!strcasecmp(variable, "Subnet")) {
+		if(!strcasecmp(variable, "Subnet") && *value) {
 			subnet_t s = {0};
 
 			if(!str2net(&s, value)) {
