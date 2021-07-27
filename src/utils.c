@@ -284,3 +284,30 @@ char *replace_name(const char *name) {
 
 	return ret_name;
 }
+
+/* Open a file with the desired permissions, minus the umask.
+   Also, if we want to create an executable file, we call fchmod()
+   to set the executable bits. */
+
+FILE *fopenmask(const char *filename, const char *mode, mode_t perms) {
+	mode_t mask = umask(0);
+	perms &= ~mask;
+	umask(~perms & 0777);
+	FILE *f = fopen(filename, mode);
+
+	if(!f) {
+		fprintf(stderr, "Could not open %s: %s\n", filename, strerror(errno));
+		return NULL;
+	}
+
+#ifdef HAVE_FCHMOD
+
+	if((perms & 0444) && f) {
+		fchmod(fileno(f), perms);
+	}
+
+#endif
+	umask(mask);
+	return f;
+}
+

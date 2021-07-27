@@ -23,6 +23,7 @@
 #include "system.h"
 
 #include "cipher.h"
+#include "conf_net.h"
 #include "conf.h"
 #include "connection.h"
 #include "control.h"
@@ -42,6 +43,7 @@
 #include "subnet.h"
 #include "utils.h"
 #include "xalloc.h"
+#include "keys.h"
 
 #ifdef HAVE_MINIUPNPC
 #include "upnp.h"
@@ -109,146 +111,6 @@ exit:
 	return n->ecdsa;
 }
 
-bool read_ecdsa_public_key(connection_t *c) {
-	if(ecdsa_active(c->ecdsa)) {
-		return true;
-	}
-
-	FILE *fp;
-	char *fname;
-	char *p;
-
-	if(!c->config_tree) {
-		init_configuration(&c->config_tree);
-
-		if(!read_host_config(c->config_tree, c->name, true)) {
-			return false;
-		}
-	}
-
-	/* First, check for simple Ed25519PublicKey statement */
-
-	if(get_config_string(lookup_config(c->config_tree, "Ed25519PublicKey"), &p)) {
-		c->ecdsa = ecdsa_set_base64_public_key(p);
-		free(p);
-		return c->ecdsa;
-	}
-
-	/* Else, check for Ed25519PublicKeyFile statement and read it */
-
-	if(!get_config_string(lookup_config(c->config_tree, "Ed25519PublicKeyFile"), &fname)) {
-		xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, c->name);
-	}
-
-	fp = fopen(fname, "r");
-
-	if(!fp) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error reading Ed25519 public key file `%s': %s",
-		       fname, strerror(errno));
-		free(fname);
-		return false;
-	}
-
-	c->ecdsa = ecdsa_read_pem_public_key(fp);
-
-	if(!c->ecdsa && errno != ENOENT) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Parsing Ed25519 public key file `%s' failed.", fname);
-	}
-
-	fclose(fp);
-	free(fname);
-	return c->ecdsa;
-}
-
-#ifndef DISABLE_LEGACY
-bool read_rsa_public_key(connection_t *c) {
-	FILE *fp;
-	char *fname;
-	char *n;
-
-	/* First, check for simple PublicKey statement */
-
-	if(get_config_string(lookup_config(c->config_tree, "PublicKey"), &n)) {
-		c->rsa = rsa_set_hex_public_key(n, "FFFF");
-		free(n);
-		return c->rsa;
-	}
-
-	/* Else, check for PublicKeyFile statement and read it */
-
-	if(!get_config_string(lookup_config(c->config_tree, "PublicKeyFile"), &fname)) {
-		xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, c->name);
-	}
-
-	fp = fopen(fname, "r");
-
-	if(!fp) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error reading RSA public key file `%s': %s", fname, strerror(errno));
-		free(fname);
-		return false;
-	}
-
-	c->rsa = rsa_read_pem_public_key(fp);
-	fclose(fp);
-
-	if(!c->rsa) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Reading RSA public key file `%s' failed: %s", fname, strerror(errno));
-	}
-
-	free(fname);
-	return c->rsa;
-}
-#endif
-
-static bool read_ecdsa_private_key(void) {
-	FILE *fp;
-	char *fname;
-
-	/* Check for PrivateKeyFile statement and read it */
-
-	if(!get_config_string(lookup_config(config_tree, "Ed25519PrivateKeyFile"), &fname)) {
-		xasprintf(&fname, "%s" SLASH "ed25519_key.priv", confbase);
-	}
-
-	fp = fopen(fname, "r");
-
-	if(!fp) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error reading Ed25519 private key file `%s': %s", fname, strerror(errno));
-
-		if(errno == ENOENT) {
-			logger(DEBUG_ALWAYS, LOG_INFO, "Create an Ed25519 key pair with `tinc -n %s generate-ed25519-keys'.", netname ? netname : ".");
-		}
-
-		free(fname);
-		return false;
-	}
-
-#ifndef HAVE_MINGW
-	struct stat s;
-
-	if(fstat(fileno(fp), &s)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not stat Ed25519 private key file `%s': %s'", fname, strerror(errno));
-		free(fname);
-		return false;
-	}
-
-	if(s.st_mode & ~0100700u) {
-		logger(DEBUG_ALWAYS, LOG_WARNING, "Warning: insecure file permissions for Ed25519 private key file `%s'!", fname);
-	}
-
-#endif
-
-	myself->connection->ecdsa = ecdsa_read_pem_private_key(fp);
-	fclose(fp);
-
-	if(!myself->connection->ecdsa) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Reading Ed25519 private key file `%s' failed", fname);
-	}
-
-	free(fname);
-	return myself->connection->ecdsa;
-}
-
 static bool read_invitation_key(void) {
 	FILE *fp;
 	char fname[PATH_MAX];
@@ -273,74 +135,6 @@ static bool read_invitation_key(void) {
 
 	return invitation_key;
 }
-
-#ifndef DISABLE_LEGACY
-static bool read_rsa_private_key(void) {
-	FILE *fp;
-	char *fname;
-	char *n, *d;
-
-	/* First, check for simple PrivateKey statement */
-
-	if(get_config_string(lookup_config(config_tree, "PrivateKey"), &d)) {
-		if(!get_config_string(lookup_config(config_tree, "PublicKey"), &n)) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "PrivateKey used but no PublicKey found!");
-			free(d);
-			return false;
-		}
-
-		myself->connection->rsa = rsa_set_hex_private_key(n, "FFFF", d);
-		free(n);
-		free(d);
-		return myself->connection->rsa;
-	}
-
-	/* Else, check for PrivateKeyFile statement and read it */
-
-	if(!get_config_string(lookup_config(config_tree, "PrivateKeyFile"), &fname)) {
-		xasprintf(&fname, "%s" SLASH "rsa_key.priv", confbase);
-	}
-
-	fp = fopen(fname, "r");
-
-	if(!fp) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error reading RSA private key file `%s': %s",
-		       fname, strerror(errno));
-
-		if(errno == ENOENT) {
-			logger(DEBUG_ALWAYS, LOG_INFO, "Create an RSA key pair with `tinc -n %s generate-rsa-keys'.", netname ? netname : ".");
-		}
-
-		free(fname);
-		return false;
-	}
-
-#ifndef HAVE_MINGW
-	struct stat s;
-
-	if(fstat(fileno(fp), &s)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not stat RSA private key file `%s': %s'", fname, strerror(errno));
-		free(fname);
-		return false;
-	}
-
-	if(s.st_mode & ~0100700u) {
-		logger(DEBUG_ALWAYS, LOG_WARNING, "Warning: insecure file permissions for RSA private key file `%s'!", fname);
-	}
-
-#endif
-
-	myself->connection->rsa = rsa_read_pem_private_key(fp);
-	fclose(fp);
-
-	if(!myself->connection->rsa) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Reading RSA private key file `%s' failed: %s", fname, strerror(errno));
-	}
-
-	free(fname);
-	return myself->connection->rsa;
-}
-#endif
 
 #ifndef DISABLE_LEGACY
 static timeout_t keyexpire_timeout;
@@ -890,7 +684,8 @@ static bool setup_myself(void) {
 	myself->options |= PROT_MINOR << 24;
 
 #ifdef DISABLE_LEGACY
-	experimental = read_ecdsa_private_key();
+	myself->connection->ecdsa = read_ecdsa_private_key(config_tree, NULL);
+	experimental = myself->connection->ecdsa != NULL;
 
 	if(!experimental) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "No private key available, cannot start tinc!");
@@ -900,18 +695,25 @@ static bool setup_myself(void) {
 #else
 
 	if(!get_config_bool(lookup_config(config_tree, "ExperimentalProtocol"), &experimental)) {
-		experimental = read_ecdsa_private_key();
+		myself->connection->ecdsa = read_ecdsa_private_key(config_tree, NULL);
+		experimental = myself->connection->ecdsa != NULL;
 
 		if(!experimental) {
 			logger(DEBUG_ALWAYS, LOG_WARNING, "Support for SPTPS disabled.");
 		}
 	} else {
-		if(experimental && !read_ecdsa_private_key()) {
-			return false;
+		if(experimental) {
+			myself->connection->ecdsa = read_ecdsa_private_key(config_tree, NULL);
+
+			if(!myself->connection->ecdsa) {
+				return false;
+			}
 		}
 	}
 
-	if(!read_rsa_private_key()) {
+	myself->connection->rsa = read_rsa_private_key(config_tree, NULL);
+
+	if(!myself->connection->rsa) {
 		if(experimental) {
 			logger(DEBUG_ALWAYS, LOG_WARNING, "Support for legacy protocol disabled.");
 		} else {

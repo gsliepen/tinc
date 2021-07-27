@@ -297,7 +297,7 @@ static bool parse_options(int argc, char **argv) {
 
 exit_fail:
 	free_names();
-	free(cmdline_conf);
+	list_delete_list(cmdline_conf);
 	cmdline_conf = NULL;
 	return false;
 }
@@ -387,7 +387,7 @@ static void cleanup() {
 		exit_configuration(&config_tree);
 	}
 
-	free(cmdline_conf);
+	list_delete_list(cmdline_conf);
 	free_names();
 }
 
@@ -504,7 +504,7 @@ int main(int argc, char **argv) {
 	srand(now.tv_sec + now.tv_usec);
 	crypto_init();
 
-	if(!read_server_config()) {
+	if(!read_server_config(config_tree)) {
 		return 1;
 	}
 

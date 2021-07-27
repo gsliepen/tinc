@@ -52,12 +52,11 @@ extern bool get_config_bool(const config_t *config, bool *result);
 extern bool get_config_int(const config_t *config, int *result);
 extern bool get_config_string(const config_t *config, char **result);
 extern bool get_config_address(const config_t *config, struct addrinfo **result);
-extern bool get_config_subnet(const config_t *config, struct subnet_t **result);
 
 extern config_t *parse_config_line(char *line, const char *fname, int lineno);
 extern bool read_config_file(splay_tree_t *config_tree, const char *filename, bool verbose);
 extern void read_config_options(splay_tree_t *config_tree, const char *prefix);
-extern bool read_server_config(void);
+extern bool read_server_config(splay_tree_t *config_tree);
 extern bool read_host_config(splay_tree_t *config_tree, const char *name, bool verbose);
 extern bool append_config_file(const char *name, const char *key, const char *value);
 

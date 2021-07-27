@@ -193,29 +193,6 @@ bool get_config_address(const config_t *cfg, struct addrinfo **result) {
 	return false;
 }
 
-bool get_config_subnet(const config_t *cfg, subnet_t **result) {
-	subnet_t subnet = {0};
-
-	if(!cfg) {
-		return false;
-	}
-
-	if(!str2net(&subnet, cfg->value)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Subnet expected for configuration variable %s in %s line %d",
-		       cfg->variable, cfg->file, cfg->line);
-		return false;
-	}
-
-	if(subnetcheck(subnet)) {
-		*(*result = new_subnet()) = subnet;
-		return true;
-	}
-
-	logger(DEBUG_ALWAYS, LOG_ERR, "Network address and prefix length do not match for configuration variable %s in %s line %d",
-	       cfg->variable, cfg->file, cfg->line);
-	return false;
-}
-
 /*
   Read exactly one line and strip the trailing newline if any.
 */
@@ -359,6 +336,10 @@ bool read_config_file(splay_tree_t *config_tree, const char *fname, bool verbose
 }
 
 void read_config_options(splay_tree_t *config_tree, const char *prefix) {
+	if(!cmdline_conf) {
+		return;
+	}
+
 	size_t prefix_len = prefix ? strlen(prefix) : 0;
 
 	for(const list_node_t *node = cmdline_conf->tail; node; node = node->prev) {
@@ -392,7 +373,7 @@ void read_config_options(splay_tree_t *config_tree, const char *prefix) {
 	}
 }
 
-bool read_server_config(void) {
+bool read_server_config(splay_tree_t *config_tree) {
 	char fname[PATH_MAX];
 	bool x;
 

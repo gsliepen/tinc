@@ -53,6 +53,7 @@ tincd_SOURCES = \
 	buffer.c buffer.h \
 	cipher.h \
 	conf.c conf.h \
+	conf_net.c conf_net.h \
 	connection.c connection.h \
 	control.c control.h \
 	control_common.h \
@@ -70,6 +71,7 @@ tincd_SOURCES = \
 	fd_device.c \
 	graph.c graph.h \
 	hash.c hash.h \
+	keys.c keys.h \
 	have.h \
 	ipv4.h \
 	ipv6.h \
@@ -118,6 +120,9 @@ tinc_SOURCES = \
 	ifconfig.c ifconfig.h \
 	info.c info.h \
 	invitation.c invitation.h \
+	conf.c conf.h \
+	keys.c keys.h \
+	splay_tree.c splay_tree.h \
 	list.c list.h \
 	names.c names.h \
 	netutl.c netutl.h \

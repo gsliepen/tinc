@@ -23,6 +23,7 @@
 #include "system.h"
 
 #include "autoconnect.h"
+#include "conf_net.h"
 #include "conf.h"
 #include "connection.h"
 #include "device.h"
@@ -340,7 +341,7 @@ int reload_configuration(void) {
 	exit_configuration(&config_tree);
 	init_configuration(&config_tree);
 
-	if(!read_server_config()) {
+	if(!read_server_config(config_tree)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to reread configuration file.");
 		return EINVAL;
 	}

@@ -55,4 +55,6 @@ extern bool check_id(const char *id);
 extern bool check_netname(const char *netname, bool strict);
 char *replace_name(const char *name);
 
+extern FILE *fopenmask(const char *filename, const char *mode, mode_t perms);
+
 #endif

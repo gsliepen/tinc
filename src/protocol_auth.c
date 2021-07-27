@@ -46,6 +46,7 @@
 #include "xalloc.h"
 
 #include "ed25519/sha512.h"
+#include "keys.h"
 
 int invitation_lifetime;
 ecdsa_t *invitation_key = NULL;
@@ -160,7 +161,7 @@ bool send_id(connection_t *c) {
 	int minor = 0;
 
 	if(experimental) {
-		if(c->outgoing && !read_ecdsa_public_key(c)) {
+		if(c->outgoing && !read_ecdsa_public_key(&c->ecdsa, &c->config_tree, c->name)) {
 			minor = 1;
 		} else {
 			minor = myself->connection->protocol_minor;
@@ -453,7 +454,7 @@ bool id_h(connection_t *c, const char *request) {
 		}
 
 		if(experimental) {
-			read_ecdsa_public_key(c);
+			read_ecdsa_public_key(&c->ecdsa, &c->config_tree, c->name);
 		}
 
 		/* Ignore failures if no key known yet */
@@ -500,7 +501,7 @@ bool send_metakey(connection_t *c) {
 		return false;
 	}
 
-	if(!read_rsa_public_key(c)) {
+	if(!read_rsa_public_key(&c->rsa, c->config_tree, c->name)) {
 		return false;
 	}
 
@@ -917,7 +918,7 @@ static bool upgrade_h(connection_t *c, const char *request) {
 		return false;
 	}
 
-	if(ecdsa_active(c->ecdsa) || read_ecdsa_public_key(c)) {
+	if(ecdsa_active(c->ecdsa) || read_ecdsa_public_key(&c->ecdsa, &c->config_tree, c->name)) {
 		char *knownkey = ecdsa_get_base64_public_key(c->ecdsa);
 		bool different = strcmp(knownkey, pubkey);
 		free(knownkey);

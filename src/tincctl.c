@@ -41,6 +41,7 @@
 #include "top.h"
 #include "version.h"
 #include "subnet.h"
+#include "keys.h"
 
 #ifndef MSG_NOSIGNAL
 #define MSG_NOSIGNAL 0
@@ -245,127 +246,6 @@ static bool parse_options(int argc, char **argv) {
 	}
 
 	return true;
-}
-
-/* Open a file with the desired permissions, minus the umask.
-   Also, if we want to create an executable file, we call fchmod()
-   to set the executable bits. */
-
-FILE *fopenmask(const char *filename, const char *mode, mode_t perms) {
-	mode_t mask = umask(0);
-	perms &= ~mask;
-	umask(~perms & 0777);
-	FILE *f = fopen(filename, mode);
-
-	if(!f) {
-		fprintf(stderr, "Could not open %s: %s\n", filename, strerror(errno));
-		return NULL;
-	}
-
-#ifdef HAVE_FCHMOD
-
-	if((perms & 0444) && f) {
-		fchmod(fileno(f), perms);
-	}
-
-#endif
-	umask(mask);
-	return f;
-}
-
-static void disable_old_keys(const char *filename, const char *what) {
-	char tmpfile[PATH_MAX] = "";
-	char buf[1024];
-	bool disabled = false;
-	bool block = false;
-	bool error = false;
-
-	FILE *r = fopen(filename, "r");
-	FILE *w = NULL;
-
-	if(!r) {
-		return;
-	}
-
-	int result = snprintf(tmpfile, sizeof(tmpfile), "%s.tmp", filename);
-
-	if(result < sizeof(tmpfile)) {
-		struct stat st = {.st_mode = 0600};
-		fstat(fileno(r), &st);
-		w = fopenmask(tmpfile, "w", st.st_mode);
-	}
-
-	while(fgets(buf, sizeof(buf), r)) {
-		if(!block && !strncmp(buf, "-----BEGIN ", 11)) {
-			if((strstr(buf, " ED25519 ") && strstr(what, "Ed25519")) || (strstr(buf, " RSA ") && strstr(what, "RSA"))) {
-				disabled = true;
-				block = true;
-			}
-		}
-
-		bool ed25519pubkey = !strncasecmp(buf, "Ed25519PublicKey", 16) && strchr(" \t=", buf[16]) && strstr(what, "Ed25519");
-
-		if(ed25519pubkey) {
-			disabled = true;
-		}
-
-		if(w) {
-			if(block || ed25519pubkey) {
-				fputc('#', w);
-			}
-
-			if(fputs(buf, w) < 0) {
-				error = true;
-				break;
-			}
-		}
-
-		if(block && !strncmp(buf, "-----END ", 9)) {
-			block = false;
-		}
-	}
-
-	if(w)
-		if(fclose(w) < 0) {
-			error = true;
-		}
-
-	if(ferror(r) || fclose(r) < 0) {
-		error = true;
-	}
-
-	if(disabled) {
-		if(!w || error) {
-			fprintf(stderr, "Warning: old key(s) found, remove them by hand!\n");
-
-			if(w) {
-				unlink(tmpfile);
-			}
-
-			return;
-		}
-
-#ifdef HAVE_MINGW
-		// We cannot atomically replace files on Windows.
-		char bakfile[PATH_MAX] = "";
-		snprintf(bakfile, sizeof(bakfile), "%s.bak", filename);
-
-		if(rename(filename, bakfile) || rename(tmpfile, filename)) {
-			rename(bakfile, filename);
-#else
-
-		if(rename(tmpfile, filename)) {
-#endif
-			fprintf(stderr, "Warning: old key(s) found, remove them by hand!\n");
-		} else  {
-#ifdef HAVE_MINGW
-			unlink(bakfile);
-#endif
-			fprintf(stderr, "Warning: old key(s) found and disabled.\n");
-		}
-	}
-
-	unlink(tmpfile);
 }
 
 static FILE *ask_and_open(const char *filename, const char *what, const char *mode, bool ask, mode_t perms) {
