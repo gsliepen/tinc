@@ -37,9 +37,7 @@
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
 #include <openssl/evp.h>
-#ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
-#endif
 #include <openssl/bn.h>
 
 #ifdef HAVE_LZO
@@ -404,16 +402,6 @@ static int indicator(int a, int b, BN_GENCB *cb) {
 	return 1;
 }
 
-#ifndef HAVE_BN_GENCB_NEW
-BN_GENCB *BN_GENCB_new(void) {
-	return xmalloc_and_zero(sizeof(BN_GENCB));
-}
-
-void BN_GENCB_free(BN_GENCB *cb) {
-	free(cb);
-}
-#endif
-
 /*
   Generate a public/private RSA keypair, and ask for a file to store
   them in.
@@ -688,14 +676,7 @@ int main(int argc, char **argv) {
 
 	init_configuration(&config_tree);
 
-#ifndef OPENSSL_NO_ENGINE
 	ENGINE_load_builtin_engines();
-	ENGINE_register_all_complete();
-#endif
-
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-	OpenSSL_add_all_algorithms();
-#endif
 
 	if(generate_keys) {
 		read_server_config();
@@ -813,14 +794,6 @@ end:
 #endif
 
 	free(priority);
-
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-	EVP_cleanup();
-	ERR_free_strings();
-#ifndef OPENSSL_NO_ENGINE
-	ENGINE_cleanup();
-#endif
-#endif
 
 	exit_configuration(&config_tree);
 	list_delete_list(cmdline_conf);

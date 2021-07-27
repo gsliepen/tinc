@@ -49,18 +49,6 @@
 char *myport;
 devops_t devops;
 
-#ifndef HAVE_RSA_SET0_KEY
-int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d) {
-	BN_free(r->n);
-	r->n = n;
-	BN_free(r->e);
-	r->e = e;
-	BN_free(r->d);
-	r->d = d;
-	return 1;
-}
-#endif
-
 bool read_rsa_public_key(connection_t *c) {
 	FILE *fp;
 	char *pubname;

@@ -69,7 +69,7 @@ Requirements
 ------------
 
 The OpenSSL library is used for all cryptographic functions. You can find it at
-https://www.openssl.org/. You will need version 1.0.1 or later with support for
+https://www.openssl.org/. You will need version 1.1.0 or later with support for
 AES256 and SHA256 enabled. If this library is not installed on your system, the
 configure script will fail.  The manual in doc/tinc.texi contains more detailed
 information on how to install this library. Alternatively, you may also use the
