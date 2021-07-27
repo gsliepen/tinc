@@ -131,6 +131,12 @@ bool req_key_h(connection_t *c) {
 	/* Check if this key request is for us */
 
 	if(to == myself) {                      /* Yes, send our own key back */
+		if(!from->status.reachable) {
+			logger(LOG_WARNING, "Got %s from %s (%s) origin %s which is not reachable",
+			       "REQ_KEY", c->name, c->hostname, from_name);
+			return true;
+		}
+
 		if(!send_ans_key(from)) {
 			return false;
 		}
