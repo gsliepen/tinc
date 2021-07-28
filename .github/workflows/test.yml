@@ -10,6 +10,7 @@ on:
 jobs:
   code-style:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -42,6 +43,7 @@ jobs:
 
   sanitizer:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
@@ -87,6 +89,7 @@ jobs:
 
   linux:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
@@ -173,6 +176,7 @@ jobs:
         os: [ubuntu-18.04, ubuntu-20.04]
 
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
 
     steps:
       - name: Checkout code
@@ -221,6 +225,7 @@ jobs:
         os: [ubuntu-18.04, ubuntu-20.04]
 
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
 
     steps:
       - name: Download built packages
@@ -252,6 +257,7 @@ jobs:
 
   macos:
     runs-on: macos-latest
+    timeout-minutes: 10
 
     strategy:
       fail-fast: false
@@ -291,6 +297,7 @@ jobs:
 
   windows:
     runs-on: windows-latest
+    timeout-minutes: 20
 
     strategy:
       fail-fast: false
