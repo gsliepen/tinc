@@ -58,6 +58,12 @@ if type gtimeout >/dev/null; then
   timeout() { gtimeout "$@"; }
 fi
 
+# As usual, BSD tools require special handling, as they do not support -i without a suffix.
+# Note that there must be no space after -i, or it won't work on GNU sed.
+sed_cmd() {
+  sed -i.orig "$@"
+}
+
 # Are the shell tools provided by busybox?
 is_busybox() {
   timeout --help 2>&1 | grep -q -i busybox
@@ -93,11 +99,74 @@ rm_cr() {
   tr -d '\r'
 }
 
+if is_windows; then
+  normalize_path() { cygpath --mixed -- "$@"; }
+else
+  normalize_path() { echo "$@"; }
+fi
+
 # Executes whatever is passed to it, checking that the resulting exit code is non-zero.
 must_fail() {
   if "$@"; then
     bail "expected a non-zero exit code"
   fi
+}
+
+# Executes the passed command and checks two conditions:
+#   1. it must exit successfully (with code 0)
+#   2. its output (stdout + stderr) must include the substring from the first argument (ignoring case)
+# usage: expect_msg 'expected message' command --with --args
+expect_msg() {
+  message=$1
+  shift
+
+  if ! output=$("$@" 2>&1); then
+    bail 'expected 0 exit code'
+  fi
+
+  if ! echo "$output" | grep -q -i "$message"; then
+    bail "expected message '$message'"
+  fi
+}
+
+# The reverse of expect_msg. We cannot simply wrap expect_msg with must_fail
+# because there should be a separate check for tinc exit code.
+fail_on_msg() {
+  message=$1
+  shift
+
+  if ! output=$("$@" 2>&1); then
+    bail 'expected 0 exit code'
+  fi
+
+  if echo "$output" | grep -q -i "$message"; then
+    bail "unexpected message '$message'"
+  fi
+}
+
+# Like expect_msg, but the command must fail with a non-zero exit code.
+# usage: must_fail_with_msg 'expected message' command --with --args
+must_fail_with_msg() {
+  message=$1
+  shift
+
+  if output=$("$@" 2>&1); then
+    bail "expected a non-zero exit code"
+  fi
+
+  if ! echo "$output" | grep -i -q "$message"; then
+    bail "expected message '$message'"
+  fi
+}
+
+# Is the legacy protocol enabled?
+with_legacy() {
+  tincd foo --version | grep -q legacy_protocol
+}
+
+# Are we running with EUID 0?
+is_root() {
+  test "$(id -u)" = 0
 }
 
 # Executes whatever is passed to it, checking that the resulting exit code is equal to the first argument.
@@ -215,6 +284,7 @@ require_nodes() {
 }
 
 peer_directory() {
+  peer=$1
   case "$peer" in
   foo) echo "$DIR_FOO" ;;
   bar) echo "$DIR_BAR" ;;
@@ -370,9 +440,32 @@ cleanup() {
   ) || true
 }
 
+# If we're on a CI server, the test requires superuser privileges to run, and we're not
+# currently a superuser, try running the test as one and fail if it doesn't work (the
+# system must be configured to provide passwordless sudo for our user).
+require_root() {
+  if is_root; then
+    return
+  fi
+  if is_ci; then
+    echo "root is required for test $SCRIPTNAME, but we're a regular user; elevating privileges..."
+    if ! command -v sudo 2>/dev/null; then
+      bail "please install sudo and configure passwordless auth for user $USER"
+    fi
+    if ! sudo --preserve-env --non-interactive true; then
+      bail "sudo is not allowed or requires a password for user $USER"
+    fi
+    exec sudo --preserve-env "$@"
+  else
+    # Avoid these kinds of surprises outside CI. Just skip the test.
+    echo "root is required for test $SCRIPTNAME, but we're a regular user; skipping"
+    exit $EXIT_SKIP_TEST
+  fi
+}
+
 # Generate path to current shell which can be used from Windows applications.
 if is_windows; then
-  MINGW_SHELL=$(cygpath --mixed -- "$SHELL")
+  MINGW_SHELL=$(normalize_path "$SHELL")
 fi
 
 # This was called from a tincd script. Skip executing commands with side effects.
@@ -383,10 +476,9 @@ echo [STEP] Check for leftover tinc daemons and test directories
 # Cleanup leftovers from previous runs.
 stop_all_tincs
 
-# On Windows this can actually fail. We don't want to suppress possible failure with -f.
-if [ -d "$DIR_FOO" ]; then rm -r "$DIR_FOO"; fi
-if [ -d "$DIR_BAR" ]; then rm -r "$DIR_BAR"; fi
-if [ -d "$DIR_BAZ" ]; then rm -r "$DIR_BAZ"; fi
+if [ -d "$DIR_FOO" ]; then rm -rf "$DIR_FOO"; fi
+if [ -d "$DIR_BAR" ]; then rm -rf "$DIR_BAR"; fi
+if [ -d "$DIR_BAZ" ]; then rm -rf "$DIR_BAZ"; fi
 
 # Register cleanup function so we don't have to call it everywhere
 # (and failed scripts do not leave stray tincd running).

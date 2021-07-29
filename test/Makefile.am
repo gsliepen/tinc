@@ -2,7 +2,7 @@ TESTS = \
 	basic.test \
 	executables.test \
 	commandline.test \
-	compression.test \
+	command-fsck.test \
 	import-export.test \
 	invite-join.test \
 	invite-offline.test \
@@ -14,12 +14,14 @@ TESTS = \
 
 if WITH_LEGACY_PROTOCOL
 TESTS += \
-	 legacy-protocol.test \
-	 algorithms.test
+	legacy-protocol.test \
+	algorithms.test
 endif
 
 if LINUX
-TESTS += ns-ping.test
+TESTS += \
+	ns-ping.test \
+	compression.test
 endif
 
 dist_check_SCRIPTS = $(TESTS)

@@ -2,9 +2,7 @@
 
 . ./testlib.sh
 
-echo "[STEP] Skip this test if we aren't root or if 'ip netns' does not exist"
-
-test "$(id -u)" = "0" || exit $EXIT_SKIP_TEST
+require_root "$0" "$@"
 test -e /dev/net/tun || exit $EXIT_SKIP_TEST
 ip netns list || exit $EXIT_SKIP_TEST
 
