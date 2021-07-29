@@ -124,10 +124,6 @@ bool rsa_private_decrypt(rsa_t *rsa, void *in, size_t len, void *out) {
 	return false;
 }
 
-bool rsa_active(rsa_t *rsa) {
-	return rsa;
-}
-
 void rsa_free(rsa_t *rsa) {
 	if(rsa) {
 		RSA_free(rsa);
