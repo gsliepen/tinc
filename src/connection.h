@@ -89,9 +89,7 @@ typedef struct connection_t {
 	ecdsa_t *ecdsa;                 /* his public ECDSA key */
 	sptps_t sptps;
 
-	int inmaclength;
 	int outmaclength;
-	int incompression;
 	int outcompression;
 
 	char *hischallenge;             /* The challenge we sent to him */
