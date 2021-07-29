@@ -41,7 +41,6 @@ typedef struct splay_node_t {
 
 typedef int (*splay_compare_t)(const void *data1, const void *data2);
 typedef void (*splay_action_t)(const void *data);
-typedef void (*splay_action_node_t)(const splay_node_t *node);
 
 typedef struct splay_tree_t {
 

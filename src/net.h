@@ -101,12 +101,6 @@ typedef struct vpn_packet_t {
 #define PKT_MAC 2
 #define PKT_PROBE 4
 
-typedef enum packet_type_t {
-	PACKET_NORMAL,
-	PACKET_COMPRESSED,
-	PACKET_PROBE
-} packet_type_t;
-
 typedef struct listen_socket_t {
 	io_t tcp;
 	io_t udp;
