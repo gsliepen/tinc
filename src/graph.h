@@ -22,6 +22,5 @@
 */
 
 extern void graph(void);
-extern void dump_graph(void);
 
 #endif

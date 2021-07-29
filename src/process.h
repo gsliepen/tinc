@@ -23,9 +23,7 @@
 
 extern bool do_detach;
 
-extern void setup_signals(void);
 extern bool detach(void);
-extern bool kill_other(int);
 
 #ifdef HAVE_MINGW
 #include "event.h"
