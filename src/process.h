@@ -22,7 +22,6 @@
 */
 
 extern bool do_detach;
-extern bool sigalrm;
 
 extern void setup_signals(void);
 extern bool detach(void);

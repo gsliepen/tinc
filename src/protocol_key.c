@@ -32,10 +32,6 @@
 #include "sptps.h"
 #include "utils.h"
 
-#ifndef DISABLE_LEGACY
-static bool mykeyused = false;
-#endif
-
 void send_key_changed(void) {
 #ifndef DISABLE_LEGACY
 	send_request(everyone, "%d %x %s", KEY_CHANGED, rand(), myself->name);
@@ -375,7 +371,6 @@ bool send_ans_key(node_t *to) {
 	bin2hex(key, key, keylen);
 
 	// Reset sequence number and late packet window
-	mykeyused = true;
 	to->received_seqno = 0;
 	to->received = 0;
 

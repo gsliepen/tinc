@@ -48,7 +48,6 @@
 #endif
 
 static char **orig_argv;
-static int orig_argc;
 
 /* If nonzero, display usage information and exit. */
 static bool show_help = false;
@@ -72,7 +71,6 @@ static int result;
 bool force = false;
 bool tty = true;
 bool confbasegiven = false;
-bool netnamegiven = false;
 char *scriptinterpreter = NULL;
 char *scriptextension = "";
 static char *prompt;
@@ -3272,7 +3270,6 @@ static void cleanup() {
 int main(int argc, char *argv[]) {
 	program_name = argv[0];
 	orig_argv = argv;
-	orig_argc = argc;
 	tty = isatty(0) && isatty(1);
 
 	if(!parse_options(argc, argv)) {

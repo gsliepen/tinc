@@ -31,7 +31,6 @@
 
 /* If zero, don't detach from the terminal. */
 bool do_detach = true;
-bool sigalrm = false;
 
 extern char **g_argv;
 extern bool use_logfile;
