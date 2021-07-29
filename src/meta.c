@@ -28,7 +28,6 @@
 #include "net.h"
 #include "protocol.h"
 #include "utils.h"
-#include "xalloc.h"
 
 #ifndef MIN
 static ssize_t MIN(ssize_t x, ssize_t y) {

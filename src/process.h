@@ -29,6 +29,8 @@ extern bool detach(void);
 extern bool kill_other(int);
 
 #ifdef HAVE_MINGW
+#include "event.h"
+
 extern io_t stop_io;
 extern bool init_service(void);
 #endif

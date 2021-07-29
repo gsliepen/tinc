@@ -48,14 +48,11 @@
 #endif
 
 #include "conf.h"
-#include "control.h"
 #include "crypto.h"
-#include "device.h"
 #include "event.h"
 #include "logger.h"
 #include "names.h"
 #include "net.h"
-#include "netutl.h"
 #include "process.h"
 #include "protocol.h"
 #include "utils.h"

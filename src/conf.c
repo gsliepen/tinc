@@ -32,7 +32,6 @@
 #include "names.h"
 #include "netutl.h"             /* for str2address */
 #include "protocol.h"
-#include "utils.h"              /* for cp */
 #include "xalloc.h"
 
 splay_tree_t *config_tree = NULL;

@@ -22,16 +22,13 @@
 
 #include "splay_tree.h"
 #include "control_common.h"
-#include "device.h"
 #include "hash.h"
 #include "logger.h"
-#include "names.h"
 #include "net.h"
 #include "netutl.h"
 #include "node.h"
 #include "script.h"
 #include "subnet.h"
-#include "utils.h"
 #include "xalloc.h"
 
 /* lists type of subnet */

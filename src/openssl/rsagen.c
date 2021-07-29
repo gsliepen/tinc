@@ -17,8 +17,6 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include "../system.h"
-
 #include <openssl/pem.h>
 #include <openssl/err.h>
 
@@ -27,7 +25,6 @@ typedef RSA rsa_t;
 
 #include "../logger.h"
 #include "../rsagen.h"
-#include "../xalloc.h"
 
 /* This function prettyprints the key generation process */
 

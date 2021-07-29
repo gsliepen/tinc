@@ -21,7 +21,6 @@
 #include "system.h"
 
 #include "address_cache.h"
-#include "conf.h"
 #include "connection.h"
 #include "logger.h"
 #include "meta.h"
@@ -29,7 +28,6 @@
 #include "netutl.h"
 #include "protocol.h"
 #include "utils.h"
-#include "xalloc.h"
 
 #ifndef MIN
 #define MIN(x, y) (((x)<(y))?(x):(y))

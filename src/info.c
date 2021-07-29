@@ -20,12 +20,10 @@
 #include "system.h"
 
 #include "control_common.h"
-#include "list.h"
 #include "subnet.h"
 #include "tincctl.h"
 #include "info.h"
 #include "utils.h"
-#include "xalloc.h"
 
 void logger(int level, int priority, const char *format, ...) {
 	(void)level;

@@ -31,7 +31,6 @@
 #include "protocol.h"
 #include "route.h"
 #include "subnet.h"
-#include "utils.h"
 
 rmode_t routing_mode = RMODE_ROUTER;
 fmode_t forwarding_mode = FMODE_INTERNAL;

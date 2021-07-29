@@ -27,11 +27,8 @@
 #include "../device.h"
 #include "../logger.h"
 #include "../names.h"
-#include "../net.h"
 #include "../route.h"
-#include "../utils.h"
 #include "../xalloc.h"
-#include "../device.h"
 
 typedef enum device_type_t {
 	DEVICE_TYPE_TUN,

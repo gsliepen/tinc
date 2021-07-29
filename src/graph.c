@@ -45,20 +45,16 @@
 #include "system.h"
 
 #include "connection.h"
-#include "device.h"
 #include "edge.h"
 #include "graph.h"
 #include "list.h"
 #include "logger.h"
-#include "names.h"
 #include "netutl.h"
 #include "node.h"
 #include "protocol.h"
 #include "script.h"
 #include "subnet.h"
-#include "utils.h"
 #include "xalloc.h"
-#include "graph.h"
 
 /* Implementation of Kruskal's algorithm.
    Running time: O(EN)

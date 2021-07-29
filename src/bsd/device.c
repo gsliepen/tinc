@@ -24,10 +24,7 @@
 #include "../conf.h"
 #include "../device.h"
 #include "../logger.h"
-#include "../names.h"
-#include "../net.h"
 #include "../route.h"
-#include "../utils.h"
 #include "../xalloc.h"
 
 #ifdef ENABLE_TUNEMU

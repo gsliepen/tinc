@@ -31,7 +31,6 @@
 #include "logger.h"
 #include "net.h"
 #include "route.h"
-#include "utils.h"
 
 struct unix_socket_addr {
 	size_t size;

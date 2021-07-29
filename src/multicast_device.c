@@ -26,7 +26,6 @@
 #include "logger.h"
 #include "netutl.h"
 #include "utils.h"
-#include "route.h"
 #include "xalloc.h"
 
 static const char *device_info = "multicast socket";

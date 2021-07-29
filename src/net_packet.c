@@ -47,14 +47,12 @@
 #include "ethernet.h"
 #include "ipv4.h"
 #include "ipv6.h"
-#include "graph.h"
 #include "logger.h"
 #include "net.h"
 #include "netutl.h"
 #include "protocol.h"
 #include "route.h"
 #include "utils.h"
-#include "xalloc.h"
 
 #ifndef MAX
 #define MAX(a, b) ((a) > (b) ? (a) : (b))

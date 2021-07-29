@@ -18,7 +18,6 @@
 */
 
 #include "../system.h"
-#include "../utils.h"
 #include "../xalloc.h"
 
 #include <openssl/err.h>

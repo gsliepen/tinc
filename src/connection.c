@@ -25,11 +25,9 @@
 #include "cipher.h"
 #include "conf.h"
 #include "control_common.h"
-#include "list.h"
 #include "logger.h"
 #include "net.h"
 #include "rsa.h"
-#include "subnet.h"
 #include "utils.h"
 #include "xalloc.h"
 

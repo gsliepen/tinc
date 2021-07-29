@@ -26,7 +26,6 @@
 #include "edge.h"
 #include "graph.h"
 #include "logger.h"
-#include "meta.h"
 #include "net.h"
 #include "netutl.h"
 #include "node.h"

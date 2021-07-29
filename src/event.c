@@ -18,12 +18,8 @@
 */
 
 #include "system.h"
-
-#include "dropin.h"
 #include "event.h"
-#include "net.h"
 #include "utils.h"
-#include "xalloc.h"
 
 struct timeval now;
 

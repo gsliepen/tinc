@@ -26,7 +26,6 @@
 #include "logger.h"
 #include "netutl.h"
 #include "node.h"
-#include "utils.h"
 #include "xalloc.h"
 
 splay_tree_t *edge_weight_tree;

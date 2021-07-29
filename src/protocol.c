@@ -25,7 +25,6 @@
 #include "logger.h"
 #include "meta.h"
 #include "protocol.h"
-#include "utils.h"
 #include "xalloc.h"
 
 bool tunnelserver = false;

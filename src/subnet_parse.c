@@ -22,10 +22,7 @@
 
 #include "logger.h"
 #include "net.h"
-#include "netutl.h"
 #include "subnet.h"
-#include "utils.h"
-#include "xalloc.h"
 
 /* Changing this default will affect ADD_SUBNET messages - beware of inconsistencies between versions */
 static const int DEFAULT_WEIGHT = 10;

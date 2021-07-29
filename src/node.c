@@ -22,7 +22,6 @@
 
 #include "address_cache.h"
 #include "control_common.h"
-#include "hash.h"
 #include "logger.h"
 #include "net.h"
 #include "netutl.h"

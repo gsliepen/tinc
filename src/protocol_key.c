@@ -27,12 +27,10 @@
 #include "net.h"
 #include "netutl.h"
 #include "node.h"
-#include "prf.h"
 #include "protocol.h"
 #include "route.h"
 #include "sptps.h"
 #include "utils.h"
-#include "xalloc.h"
 
 #ifndef DISABLE_LEGACY
 static bool mykeyused = false;

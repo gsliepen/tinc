@@ -20,8 +20,6 @@
 
 #include "system.h"
 
-#include "xalloc.h"
-
 #ifndef HAVE_DAEMON
 /*
   Replacement for the daemon() function.

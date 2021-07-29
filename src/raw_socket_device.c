@@ -28,8 +28,6 @@
 #include "device.h"
 #include "net.h"
 #include "logger.h"
-#include "utils.h"
-#include "route.h"
 #include "xalloc.h"
 
 #if defined(PF_PACKET) && defined(ETH_P_ALL) && defined(AF_PACKET) && defined(SIOCGIFINDEX)

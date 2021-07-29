@@ -26,17 +26,14 @@
 #include "conf_net.h"
 #include "conf.h"
 #include "connection.h"
-#include "device.h"
 #include "graph.h"
 #include "logger.h"
 #include "meta.h"
 #include "names.h"
 #include "net.h"
-#include "netutl.h"
 #include "protocol.h"
 #include "subnet.h"
 #include "utils.h"
-#include "xalloc.h"
 
 int contradicting_add_edge = 0;
 int contradicting_del_edge = 0;
