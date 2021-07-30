@@ -386,18 +386,25 @@ wait_script() {
   # group by enabling job control, but this results in weird behavior when
   # running tests in parallel on some interactive shells
   # (e.g. when /bin/sh is symlinked to dash).
+  fifo=$(mktemp)
+  rm -f "$fifo"
+  mkfifo "$fifo"
+
+  # This weird thing is required to support old versions of ksh on NetBSD 8.2 and the like.
+  (tail -n +"$line" -f "$script_log" >"$fifo") &
+
   new_line=$(
     try_limit_time 60 sh -c "
-      fifo=\$$.fifo
-      cleanup() { rm -f \$fifo; }
-      cleanup && trap cleanup EXIT
-
-      mkfifo \$$.fifo
-      tail -n '+$line' -f '$script_log' >\$fifo &
-      grep -n -m '$count' '^$script,'   <\$fifo
-      kill \$!
+      grep -n -m $count '^$script,' <'$fifo'
     " | awk -F: 'END { print $1 }'
   )
+
+  # Try to stop the background tail, ignoring possible failure (some tails
+  # detect EOF, some don't, so it may have already exited), but do wait on
+  # it (which is required at least by old ksh).
+  kill $! || true
+  wait || true
+  rm -f "$fifo"
 
   # Remember the next line number for future reference. We'll use it if
   # wait_script is called again with same $peer and $script.
