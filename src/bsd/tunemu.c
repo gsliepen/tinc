@@ -343,7 +343,7 @@ int tunemu_read(int ppp_sockfd, char *buffer, int length) {
 	return length;
 }
 
-int tunemu_write(int ppp_sockfd, char *buffer, int length) {
+int tunemu_write(char *buffer, int length) {
 	allocate_data_buffer(length + 4);
 
 	data_buffer[0] = 0x02;

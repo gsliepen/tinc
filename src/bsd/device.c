@@ -500,7 +500,7 @@ static bool write_packet(vpn_packet_t *packet) {
 #ifdef ENABLE_TUNEMU
 
 	case DEVICE_TYPE_TUNEMU:
-		if(tunemu_write(device_fd, DATA(packet) + 14, packet->len - 14) < 0) {
+		if(tunemu_write(DATA(packet) + 14, packet->len - 14) < 0) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Error while writing to %s %s: %s", device_info,
 			       device, strerror(errno));
 			return false;

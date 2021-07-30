@@ -27,6 +27,6 @@ extern char tunemu_error[];
 int tunemu_open(tunemu_device dev);
 int tunemu_close(int fd);
 int tunemu_read(int fd, char *buffer, int length);
-int tunemu_write(int fd, char *buffer, int length);
+int tunemu_write(char *buffer, int length);
 
 #endif
