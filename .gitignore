@@ -3,6 +3,7 @@
 !.builds/
 !.gitignore
 !.astylerc
+!.clang-tidy
 *~
 *.a
 *.dirstamp
