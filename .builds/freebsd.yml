@@ -1,7 +1,6 @@
 image: freebsd/13.x
 
 packages:
-  - gmake
   - autotools
   - openssl
   - lzo2
@@ -10,6 +9,10 @@ packages:
   - miniupnpc
   - readline
   - texinfo
+  - vde2
+  - libgcrypt
+  - llvm12
+  - py38-pip
 
 environment:
   CFLAGS: -I/usr/local/include -L/usr/local/lib
@@ -21,12 +24,25 @@ tasks:
   - configure: |
       cd tinc
       autoreconf -fsi
-      ./configure --with-miniupnpc
+      ./configure --enable-miniupnpc --enable-vde
 
   - build: |
       cd tinc
-      gmake -j$(sysctl -n hw.ncpu)
+      make -j$(sysctl -n hw.ncpu)
 
   - test: |
       cd tinc
-      gmake check-recursive VERBOSE=1
+      make check-recursive VERBOSE=1
+
+  - lint: |
+      export PATH=$PATH:$HOME/.local/bin
+      pip install --user compiledb
+      cd tinc
+      compiledb -n make check
+      find src \
+        ! '(' -path src/solaris -prune ')' \
+        ! '(' -path src/mingw   -prune ')' \
+        ! '(' -path src/linux   -prune ')' \
+        ! -name tunemu.c \
+        -name '*.c' \
+        -exec clang-tidy12 --header-filter='.*' '{}' +

@@ -8,23 +8,43 @@ on:
       - synchronize
 
 jobs:
-  code-style:
+  static-analysis:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Install code formatting tools
+      - name: Install tools
         run: |
-          sudo apt-get install -y astyle
-          curl -OL 'https://github.com/koalaman/shellcheck/releases/download/v0.7.2/shellcheck-v0.7.2.linux.x86_64.tar.xz'
+          sudo apt-get install -y astyle clang-tidy-$CLANG
+          sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-$CLANG 100
+          curl -OL "https://github.com/koalaman/shellcheck/releases/download/v$SHELLCHECK/shellcheck-v${SHELLCHECK}.linux.x86_64.tar.xz"
           tar -C ~ --strip-components=1 --wildcards -xf ./shellcheck-*.tar.xz 'shellcheck-*/shellcheck'
-          curl -o ~/shfmt -L 'https://github.com/mvdan/sh/releases/download/v3.3.0/shfmt_v3.3.0_linux_amd64'
+          curl -o ~/shfmt -L "https://github.com/mvdan/sh/releases/download/v$SHFMT/shfmt_v${SHFMT}_linux_amd64"
           chmod 755 ~/shfmt ~/shellcheck
+          pip3 install --user compiledb
+        env:
+          CLANG: 11
+          SHELLCHECK: 0.7.2
+          SHFMT: 3.3.0
+
+      - name: Install deps
+        run: >
+          sudo apt-get install -y
+          git binutils make autoconf automake diffutils texinfo netcat
+          zlib1g-dev lib{ssl,lzo2,ncurses,readline,vdeplug,miniupnpc,gcrypt}-dev
+
+      - name: Configure and compile
+        run: |
+          autoreconf -fsi
+          ./configure --enable-{uml,vde,miniupnpc}
+          make -j$(nproc)
+          compiledb -n make check
 
       - name: Check code formatting
         run: "! astyle -r --options=.astylerc --dry-run --formatted '*.c' '*.h' | grep '^Formatted'"
+        if: always()
 
       - name: Check scripts formatting
         run: find -type f -regextype egrep -regex '.+\.(sh|sh\.in|test)$' -exec ~/shfmt -d -i 2 -s '{}' +
@@ -34,11 +54,18 @@ jobs:
         run: find -type f -regextype egrep -regex '.+\.sh(\.in)?$' -exec shellcheck -x '{}' +
         if: always()
 
-      - name: Prepare test library and run static analysis on tests
+      - name: Run static analysis on tests
+        run: find -type f -name '*.test' -execdir shellcheck -x '{}' +
+        if: always()
+
+      - name: Run clang-tidy
         run: |
-          autoreconf -fsi
-          ./configure --disable-{lzo,readline,zlib,curses}
-          find -type f -name '*.test' -execdir shellcheck -x '{}' +
+          find src \
+            ! '(' -path src/solaris -prune ')' \
+            ! '(' -path src/mingw   -prune ')' \
+            ! '(' -path src/bsd     -prune ')' \
+            -name '*.c' \
+            -exec clang-tidy --header-filter='.*' '{}' +
         if: always()
 
   sanitizer:
@@ -278,18 +305,42 @@ jobs:
           fetch-depth: 0
 
       - name: Install build deps
-        run: brew install coreutils netcat automake lzo lz4 miniupnpc
-
-      - name: Configure project
         run: |
-          autoreconf -fsi
-          ./configure --with-openssl=/usr/local/opt/openssl@1.1 --enable-{tunemu,miniupnpc} ${{ matrix.legacy_protocol }}
+          brew install coreutils netcat automake lzo lz4 miniupnpc
+          pip3 install --user compiledb
 
-      - name: Compile project
-        run: make -j$(sysctl -n hw.ncpu)
+      - name: Configure and compile
+        run: |
+          export CPPFLAGS="-I/usr/local/include"
+          export CPPFLAGS="$CPPFLAGS -I$(brew --prefix libgcrypt)/include"
+          export CPPFLAGS="$CPPFLAGS -I$(brew --prefix openssl)/include"
+          export CPPFLAGS="$CPPFLAGS -I$(brew --prefix libgcrypt)/include"
+
+          autoreconf -fsi
+          ./configure \
+            --with-openssl="$(brew --prefix openssl)" \
+            --with-miniupnpc="$(brew --prefix miniupnpc)" \
+            --enable-{tunemu,miniupnpc} \
+            ${{ matrix.legacy_protocol }}
+
+          make -j$(sysctl -n hw.ncpu)
 
       - name: Run tests
-        run: make check-recursive VERBOSE=1
+        run: |
+          export PATH="$PATH:$HOME/Library/Python/3.9/bin"
+          compiledb make -j$(sysctl -n hw.ncpu) check VERBOSE=1
+
+      - name: Run clang-tidy
+        run: |
+          export PATH="$PATH:$(brew --prefix llvm)/bin/"
+          find src \
+            ! '(' -path src/solaris -prune ')' \
+            ! '(' -path src/mingw   -prune ')' \
+            ! '(' -path src/linux   -prune ')' \
+            ! -name vde_device.c \
+            -name '*.c' \
+            -exec clang-tidy --header-filter='.*' '{}' +
+        if: ${{ matrix.legacy_protocol == '' }}
 
       - name: Archive test results
         run: sudo tar -c -z -f test-results.tar.gz test/
