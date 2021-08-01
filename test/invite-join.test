@@ -17,7 +17,8 @@ start_tinc foo
 
 echo [STEP] Generate an invitation and let another node join the VPN
 
-tinc foo invite bar | tinc bar join
+invitation=$(tinc foo invite bar)
+tinc bar join "$invitation"
 
 echo [STEP] Test equivalence of host config files
 
