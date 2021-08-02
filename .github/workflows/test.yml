@@ -68,6 +68,18 @@ jobs:
             -exec clang-tidy --header-filter='.*' '{}' +
         if: always()
 
+      - name: Check warnings (gcc)
+        run: bash .github/workflows/warn/run.sh
+        env:
+          CC: gcc
+        if: always()
+
+      - name: Check warnings (clang)
+        run: bash .github/workflows/warn/run.sh
+        env:
+          CC: clang
+        if: always()
+
   sanitizer:
     runs-on: ubuntu-latest
     timeout-minutes: 10

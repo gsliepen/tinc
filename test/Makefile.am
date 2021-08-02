@@ -33,6 +33,9 @@ check_PROGRAMS = \
 
 splice_SOURCES = splice.c
 
+.PHONY: extra
+extra: $(check_PROGRAMS)
+
 clean-local:
 	-for pid in *.test.?/pid; do ../src/tinc --pidfile="$$pid" stop; done
 	-killall ../src/sptps_test

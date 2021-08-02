@@ -10,6 +10,11 @@ EXTRA_DIST = COPYING.README README.android SECURITY.md
 
 @CODE_COVERAGE_RULES@
 
+.PHONY: extra
+extra:
+	$(MAKE) -C $(srcdir)/src extra
+	$(MAKE) -C $(srcdir)/test extra
+
 # If git describe works, force autoconf to run in order to make sure we have the
 # current version number from git in the resulting configure script.
 configure-version:

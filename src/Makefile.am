@@ -2,9 +2,12 @@
 
 sbin_PROGRAMS = tincd tinc
 check_PROGRAMS = sptps_test sptps_keypair
-EXTRA_PROGRAMS = sptps_test sptps_keypair
+EXTRA_PROGRAMS = $(check_PROGRAMS)
 
 CLEANFILES = version_git.h
+
+.PHONY: extra
+extra: $(EXTRA_PROGRAMS)
 
 .PHONY: version-stamp
 version-stamp:
