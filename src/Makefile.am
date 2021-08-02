@@ -55,6 +55,7 @@ tincd_SOURCES = \
 	autoconnect.c autoconnect.h \
 	buffer.c buffer.h \
 	cipher.h \
+	compression.h \
 	conf.c conf.h \
 	conf_net.c conf_net.h \
 	connection.c connection.h \

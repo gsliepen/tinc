@@ -150,7 +150,7 @@ void make_names(bool daemon) {
 #endif
 
 	if(!unixsocketname) {
-		int len = strlen(pidfilename);
+		size_t len = strlen(pidfilename);
 		unixsocketname = xmalloc(len + 8);
 		memcpy(unixsocketname, pidfilename, len);
 

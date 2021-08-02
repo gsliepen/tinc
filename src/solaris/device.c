@@ -104,7 +104,7 @@ static bool setup_device(void) {
 	char *ptr = device;
 	get_config_string(lookup_config(config_tree, "Interface"), &ptr);
 
-	while(*ptr && !isdigit(*ptr)) {
+	while(*ptr && !isdigit((uint8_t) *ptr)) {
 		ptr++;
 	}
 

@@ -108,7 +108,7 @@ static bool setup_device(void) {
 	name.zero = 0;
 	name.pid = getpid();
 	gettimeofday(&tv, NULL);
-	name.usecs = tv.tv_usec;
+	name.usecs = (int) tv.tv_usec;
 	memcpy(&data_sun.sun_path, &name, sizeof(name));
 
 	if(bind(data_fd, (struct sockaddr *)&data_sun, sizeof(data_sun)) < 0) {
@@ -196,7 +196,7 @@ void close_device(void) {
 }
 
 static bool read_packet(vpn_packet_t *packet) {
-	int inlen;
+	ssize_t inlen;
 
 	switch(state) {
 	case 0: {

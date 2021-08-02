@@ -85,7 +85,7 @@ static bool setup_utun(void) {
 		return false;
 	}
 
-	int unit = -1;
+	long unit = -1;
 	char *p = strstr(device, "utun"), *e = NULL;
 
 	if(p) {
@@ -351,7 +351,7 @@ static void close_device(void) {
 }
 
 static bool read_packet(vpn_packet_t *packet) {
-	int inlen;
+	ssize_t inlen;
 
 	switch(device_type) {
 	case DEVICE_TYPE_TUN:

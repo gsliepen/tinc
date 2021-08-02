@@ -21,6 +21,8 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#include "system.h"
+
 #include "ipv6.h"
 #include "cipher.h"
 #include "digest.h"
@@ -182,7 +184,7 @@ extern void handle_new_meta_connection(void *data, int flags);
 extern void handle_new_unix_connection(void *data, int flags);
 extern int setup_listen_socket(const sockaddr_t *sa);
 extern int setup_vpn_in_socket(const sockaddr_t *sa);
-extern bool send_sptps_data(node_t *to, node_t *from, int type, const void *data, size_t len);
+extern bool send_sptps_data(struct node_t *to, struct node_t *from, int type, const void *data, size_t len);
 extern bool receive_sptps_record(void *handle, uint8_t type, const void *data, uint16_t len);
 extern void send_packet(struct node_t *n, vpn_packet_t *packet);
 extern void receive_tcppacket(struct connection_t *c, const char *buffer, size_t length);

@@ -42,7 +42,7 @@ static int read_fd(int socket) {
 	struct iovec iov = {0};
 	char cmsgbuf[CMSG_SPACE(sizeof(device_fd))];
 	struct msghdr msg = {0};
-	int ret;
+	ssize_t ret;
 	struct cmsghdr *cmsgptr;
 
 	iov.iov_base = &iobuf;
@@ -53,7 +53,7 @@ static int read_fd(int socket) {
 	msg.msg_controllen = sizeof(cmsgbuf);
 
 	if((ret = recvmsg(socket, &msg, 0)) < 1) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not read from unix socket (error %d)!", ret);
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not read from unix socket (error %zd)!", ret);
 		return -1;
 	}
 
@@ -83,8 +83,8 @@ static int read_fd(int socket) {
 	}
 
 	if(cmsgptr->cmsg_len != CMSG_LEN(sizeof(device_fd))) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Wrong CMSG data length: %lu, expected %lu!",
-		       (unsigned long)cmsgptr->cmsg_len, (unsigned long)CMSG_LEN(sizeof(device_fd)));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Wrong CMSG data length: %zu, expected %zu!",
+		       cmsgptr->cmsg_len, CMSG_LEN(sizeof(device_fd)));
 		return -1;
 	}
 
@@ -201,7 +201,7 @@ static inline void set_etherheader(vpn_packet_t *packet, uint16_t ethertype) {
 }
 
 static bool read_packet(vpn_packet_t *packet) {
-	int lenin = read(device_fd, DATA(packet) + ETH_HLEN, MTU - ETH_HLEN);
+	ssize_t lenin = read(device_fd, DATA(packet) + ETH_HLEN, MTU - ETH_HLEN);
 
 	if(lenin <= 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from fd/%d: %s!", device_fd, strerror(errno));

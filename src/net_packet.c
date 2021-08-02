@@ -41,6 +41,7 @@
 #include "cipher.h"
 #include "conf.h"
 #include "connection.h"
+#include "compression.h"
 #include "crypto.h"
 #include "digest.h"
 #include "device.h"
@@ -166,7 +167,7 @@ static void udp_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 		gettimeofday(&now, NULL);
 		struct timeval rtt;
 		timersub(&now, &n->udp_ping_sent, &rtt);
-		n->udp_ping_rtt = rtt.tv_sec * 1000000 + rtt.tv_usec;
+		n->udp_ping_rtt = (int)(rtt.tv_sec * 1000000 + rtt.tv_usec);
 		n->status.ping_sent = false;
 		logger(DEBUG_TRAFFIC, LOG_INFO, "Got type %d UDP probe reply %d from %s (%s) rtt=%d.%03d", DATA(packet)[0], len, n->name, n->hostname, n->udp_ping_rtt / 1000, n->udp_ping_rtt % 1000);
 	} else {
@@ -238,15 +239,15 @@ static length_t compress_packet_lz4(uint8_t *dest, const uint8_t *source, length
 #endif /* HAVE_LZ4 */
 
 #ifdef HAVE_LZO
-static length_t compress_packet_lzo(uint8_t *dest, const uint8_t *source, length_t len, int level) {
-	assert(level == 10 || level == 11);
+static length_t compress_packet_lzo(uint8_t *dest, const uint8_t *source, length_t len, compression_level_t level) {
+	assert(level == COMPRESS_LZO_LO || level == COMPRESS_LZO_HI);
 
 	lzo_uint lzolen = MAXSIZE;
 	int result;
 
-	if(level == 11) {
+	if(level == COMPRESS_LZO_HI) {
 		result = lzo1x_999_compress(source, len, dest, &lzolen, lzo_wrkmem);
-	} else { // level == 10
+	} else { // level == COMPRESS_LZO_LO
 		result = lzo1x_1_compress(source, len, dest, &lzolen, lzo_wrkmem);
 	}
 
@@ -258,34 +259,34 @@ static length_t compress_packet_lzo(uint8_t *dest, const uint8_t *source, length
 }
 #endif
 
-static length_t compress_packet(uint8_t *dest, const uint8_t *source, length_t len, int level) {
+static length_t compress_packet(uint8_t *dest, const uint8_t *source, length_t len, compression_level_t level) {
 	switch(level) {
 #ifdef HAVE_LZ4
 
-	case 12:
+	case COMPRESS_LZ4:
 		return compress_packet_lz4(dest, source, len);
 #endif
 
 #ifdef HAVE_LZO
 
-	case 11:
-	case 10:
+	case COMPRESS_LZO_HI:
+	case COMPRESS_LZO_LO:
 		return compress_packet_lzo(dest, source, len, level);
 #endif
 #ifdef HAVE_ZLIB
 
-	case 9:
-	case 8:
-	case 7:
-	case 6:
-	case 5:
-	case 4:
-	case 3:
-	case 2:
-	case 1: {
+	case COMPRESS_ZLIB_9:
+	case COMPRESS_ZLIB_8:
+	case COMPRESS_ZLIB_7:
+	case COMPRESS_ZLIB_6:
+	case COMPRESS_ZLIB_5:
+	case COMPRESS_ZLIB_4:
+	case COMPRESS_ZLIB_3:
+	case COMPRESS_ZLIB_2:
+	case COMPRESS_ZLIB_1: {
 		unsigned long dest_len = MAXSIZE;
 
-		if(compress2(dest, (unsigned long *) &dest_len, source, len, level) == Z_OK) {
+		if(compress2(dest, &dest_len, source, len, level) == Z_OK) {
 			return dest_len;
 		} else {
 			return 0;
@@ -294,7 +295,7 @@ static length_t compress_packet(uint8_t *dest, const uint8_t *source, length_t l
 
 #endif
 
-	case 0:
+	case COMPRESS_NONE:
 		memcpy(dest, source, len);
 		return len;
 
@@ -303,21 +304,21 @@ static length_t compress_packet(uint8_t *dest, const uint8_t *source, length_t l
 	}
 }
 
-static length_t uncompress_packet(uint8_t *dest, const uint8_t *source, length_t len, int level) {
+static length_t uncompress_packet(uint8_t *dest, const uint8_t *source, length_t len, compression_level_t level) {
 	switch(level) {
 #ifdef HAVE_LZ4
 
-	case 12:
+	case COMPRESS_LZ4:
 		return LZ4_decompress_safe((char *)source, (char *) dest, len, MAXSIZE);
 
 #endif
 #ifdef HAVE_LZO
 
-	case 11:
-	case 10: {
+	case COMPRESS_LZO_HI:
+	case COMPRESS_LZO_LO: {
 		lzo_uint dst_len = MAXSIZE;
 
-		if(lzo1x_decompress_safe(source, len, dest, (lzo_uint *) &dst_len, NULL) == LZO_E_OK) {
+		if(lzo1x_decompress_safe(source, len, dest, &dst_len, NULL) == LZO_E_OK) {
 			return dst_len;
 		} else {
 			return 0;
@@ -327,15 +328,15 @@ static length_t uncompress_packet(uint8_t *dest, const uint8_t *source, length_t
 #endif
 #ifdef HAVE_ZLIB
 
-	case 9:
-	case 8:
-	case 7:
-	case 6:
-	case 5:
-	case 4:
-	case 3:
-	case 2:
-	case 1: {
+	case COMPRESS_ZLIB_9:
+	case COMPRESS_ZLIB_8:
+	case COMPRESS_ZLIB_7:
+	case COMPRESS_ZLIB_6:
+	case COMPRESS_ZLIB_5:
+	case COMPRESS_ZLIB_4:
+	case COMPRESS_ZLIB_3:
+	case COMPRESS_ZLIB_2:
+	case COMPRESS_ZLIB_1: {
 		unsigned long destlen = MAXSIZE;
 		static z_stream stream;
 
@@ -360,7 +361,7 @@ static length_t uncompress_packet(uint8_t *dest, const uint8_t *source, length_t
 
 #endif
 
-	case 0:
+	case COMPRESS_NONE:
 		memcpy(dest, source, len);
 		return len;
 
@@ -534,7 +535,7 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 
 	length_t origlen = inpkt->len;
 
-	if(n->incompression) {
+	if(n->incompression != COMPRESS_NONE) {
 		vpn_packet_t *outpkt = pkt[nextpkt++];
 
 		if(!(outpkt->len = uncompress_packet(DATA(outpkt), DATA(inpkt), inpkt->len, n->incompression))) {
@@ -665,7 +666,7 @@ static void send_sptps_packet(node_t *n, vpn_packet_t *origpkt) {
 	int offset = 0;
 
 	if((!(DATA(origpkt)[12] | DATA(origpkt)[13])) && (n->sptps.outstate))  {
-		sptps_send_record(&n->sptps, PKT_PROBE, (char *)DATA(origpkt), origpkt->len);
+		sptps_send_record(&n->sptps, PKT_PROBE, DATA(origpkt), origpkt->len);
 		return;
 	}
 
@@ -681,7 +682,7 @@ static void send_sptps_packet(node_t *n, vpn_packet_t *origpkt) {
 
 	vpn_packet_t outpkt;
 
-	if(n->outcompression) {
+	if(n->outcompression != COMPRESS_NONE) {
 		outpkt.offset = 0;
 		length_t len = compress_packet(DATA(&outpkt) + offset, DATA(origpkt) + offset, origpkt->len - offset, n->outcompression);
 
@@ -703,11 +704,9 @@ static void send_sptps_packet(node_t *n, vpn_packet_t *origpkt) {
 	} else {
 		sptps_send_record(&n->sptps, type, DATA(origpkt) + offset, origpkt->len - offset);
 	}
-
-	return;
 }
 
-static void adapt_socket(const sockaddr_t *sa, int *sock) {
+static void adapt_socket(const sockaddr_t *sa, size_t *sock) {
 	/* Make sure we have a suitable socket for the chosen address */
 	if(listen_socket[*sock].sa.sa.sa_family != sa->sa.sa_family) {
 		for(int i = 0; i < listen_sockets; i++) {
@@ -719,7 +718,7 @@ static void adapt_socket(const sockaddr_t *sa, int *sock) {
 	}
 }
 
-static void choose_udp_address(const node_t *n, const sockaddr_t **sa, int *sock) {
+static void choose_udp_address(const node_t *n, const sockaddr_t **sa, size_t *sock) {
 	/* Latest guess */
 	*sa = &n->address;
 	*sock = n->sock;
@@ -743,8 +742,8 @@ static void choose_udp_address(const node_t *n, const sockaddr_t **sa, int *sock
 	/* Otherwise, address are found in edges to this node.
 	   So we pick a random edge and a random socket. */
 
-	int i = 0;
-	int j = rand() % n->edge_tree->count;
+	unsigned int i = 0;
+	unsigned int j = rand() % n->edge_tree->count;
 	edge_t *candidate = NULL;
 
 	for splay_each(edge_t, e, n->edge_tree) {
@@ -762,13 +761,13 @@ static void choose_udp_address(const node_t *n, const sockaddr_t **sa, int *sock
 	adapt_socket(*sa, sock);
 }
 
-static void choose_local_address(const node_t *n, const sockaddr_t **sa, int *sock) {
+static void choose_local_address(const node_t *n, const sockaddr_t **sa, size_t *sock) {
 	*sa = NULL;
 
 	/* Pick one of the edges from this node at random, then use its local address. */
 
-	int i = 0;
-	int j = rand() % n->edge_tree->count;
+	unsigned int i = 0;
+	unsigned int j = rand() % n->edge_tree->count;
 	edge_t *candidate = NULL;
 
 	for splay_each(edge_t, e, n->edge_tree) {
@@ -837,7 +836,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 
 	/* Compress the packet */
 
-	if(n->outcompression) {
+	if(n->outcompression != COMPRESS_NONE) {
 		outpkt = pkt[nextpkt++];
 
 		if(!(outpkt->len = compress_packet(DATA(outpkt), DATA(inpkt), inpkt->len, n->outcompression))) {
@@ -884,7 +883,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	/* Send the packet */
 
 	const sockaddr_t *sa = NULL;
-	int sock;
+	size_t sock;
 
 	if(n->status.send_locally) {
 		choose_local_address(n, &sa, &sock);
@@ -957,8 +956,8 @@ bool send_sptps_data(node_t *to, node_t *from, int type, const void *data, size_
 
 	if(type == SPTPS_HANDSHAKE || tcponly || (!direct && !relay_supported) || (type != PKT_PROBE && (len - SPTPS_DATAGRAM_OVERHEAD) > relay->minmtu)) {
 		if(type != SPTPS_HANDSHAKE && (to->nexthop->connection->options >> 24) >= 7) {
-			char buf[len + sizeof(to->id) + sizeof(from->id)];
-			char *buf_ptr = buf;
+			uint8_t buf[len + sizeof(to->id) + sizeof(from->id)];
+			uint8_t *buf_ptr = buf;
 			memcpy(buf_ptr, &to->id, sizeof(to->id));
 			buf_ptr += sizeof(to->id);
 			memcpy(buf_ptr, &from->id, sizeof(from->id));
@@ -988,8 +987,8 @@ bool send_sptps_data(node_t *to, node_t *from, int type, const void *data, size_
 		overhead += sizeof(to->id) + sizeof(from->id);
 	}
 
-	char buf[len + overhead];
-	char *buf_ptr = buf;
+	uint8_t buf[len + overhead];
+	uint8_t *buf_ptr = buf;
 
 	if(relay_supported) {
 		if(direct) {
@@ -1012,7 +1011,7 @@ bool send_sptps_data(node_t *to, node_t *from, int type, const void *data, size_
 	buf_ptr += len;
 
 	const sockaddr_t *sa = NULL;
-	int sock;
+	size_t sock;
 
 	if(relay->status.send_locally) {
 		choose_local_address(relay, &sa, &sock);
@@ -1168,11 +1167,11 @@ static void try_sptps(node_t *n) {
 	return;
 }
 
-static void send_udp_probe_packet(node_t *n, int len) {
+static void send_udp_probe_packet(node_t *n, size_t len) {
 	vpn_packet_t packet;
 
 	if(len > sizeof(packet.data)) {
-		logger(DEBUG_TRAFFIC, LOG_INFO, "Truncating probe length %d to %s (%s)", len, n->name, n->hostname);
+		logger(DEBUG_TRAFFIC, LOG_INFO, "Truncating probe length %zu to %s (%s)", len, n->name, n->hostname);
 		len = sizeof(packet.data);
 	}
 
@@ -1182,7 +1181,7 @@ static void send_udp_probe_packet(node_t *n, int len) {
 	packet.len = len;
 	packet.priority = 0;
 
-	logger(DEBUG_TRAFFIC, LOG_INFO, "Sending UDP probe length %d to %s (%s)", len, n->name, n->hostname);
+	logger(DEBUG_TRAFFIC, LOG_INFO, "Sending UDP probe length %zu to %s (%s)", len, n->name, n->hostname);
 
 	send_udppacket(n, &packet);
 }
@@ -1221,7 +1220,9 @@ static void try_udp(node_t *n) {
 	struct timeval ping_tx_elapsed;
 	timersub(&now, &n->udp_ping_sent, &ping_tx_elapsed);
 
-	int interval = n->status.udp_confirmed ? udp_discovery_keepalive_interval : udp_discovery_interval;
+	int interval = n->status.udp_confirmed
+	               ? udp_discovery_keepalive_interval
+	               : udp_discovery_interval;
 
 	if(ping_tx_elapsed.tv_sec >= interval) {
 		gettimeofday(&now, NULL);
@@ -1243,7 +1244,7 @@ static length_t choose_initial_maxmtu(node_t *n) {
 	int sock = -1;
 
 	const sockaddr_t *sa = NULL;
-	int sockindex;
+	size_t sockindex;
 	choose_udp_address(n, &sa, &sockindex);
 
 	if(!sa) {
@@ -1412,11 +1413,11 @@ static void try_mtu(node_t *n) {
 			   This fine-tuning is only valid for maxmtu = MTU; if maxmtu is smaller,
 			   then it's better to use a multiplier of 1. Indeed, this leads to an interesting scenario
 			   if choose_initial_maxmtu() returns the actual MTU value - it will get confirmed with one single probe. */
-			const float multiplier = (n->maxmtu == MTU) ? 0.97 : 1;
+			const float multiplier = (n->maxmtu == MTU) ? 0.97f : 1.0f;
 
-			const float cycle_position = probes_per_cycle - (n->mtuprobes % probes_per_cycle) - 1;
+			const float cycle_position = (float) probes_per_cycle - (float)(n->mtuprobes % probes_per_cycle) - 1.0f;
 			const length_t minmtu = MAX(n->minmtu, 512);
-			const float interval = n->maxmtu - minmtu;
+			const float interval = (float)(n->maxmtu - minmtu);
 
 			length_t offset = 0;
 
@@ -1429,7 +1430,7 @@ static void try_mtu(node_t *n) {
 				        on the precise MTU as we are approaching it.
 				        The last probe of the cycle is always 1 byte in size - this is to make sure we'll get at least one
 				        reply per cycle so that we can make progress. */
-				offset = powf(interval, multiplier * cycle_position / (probes_per_cycle - 1));
+				offset = (length_t) powf(interval, multiplier * cycle_position / ((float) probes_per_cycle - 1.0f));
 			}
 
 			length_t maxmtu = n->maxmtu;
@@ -1830,7 +1831,7 @@ void handle_incoming_vpn_data(void *data, int flags) {
 
 #ifdef HAVE_RECVMMSG
 #define MAX_MSG 64
-	static int num = MAX_MSG;
+	static ssize_t num = MAX_MSG;
 	static vpn_packet_t pkt[MAX_MSG];
 	static sockaddr_t addr[MAX_MSG];
 	static struct mmsghdr msg[MAX_MSG];
@@ -1878,7 +1879,7 @@ void handle_incoming_vpn_data(void *data, int flags) {
 	socklen_t addrlen = sizeof(addr);
 
 	pkt.offset = 0;
-	int len = recvfrom(ls->udp.fd, (void *)DATA(&pkt), MAXSIZE, 0, &addr.sa, &addrlen);
+	ssize_t len = recvfrom(ls->udp.fd, (void *)DATA(&pkt), MAXSIZE, 0, &addr.sa, &addrlen);
 
 	if(len <= 0 || (size_t)len > MAXSIZE) {
 		if(!sockwouldblock(sockerrno)) {

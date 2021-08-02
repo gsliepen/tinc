@@ -587,7 +587,7 @@ static void fragment_ipv4_packet(node_t *dest, vpn_packet_t *packet, length_t et
 	todo = ntohs(ip.ip_len) - ip_size;
 
 	if(ether_size + ip_size + todo != packet->len) {
-		logger(DEBUG_TRAFFIC, LOG_WARNING, "Length of packet (%d) doesn't match length in IPv4 header (%d)", packet->len, (int)(ether_size + ip_size + todo));
+		logger(DEBUG_TRAFFIC, LOG_WARNING, "Length of packet (%d) doesn't match length in IPv4 header (%zu)", packet->len, ether_size + ip_size + todo);
 		return;
 	}
 
@@ -1124,7 +1124,7 @@ static void send_pcap(vpn_packet_t *packet) {
 		}
 
 		if(send_request(c, "%d %d %d", CONTROL, REQ_PCAP, len)) {
-			send_meta(c, (char *)DATA(packet), len);
+			send_meta(c, DATA(packet), len);
 		}
 	}
 }

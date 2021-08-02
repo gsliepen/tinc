@@ -26,7 +26,6 @@
 #include "names.h"
 #include "net.h"
 #include "logger.h"
-#include "utils.h"
 #include "route.h"
 #include "xalloc.h"
 
@@ -102,7 +101,7 @@ static void close_device(void) {
 }
 
 static bool read_packet(vpn_packet_t *packet) {
-	int lenin = (ssize_t)plug.vde_recv(conn, DATA(packet), MTU, 0);
+	ssize_t lenin = (ssize_t) plug.vde_recv(conn, DATA(packet), MTU, 0);
 
 	if(lenin <= 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info, device, strerror(errno));

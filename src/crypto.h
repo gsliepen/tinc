@@ -1,6 +1,8 @@
 #ifndef TINC_CRYPTO_H
 #define TINC_CRYPTO_H
 
+#include "system.h"
+
 /*
     crypto.h -- header for crypto.c
     Copyright (C) 2007-2013 Guus Sliepen <guus@tinc-vpn.org>

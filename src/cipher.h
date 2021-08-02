@@ -20,6 +20,8 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#include "system.h"
+
 #define CIPHER_MAX_BLOCK_SIZE 32
 #define CIPHER_MAX_IV_SIZE 16
 #define CIPHER_MAX_KEY_SIZE 32

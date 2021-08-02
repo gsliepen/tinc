@@ -20,6 +20,8 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#include "system.h"
+
 extern void ifconfig_dhcp(FILE *out);
 extern void ifconfig_dhcp6(FILE *out);
 extern void ifconfig_slaac(FILE *out);

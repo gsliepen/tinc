@@ -205,7 +205,7 @@ static bool send_sig(sptps_t *s) {
 }
 
 // Generate key material from the shared secret created from the ECDHE key exchange.
-static bool generate_key_material(sptps_t *s, const char *shared, size_t len) {
+static bool generate_key_material(sptps_t *s, const uint8_t *shared, size_t len) {
 	// Initialise cipher and digest structures if necessary
 	if(!s->outstate) {
 		s->incipher = chacha_poly1305_init();
@@ -226,7 +226,7 @@ static bool generate_key_material(sptps_t *s, const char *shared, size_t len) {
 	}
 
 	// Create the HMAC seed, which is "key expansion" + session label + server nonce + client nonce
-	char seed[s->labellen + 64 + 13];
+	uint8_t seed[s->labellen + 64 + 13];
 	memcpy(seed, "key expansion", 13);
 
 	if(s->initiator) {
@@ -330,7 +330,7 @@ static bool receive_sig(sptps_t *s, const uint8_t *data, uint16_t len) {
 	}
 
 	// Compute shared secret.
-	char shared[ECDH_SHARED_SIZE];
+	uint8_t shared[ECDH_SHARED_SIZE];
 
 	if(!ecdh_compute_shared(s->ecdh, s->hiskex + 1 + 32, shared)) {
 		return error(s, EINVAL, "Failed to compute ECDH shared secret");
@@ -513,7 +513,7 @@ bool sptps_verify_datagram(sptps_t *s, const void *vdata, size_t len) {
 		return error(s, EIO, "Received short packet");
 	}
 
-	const char *data = vdata;
+	const uint8_t *data = vdata;
 	uint32_t seqno;
 	memcpy(&seqno, data, 4);
 	seqno = ntohl(seqno);
@@ -522,7 +522,7 @@ bool sptps_verify_datagram(sptps_t *s, const void *vdata, size_t len) {
 		return false;
 	}
 
-	char buffer[len];
+	uint8_t buffer[len];
 	size_t outlen;
 	return chacha_poly1305_decrypt(s->incipher, seqno, data + 4, len - 4, buffer, &outlen);
 }

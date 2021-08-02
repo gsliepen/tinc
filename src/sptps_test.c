@@ -76,7 +76,7 @@ static bool send_data(void *handle, uint8_t type, const void *data, size_t len) 
 	bin2hex(data, hex, len);
 
 	if(verbose) {
-		fprintf(stderr, "Sending %d bytes of data:\n%s\n", (int)len, hex);
+		fprintf(stderr, "Sending %zu bytes of data:\n%s\n", len, hex);
 	}
 
 	const int *sock = handle;
@@ -162,7 +162,7 @@ void *stdin_reader_thread(void *arg) {
 			fprintf(stderr, "New connection received from :%d\n", ntohs(sa.sin_port));
 		}
 
-		char buf[1024];
+		uint8_t buf[1024];
 		ssize_t nread;
 
 		while((nread = read(STDIN_FILENO, buf, sizeof(buf))) > 0) {
@@ -170,7 +170,7 @@ void *stdin_reader_thread(void *arg) {
 				fprintf(stderr, "Read %lld bytes from input\n", nread);
 			}
 
-			char *start = buf;
+			uint8_t *start = buf;
 			ssize_t nleft = nread;
 
 			while(nleft) {
@@ -479,7 +479,7 @@ int main(int argc, char *argv[]) {
 		} else {
 			fprintf(stderr, "Listening...\n");
 
-			char buf[65536];
+			uint8_t buf[65536];
 			struct sockaddr addr;
 			socklen_t addrlen = sizeof(addr);
 
@@ -648,7 +648,7 @@ int main(int argc, char *argv[]) {
 			if(verbose) {
 				char hex[len * 2 + 1];
 				bin2hex(buf, hex, len);
-				fprintf(stderr, "Received %d bytes of data:\n%s\n", (int)len, hex);
+				fprintf(stderr, "Received %zd bytes of data:\n%s\n", len, hex);
 			}
 
 			if(packetloss && (rand() % 100) < packetloss) {
@@ -673,7 +673,7 @@ int main(int argc, char *argv[]) {
 				}
 
 				bufp += done;
-				len -= done;
+				len -= (ssize_t) done;
 			}
 		}
 	}

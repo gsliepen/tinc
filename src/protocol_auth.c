@@ -68,7 +68,7 @@ static bool send_proxyrequest(connection_t *c) {
 			return false;
 		}
 
-		char s4req[9 + (proxyuser ? strlen(proxyuser) : 0)];
+		uint8_t s4req[9 + (proxyuser ? strlen(proxyuser) : 0)];
 		s4req[0] = 4;
 		s4req[1] = 1;
 		memcpy(s4req + 2, &c->address.in.sin_port, 2);
@@ -84,15 +84,15 @@ static bool send_proxyrequest(connection_t *c) {
 	}
 
 	case PROXY_SOCKS5: {
-		int len = 3 + 6 + (c->address.sa.sa_family == AF_INET ? 4 : 16);
+		size_t len = 3 + 6 + (c->address.sa.sa_family == AF_INET ? 4 : 16);
 		c->tcplen = 2;
 
 		if(proxypass) {
 			len += 3 + strlen(proxyuser) + strlen(proxypass);
 		}
 
-		char s5req[len];
-		int i = 0;
+		uint8_t s5req[len];
+		size_t i = 0;
 		s5req[i++] = 5;
 		s5req[i++] = 1;
 
@@ -508,7 +508,7 @@ bool send_metakey(connection_t *c) {
 	   by Cipher.
 	*/
 
-	int keylen = cipher_keylength(myself->incipher);
+	size_t keylen = cipher_keylength(myself->incipher);
 
 	if(keylen <= 16) {
 		c->outcipher = cipher_open_by_name("aes-128-cfb");
@@ -518,13 +518,9 @@ bool send_metakey(connection_t *c) {
 		c->outcipher = cipher_open_by_name("aes-256-cfb");
 	}
 
-	if(!c) {
-		return false;
-	}
-
 	c->outbudget = cipher_budget(c->outcipher);
 
-	if(!(c->outdigest = digest_open_by_name("sha256", -1))) {
+	if(!(c->outdigest = digest_open_by_name("sha256", DIGEST_ALGO_SIZE))) {
 		return false;
 	}
 
@@ -639,7 +635,7 @@ bool metakey_h(connection_t *c, const char *request) {
 	c->inbudget = cipher_budget(c->incipher);
 
 	if(digest) {
-		if(!(c->indigest = digest_open_by_nid(digest, -1))) {
+		if(!(c->indigest = digest_open_by_nid(digest, DIGEST_ALGO_SIZE))) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Error during initialisation of digest from %s (%s)", c->name, c->hostname);
 			return false;
 		}
@@ -845,7 +841,7 @@ bool send_ack(connection_t *c) {
 	/* Estimate weight */
 
 	gettimeofday(&now, NULL);
-	c->estimated_weight = (now.tv_sec - c->start.tv_sec) * 1000 + (now.tv_usec - c->start.tv_usec) / 1000;
+	c->estimated_weight = (int)((now.tv_sec - c->start.tv_sec) * 1000 + (now.tv_usec - c->start.tv_usec) / 1000);
 
 	/* Check some options */
 

@@ -28,8 +28,9 @@
 #include "control_common.h"
 #include "process.h"
 #include "sptps.h"
+#include "compression.h"
 
-int debug_level = DEBUG_NOTHING;
+debug_t debug_level = DEBUG_NOTHING;
 static logmode_t logmode = LOGMODE_STDERR;
 static pid_t logpid;
 static FILE *logfile = NULL;
@@ -40,11 +41,11 @@ static const char *logident = NULL;
 bool logcontrol = false; // controlled by REQ_LOG <level>
 int umbilical = 0;
 
-static bool should_log(int level) {
+static bool should_log(debug_t level) {
 	return (level <= debug_level && logmode != LOGMODE_NULL) || logcontrol;
 }
 
-static void real_logger(int level, int priority, const char *message) {
+static void real_logger(debug_t level, int priority, const char *message) {
 	char timestr[32] = "";
 	static bool suppress = false;
 
@@ -85,6 +86,7 @@ static void real_logger(int level, int priority, const char *message) {
 			break;
 
 		case LOGMODE_NULL:
+		default:
 			break;
 		}
 
@@ -105,13 +107,13 @@ static void real_logger(int level, int priority, const char *message) {
 
 			logcontrol = true;
 
-			if(level > (c->outcompression >= 0 ? c->outcompression : debug_level)) {
+			if(level > (c->outcompression >= COMPRESS_NONE ? c->outcompression : debug_level)) {
 				continue;
 			}
 
-			int len = strlen(message);
+			size_t len = strlen(message);
 
-			if(send_request(c, "%d %d %d", CONTROL, REQ_LOG, len)) {
+			if(send_request(c, "%d %d %zu", CONTROL, REQ_LOG, len)) {
 				send_meta(c, message, len);
 			}
 		}
@@ -120,7 +122,7 @@ static void real_logger(int level, int priority, const char *message) {
 	}
 }
 
-void logger(int level, int priority, const char *format, ...) {
+void logger(debug_t level, int priority, const char *format, ...) {
 	va_list ap;
 	char message[1024] = "";
 
@@ -207,6 +209,7 @@ void openlogger(const char *ident, logmode_t mode) {
 #endif
 
 	case LOGMODE_NULL:
+	default:
 		break;
 	}
 
@@ -254,6 +257,7 @@ void closelogger(void) {
 
 	case LOGMODE_NULL:
 	case LOGMODE_STDERR:
+	default:
 		break;
 	}
 }

@@ -91,7 +91,7 @@ bool send_tcppacket(connection_t *c, const vpn_packet_t *packet) {
 		return false;
 	}
 
-	return send_meta(c, (char *)DATA(packet), packet->len);
+	return send_meta(c, DATA(packet), packet->len);
 }
 
 bool tcppacket_h(connection_t *c, const char *request) {
@@ -110,7 +110,7 @@ bool tcppacket_h(connection_t *c, const char *request) {
 	return true;
 }
 
-bool send_sptps_tcppacket(connection_t *c, const char *packet, int len) {
+bool send_sptps_tcppacket(connection_t *c, const void *packet, size_t len) {
 	/* If there already is a lot of data in the outbuf buffer, discard this packet.
 	   We use a very simple Random Early Drop algorithm. */
 
@@ -118,7 +118,7 @@ bool send_sptps_tcppacket(connection_t *c, const char *packet, int len) {
 		return true;
 	}
 
-	if(!send_request(c, "%d %d", SPTPS_PACKET, len)) {
+	if(!send_request(c, "%d %zu", SPTPS_PACKET, len)) {
 		return false;
 	}
 

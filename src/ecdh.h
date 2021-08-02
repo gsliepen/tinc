@@ -20,6 +20,8 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#include "system.h"
+
 #define ECDH_SIZE 32
 #define ECDH_SHARED_SIZE 32
 

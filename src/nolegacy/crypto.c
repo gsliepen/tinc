@@ -43,7 +43,7 @@ static void random_exit(void) {
 }
 
 void randomize(void *vout, size_t outlen) {
-	char *out = vout;
+	uint8_t *out = vout;
 
 	while(outlen) {
 		ssize_t len = read(random_fd, out, outlen);

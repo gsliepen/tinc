@@ -23,10 +23,11 @@
 
 #include "crypto.h"
 #include "ecdsagen.h"
+#include "logger.h"
 
 static char *program_name;
 
-void logger(int level, int priority, const char *format, ...) {
+void logger(debug_t level, int priority, const char *format, ...) {
 	(void)level;
 	(void)priority;
 	va_list ap;

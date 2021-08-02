@@ -103,7 +103,7 @@ void forward_request(connection_t *from, const char *request) {
 	logger(DEBUG_META, LOG_DEBUG, "Forwarding %s from %s (%s): %s", request_name[atoi(request)], from->name, from->hostname, request);
 
 	// Create a temporary newline-terminated copy of the request
-	int len = strlen(request);
+	size_t len = strlen(request);
 	char tmp[len + 1];
 	memcpy(tmp, request, len);
 	tmp[len] = '\n';

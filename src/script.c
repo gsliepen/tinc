@@ -35,7 +35,7 @@ static void unputenv(const char *p) {
 		return;
 	}
 
-	int len = e - p;
+	ptrdiff_t len = e - p;
 #ifndef HAVE_UNSETENV
 #ifdef HAVE_MINGW
 	// Windows requires putenv("FOO=") to unset %FOO%

@@ -1,6 +1,8 @@
 #ifndef TINC_BUFFER_H
 #define TINC_BUFFER_H
 
+#include "system.h"
+
 typedef struct buffer_t {
 	char *data;
 	uint32_t maxlen;

@@ -20,6 +20,8 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#include "system.h"
+
 #ifndef TINC_RSA_INTERNAL
 typedef struct rsa rsa_t;
 #endif

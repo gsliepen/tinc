@@ -463,15 +463,15 @@ bool recvline(int fd, char *line, size_t len) {
 	}
 
 	while(!(newline = memchr(buffer, '\n', blen))) {
-		int result = recv(fd, buffer + blen, sizeof(buffer) - blen, 0);
+		ssize_t nrecv = recv(fd, buffer + blen, sizeof(buffer) - blen, 0);
 
-		if(result == -1 && sockerrno == EINTR) {
+		if(nrecv == -1 && sockerrno == EINTR) {
 			continue;
-		} else if(result <= 0) {
+		} else if(nrecv <= 0) {
 			return false;
 		}
 
-		blen += result;
+		blen += nrecv;
 	}
 
 	if((size_t)(newline - buffer) >= len) {
@@ -490,15 +490,15 @@ bool recvline(int fd, char *line, size_t len) {
 
 static bool recvdata(int fd, char *data, size_t len) {
 	while(blen < len) {
-		int result = recv(fd, buffer + blen, sizeof(buffer) - blen, 0);
+		ssize_t nrecv = recv(fd, buffer + blen, sizeof(buffer) - blen, 0);
 
-		if(result == -1 && sockerrno == EINTR) {
+		if(nrecv == -1 && sockerrno == EINTR) {
 			continue;
-		} else if(result <= 0) {
+		} else if(nrecv <= 0) {
 			return false;
 		}
 
-		blen += result;
+		blen += nrecv;
 	}
 
 	memcpy(data, buffer, len);
@@ -511,7 +511,7 @@ static bool recvdata(int fd, char *data, size_t len) {
 bool sendline(int fd, char *format, ...) {
 	static char buffer[4096];
 	char *p = buffer;
-	int blen;
+	ssize_t blen;
 	va_list ap;
 
 	va_start(ap, format);
@@ -527,16 +527,16 @@ bool sendline(int fd, char *format, ...) {
 	blen++;
 
 	while(blen) {
-		int result = send(fd, p, blen, MSG_NOSIGNAL);
+		ssize_t nsend = send(fd, p, blen, MSG_NOSIGNAL);
 
-		if(result == -1 && sockerrno == EINTR) {
+		if(nsend == -1 && sockerrno == EINTR) {
 			continue;
-		} else if(result <= 0) {
+		} else if(nsend <= 0) {
 			return false;
 		}
 
-		p += result;
-		blen -= result;
+		p += nsend;
+		blen -= nsend;
 	}
 
 	return true;
@@ -577,11 +577,12 @@ static void pcap(int fd, FILE *out, uint32_t snaplen) {
 	char line[32];
 
 	while(recvline(fd, line, sizeof(line))) {
-		int code, req, len;
-		int n = sscanf(line, "%d %d %d", &code, &req, &len);
+		int code, req;
+		size_t len;
+		int n = sscanf(line, "%d %d %zd", &code, &req, &len);
 		gettimeofday(&tv, NULL);
 
-		if(n != 3 || code != CONTROL || req != REQ_PCAP || len < 0 || (size_t)len > sizeof(data)) {
+		if(n != 3 || code != CONTROL || req != REQ_PCAP || len > sizeof(data)) {
 			break;
 		}
 
@@ -970,7 +971,6 @@ static int cmd_start(int argc, char *argv[]) {
 
 	free(nargv);
 
-	int status = -1, result;
 #ifdef SIGINT
 	signal(SIGINT, SIG_IGN);
 #endif
@@ -978,7 +978,7 @@ static int cmd_start(int argc, char *argv[]) {
 	// Pass all log messages from the umbilical to stderr.
 	// A nul-byte right before closure means tincd started successfully.
 	bool failure = true;
-	char buf[1024];
+	uint8_t buf[1024];
 	ssize_t len;
 
 	while((len = read(pfd[0], buf, sizeof(buf))) > 0) {
@@ -998,7 +998,8 @@ static int cmd_start(int argc, char *argv[]) {
 	close(pfd[0]);
 
 	// Make sure the child process is really gone.
-	result = waitpid(pid, &status, 0);
+	int status = -1;
+	pid_t result = waitpid(pid, &status, 0);
 
 #ifdef SIGINT
 	signal(SIGINT, SIG_DFL);
@@ -1302,7 +1303,7 @@ static int cmd_dump(int argc, char *argv[]) {
 			}
 
 			if(do_graph) {
-				float w = 1 + 65536.0 / weight;
+				float w = 1.0f + 65536.0f / (float)weight;
 
 				if(do_graph == 1 && strcmp(node1, node2) > 0) {
 					printf(" \"%s\" -- \"%s\" [w = %f, weight = %f];\n", node1, node2, w, w);
@@ -1553,8 +1554,8 @@ static int cmd_pid(int argc, char *argv[]) {
 	return 0;
 }
 
-int rstrip(char *value) {
-	int len = strlen(value);
+size_t rstrip(char *value) {
+	size_t len = strlen(value);
 
 	while(len && strchr("\t\r\n ", value[len - 1])) {
 		value[--len] = 0;
@@ -1578,7 +1579,7 @@ char *get_my_name(bool verbose) {
 	char *value;
 
 	while(fgets(buf, sizeof(buf), f)) {
-		int len = strcspn(buf, "\t =");
+		size_t len = strcspn(buf, "\t =");
 		value = buf + len;
 		value += strspn(value, "\t ");
 
@@ -1617,7 +1618,7 @@ ecdsa_t *get_pubkey(FILE *f) {
 	char *value;
 
 	while(fgets(buf, sizeof(buf), f)) {
-		int len = strcspn(buf, "\t =");
+		size_t len = strcspn(buf, "\t =");
 		value = buf + len;
 		value += strspn(value, "\t ");
 
@@ -1944,9 +1945,8 @@ static int cmd_config(int argc, char *argv[]) {
 
 		// Parse line in a simple way
 		char *bvalue;
-		int len;
 
-		len = strcspn(buf2, "\t =");
+		size_t len = strcspn(buf2, "\t =");
 		bvalue = buf2 + len;
 		bvalue += strspn(bvalue, "\t ");
 
@@ -2170,7 +2170,7 @@ static int cmd_init(int argc, char *argv[]) {
 				return 1;
 			}
 
-			int len = rstrip(buf);
+			size_t len = rstrip(buf);
 
 			if(!len) {
 				fprintf(stderr, "No name given!\n");
@@ -2787,7 +2787,7 @@ static int cmd_sign(int argc, char *argv[]) {
 	long t = time(NULL);
 	char *trailer;
 	xasprintf(&trailer, " %s %ld", name, t);
-	int trailer_len = strlen(trailer);
+	size_t trailer_len = strlen(trailer);
 
 	data = xrealloc(data, len + trailer_len);
 	memcpy(data + len, trailer, trailer_len);
@@ -2902,7 +2902,7 @@ static int cmd_verify(int argc, char *argv[]) {
 
 	char *trailer;
 	xasprintf(&trailer, " %s %ld", signer, t);
-	int trailer_len = strlen(trailer);
+	size_t trailer_len = strlen(trailer);
 
 	data = xrealloc(data, len + trailer_len);
 	memcpy(data + len, trailer, trailer_len);

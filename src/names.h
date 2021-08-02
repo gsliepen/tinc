@@ -21,6 +21,8 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#include "system.h"
+
 extern char *confdir;
 extern char *confbase;
 extern bool confbase_given;

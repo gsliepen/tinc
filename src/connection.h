@@ -35,22 +35,22 @@
 #define OPTION_VERSION(x) ((x) >> 24) /* Top 8 bits are for protocol minor version */
 
 typedef struct connection_status_t {
-	unsigned int pinged: 1;                 /* sent ping */
-	unsigned int unused_active: 1;
-	unsigned int connecting: 1;             /* 1 if we are waiting for a non-blocking connect() to finish */
-	unsigned int unused_termreq: 1;         /* the termination of this connection was requested */
-	unsigned int remove_unused: 1;          /* Set to 1 if you want this connection removed */
-	unsigned int timeout_unused: 1;         /* 1 if gotten timeout */
-	unsigned int encryptout: 1;             /* 1 if we can encrypt outgoing traffic */
-	unsigned int decryptin: 1;              /* 1 if we have to decrypt incoming traffic */
-	unsigned int mst: 1;                    /* 1 if this connection is part of a minimum spanning tree */
-	unsigned int control: 1;                /* 1 if this is a control connection */
-	unsigned int pcap: 1;                   /* 1 if this is a control connection requesting packet capture */
-	unsigned int log: 1;                    /* 1 if this is a control connection requesting log dump */
-	unsigned int invitation: 1;             /* 1 if this is an invitation */
-	unsigned int invitation_used: 1;        /* 1 if the invitation has been consumed */
-	unsigned int tarpit: 1;                 /* 1 if the connection should be added to the tarpit */
-	unsigned int unused: 17;
+	bool pinged: 1;                 /* sent ping */
+	bool unused_active: 1;
+	bool connecting: 1;             /* 1 if we are waiting for a non-blocking connect() to finish */
+	bool unused_termreq: 1;         /* the termination of this connection was requested */
+	bool remove_unused: 1;          /* Set to 1 if you want this connection removed */
+	bool timeout_unused: 1;         /* 1 if gotten timeout */
+	bool encryptout: 1;             /* 1 if we can encrypt outgoing traffic */
+	bool decryptin: 1;              /* 1 if we have to decrypt incoming traffic */
+	bool mst: 1;                    /* 1 if this connection is part of a minimum spanning tree */
+	bool control: 1;                /* 1 if this is a control connection */
+	bool pcap: 1;                   /* 1 if this is a control connection requesting packet capture */
+	bool log: 1;                    /* 1 if this is a control connection requesting log dump */
+	bool invitation: 1;             /* 1 if this is an invitation */
+	bool invitation_used: 1;        /* 1 if the invitation has been consumed */
+	bool tarpit: 1;                 /* 1 if the connection should be added to the tarpit */
+	uint32_t unused: 17;
 } connection_status_t;
 
 #include "ecdsa.h"
@@ -90,10 +90,10 @@ typedef struct connection_t {
 	sptps_t sptps;
 
 	int outmaclength;
-	int outcompression;
+	int outcompression;             /* compression level from compression_level_t */
 
-	char *hischallenge;             /* The challenge we sent to him */
-	char *mychallenge;              /* The challenge we received */
+	uint8_t *hischallenge;          /* The challenge we sent to him */
+	uint8_t *mychallenge;           /* The challenge we received */
 
 	struct buffer_t inbuf;
 	struct buffer_t outbuf;

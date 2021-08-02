@@ -94,7 +94,7 @@ static void close_device(void) {
 }
 
 static bool read_packet(vpn_packet_t *packet) {
-	int inlen;
+	ssize_t inlen;
 
 	if((inlen = read(device_fd, DATA(packet), MTU)) <= 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,

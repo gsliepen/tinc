@@ -21,6 +21,8 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#include "system.h"
+
 extern size_t hex2bin(const char *src, void *dst, size_t length);
 extern size_t bin2hex(const void *src, char *dst, size_t length);
 

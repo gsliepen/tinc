@@ -77,11 +77,11 @@ static inline unsigned char shlu8(unsigned char a, uint32_t b) {
 }
 
 static inline int32_t shl32(uint32_t a, uint32_t b) {
-	return a << b;
+	return (int32_t)(a << b);
 }
 
 static inline int64_t shl64(uint64_t a, uint32_t b) {
-	return a << b;
+	return (int64_t)(a << b);
 }
 
 static inline uint64_t shlu64(uint64_t a, uint32_t b) {

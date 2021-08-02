@@ -107,7 +107,7 @@ size_t rsa_size(const rsa_t *rsa) {
 }
 
 bool rsa_public_encrypt(rsa_t *rsa, void *in, size_t len, void *out) {
-	if((size_t)RSA_public_encrypt(len, in, out, rsa, RSA_NO_PADDING) == len) {
+	if((size_t)RSA_public_encrypt((int) len, in, out, rsa, RSA_NO_PADDING) == len) {
 		return true;
 	}
 
@@ -116,7 +116,7 @@ bool rsa_public_encrypt(rsa_t *rsa, void *in, size_t len, void *out) {
 }
 
 bool rsa_private_decrypt(rsa_t *rsa, void *in, size_t len, void *out) {
-	if((size_t)RSA_private_decrypt(len, in, out, rsa, RSA_NO_PADDING) == len) {
+	if((size_t)RSA_private_decrypt((int) len, in, out, rsa, RSA_NO_PADDING) == len) {
 		return true;
 	}
 

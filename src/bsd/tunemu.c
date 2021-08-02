@@ -50,10 +50,10 @@
 #define PPPIOCGUNIT     _IOR('t', 86, int)
 
 struct sockaddr_ppp {
-	u_int8_t ppp_len;
-	u_int8_t ppp_family;
-	u_int16_t ppp_proto;
-	u_int32_t ppp_cookie;
+	uint8_t ppp_len;
+	uint8_t ppp_family;
+	uint16_t ppp_proto;
+	uint32_t ppp_cookie;
 };
 
 enum NPmode {
@@ -77,8 +77,8 @@ char tunemu_error[ERROR_BUFFER_SIZE];
 static int pcap_use_count = 0;
 static pcap_t *pcap = NULL;
 
-static int data_buffer_length = 0;
-static char *data_buffer = NULL;
+static size_t data_buffer_length = 0;
+static uint8_t *data_buffer = NULL;
 
 static void tun_error(char *format, ...) {
 	va_list vl;
@@ -244,7 +244,7 @@ static void close_pcap() {
 	}
 }
 
-static void allocate_data_buffer(int size) {
+static void allocate_data_buffer(size_t size) {
 	if(data_buffer_length < size) {
 		free(data_buffer);
 		data_buffer_length = size;
@@ -320,10 +320,10 @@ int tunemu_close(int ppp_sockfd) {
 	return ret;
 }
 
-int tunemu_read(int ppp_sockfd, char *buffer, int length) {
-	allocate_data_buffer(length + 2);
+ssize_t tunemu_read(int ppp_sockfd, uint8_t *buffer, size_t buflen) {
+	allocate_data_buffer(buflen + 2);
 
-	length = read(ppp_sockfd, data_buffer, length + 2);
+	ssize_t length = read(ppp_sockfd, data_buffer, buflen + 2);
 
 	if(length < 0) {
 		tun_error("reading packet: %s", strerror(errno));
@@ -343,22 +343,22 @@ int tunemu_read(int ppp_sockfd, char *buffer, int length) {
 	return length;
 }
 
-int tunemu_write(char *buffer, int length) {
-	allocate_data_buffer(length + 4);
+ssize_t tunemu_write(uint8_t *buffer, size_t buflen) {
+	allocate_data_buffer(buflen + 4);
 
 	data_buffer[0] = 0x02;
 	data_buffer[1] = 0x00;
 	data_buffer[2] = 0x00;
 	data_buffer[3] = 0x00;
 
-	memcpy(data_buffer + 4, buffer, length);
+	memcpy(data_buffer + 4, buffer, buflen);
 
 	if(pcap == NULL) {
 		tun_error("pcap not open");
 		return -1;
 	}
 
-	length = pcap_inject(pcap, data_buffer, length + 4);
+	ssize_t length = pcap_inject(pcap, data_buffer, buflen + 4);
 
 	if(length < 0) {
 		tun_error("injecting packet: %s", pcap_geterr(pcap));

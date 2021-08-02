@@ -704,8 +704,8 @@ void handle_new_meta_connection(void *data, int flags) {
 	static sockaddr_t prev_sa;
 
 	if(!sockaddrcmp_noport(&sa, &prev_sa)) {
-		static int samehost_burst;
-		static int samehost_burst_time;
+		static time_t samehost_burst;
+		static time_t samehost_burst_time;
 
 		if(now.tv_sec - samehost_burst_time > samehost_burst) {
 			samehost_burst = 0;
@@ -726,8 +726,8 @@ void handle_new_meta_connection(void *data, int flags) {
 
 	// Check if we get many connections from different hosts
 
-	static int connection_burst;
-	static int connection_burst_time;
+	static time_t connection_burst;
+	static time_t connection_burst_time;
 
 	if(now.tv_sec - connection_burst_time > connection_burst) {
 		connection_burst = 0;

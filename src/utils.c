@@ -45,11 +45,13 @@ static const char base64_decode[256] = {
 	        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         };
 
-static int charhex2bin(char c) {
-	if(isdigit(c)) {
-		return c - '0';
+static uint8_t charhex2bin(char c) {
+	uint8_t cu = (uint8_t) c;
+
+	if(isdigit(cu)) {
+		return cu - '0';
 	} else {
-		return toupper(c) - 'A' + 10;
+		return toupper(cu) - 'A' + 10;
 	}
 }
 
@@ -57,7 +59,7 @@ size_t hex2bin(const char *src, void *vdst, size_t length) {
 	uint8_t *dst = vdst;
 	size_t i;
 
-	for(i = 0; i < length && isxdigit(src[i * 2]) && isxdigit(src[i * 2 + 1]); i++) {
+	for(i = 0; i < length && isxdigit((uint8_t) src[i * 2]) && isxdigit((uint8_t) src[i * 2 + 1]); i++) {
 		dst[i] = charhex2bin(src[i * 2]) * 16 + charhex2bin(src[i * 2 + 1]);
 	}
 
@@ -210,7 +212,7 @@ bool check_id(const char *id) {
 	}
 
 	for(; *id; id++)
-		if(!isalnum(*id) && *id != '_') {
+		if(!isalnum((uint8_t) *id) && *id != '_') {
 			return false;
 		}
 
@@ -223,7 +225,7 @@ bool check_netname(const char *netname, bool strict) {
 	}
 
 	for(const char *c = netname; *c; c++) {
-		if(iscntrl(*c)) {
+		if(iscntrl((uint8_t) *c)) {
 			return false;
 		}
 
@@ -269,7 +271,7 @@ char *replace_name(const char *name) {
 		ret_name = xstrdup(envname);
 
 		for(char *c = ret_name; *c; c++)
-			if(!isalnum(*c)) {
+			if(!isalnum((uint8_t) *c)) {
 				*c = '_';
 			}
 	} else {
@@ -302,7 +304,7 @@ FILE *fopenmask(const char *filename, const char *mode, mode_t perms) {
 
 #ifdef HAVE_FCHMOD
 
-	if((perms & 0444) && f) {
+	if(perms & 0444) {
 		fchmod(fileno(f), perms);
 	}
 

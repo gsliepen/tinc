@@ -29,13 +29,13 @@ static const int DEFAULT_WEIGHT = 10;
 
 /* Subnet mask handling */
 
-int maskcmp(const void *va, const void *vb, int masklen) {
-	int i, m, result;
-	const char *a = va;
-	const char *b = vb;
+int maskcmp(const void *va, const void *vb, size_t masklen) {
+	size_t i, m;
+	const uint8_t *a = va;
+	const uint8_t *b = vb;
 
 	for(m = masklen, i = 0; m >= 8; m -= 8, i++) {
-		result = a[i] - b[i];
+		int result = a[i] - b[i];
 
 		if(result) {
 			return result;
@@ -49,9 +49,9 @@ int maskcmp(const void *va, const void *vb, int masklen) {
 	return 0;
 }
 
-void mask(void *va, int masklen, int len) {
-	int i;
-	char *a = va;
+void mask(void *va, size_t masklen, size_t len) {
+	size_t i;
+	uint8_t *a = va;
 
 	i = masklen / 8;
 	masklen %= 8;
@@ -65,10 +65,10 @@ void mask(void *va, int masklen, int len) {
 	}
 }
 
-void maskcpy(void *va, const void *vb, int masklen, int len) {
-	int i, m;
-	char *a = va;
-	const char *b = vb;
+void maskcpy(void *va, const void *vb, size_t masklen, size_t len) {
+	size_t i, m;
+	uint8_t *a = va;
+	const uint8_t *b = vb;
 
 	for(m = masklen, i = 0; m >= 8; m -= 8, i++) {
 		a[i] = b[i];
@@ -95,9 +95,9 @@ bool subnetcheck(const subnet_t subnet) {
 	return true;
 }
 
-bool maskcheck(const void *va, int masklen, int len) {
-	int i;
-	const char *a = va;
+bool maskcheck(const void *va, size_t masklen, size_t len) {
+	size_t i;
+	const uint8_t *a = va;
 
 	i = masklen / 8;
 	masklen %= 8;
@@ -310,7 +310,7 @@ bool str2net(subnet_t *subnet, const char *subnetstr) {
 	return false;
 }
 
-bool net2str(char *netstr, int len, const subnet_t *subnet) {
+bool net2str(char *netstr, size_t len, const subnet_t *subnet) {
 	if(!netstr || !subnet) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "net2str() was called with netstr=%p, subnet=%p!", (void *)netstr, (void *)subnet);
 		return false;

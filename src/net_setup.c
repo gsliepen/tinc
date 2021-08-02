@@ -26,6 +26,7 @@
 #include "conf_net.h"
 #include "conf.h"
 #include "connection.h"
+#include "compression.h"
 #include "control.h"
 #include "device.h"
 #include "digest.h"
@@ -859,10 +860,9 @@ static bool setup_myself(void) {
 #endif
 
 	/* Compression */
-
 	if(get_config_int(lookup_config(config_tree, "Compression"), &myself->incompression)) {
 		switch(myself->incompression) {
-		case 12:
+		case COMPRESS_LZ4:
 #ifdef HAVE_LZ4
 			break;
 #else
@@ -871,8 +871,8 @@ static bool setup_myself(void) {
 			return false;
 #endif
 
-		case 11:
-		case 10:
+		case COMPRESS_LZO_HI:
+		case COMPRESS_LZO_LO:
 #ifdef HAVE_LZO
 			break;
 #else
@@ -881,15 +881,15 @@ static bool setup_myself(void) {
 			return false;
 #endif
 
-		case 9:
-		case 8:
-		case 7:
-		case 6:
-		case 5:
-		case 4:
-		case 3:
-		case 2:
-		case 1:
+		case COMPRESS_ZLIB_9:
+		case COMPRESS_ZLIB_8:
+		case COMPRESS_ZLIB_7:
+		case COMPRESS_ZLIB_6:
+		case COMPRESS_ZLIB_5:
+		case COMPRESS_ZLIB_4:
+		case COMPRESS_ZLIB_3:
+		case COMPRESS_ZLIB_2:
+		case COMPRESS_ZLIB_1:
 #ifdef HAVE_ZLIB
 			break;
 #else
@@ -898,7 +898,7 @@ static bool setup_myself(void) {
 			return false;
 #endif
 
-		case 0:
+		case COMPRESS_NONE:
 			break;
 
 		default:
@@ -907,10 +907,10 @@ static bool setup_myself(void) {
 			return false;
 		}
 	} else {
-		myself->incompression = 0;
+		myself->incompression = COMPRESS_NONE;
 	}
 
-	myself->connection->outcompression = 0;
+	myself->connection->outcompression = COMPRESS_NONE;
 
 	/* Done */
 

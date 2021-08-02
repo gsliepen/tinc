@@ -20,6 +20,8 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#include "system.h"
+
 #include <gcrypt.h>
 
 #define CIPHER_MAX_BLOCK_SIZE 32
@@ -28,7 +30,7 @@
 
 typedef struct cipher {
 	gcry_cipher_hd_t handle;
-	char *key;
+	uint8_t *key;
 	int nid;
 	uint16_t keylen;
 	uint16_t blklen;

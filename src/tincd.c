@@ -313,7 +313,9 @@ static bool drop_privs(void) {
 
 		uid = pw->pw_uid;
 
-		if(initgroups(switchuser, pw->pw_gid) != 0 ||
+		// The second parameter to initgroups on macOS requires int,
+		// but __gid_t is unsigned int. There's not much we can do here.
+		if(initgroups(switchuser, pw->pw_gid) != 0 || // NOLINT(bugprone-narrowing-conversions)
 		                setgid(pw->pw_gid) != 0) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s",
 			       "initgroups", strerror(errno));
@@ -505,8 +507,12 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	if(!debug_level) {
-		get_config_int(lookup_config(config_tree, "LogLevel"), &debug_level);
+	if(debug_level == DEBUG_NOTHING) {
+		int level = 0;
+
+		if(get_config_int(lookup_config(config_tree, "LogLevel"), &level)) {
+			debug_level = level;
+		}
 	}
 
 #ifdef HAVE_LZO

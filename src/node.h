@@ -29,20 +29,20 @@
 #include "subnet.h"
 
 typedef struct node_status_t {
-	unsigned int unused_active: 1;          /* 1 if active (not used for nodes) */
-	unsigned int validkey: 1;               /* 1 if we currently have a valid key for him */
-	unsigned int waitingforkey: 1;          /* 1 if we already sent out a request */
-	unsigned int visited: 1;                /* 1 if this node has been visited by one of the graph algorithms */
-	unsigned int reachable: 1;              /* 1 if this node is reachable in the graph */
-	unsigned int indirect: 1;               /* 1 if this node is not directly reachable by us */
-	unsigned int sptps: 1;                  /* 1 if this node supports SPTPS */
-	unsigned int udp_confirmed: 1;          /* 1 if the address is one that we received UDP traffic on */
-	unsigned int send_locally: 1;           /* 1 if the next UDP packet should be sent on the local network */
-	unsigned int udppacket: 1;              /* 1 if the most recently received packet was UDP */
-	unsigned int validkey_in: 1;            /* 1 if we have sent a valid key to him */
-	unsigned int has_address: 1;            /* 1 if we know an external address for this node */
-	unsigned int ping_sent: 1;              /* 1 if we sent a UDP probe but haven't received the reply yet */
-	unsigned int unused: 19;
+	bool unused_active: 1;          /* 1 if active (not used for nodes) */
+	bool validkey: 1;               /* 1 if we currently have a valid key for him */
+	bool waitingforkey: 1;          /* 1 if we already sent out a request */
+	bool visited: 1;                /* 1 if this node has been visited by one of the graph algorithms */
+	bool reachable: 1;              /* 1 if this node is reachable in the graph */
+	bool indirect: 1;               /* 1 if this node is not directly reachable by us */
+	bool sptps: 1;                  /* 1 if this node supports SPTPS */
+	bool udp_confirmed: 1;          /* 1 if the address is one that we received UDP traffic on */
+	bool send_locally: 1;           /* 1 if the next UDP packet should be sent on the local network */
+	bool udppacket: 1;              /* 1 if the most recently received packet was UDP */
+	bool validkey_in: 1;            /* 1 if we have sent a valid key to him */
+	bool has_address: 1;            /* 1 if we know an external address for this node */
+	bool ping_sent: 1;              /* 1 if we sent a UDP probe but haven't received the reply yet */
+	uint32_t unused: 19;
 } node_status_t;
 
 typedef struct node_t {
@@ -51,7 +51,7 @@ typedef struct node_t {
 	node_id_t id;                           /* unique node ID (name hash) */
 	uint32_t options;                       /* options turned on for this node */
 
-	int sock;                               /* Socket to use for outgoing UDP packets */
+	size_t sock;                            /* Socket to use for outgoing UDP packets */
 	sockaddr_t address;                     /* his real (internet) ip to send UDP packets to */
 
 	node_status_t status;
@@ -87,7 +87,7 @@ typedef struct node_t {
 	uint32_t received_seqno;                /* Sequence number last received from this node */
 	uint32_t received;                      /* Total valid packets received from this node */
 	uint32_t farfuture;                     /* Packets in a row that have arrived from the far future */
-	unsigned char *late;                    /* Bitfield marking late packets */
+	uint8_t *late;                          /* Bitfield marking late packets */
 
 	struct timeval udp_reply_sent;          /* Last time a (gratuitous) UDP probe reply was sent */
 	struct timeval udp_ping_sent;           /* Last time a UDP probe was sent */

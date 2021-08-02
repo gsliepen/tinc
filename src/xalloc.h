@@ -21,6 +21,8 @@
    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#include "system.h"
+
 static inline void *xmalloc(size_t n) __attribute__((__malloc__));
 static inline void *xmalloc(size_t n) {
 	void *p = malloc(n);

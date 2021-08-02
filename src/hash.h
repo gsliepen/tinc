@@ -20,10 +20,12 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#include "system.h"
+
 typedef struct hash_t {
 	size_t n;
 	size_t size;
-	char *keys;
+	uint8_t *keys;
 	const void **values;
 } hash_t;
 

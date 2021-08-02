@@ -203,7 +203,7 @@ static char *readline(FILE *fp, char *buf, size_t buflen) {
 		return NULL;
 	}
 
-	p = fgets(buf, buflen, fp);
+	p = fgets(buf, (int) buflen, fp);
 
 	if(!p) {
 		return NULL;
@@ -227,7 +227,6 @@ static char *readline(FILE *fp, char *buf, size_t buflen) {
 
 config_t *parse_config_line(char *line, const char *fname, int lineno) {
 	config_t *cfg;
-	int len;
 	char *variable, *value, *eol;
 	variable = value = line;
 
@@ -237,7 +236,7 @@ config_t *parse_config_line(char *line, const char *fname, int lineno) {
 		*eol = '\0';
 	}
 
-	len = strcspn(value, "\t =");
+	size_t len = strcspn(value, "\t =");
 	value += len;
 	value += strspn(value, "\t ");
 

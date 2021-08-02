@@ -80,7 +80,7 @@ static void connect_to_unreachable() {
 	 * are only a few reachable nodes, and many unreachable ones, we're
 	 * going to try harder to connect to them. */
 
-	int r = rand() % node_tree->count;
+	unsigned int r = rand() % node_tree->count;
 
 	for splay_each(node_t, n, node_tree) {
 		if(r--) {

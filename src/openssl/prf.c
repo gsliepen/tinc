@@ -29,8 +29,8 @@
    We use SHA512 instead of MD5 and SHA1.
  */
 
-static bool prf_xor(int nid, const char *secret, size_t secretlen, char *seed, size_t seedlen, char *out, size_t outlen) {
-	digest_t *digest = digest_open_by_nid(nid, -1);
+static bool prf_xor(int nid, const uint8_t *secret, size_t secretlen, uint8_t *seed, size_t seedlen, uint8_t *out, size_t outlen) {
+	digest_t *digest = digest_open_by_nid(nid, DIGEST_ALGO_SIZE);
 
 	if(!digest) {
 		return false;
@@ -51,7 +51,7 @@ static bool prf_xor(int nid, const char *secret, size_t secretlen, char *seed, s
 	memset(data, 0, len);
 	memcpy(data + len, seed, seedlen);
 
-	char hash[len];
+	uint8_t hash[len];
 
 	while(outlen > 0) {
 		/* Inner HMAC */
@@ -80,7 +80,7 @@ static bool prf_xor(int nid, const char *secret, size_t secretlen, char *seed, s
 	return true;
 }
 
-bool prf(const char *secret, size_t secretlen, char *seed, size_t seedlen, char *out, size_t outlen) {
+bool prf(const uint8_t *secret, size_t secretlen, uint8_t *seed, size_t seedlen, uint8_t *out, size_t outlen) {
 	/* This construction allows us to easily switch back to a scheme where the PRF is calculated using two different digest algorithms. */
 	memset(out, 0, outlen);
 

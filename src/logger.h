@@ -22,6 +22,7 @@
 */
 
 typedef enum debug_t {
+	DEBUG_UNSET = -1,               /* Used by tinc as the default debug level. */
 	DEBUG_NOTHING = 0,              /* Quiet mode, only show starting/stopping of the daemon */
 	DEBUG_ALWAYS = 0,
 	DEBUG_CONNECTIONS = 1,          /* Show (dis)connects of other tinc daemons via TCP */
@@ -67,12 +68,12 @@ enum {
 
 #include <stdbool.h>
 
-extern int debug_level;
+extern debug_t debug_level;
 extern bool logcontrol;
 extern int umbilical;
 extern void openlogger(const char *ident, logmode_t mode);
 extern void reopenlogger(void);
-extern void logger(int level, int priority, const char *format, ...) __attribute__((__format__(printf, 3, 4)));
+extern void logger(debug_t level, int priority, const char *format, ...) __attribute__((__format__(printf, 3, 4)));
 extern void closelogger(void);
 
 #endif
