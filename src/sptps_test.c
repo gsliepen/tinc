@@ -583,7 +583,18 @@ static int run_test(int argc, char *argv[]) {
 
 	sptps_t s;
 
-	if(!sptps_start(&s, &sock, initiator, datagram, mykey, hiskey, "sptps_test", 10, send_data, receive_record)) {
+	sptps_params_t params = {
+		.handle = &sock,
+		.initiator = initiator,
+		.datagram = datagram,
+		.mykey = mykey,
+		.hiskey = hiskey,
+		.label = "sptps_test",
+		.send_data = send_data,
+		.receive_record = receive_record,
+	};
+
+	if(!sptps_start(&s, &params)) {
 		ecdsa_free(mykey);
 		ecdsa_free(hiskey);
 		return 1;
