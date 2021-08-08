@@ -35,14 +35,9 @@ tasks:
       make check-recursive VERBOSE=1
 
   - lint: |
-      export PATH=$PATH:$HOME/.local/bin
+      mkdir -p ~/.local/bin
+      ln -f -s "$(which clang-tidy12)" ~/.local/bin/clang-tidy
       pip install --user compiledb
       cd tinc
-      compiledb -n make check
-      find src \
-        ! '(' -path src/solaris -prune ')' \
-        ! '(' -path src/mingw   -prune ')' \
-        ! '(' -path src/linux   -prune ')' \
-        ! -name tunemu.c \
-        -name '*.c' \
-        -exec clang-tidy12 --header-filter='.*' '{}' +
+      export PATH=$PATH:$HOME/.local/bin
+      sh .ci/tidy/run.sh

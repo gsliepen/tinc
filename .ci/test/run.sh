@@ -25,42 +25,52 @@ run_tests() {
   done
 
   sudo git clean -dfx
-  sudo chown -R build:build .
+  sudo chown -R "${USER:-$(whoami)}" .
 
   header "Running test flavor $flavor"
 
-  # CentOS 7 has OpenSSL 1.1 installed in a non-default location.
-  if test -d /usr/include/openssl11; then
-    set -- "$@" --with-openssl-include=/usr/include/openssl11
-  fi
-
-  if test -d /usr/lib64/openssl11; then
-    set -- "$@" --with-openssl-lib=/usr/lib64/openssl11
-  fi
-
   autoreconf -fsi
-  ./configure "$@"
-  make -j"$(nproc)"
+  # shellcheck disable=SC2046
+  ./configure $(sh .ci/conf.sh "$@")
+  make -j"$(nproc)" all extra
 
   code=0
   make check -j2 VERBOSE=1 || code=$?
 
-  sudo tar -c -z -f "/tmp/tests.$flavor.tar.gz" test/
+  mkdir -p /tmp/logs
+  sudo tar -c -z -f "/tmp/logs/tests.$flavor.tar.gz" test/
 
   return $code
 }
 
-# GitHub Checkout action supports git 2.18+.
-# If we're running in a container with an older version,
-# create our own local repository to make `git clean` work.
-if ! [ -e .git ]; then
-  git init
-  git add .
-fi
+echo "system name $(uname -s)"
+echo "full $(uname -a)"
+echo "o $(uname -o)"
+
+case "$(uname -s)" in
+Linux)
+  if [ -n "${HOST:-}" ]; then
+    # Needed for cross-compilation for 32-bit targets.
+    export CPPFLAGS='-D_FILE_OFFSET_BITS=64'
+  fi
+  ;;
+
+MINGW*)
+  # No-op.
+  sudo() { "$@"; }
+  ;;
+
+Darwin)
+  nproc() { sysctl -n hw.ncpu; }
+  gcrypt=$(brew --prefix libgcrypt)
+  openssl=$(brew --prefix openssl)
+  export CPPFLAGS="-I/usr/local/include -I$gcrypt/include -I$openssl/include -I$gcrypt/include"
+  ;;
+esac
 
 case "$1" in
 default)
-  run_tests default ''
+  run_tests default
   ;;
 nolegacy)
   run_tests nolegacy --disable-legacy-protocol

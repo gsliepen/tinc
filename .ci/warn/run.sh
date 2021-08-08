@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/bash
 
-set -eu
+set -euo pipefail
 
 test -n "$CC"
 export CFLAGS="${CFLAGS:-} -Werror"
@@ -11,8 +11,8 @@ check_warnings() {
   git clean -dfx
 
   autoreconf -fsi
-  ./configure --enable-uml --enable-vde --enable-miniupnpc "$@"
-
+  # shellcheck disable=SC2046
+  ./configure $(sh .ci/conf.sh)
   make -j"$(nproc)" all extra || result=$?
 }
 

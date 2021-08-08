@@ -22,5 +22,6 @@ export CPPFLAGS='-DDEBUG'
 export CFLAGS="-O0 -g -fsanitize=$SANITIZER -fno-omit-frame-pointer -fno-common -fsanitize-blacklist=$dir/ignore.txt $flags"
 
 autoreconf -fsi
-./configure --enable-{uml,vde,miniupnpc}
-make -j"$(nproc)" all
+# shellcheck disable=SC2046
+./configure $(sh .ci/conf.sh)
+make -j2 all extra

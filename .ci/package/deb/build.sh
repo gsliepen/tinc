@@ -2,16 +2,25 @@
 
 set -euo pipefail
 
+. /etc/os-release
+
 bail() {
   echo >&2 "$@"
   exit 1
 }
 
 find_tag() {
-  git describe --abbrev=0 --always --tags --match='release-*' "$@"
+  git describe --always --tags --match='release-*' "$@"
 }
 
-templates=.github/workflows/deb/debian
+apt-get install -y devscripts git-buildpackage dh-make
+
+export USER=${USER:-$(whoami)}
+
+os="$ID-$VERSION_ID"
+templates=$(dirname "$0")/debian
+
+git clean -dfx
 
 # get latest tag name
 curr=$(find_tag HEAD)
@@ -25,7 +34,7 @@ prev=$(find_tag "$curr"^)
 version=${curr//release-/}
 
 # prepare a new debian directory
-dh_make --yes --single --createorig --copyright gpl2 --packagename "tinc_$version-$JOB_DISTRIBUTION"
+dh_make --yes --single --createorig --copyright gpl2 --packagename "tinc_$version-$os"
 
 # write all commit messages between two most recent tags to the changelog
 gbp dch --since "$prev" --ignore-branch --spawn-editor=never --release
@@ -35,3 +44,6 @@ cp "$templates/"* debian/
 
 # remove useless READMEs created by dh_make
 rm -f debian/README.*
+
+dpkg-buildpackage -d -us -uc
+mv ../*.deb .

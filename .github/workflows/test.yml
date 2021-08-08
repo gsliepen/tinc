@@ -8,12 +8,51 @@ on:
       - synchronize
 
 jobs:
+  cross:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+          - armhf
+          - mips
+
+    container:
+      image: debian:stable
+      options: --privileged
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v1
+
+      - name: Install deps
+        run: HOST=${{ matrix.arch }} sh .ci/deps.sh
+
+      - name: Prepare the system
+        run: |
+          sh .ci/test/prepare.sh
+          rm -f /dev/net/tun
+
+      - name: Run tests with default settings
+        run: sudo -u build CI=1 HOST=${{ matrix.arch }} sh .ci/test/run.sh default
+
+      - name: Run tests without legacy protocol
+        run: sudo -u build CI=1 HOST=${{ matrix.arch }} sh .ci/test/run.sh nolegacy
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v2
+        with:
+          name: tests_cross_${{ env.ARTIFACT }}
+          path: /tmp/logs/tests.*.tar.gz
+        if: always()
+
   static-analysis:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v1
 
       - name: Install tools
         run: |
@@ -30,17 +69,16 @@ jobs:
           SHFMT: 3.3.0
 
       - name: Install deps
-        run: >
-          sudo apt-get install -y
-          git binutils make autoconf automake diffutils texinfo netcat
-          zlib1g-dev lib{ssl,lzo2,ncurses,readline,vdeplug,miniupnpc,gcrypt}-dev
+        run: sudo sh .ci/deps.sh
 
       - name: Configure and compile
         run: |
           autoreconf -fsi
-          ./configure --enable-{uml,vde,miniupnpc}
-          make -j$(nproc)
-          compiledb -n make check
+          ./configure $(sh .ci/conf.sh)
+
+      - name: Run clang-tidy
+        run: sh .ci/tidy/run.sh
+        if: always()
 
       - name: Check code formatting
         run: "! astyle -r --options=.astylerc --dry-run --formatted '*.c' '*.h' | grep '^Formatted'"
@@ -58,24 +96,14 @@ jobs:
         run: find -type f -name '*.test' -execdir shellcheck -x '{}' +
         if: always()
 
-      - name: Run clang-tidy
-        run: |
-          find src \
-            ! '(' -path src/solaris -prune ')' \
-            ! '(' -path src/mingw   -prune ')' \
-            ! '(' -path src/bsd     -prune ')' \
-            -name '*.c' \
-            -exec clang-tidy --header-filter='.*' '{}' +
-        if: always()
-
       - name: Check warnings (gcc)
-        run: bash .github/workflows/warn/run.sh
+        run: bash .ci/warn/run.sh
         env:
           CC: gcc
         if: always()
 
       - name: Check warnings (clang)
-        run: bash .github/workflows/warn/run.sh
+        run: bash .ci/warn/run.sh
         env:
           CC: clang
         if: always()
@@ -95,25 +123,19 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
+        uses: actions/checkout@v1
 
       - name: Install deps
-        shell: bash
-        run: >
-          sudo apt-get install -y
-          git binutils make autoconf automake diffutils texinfo netcat
-          zlib1g-dev lib{ssl,lzo2,ncurses,readline,vdeplug,miniupnpc}-dev
+        run: sudo sh .ci/deps.sh
 
       - name: Configure and compile
         shell: bash
-        run: bash .github/workflows/sanitizers/build.sh
+        run: bash .ci/sanitizers/build.sh
         env:
           CC: clang-12
 
       - name: Run tests
-        run: bash .github/workflows/sanitizers/run.sh
+        run: bash .ci/sanitizers/run.sh
 
       - name: Archive test results
         run: sudo tar -c -z -f test-results.tar.gz test/ sanitizer/
@@ -128,258 +150,131 @@ jobs:
 
   linux:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
         os:
-          - alpine:3.13
+          - alpine
           - centos:7 # aka RHEL 7
           - almalinux:8 # aka RHEL 8
-          - debian:oldstable
+          - fedora
           - debian:stable
           - debian:testing
-          - debian:unstable
-          - ubuntu:18.04 # previous LTS
-          - ubuntu:20.04 # current LTS
-          - opensuse/leap # aka SLES
+          - ubuntu # current LTS
+          - ubuntu:rolling # latest
     container:
       image: ${{ matrix.os }}
       options: --privileged
       env:
         CI: 1
     steps:
-      - name: Install deps (Alpine)
-        run: >
-          apk add git binutils make autoconf automake gcc linux-headers libtool
-          diffutils texinfo procps openssl-dev zlib-dev lzo-dev ncurses-dev
-          readline-dev musl-dev lz4-dev socat shadow sudo
-        if: startsWith(matrix.os, 'alpine')
-
-      - name: Install deps (Debian and Ubuntu)
-        shell: bash
-        run: |
-          apt-get update
-          apt-get install -y git binutils make autoconf automake gcc diffutils sudo \
-            texinfo netcat procps socat zlib1g-dev lib{ssl,lzo2,lz4,ncurses,readline}-dev
-        env:
-          DEBIAN_FRONTEND: noninteractive
-        if: startsWith(matrix.os, 'debian') || startsWith(matrix.os, 'ubuntu')
-
-      - name: Install deps (RHEL)
-        shell: bash
-        run: |
-          if type dnf 2>/dev/null; then
-            dnf install -y 'dnf-command(config-manager)'
-            dnf config-manager --enable powertools
-          fi
-          yum install -y epel-release
-          yum install -y git binutils make autoconf automake gcc diffutils sudo \
-            texinfo netcat procps socat {lzo,zlib,lz4,ncurses,readline}-devel
-          yum install -y openssl11-devel || yum install -y openssl-devel
-        if: startsWith(matrix.os, 'centos') || startsWith(matrix.os, 'alma')
-
-      - name: Install deps (SUSE)
-        shell: bash
-        run: >
-          zypper install -y tar git binutils make autoconf automake gcc procps sudo
-          makeinfo diffutils gzip socat {openssl,zlib,lzo,liblz4,ncurses,readline}-devel
-        if: startsWith(matrix.os, 'opensuse')
-
       - name: Checkout code
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
+        uses: actions/checkout@v1
+
+      - name: Install deps
+        run: sh .ci/deps.sh
 
       - name: Assign name for test results artifact
-        run: echo TEST_ARTIFACT="$(echo '${{ matrix.os }}' | sed 's|[:/]|_|g')" >>"$GITHUB_ENV"
+        run: echo ARTIFACT="$(echo '${{ matrix.os }}' | sed 's|[:/]|_|g')" >>"$GITHUB_ENV"
 
       - name: Create a non-privileged user
-        run: |
-          useradd --user-group build
-          chown -R build:build .
-          echo 'build ALL=(ALL) NOPASSWD: ALL' >/etc/sudoers.d/build
+        run: sh .ci/test/prepare.sh
 
       - name: Run tests with default settings
-        run: sudo -u build CI=1 sh .github/workflows/test/run.sh default
+        run: sudo -u build CI=1 sh .ci/test/run.sh default
 
       - name: Run tests without legacy protocol
-        run: sudo -u build CI=1 sh .github/workflows/test/run.sh nolegacy
+        run: sudo -u build CI=1 sh .ci/test/run.sh nolegacy
 
       - name: Upload test results
         uses: actions/upload-artifact@v2
         with:
-          name: tests_${{ env.TEST_ARTIFACT }}
-          path: /tmp/tests.*.tar.gz
+          name: tests_${{ env.ARTIFACT }}
+          path: /tmp/logs/tests.*.tar.gz
         if: always()
 
-  deb-build:
-    if: startsWith(github.ref, 'refs/tags/release-')
-    needs: linux
+      - name: Build package
+        run: sh .ci/package/build.sh
+        if: github.ref == 'refs/heads/1.1' || startsWith(github.ref, 'refs/tags/release-')
 
-    strategy:
-      matrix:
-        os: [ubuntu-18.04, ubuntu-20.04]
-
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 5
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-
-      - name: Install build deps
-        run: >
-          sudo apt-get install -y --no-install-{recommends,suggests}
-          devscripts
-          git-buildpackage
-          dh-make
-          texinfo
-          libssl-dev
-          zlib1g-dev
-          liblzo2-dev
-          libncurses-dev
-          libreadline-dev
-          libminiupnpc-dev
-
-      - name: Configure project
-        run: autoreconf -fsi
-
-      - name: Prepare debian directory
-        run: bash .github/workflows/deb/prepare.sh
-        env:
-          JOB_DISTRIBUTION: ${{ matrix.os }}
-
-      - name: Build deb package
-        run: |
-          dpkg-buildpackage -d -us -uc
-          mv ../*.deb .
-
-      - name: Upload packages
+      - name: Upload package
         uses: actions/upload-artifact@v2
         with:
-          name: deb-${{ matrix.os }}
-          path: "*.deb"
+          name: pkg-${{ env.ARTIFACT }}
+          path: |
+            *.deb
+            ~/rpmbuild/RPMS/*/*.rpm
 
-  deb-publish:
-    needs: deb-build
-
-    strategy:
-      matrix:
-        os: [ubuntu-18.04, ubuntu-20.04]
-
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 5
+  pkg-publish:
+    if: always() && (github.ref == 'refs/heads/1.1' || startsWith(github.ref, 'refs/tags/release-'))
+    runs-on: ubuntu-latest
+    needs:
+      - linux
+      - windows
 
     steps:
-      - name: Download built packages
+      - name: Create artifact directory
+        run: mkdir -p /tmp/artifacts
+
+      - name: Download packages
         uses: actions/download-artifact@v2
         with:
-          name: deb-${{ matrix.os }}
+          path: /tmp/artifacts
 
-      - name: Install package
-        run: sudo apt-get install -y ./*.deb
+      - name: Publish packages (dev)
+        uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          automatic_release_tag: latest
+          title: Development release
+          prerelease: true
+          files: /tmp/artifacts/**/*.(deb|rpm|exe)
+        if: startsWith(github.ref, 'refs/heads/')
 
-      - name: Prepare tinc configs
-        run: |
-          set -eu
-          sudo mkdir -p /etc/tinc/test/hosts
-          sudo tinc -b -n test generate-ed25519-keys
-          echo "Name test" | sudo tee /etc/tinc/test/tinc.conf
-
-      - name: Enable and start tincd
-        run: |
-          sudo systemctl start tinc@test
-          sudo tinc -n test dump reachable nodes
-
-      - name: Publish deb package
+      - name: Publish packages (release)
         uses: softprops/action-gh-release@v1
         with:
-          files: "*.deb"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          files: |
+            /tmp/artifacts/**/*.deb
+            /tmp/artifacts/**/*.rpm
+            /tmp/artifacts/**/*.exe
+        if: startsWith(github.ref, 'refs/tags/')
 
   macos:
     runs-on: macos-latest
-    timeout-minutes: 10
-
-    strategy:
-      fail-fast: false
-      matrix:
-        legacy_protocol: ["", --disable-legacy-protocol]
+    timeout-minutes: 15
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
+        uses: actions/checkout@v1
 
       - name: Install build deps
-        run: |
-          brew install coreutils netcat automake lzo lz4 miniupnpc
-          pip3 install --user compiledb
+        run: sh .ci/deps.sh
 
-      - name: Configure and compile
-        run: |
-          export CPPFLAGS="-I/usr/local/include"
-          export CPPFLAGS="$CPPFLAGS -I$(brew --prefix libgcrypt)/include"
-          export CPPFLAGS="$CPPFLAGS -I$(brew --prefix openssl)/include"
-          export CPPFLAGS="$CPPFLAGS -I$(brew --prefix libgcrypt)/include"
-
-          autoreconf -fsi
-          ./configure \
-            --with-openssl="$(brew --prefix openssl)" \
-            --with-miniupnpc="$(brew --prefix miniupnpc)" \
-            --enable-{tunemu,miniupnpc} \
-            ${{ matrix.legacy_protocol }}
-
-          make -j$(sysctl -n hw.ncpu)
-
-      - name: Run tests
-        run: |
-          export PATH="$PATH:$HOME/Library/Python/3.9/bin"
-          compiledb make -j$(sysctl -n hw.ncpu) check VERBOSE=1
+      - name: Run tests with default settings
+        run: sh .ci/test/run.sh default
 
       - name: Run clang-tidy
         run: |
-          export PATH="$PATH:$(brew --prefix llvm)/bin/"
-          find src \
-            ! '(' -path src/solaris -prune ')' \
-            ! '(' -path src/mingw   -prune ')' \
-            ! '(' -path src/linux   -prune ')' \
-            ! -name vde_device.c \
-            -name '*.c' \
-            -exec clang-tidy --header-filter='.*' '{}' +
-        if: ${{ matrix.legacy_protocol == '' }}
+          export PATH="$PATH:$(brew --prefix llvm)/bin:$HOME/Library/Python/3.9/bin"
+          sh .ci/tidy/run.sh
 
-      - name: Archive test results
-        run: sudo tar -c -z -f test-results.tar.gz test/
-        if: always()
+      - name: Run tests without legacy protocol
+        run: sh .ci/test/run.sh nolegacy
 
       - name: Upload test results
         uses: actions/upload-artifact@v2
         with:
-          name: tests_${{ runner.os }}_${{ matrix.legacy_protocol }}
-          path: test-results.tar.gz
+          name: tests_macos
+          path: /tmp/logs/tests.*.tar.gz
         if: always()
 
   windows:
     runs-on: windows-latest
     timeout-minutes: 20
 
-    strategy:
-      fail-fast: false
-      matrix:
-        legacy_protocol: ["", --disable-legacy-protocol]
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-
       - name: Install msys2
         uses: msys2/setup-msys2@v2
         with:
@@ -394,32 +289,36 @@ jobs:
             mingw-w64-x86_64-lz4
             mingw-w64-x86_64-ncurses
             mingw-w64-x86_64-miniupnpc
+            mingw-w64-x86_64-nsis
             git
             netcat
             procps
 
-      - name: Configure project
-        shell: msys2 {0}
-        run: |
-          autoreconf -fsi
-          ./configure --enable-miniupnpc --disable-readline --with-curses-include=/mingw64/include/ncurses ${{ matrix.legacy_protocol }}
+      - name: Checkout code
+        uses: actions/checkout@v1
 
-      - name: Compile project
+      - name: Run tests with default settings
         shell: msys2 {0}
-        run: make -j$(nproc)
+        run: sh .ci/test/run.sh default
 
-      - name: Run tests
+      - name: Create installer
         shell: msys2 {0}
-        run: make check-recursive VERBOSE=1
+        run: sh .ci/package/build.sh
+        if: github.ref == 'refs/heads/1.1' || startsWith(github.ref, 'refs/tags/release-')
 
-      - name: Archive test results
+      - name: Upload package
+        uses: actions/upload-artifact@v2
+        with:
+          name: pkg-windows
+          path: .ci/package/win/tinc-*.exe
+
+      - name: Run tests without legacy protocol
         shell: msys2 {0}
-        run: tar -c -z -f test-results.tar.gz test/
-        if: always()
+        run: sh .ci/test/run.sh nolegacy
 
       - name: Upload test results
         uses: actions/upload-artifact@v2
         with:
-          name: tests_${{ runner.os }}_${{ matrix.legacy_protocol }}
-          path: test-results.tar.gz
+          name: tests_windows
+          path: /tmp/logs/tests.*.tar.gz
         if: always()
