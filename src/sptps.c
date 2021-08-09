@@ -1,6 +1,6 @@
 /*
     sptps.c -- Simple Peer-to-Peer Security
-    Copyright (C) 2011-2015 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2011-2021 Guus Sliepen <guus@tinc-vpn.org>,
                   2010      Brandon L. Black <blblack@gmail.com>
 
     This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 
 #include "system.h"
 
-#include "chacha-poly1305/chacha-poly1305.h"
+#include "chacha-poly1305/chachapoly.h"
 #include "ecdh.h"
 #include "ecdsa.h"
 #include "prf.h"
@@ -31,6 +31,8 @@
 #ifdef HAVE_OPENSSL
 #include <openssl/evp.h>
 #endif
+
+#define CIPHER_KEYLEN 64
 
 unsigned int sptps_replaywin = 16;
 
@@ -113,14 +115,14 @@ static void free_sptps_key(sptps_key_t *key) {
 }
 
 static bool cipher_init(uint8_t suite, void **ctx, const sptps_key_t *keys, bool key_half) {
-        const uint8_t *key = key_half ? keys->key1 : keys->key0;
+	const uint8_t *key = key_half ? keys->key1 : keys->key0;
 
 	switch(suite) {
 #ifndef HAVE_OPENSSL
 
 	case SPTPS_CHACHA_POLY1305:
-		*ctx = chacha_poly1305_init();
-		return ctx && chacha_poly1305_set_key(*ctx, key);
+		*ctx = malloc(sizeof(struct chachapoly_ctx));
+		return *ctx && chachapoly_init(*ctx, key, 256) == CHACHAPOLY_OK;
 
 #else
 
@@ -157,7 +159,7 @@ static void cipher_exit(uint8_t suite, void *ctx) {
 #ifndef HAVE_OPENSSL
 
 	case SPTPS_CHACHA_POLY1305:
-		chacha_poly1305_exit(ctx);
+		free(ctx);
 		break;
 
 #else
@@ -177,9 +179,17 @@ static bool cipher_encrypt(uint8_t suite, void *ctx, uint32_t seqno, const uint8
 	switch(suite) {
 #ifndef HAVE_OPENSSL
 
-	case SPTPS_CHACHA_POLY1305:
-		chacha_poly1305_encrypt(ctx, seqno, in, inlen, out, outlen);
+	case SPTPS_CHACHA_POLY1305: {
+		if(chachapoly_crypt(ctx, nonce, NULL, 0, (void *)in, inlen, out, out + inlen, 16, 1) != CHACHAPOLY_OK) {
+			return false;
+		}
+
+		if(outlen) {
+			*outlen = inlen + 16;
+		}
+
 		return true;
+	}
 
 #else
 
@@ -224,22 +234,30 @@ static bool cipher_encrypt(uint8_t suite, void *ctx, uint32_t seqno, const uint8
 }
 
 static bool cipher_decrypt(uint8_t suite, void *ctx, uint32_t seqno, const uint8_t *in, size_t inlen, uint8_t *out, size_t *outlen) {
+	if(inlen < 16) {
+		return false;
+	}
+
+	inlen -= 16;
+
 	switch(suite) {
 #ifndef HAVE_OPENSSL
 
 	case SPTPS_CHACHA_POLY1305:
-		return chacha_poly1305_decrypt(ctx, seqno, in, inlen, out, outlen);
+		if(chachapoly_crypt(ctx, nonce, NULL, 0, (void *)in, inlen, out, (void *)(in + inlen), 16, 0) != CHACHAPOLY_OK) {
+			return false;
+		}
+
+		if(outlen) {
+			*outlen = inlen;
+		}
+
+		return true;
 
 #else
 
 	case SPTPS_CHACHA_POLY1305:
 	case SPTPS_AES256_GCM: {
-		if(inlen < 16) {
-			return false;
-		}
-
-		inlen -= 16;
-
 		uint8_t nonce[12] = {seqno, seqno >> 8, seqno >> 16, seqno >> 24};
 
 		if(!EVP_DecryptInit_ex(ctx, NULL, NULL, NULL, nonce)) {

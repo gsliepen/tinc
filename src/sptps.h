@@ -3,7 +3,7 @@
 
 /*
     sptps.h -- Simple Peer-to-Peer Security
-    Copyright (C) 2011-2014 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2011-2021 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 
 #include "system.h"
 
-#include "chacha-poly1305/chacha-poly1305.h"
+#include "chacha-poly1305/chachapoly.h"
 #include "ecdh.h"
 #include "ecdsa.h"
 
@@ -62,12 +62,15 @@ typedef struct sptps_kex_t sptps_kex_t;
 
 STATIC_ASSERT(sizeof(sptps_kex_t) == 68, "sptps_kex_t has invalid size");
 
+// Big enough to handle a 256 bit key + IV
+#define SPTPS_KEYLEN 64
+
 typedef union sptps_key_t {
 	struct {
-		uint8_t key0[CHACHA_POLY1305_KEYLEN];
-		uint8_t key1[CHACHA_POLY1305_KEYLEN];
+		uint8_t key0[SPTPS_KEYLEN];
+		uint8_t key1[SPTPS_KEYLEN];
 	};
-	uint8_t both[CHACHA_POLY1305_KEYLEN * 2];
+	uint8_t both[SPTPS_KEYLEN * 2];
 } sptps_key_t;
 
 STATIC_ASSERT(sizeof(sptps_key_t) == 128, "sptps_key_t has invalid size");

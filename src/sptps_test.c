@@ -132,8 +132,8 @@ typedef enum option_t {
 	OPT_SPECIAL_CHAR    = 's',
 	OPT_TUN             = 't',
 	OPT_VERBOSE         = 'v',
-        OPT_CIPHER_SUITES   = 'M',
-        OPT_PREFERRED_SUITE = 'P',
+	OPT_CIPHER_SUITES   = 'M',
+	OPT_PREFERRED_SUITE = 'P',
 	OPT_IPV4            = '4',
 	OPT_IPV6            = '6',
 
