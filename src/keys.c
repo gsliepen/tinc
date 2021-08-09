@@ -21,7 +21,7 @@ bool disable_old_keys(const char *filename, const char *what) {
 		return false;
 	}
 
-	int result = snprintf(tmpfile, sizeof(tmpfile), "%s.tmp", filename);
+	size_t result = snprintf(tmpfile, sizeof(tmpfile), "%s.tmp", filename);
 
 	if(result < sizeof(tmpfile)) {
 		struct stat st = {.st_mode = 0600};
