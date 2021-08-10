@@ -96,11 +96,11 @@ static void real_logger(debug_t level, int priority, const char *message) {
 		}
 	}
 
-	if(logcontrol && connection_list) {
+	if(logcontrol) {
 		suppress = true;
 		logcontrol = false;
 
-		for list_each(connection_t, c, connection_list) {
+		for list_each(connection_t, c, &connection_list) {
 			if(!c->status.log) {
 				continue;
 			}

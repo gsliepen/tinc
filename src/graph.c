@@ -64,7 +64,7 @@
 static void mst_kruskal(void) {
 	/* Clear MST status on connections */
 
-	for list_each(connection_t, c, connection_list) {
+	for list_each(connection_t, c, &connection_list) {
 		c->status.mst = false;
 	}
 

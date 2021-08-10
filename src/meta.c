@@ -109,7 +109,7 @@ void send_meta_raw(connection_t *c, const void *buffer, size_t length) {
 }
 
 void broadcast_meta(connection_t *from, const char *buffer, size_t length) {
-	for list_each(connection_t, c, connection_list)
+	for list_each(connection_t, c, &connection_list)
 		if(c != from && c->edge) {
 			send_meta(c, buffer, length);
 		}

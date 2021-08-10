@@ -1149,7 +1149,7 @@ bool setup_network(void) {
   close all open network connections
 */
 void close_network_connections(void) {
-	for(list_node_t *node = connection_list->head, *next; node; node = next) {
+	for(list_node_t *node = connection_list.head, *next; node; node = next) {
 		next = node->next;
 		connection_t *c = node->data;
 
@@ -1162,9 +1162,7 @@ void close_network_connections(void) {
 		terminate_connection(c, false);
 	}
 
-	if(outgoing_list) {
-		list_delete_list(outgoing_list);
-	}
+	list_empty_list(&outgoing_list);
 
 	if(myself && myself->connection) {
 		subnet_update(myself, NULL, false);
