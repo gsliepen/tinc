@@ -295,7 +295,7 @@ bool req_key_h(connection_t *c, const char *request) {
 		if(!from->status.reachable) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Got %s from %s (%s) origin %s which is not reachable",
 			       "REQ_KEY", c->name, c->hostname, from_name);
-			return true;
+			// return true;
 		}
 
 		/* Is this an extended REQ_KEY message? */
