@@ -6,7 +6,7 @@ SUBDIRS =  src doc test systemd bash_completion.d
 
 ACLOCAL_AMFLAGS = -I m4
 
-EXTRA_DIST = COPYING.README README.android SECURITY.md
+EXTRA_DIST = COPYING.README README.md README.android SECURITY.md
 
 @CODE_COVERAGE_RULES@
 
@@ -21,7 +21,7 @@ configure-version:
 	-cd $(srcdir) && git describe && autoconf --force
 
 # Triggering the README target means we are building a distribution (make dist).
-README: configure-version
+README: configure-version README.md
 
 ChangeLog:
 	(cd $(srcdir) && git log) > ChangeLog

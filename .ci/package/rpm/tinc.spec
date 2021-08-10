@@ -43,7 +43,7 @@ rm -f %{buildroot}%{_infodir}/dir
 %systemd_postun_with_restart %{name}@.service
 
 %files
-%doc AUTHORS COPYING.README NEWS README THANKS doc/sample* doc/*.tex
+%doc AUTHORS COPYING.README NEWS README.md THANKS doc/sample* doc/*.tex
 %license COPYING
 %{_mandir}/man*/%{name}*.*
 %{_infodir}/%{name}.info.*
