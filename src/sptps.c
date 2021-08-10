@@ -127,25 +127,25 @@ static bool cipher_init(uint8_t suite, void **ctx, const sptps_key_t *keys, bool
 #else
 
 	case SPTPS_CHACHA_POLY1305:
+#ifdef EVP_F_EVP_AEAD_CTX_INIT
+		*ctx = malloc(sizeof(EVP_AEAD_CTX));
+
+		return *ctx && EVP_AEAD_CTX_init(*ctx, EVP_aead_chacha20_poly1305(), key + (key_half ? CIPHER_KEYLEN : 0), 32, 16, NULL);
+#else
 		*ctx = EVP_CIPHER_CTX_new();
 
-		if(!ctx) {
-			return false;
-		}
-
-		return EVP_EncryptInit_ex(*ctx, EVP_chacha20_poly1305(), NULL, NULL, NULL)
-		       && EVP_CIPHER_CTX_ctrl(*ctx, EVP_CTRL_AEAD_SET_IVLEN, 12, NULL)
+		return *ctx
+		       && EVP_EncryptInit_ex(*ctx, EVP_chacha20_poly1305(), NULL, NULL, NULL)
+		       && EVP_CIPHER_CTX_ctrl(*ctx, EVP_CTRL_GCM_SET_IVLEN, 12, NULL)
 		       && EVP_EncryptInit_ex(*ctx, NULL, NULL, key, key + 32);
+#endif
 
 	case SPTPS_AES256_GCM:
 		*ctx = EVP_CIPHER_CTX_new();
 
-		if(!ctx) {
-			return false;
-		}
-
-		return EVP_EncryptInit_ex(*ctx, EVP_aes_256_gcm(), NULL, NULL, NULL)
-		       && EVP_CIPHER_CTX_ctrl(*ctx, EVP_CTRL_AEAD_SET_IVLEN, 12, NULL)
+		return *ctx
+		       && EVP_EncryptInit_ex(*ctx, EVP_aes_256_gcm(), NULL, NULL, NULL)
+		       && EVP_CIPHER_CTX_ctrl(*ctx, EVP_CTRL_GCM_SET_IVLEN, 12, NULL)
 		       && EVP_EncryptInit_ex(*ctx, NULL, NULL, key, key + 32);
 #endif
 
@@ -165,6 +165,12 @@ static void cipher_exit(uint8_t suite, void *ctx) {
 #else
 
 	case SPTPS_CHACHA_POLY1305:
+#ifdef EVP_F_EVP_AEAD_CTX_INIT
+		EVP_AEAD_CTX_cleanup(ctx);
+		free(ctx);
+		break;
+#endif
+
 	case SPTPS_AES256_GCM:
 		EVP_CIPHER_CTX_free(ctx);
 		break;
@@ -194,6 +200,23 @@ static bool cipher_encrypt(uint8_t suite, void *ctx, uint32_t seqno, const uint8
 #else
 
 	case SPTPS_CHACHA_POLY1305:
+#ifdef EVP_F_EVP_AEAD_CTX_INIT
+		{
+			size_t outlen1;
+
+			if(!EVP_AEAD_CTX_seal(ctx, out, &outlen1, inlen + 16, nonce, sizeof(nonce), in, inlen, NULL, 0)) {
+				return false;
+			}
+
+			if(outlen) {
+				*outlen = outlen1;
+			}
+
+			return true;
+		}
+
+#endif
+
 	case SPTPS_AES256_GCM: {
 		uint8_t nonce[12] = {seqno, seqno >> 8, seqno >> 16, seqno >> 24};
 
@@ -257,6 +280,23 @@ static bool cipher_decrypt(uint8_t suite, void *ctx, uint32_t seqno, const uint8
 #else
 
 	case SPTPS_CHACHA_POLY1305:
+#ifdef EVP_F_EVP_AEAD_CTX_INIT
+		{
+			size_t outlen1;
+
+			if(!EVP_AEAD_CTX_open(ctx, out, &outlen1, inlen, nonce, sizeof(nonce), in, inlen + 16, NULL, 0)) {
+				return false;
+			}
+
+			if(outlen) {
+				*outlen = outlen1;
+			}
+
+			return true;
+		}
+
+#endif
+
 	case SPTPS_AES256_GCM: {
 		uint8_t nonce[12] = {seqno, seqno >> 8, seqno >> 16, seqno >> 24};
 
