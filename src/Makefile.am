@@ -26,6 +26,10 @@ if LINUX
 EXTRA_PROGRAMS += sptps_speed
 endif
 
+gettext_SOURCES = \
+	lib/gettext.h \
+	locale.c locale.h
+
 ed25519_SOURCES = \
 	ed25519/ed25519.h \
 	ed25519/fe.c ed25519/fe.h \
@@ -114,6 +118,7 @@ tincd_SOURCES = \
 	version.c version.h \
 	ed25519/ecdh.c \
 	ed25519/ecdsa.c \
+	$(gettext_SOURCES) \
 	$(ed25519_SOURCES) \
 	$(chacha_poly1305_SOURCES) \
 	$(lz4_SOURCES)
@@ -140,6 +145,7 @@ tinc_SOURCES = \
 	ed25519/ecdh.c \
 	ed25519/ecdsa.c \
 	ed25519/ecdsagen.c \
+	$(gettext_SOURCES) \
 	$(ed25519_SOURCES) \
 	$(chacha_poly1305_SOURCES)
 
@@ -150,6 +156,7 @@ sptps_test_SOURCES = \
 	utils.c utils.h \
 	ed25519/ecdh.c \
 	ed25519/ecdsa.c \
+	$(gettext_SOURCES) \
 	$(ed25519_SOURCES) \
 	$(chacha_poly1305_SOURCES)
 
@@ -157,6 +164,7 @@ sptps_keypair_SOURCES = \
 	sptps_keypair.c \
 	utils.c utils.h \
 	ed25519/ecdsagen.c \
+	$(gettext_SOURCES) \
 	$(ed25519_SOURCES)
 
 sptps_speed_SOURCES = \
@@ -167,6 +175,7 @@ sptps_speed_SOURCES = \
 	ed25519/ecdh.c \
 	ed25519/ecdsa.c \
 	ed25519/ecdsagen.c \
+	$(gettext_SOURCES) \
 	$(ed25519_SOURCES) \
 	$(chacha_poly1305_SOURCES)
 
@@ -295,11 +304,11 @@ endif
 tinc_LDADD = $(READLINE_LIBS) $(CURSES_LIBS)
 sptps_speed_LDADD = -lrt
 
-LIBS = @LIBS@ -lm $(CODE_COVERAGE_LIBS)
+LIBS = @LIBS@ @LIBINTL@ -lm $(CODE_COVERAGE_LIBS)
 
 if TUNEMU
 LIBS += -lpcap
 endif
 
-AM_CFLAGS = -DCONFDIR=\"$(sysconfdir)\" -DRUNSTATEDIR=\"$(runstatedir)\" -DLOCALSTATEDIR=\"$(localstatedir)\" -DSBINDIR=\"$(sbindir)\" -iquote. $(CODE_COVERAGE_CFLAGS)
+AM_CFLAGS = -DCONFDIR=\"$(sysconfdir)\" -DLOCALEDIR=\"$(localedir)\" -DRUNSTATEDIR=\"$(runstatedir)\" -DLOCALSTATEDIR=\"$(localstatedir)\" -DSBINDIR=\"$(sbindir)\" -iquote. $(CODE_COVERAGE_CFLAGS)
 AM_CPPFLAGS = $(CODE_COVERAGE_CPPFLAGS)

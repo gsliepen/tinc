@@ -9,6 +9,8 @@ AM_INIT_AUTOMAKE([std-options subdir-objects nostdinc silent-rules -Wall])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AM_SILENT_RULES([yes])
+AM_GNU_GETTEXT([external])
+AM_GNU_GETTEXT_VERSION([0.18])
 
 AC_USE_SYSTEM_EXTENSIONS
 
@@ -268,6 +270,15 @@ if test "x$runstatedir" = "x"; then
   AC_SUBST([runstatedir], ['${localstatedir}/run'])
 fi
 
-AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile test/Makefile test/testlib.sh systemd/Makefile bash_completion.d/Makefile])
+AC_CONFIG_FILES([
+    Makefile
+    src/Makefile
+    doc/Makefile
+    po/Makefile.in
+    test/Makefile
+    test/testlib.sh
+    systemd/Makefile
+    bash_completion.d/Makefile
+])
 
 AC_OUTPUT

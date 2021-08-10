@@ -33,6 +33,7 @@
 #include "ecdsa.h"
 #include "sptps.h"
 #include "utils.h"
+#include "locale.h"
 
 #ifndef MAX
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -297,6 +298,8 @@ int main(int argc, char *argv[]) {
 	int r;
 	int option_index = 0;
 	bool quit = false;
+
+	init_locale();
 
 	while((r = getopt_long(argc, argv, "dqrstwL:W:v46", long_options, &option_index)) != EOF) {
 		switch(r) {

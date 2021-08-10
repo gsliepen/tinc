@@ -33,6 +33,8 @@ check_PROGRAMS = \
 
 splice_SOURCES = splice.c
 
+LDADD = @LIBINTL@
+
 .PHONY: extra
 extra: $(check_PROGRAMS)
 

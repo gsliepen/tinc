@@ -2,7 +2,7 @@
 
 AUTOMAKE_OPTIONS = gnu
 
-SUBDIRS =  src doc test systemd bash_completion.d
+SUBDIRS = src doc po test systemd bash_completion.d
 
 ACLOCAL_AMFLAGS = -I m4
 
@@ -25,6 +25,9 @@ README: configure-version README.md
 	ln -sf README.md README
 
 CLEANFILES = README
+
+update-po:
+	$(MAKE) -C po update-po
 
 ChangeLog:
 	(cd $(srcdir) && git log) > ChangeLog

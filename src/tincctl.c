@@ -20,6 +20,8 @@
 #include "system.h"
 
 #include <getopt.h>
+#include <locale.h>
+#include <libintl.h>
 
 #ifdef HAVE_READLINE
 #include "readline/readline.h"
@@ -42,6 +44,7 @@
 #include "version.h"
 #include "subnet.h"
 #include "keys.h"
+#include "locale.h"
 
 #ifndef MSG_NOSIGNAL
 #define MSG_NOSIGNAL 0
@@ -3271,6 +3274,8 @@ int main(int argc, char *argv[]) {
 	program_name = argv[0];
 	orig_argv = argv;
 	tty = isatty(0) && isatty(1);
+
+	init_locale();
 
 	if(!parse_options(argc, argv)) {
 		return 1;

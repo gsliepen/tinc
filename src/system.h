@@ -31,6 +31,8 @@
 
 /* Other functions */
 
+#define _(STRING) gettext(STRING)
+
 #include "dropin.h"
 
 #endif

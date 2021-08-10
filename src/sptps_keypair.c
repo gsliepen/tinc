@@ -24,6 +24,7 @@
 #include "crypto.h"
 #include "ecdsagen.h"
 #include "logger.h"
+#include "locale.h"
 
 static char *program_name;
 
@@ -56,6 +57,8 @@ int main(int argc, char *argv[]) {
 	program_name = argv[0];
 	int r;
 	int option_index = 0;
+
+	init_locale();
 
 	while((r = getopt_long(argc, argv, "", long_options, &option_index)) != EOF) {
 		switch(r) {

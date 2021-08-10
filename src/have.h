@@ -207,6 +207,8 @@
 #include "getopt.h"
 #endif
 
+#include "lib/gettext.h"
+
 #ifdef STATUS
 #undef STATUS
 #endif

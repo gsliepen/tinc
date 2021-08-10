@@ -27,6 +27,7 @@
 #include "ecdsa.h"
 #include "ecdsagen.h"
 #include "sptps.h"
+#include "locale.h"
 
 // Symbols necessary to link with logger.o
 bool send_request(void *c, const char *msg, ...) {
@@ -97,6 +98,8 @@ int main(int argc, char *argv[]) {
 	sptps_t sptps1, sptps2;
 	uint8_t buf1[4096], buf2[4096], buf3[4096];
 	double duration = argc > 1 ? atof(argv[1]) : 10;
+
+	init_locale();
 
 	crypto_init();
 

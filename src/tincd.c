@@ -58,6 +58,7 @@
 #include "utils.h"
 #include "xalloc.h"
 #include "version.h"
+#include "locale.h"
 
 /* If nonzero, display usage information and exit. */
 static bool show_help = false;
@@ -386,6 +387,8 @@ static void cleanup() {
 
 int main(int argc, char **argv) {
 	program_name = argv[0];
+
+	init_locale();
 
 	if(!parse_options(argc, argv)) {
 		return 1;
