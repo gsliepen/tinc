@@ -38,7 +38,14 @@ splay_tree_t *config_tree = NULL;
 
 int pinginterval = 0;           /* seconds between pings */
 int pingtimeout = 0;            /* seconds to wait for response */
-list_t *cmdline_conf = NULL;    /* global/host configuration values given at the command line */
+
+/* global/host configuration values given at the command line */
+list_t cmdline_conf = {
+	.head = NULL,
+	.tail = NULL,
+	.count = 0,
+	.delete = (list_action_t)free_config,
+};
 
 static int config_compare(const config_t *a, const config_t *b) {
 	int result;
@@ -334,13 +341,9 @@ bool read_config_file(splay_tree_t *config_tree, const char *fname, bool verbose
 }
 
 void read_config_options(splay_tree_t *config_tree, const char *prefix) {
-	if(!cmdline_conf) {
-		return;
-	}
-
 	size_t prefix_len = prefix ? strlen(prefix) : 0;
 
-	for(const list_node_t *node = cmdline_conf->tail; node; node = node->prev) {
+	for(const list_node_t *node = cmdline_conf.tail; node; node = node->prev) {
 		const config_t *cfg = node->data;
 		config_t *new;
 

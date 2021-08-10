@@ -148,8 +148,6 @@ static bool parse_options(int argc, char **argv) {
 	int option_index = 0;
 	int lineno = 0;
 
-	cmdline_conf = list_alloc((list_action_t)free_config);
-
 	while((r = getopt_long(argc, argv, "c:DLd::n:so:RU:", long_options, &option_index)) != EOF) {
 		switch(r) {
 		case 0:   /* long option */
@@ -203,7 +201,7 @@ static bool parse_options(int argc, char **argv) {
 				goto exit_fail;
 			}
 
-			list_insert_tail(cmdline_conf, cfg);
+			list_insert_tail(&cmdline_conf, cfg);
 			break;
 
 #ifdef HAVE_MINGW
@@ -294,8 +292,7 @@ static bool parse_options(int argc, char **argv) {
 
 exit_fail:
 	free_names();
-	list_delete_list(cmdline_conf);
-	cmdline_conf = NULL;
+	list_empty_list(&cmdline_conf);
 	return false;
 }
 
@@ -386,7 +383,7 @@ static void cleanup() {
 		exit_configuration(&config_tree);
 	}
 
-	list_delete_list(cmdline_conf);
+	list_empty_list(&cmdline_conf);
 	free_names();
 }
 

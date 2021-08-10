@@ -107,7 +107,7 @@ typedef struct connection_t {
 	splay_tree_t *config_tree;      /* Pointer to configuration tree belonging to him */
 } connection_t;
 
-extern list_t *connection_list;
+extern list_t connection_list;
 extern connection_t *everyone;
 
 extern void init_connections(void);

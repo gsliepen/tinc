@@ -108,7 +108,7 @@ bool control_h(connection_t *c, const char *request) {
 			return control_return(c, REQ_DISCONNECT, -1);
 		}
 
-		for list_each(connection_t, other, connection_list) {
+		for list_each(connection_t, other, &connection_list) {
 			if(strcmp(other->name, name)) {
 				continue;
 			}

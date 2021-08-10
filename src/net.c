@@ -209,7 +209,7 @@ static void timeout_handler(void *data) {
 
 	last_periodic_run_time = now;
 
-	for list_each(connection_t, c, connection_list) {
+	for list_each(connection_t, c, &connection_list) {
 		// control connections (eg. tinc ctl) do not have any timeout
 		if(c->status.control) {
 			continue;
@@ -434,7 +434,7 @@ int reload_configuration(void) {
 
 	/* Close connections to hosts that have a changed or deleted host config file */
 
-	for list_each(connection_t, c, connection_list) {
+	for list_each(connection_t, c, &connection_list) {
 		if(c->status.control) {
 			continue;
 		}
@@ -455,7 +455,7 @@ int reload_configuration(void) {
 
 void retry(void) {
 	/* Reset the reconnection timers for all outgoing connections */
-	for list_each(outgoing_t, outgoing, outgoing_list) {
+	for list_each(outgoing_t, outgoing, &outgoing_list) {
 		outgoing->timeout = 0;
 
 		if(outgoing->ev.cb)
@@ -465,7 +465,7 @@ void retry(void) {
 	}
 
 	/* Check for outgoing connections that are in progress, and reset their ping timers */
-	for list_each(connection_t, c, connection_list) {
+	for list_each(connection_t, c, &connection_list) {
 		if(c->outgoing && !c->node) {
 			c->last_ping_time = 0;
 		}

@@ -504,7 +504,7 @@ static void age_subnets(void *data) {
 				}
 			}
 
-			for list_each(connection_t, c, connection_list)
+			for list_each(connection_t, c, &connection_list)
 				if(c->edge) {
 					send_del_subnet(c, s);
 				}
@@ -543,7 +543,7 @@ static void learn_mac(mac_t *address) {
 
 		/* And tell all other tinc daemons it's our MAC */
 
-		for list_each(connection_t, c, connection_list)
+		for list_each(connection_t, c, &connection_list)
 			if(c->edge) {
 				send_add_subnet(c, subnet);
 			}
@@ -1111,7 +1111,7 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 static void send_pcap(vpn_packet_t *packet) {
 	pcap = false;
 
-	for list_each(connection_t, c, connection_list) {
+	for list_each(connection_t, c, &connection_list) {
 		if(!c->status.pcap) {
 			continue;
 		}

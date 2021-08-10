@@ -49,7 +49,18 @@ int listen_sockets;
 #ifndef HAVE_MINGW
 io_t unix_socket;
 #endif
-list_t *outgoing_list = NULL;
+
+static void free_outgoing(outgoing_t *outgoing) {
+	timeout_del(&outgoing->ev);
+	free(outgoing);
+}
+
+list_t outgoing_list = {
+	.head = NULL,
+	.tail = NULL,
+	.count = 0,
+	.delete = (list_action_t)free_outgoing,
+};
 
 /* Setup sockets */
 
@@ -675,7 +686,7 @@ void setup_outgoing_connection(outgoing_t *outgoing, bool verbose) {
 	return;
 
 remove:
-	list_delete(outgoing_list, outgoing);
+	list_delete(&outgoing_list, outgoing);
 }
 
 /*
@@ -809,20 +820,11 @@ void handle_new_unix_connection(void *data, int flags) {
 }
 #endif
 
-static void free_outgoing(outgoing_t *outgoing) {
-	timeout_del(&outgoing->ev);
-	free(outgoing);
-}
-
 void try_outgoing_connections(void) {
 	/* If there is no outgoing list yet, create one. Otherwise, mark all outgoings as deleted. */
 
-	if(!outgoing_list) {
-		outgoing_list = list_alloc((list_action_t)free_outgoing);
-	} else {
-		for list_each(outgoing_t, outgoing, outgoing_list) {
-			outgoing->timeout = -1;
-		}
+	for list_each(outgoing_t, outgoing, &outgoing_list) {
+		outgoing->timeout = -1;
 	}
 
 	/* Make sure there is one outgoing_t in the list for each ConnectTo. */
@@ -846,7 +848,7 @@ void try_outgoing_connections(void) {
 
 		bool found = false;
 
-		for list_each(outgoing_t, outgoing, outgoing_list) {
+		for list_each(outgoing_t, outgoing, &outgoing_list) {
 			if(!strcmp(outgoing->node->name, name)) {
 				found = true;
 				outgoing->timeout = 0;
@@ -867,14 +869,14 @@ void try_outgoing_connections(void) {
 			free(name);
 
 			outgoing->node = n;
-			list_insert_tail(outgoing_list, outgoing);
+			list_insert_tail(&outgoing_list, outgoing);
 			setup_outgoing_connection(outgoing, true);
 		}
 	}
 
 	/* Terminate any connections whose outgoing_t is to be deleted. */
 
-	for list_each(connection_t, c, connection_list) {
+	for list_each(connection_t, c, &connection_list) {
 		if(c->outgoing && c->outgoing->timeout == -1) {
 			c->outgoing = NULL;
 			logger(DEBUG_CONNECTIONS, LOG_INFO, "No more outgoing connection to %s", c->name);
@@ -884,8 +886,8 @@ void try_outgoing_connections(void) {
 
 	/* Delete outgoing_ts for which there is no ConnectTo. */
 
-	for list_each(outgoing_t, outgoing, outgoing_list)
+	for list_each(outgoing_t, outgoing, &outgoing_list)
 		if(outgoing->timeout == -1) {
-			list_delete_node(outgoing_list, node);
+			list_delete_node(&outgoing_list, node);
 		}
 }
