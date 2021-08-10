@@ -744,6 +744,8 @@ static int run_test(int argc, char *argv[]) {
 						ecdsa_free(mykey);
 						ecdsa_free(hiskey);
 						return 1;
+					} else {
+						break;
 					}
 				}
 
