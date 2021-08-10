@@ -22,6 +22,9 @@ configure-version:
 
 # Triggering the README target means we are building a distribution (make dist).
 README: configure-version README.md
+	ln -sf README.md README
+
+CLEANFILES = README
 
 ChangeLog:
 	(cd $(srcdir) && git log) > ChangeLog
