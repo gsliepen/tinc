@@ -379,10 +379,7 @@ static BOOL WINAPI console_ctrl_handler(DWORD type) {
 #endif
 
 static void cleanup() {
-	if(config_tree) {
-		exit_configuration(&config_tree);
-	}
-
+	splay_empty_tree(&config_tree);
 	list_empty_list(&cmdline_conf);
 	free_names();
 }
@@ -492,22 +489,20 @@ int main(int argc, char **argv) {
 	unsetenv("LISTEN_PID");
 #endif
 
-	init_configuration(&config_tree);
-
 	/* Slllluuuuuuurrrrp! */
 
 	gettimeofday(&now, NULL);
 	srand(now.tv_sec + now.tv_usec);
 	crypto_init();
 
-	if(!read_server_config(config_tree)) {
+	if(!read_server_config(&config_tree)) {
 		return 1;
 	}
 
 	if(debug_level == DEBUG_NOTHING) {
 		int level = 0;
 
-		if(get_config_int(lookup_config(config_tree, "LogLevel"), &level)) {
+		if(get_config_int(lookup_config(&config_tree, "LogLevel"), &level)) {
 			debug_level = level;
 		}
 	}
@@ -576,7 +571,7 @@ int main2(int argc, char **argv) {
 
 	/* Change process priority */
 
-	if(get_config_string(lookup_config(config_tree, "ProcessPriority"), &priority)) {
+	if(get_config_string(lookup_config(&config_tree, "ProcessPriority"), &priority)) {
 		if(!strcasecmp(priority, "Normal")) {
 			if(setpriority(NORMAL_PRIORITY_CLASS) != 0) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "setpriority", strerror(errno));

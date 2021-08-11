@@ -58,7 +58,7 @@ static const char *device_info = NULL;
 static bool setup_device(void) {
 	char *type;
 
-	if(!get_config_string(lookup_config(config_tree, "Device"), &device)) {
+	if(!get_config_string(lookup_config(&config_tree, "Device"), &device)) {
 		if(routing_mode == RMODE_ROUTER) {
 			device = xstrdup(DEFAULT_TUN_DEVICE);
 		} else {
@@ -66,7 +66,7 @@ static bool setup_device(void) {
 		}
 	}
 
-	if(get_config_string(lookup_config(config_tree, "DeviceType"), &type)) {
+	if(get_config_string(lookup_config(&config_tree, "DeviceType"), &type)) {
 		if(!strcasecmp(type, "tun"))
 			/* use default */;
 		else if(!strcasecmp(type, "tap")) {
@@ -102,7 +102,7 @@ static bool setup_device(void) {
 	/* Get unit number. */
 
 	char *ptr = device;
-	get_config_string(lookup_config(config_tree, "Interface"), &ptr);
+	get_config_string(lookup_config(&config_tree, "Interface"), &ptr);
 
 	while(*ptr && !isdigit((uint8_t) *ptr)) {
 		ptr++;

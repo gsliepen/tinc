@@ -28,12 +28,6 @@
 #include "node.h"
 #include "xalloc.h"
 
-splay_tree_t *edge_weight_tree;
-
-static int edge_compare(const edge_t *a, const edge_t *b) {
-	return strcmp(a->to->name, b->to->name);
-}
-
 static int edge_weight_compare(const edge_t *a, const edge_t *b) {
 	int result;
 
@@ -52,8 +46,12 @@ static int edge_weight_compare(const edge_t *a, const edge_t *b) {
 	return strcmp(a->to->name, b->to->name);
 }
 
-void init_edges(void) {
-	edge_weight_tree = splay_alloc_tree((splay_compare_t) edge_weight_compare, NULL);
+splay_tree_t edge_weight_tree = {
+	.compare = (splay_compare_t) edge_weight_compare,
+};
+
+static int edge_compare(const edge_t *a, const edge_t *b) {
+	return strcmp(a->to->name, b->to->name);
 }
 
 splay_tree_t *new_edge_tree(void) {
@@ -65,7 +63,7 @@ void free_edge_tree(splay_tree_t *edge_tree) {
 }
 
 void exit_edges(void) {
-	splay_delete_tree(edge_weight_tree);
+	splay_empty_tree(&edge_weight_tree);
 }
 
 /* Creation and deletion of connection elements */
@@ -96,7 +94,7 @@ void edge_add(edge_t *e) {
 		e->reverse->reverse = e;
 	}
 
-	node = splay_insert(edge_weight_tree, e);
+	node = splay_insert(&edge_weight_tree, e);
 
 	if(!node) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Edge from %s to %s already exists in edge_weight_tree\n", e->from->name, e->to->name);
@@ -109,7 +107,7 @@ void edge_del(edge_t *e) {
 		e->reverse->reverse = NULL;
 	}
 
-	splay_delete(edge_weight_tree, e);
+	splay_delete(&edge_weight_tree, e);
 	splay_delete(e->from->edge_tree, e);
 }
 
@@ -123,7 +121,7 @@ edge_t *lookup_edge(node_t *from, node_t *to) {
 }
 
 bool dump_edges(connection_t *c) {
-	for splay_each(node_t, n, node_tree) {
+	for splay_each(node_t, n, &node_tree) {
 		for splay_each(edge_t, e, n->edge_tree) {
 			char *address = sockaddr2hostname(&e->address);
 			char *local_address = sockaddr2hostname(&e->local_address);

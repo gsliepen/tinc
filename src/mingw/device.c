@@ -108,8 +108,8 @@ static bool setup_device(void) {
 
 	int err;
 
-	get_config_string(lookup_config(config_tree, "Device"), &device);
-	get_config_string(lookup_config(config_tree, "Interface"), &iface);
+	get_config_string(lookup_config(&config_tree, "Device"), &device);
+	get_config_string(lookup_config(&config_tree, "Interface"), &iface);
 
 	if(device && iface) {
 		logger(DEBUG_ALWAYS, LOG_WARNING, "Warning: both Device and Interface specified, results may not be as expected");

@@ -33,7 +33,10 @@
 
 /* lists type of subnet */
 
-splay_tree_t *subnet_tree;
+splay_tree_t subnet_tree = {
+	.compare = (splay_compare_t) subnet_compare,
+	.delete = (splay_action_t) free_subnet,
+};
 
 /* Subnet lookup cache */
 
@@ -50,15 +53,13 @@ void subnet_cache_flush(void) {
 /* Initialising trees */
 
 void init_subnets(void) {
-	subnet_tree = splay_alloc_tree((splay_compare_t) subnet_compare, (splay_action_t) free_subnet);
-
 	ipv4_cache = hash_alloc(0x100, sizeof(ipv4_t));
 	ipv6_cache = hash_alloc(0x100, sizeof(ipv6_t));
 	mac_cache = hash_alloc(0x100, sizeof(mac_t));
 }
 
 void exit_subnets(void) {
-	splay_delete_tree(subnet_tree);
+	splay_empty_tree(&subnet_tree);
 
 	hash_free(ipv4_cache);
 	hash_free(ipv6_cache);
@@ -88,7 +89,7 @@ void free_subnet(subnet_t *subnet) {
 void subnet_add(node_t *n, subnet_t *subnet) {
 	subnet->owner = n;
 
-	splay_insert(subnet_tree, subnet);
+	splay_insert(&subnet_tree, subnet);
 
 	if(n) {
 		splay_insert(n->subnet_tree, subnet);
@@ -102,7 +103,7 @@ void subnet_del(node_t *n, subnet_t *subnet) {
 		splay_delete(n->subnet_tree, subnet);
 	}
 
-	splay_delete(subnet_tree, subnet);
+	splay_delete(&subnet_tree, subnet);
 
 	subnet_cache_flush();
 }
@@ -124,7 +125,7 @@ subnet_t *lookup_subnet_mac(const node_t *owner, const mac_t *address) {
 
 	// Search all subnets for a matching one
 
-	for splay_each(subnet_t, p, owner ? owner->subnet_tree : subnet_tree) {
+	for splay_each(subnet_t, p, owner ? owner->subnet_tree : &subnet_tree) {
 		if(!p || p->type != SUBNET_MAC) {
 			continue;
 		}
@@ -158,7 +159,7 @@ subnet_t *lookup_subnet_ipv4(const ipv4_t *address) {
 
 	// Search all subnets for a matching one
 
-	for splay_each(subnet_t, p, subnet_tree) {
+	for splay_each(subnet_t, p, &subnet_tree) {
 		if(!p || p->type != SUBNET_IPV4) {
 			continue;
 		}
@@ -192,7 +193,7 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address) {
 
 	// Search all subnets for a matching one
 
-	for splay_each(subnet_t, p, subnet_tree) {
+	for splay_each(subnet_t, p, &subnet_tree) {
 		if(!p || p->type != SUBNET_IPV6) {
 			continue;
 		}
@@ -283,7 +284,7 @@ void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 }
 
 bool dump_subnets(connection_t *c) {
-	for splay_each(subnet_t, subnet, subnet_tree) {
+	for splay_each(subnet_t, subnet, &subnet_tree) {
 		char netstr[MAXNETSTR];
 
 		if(!net2str(netstr, sizeof(netstr), subnet)) {

@@ -115,9 +115,8 @@ typedef struct node_t {
 } node_t;
 
 extern struct node_t *myself;
-extern splay_tree_t *node_tree;
+extern splay_tree_t node_tree;
 
-extern void init_nodes(void);
 extern void exit_nodes(void);
 extern node_t *new_node(void) __attribute__((__malloc__));
 extern void free_node(node_t *n);

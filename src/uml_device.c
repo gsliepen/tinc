@@ -63,11 +63,11 @@ static bool setup_device(void) {
 	} name;
 	struct timeval tv;
 
-	if(!get_config_string(lookup_config(config_tree, "Device"), &device)) {
+	if(!get_config_string(lookup_config(&config_tree, "Device"), &device)) {
 		xasprintf(&device, RUNSTATEDIR "/%s.umlsocket", identname);
 	}
 
-	get_config_string(lookup_config(config_tree, "Interface"), &iface);
+	get_config_string(lookup_config(&config_tree, "Interface"), &iface);
 
 	if((write_fd = socket(PF_UNIX, SOCK_DGRAM, 0)) < 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open write %s: %s", device_info, strerror(errno));

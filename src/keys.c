@@ -171,7 +171,7 @@ bool read_ecdsa_public_key(ecdsa_t **ecdsa, splay_tree_t **config_tree, const ch
 	char *p;
 
 	if(!*config_tree) {
-		init_configuration(config_tree);
+		*config_tree = create_configuration();
 
 		if(!read_host_config(*config_tree, name, true)) {
 			return false;

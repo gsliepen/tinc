@@ -32,10 +32,6 @@
 
 #include "ed25519/sha512.h"
 
-splay_tree_t *node_tree;
-static splay_tree_t *node_id_tree;
-static splay_tree_t *node_udp_tree;
-
 node_t *myself;
 
 static int node_compare(const node_t *a, const node_t *b) {
@@ -56,16 +52,23 @@ static int node_udp_compare(const node_t *a, const node_t *b) {
 	return (a->name && b->name) ? strcmp(a->name, b->name) : 0;
 }
 
-void init_nodes(void) {
-	node_tree = splay_alloc_tree((splay_compare_t) node_compare, (splay_action_t) free_node);
-	node_id_tree = splay_alloc_tree((splay_compare_t) node_id_compare, NULL);
-	node_udp_tree = splay_alloc_tree((splay_compare_t) node_udp_compare, NULL);
-}
+splay_tree_t node_tree = {
+	.compare = (splay_compare_t) node_compare,
+	.delete = (splay_action_t) free_node,
+};
+
+static splay_tree_t node_id_tree = {
+	.compare = (splay_compare_t) node_id_compare,
+};
+
+static splay_tree_t node_udp_tree = {
+	.compare = (splay_compare_t) node_udp_compare,
+};
 
 void exit_nodes(void) {
-	splay_delete_tree(node_udp_tree);
-	splay_delete_tree(node_id_tree);
-	splay_delete_tree(node_tree);
+	splay_empty_tree(&node_udp_tree);
+	splay_empty_tree(&node_id_tree);
+	splay_empty_tree(&node_tree);
 }
 
 node_t *new_node(void) {
@@ -123,12 +126,12 @@ void node_add(node_t *n) {
 	sha512(n->name, strlen(n->name), buf);
 	memcpy(&n->id, buf, sizeof(n->id));
 
-	splay_insert(node_tree, n);
-	splay_insert(node_id_tree, n);
+	splay_insert(&node_tree, n);
+	splay_insert(&node_id_tree, n);
 }
 
 void node_del(node_t *n) {
-	splay_delete(node_udp_tree, n);
+	splay_delete(&node_udp_tree, n);
 
 	for splay_each(subnet_t, s, n->subnet_tree) {
 		subnet_del(n, s);
@@ -138,8 +141,8 @@ void node_del(node_t *n) {
 		edge_del(e);
 	}
 
-	splay_delete(node_id_tree, n);
-	splay_delete(node_tree, n);
+	splay_delete(&node_id_tree, n);
+	splay_delete(&node_tree, n);
 }
 
 node_t *lookup_node(char *name) {
@@ -147,17 +150,17 @@ node_t *lookup_node(char *name) {
 
 	n.name = name;
 
-	return splay_search(node_tree, &n);
+	return splay_search(&node_tree, &n);
 }
 
 node_t *lookup_node_id(const node_id_t *id) {
 	node_t n = {.id = *id};
-	return splay_search(node_id_tree, &n);
+	return splay_search(&node_id_tree, &n);
 }
 
 node_t *lookup_node_udp(const sockaddr_t *sa) {
 	node_t tmp = {.address = *sa};
-	return splay_search(node_udp_tree, &tmp);
+	return splay_search(&node_udp_tree, &tmp);
 }
 
 void update_node_udp(node_t *n, const sockaddr_t *sa) {
@@ -166,7 +169,7 @@ void update_node_udp(node_t *n, const sockaddr_t *sa) {
 		return;
 	}
 
-	splay_delete(node_udp_tree, n);
+	splay_delete(&node_udp_tree, n);
 
 	if(sa) {
 		n->address = *sa;
@@ -179,7 +182,7 @@ void update_node_udp(node_t *n, const sockaddr_t *sa) {
 			}
 		}
 
-		splay_insert(node_udp_tree, n);
+		splay_insert(&node_udp_tree, n);
 		free(n->hostname);
 		n->hostname = sockaddr2hostname(&n->address);
 		logger(DEBUG_PROTOCOL, LOG_DEBUG, "UDP address of %s set to %s", n->name, n->hostname);
@@ -195,7 +198,7 @@ void update_node_udp(node_t *n, const sockaddr_t *sa) {
 }
 
 bool dump_nodes(connection_t *c) {
-	for splay_each(node_t, n, node_tree) {
+	for splay_each(node_t, n, &node_tree) {
 		char id[2 * sizeof(n->id) + 1];
 
 		for(size_t c = 0; c < sizeof(n->id); ++c) {
@@ -220,7 +223,7 @@ bool dump_nodes(connection_t *c) {
 }
 
 bool dump_traffic(connection_t *c) {
-	for splay_each(node_t, n, node_tree)
+	for splay_each(node_t, n, &node_tree)
 		send_request(c, "%d %d %s %"PRIu64" %"PRIu64" %"PRIu64" %"PRIu64, CONTROL, REQ_DUMP_TRAFFIC,
 		             n->name, n->in_packets, n->in_bytes, n->out_packets, n->out_bytes);
 

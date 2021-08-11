@@ -50,7 +50,7 @@ void purge(void) {
 
 	/* Remove all edges and subnets owned by unreachable nodes. */
 
-	for splay_each(node_t, n, node_tree) {
+	for splay_each(node_t, n, &node_tree) {
 		if(!n->status.reachable) {
 			logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Purging node %s (%s)", n->name, n->hostname);
 
@@ -74,9 +74,9 @@ void purge(void) {
 
 	/* Check if anyone else claims to have an edge to an unreachable node. If not, delete node. */
 
-	for splay_each(node_t, n, node_tree) {
+	for splay_each(node_t, n, &node_tree) {
 		if(!n->status.reachable) {
-			for splay_each(edge_t, e, edge_weight_tree)
+			for splay_each(edge_t, e, &edge_weight_tree)
 				if(e->to == n) {
 					return;
 				}
@@ -289,7 +289,7 @@ static void periodic_handler(void *data) {
 
 	/* If AutoConnect is set, check if we need to make or break connections. */
 
-	if(autoconnect && node_tree->count > 1) {
+	if(autoconnect && node_tree.count > 1) {
 		do_autoconnect();
 	}
 
@@ -335,18 +335,17 @@ int reload_configuration(void) {
 
 	/* Reread our own configuration file */
 
-	exit_configuration(&config_tree);
-	init_configuration(&config_tree);
+	splay_empty_tree(&config_tree);
 
-	if(!read_server_config(config_tree)) {
+	if(!read_server_config(&config_tree)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to reread configuration file.");
 		return EINVAL;
 	}
 
-	read_config_options(config_tree, NULL);
+	read_config_options(&config_tree, NULL);
 
 	snprintf(fname, sizeof(fname), "%s" SLASH "hosts" SLASH "%s", confbase, myself->name);
-	read_config_file(config_tree, fname, true);
+	read_config_file(&config_tree, fname, true);
 
 	/* Parse some options that are allowed to be changed while tinc is running */
 
@@ -355,20 +354,20 @@ int reload_configuration(void) {
 	/* If StrictSubnet is set, expire deleted Subnets and read new ones in */
 
 	if(strictsubnets) {
-		for splay_each(subnet_t, subnet, subnet_tree)
+		for splay_each(subnet_t, subnet, &subnet_tree)
 			if(subnet->owner) {
 				subnet->expires = 1;
 			}
 	}
 
-	for splay_each(node_t, n, node_tree) {
+	for splay_each(node_t, n, &node_tree) {
 		n->status.has_address = false;
 	}
 
 	load_all_nodes();
 
 	if(strictsubnets) {
-		for splay_each(subnet_t, subnet, subnet_tree) {
+		for splay_each(subnet_t, subnet, &subnet_tree) {
 			if(!subnet->owner) {
 				continue;
 			}
@@ -397,7 +396,7 @@ int reload_configuration(void) {
 				subnet->expires = 1;
 			}
 
-		config_t *cfg = lookup_config(config_tree, "Subnet");
+		config_t *cfg = lookup_config(&config_tree, "Subnet");
 
 		while(cfg) {
 			subnet_t *subnet, *s2;
@@ -416,7 +415,7 @@ int reload_configuration(void) {
 				}
 			}
 
-			cfg = lookup_config_next(config_tree, cfg);
+			cfg = lookup_config_next(&config_tree, cfg);
 		}
 
 		for splay_each(subnet_t, subnet, myself->subnet_tree) {

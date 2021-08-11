@@ -1638,7 +1638,7 @@ void broadcast_packet(const node_t *from, vpn_packet_t *packet) {
 			break;
 		}
 
-		for splay_each(node_t, n, node_tree)
+		for splay_each(node_t, n, &node_tree)
 			if(n->status.reachable && n != myself && ((n->via == myself && n->nexthop == n) || n->via == n)) {
 				send_packet(n, packet);
 			}
@@ -1661,7 +1661,7 @@ static node_t *try_harder(const sockaddr_t *from, const vpn_packet_t *pkt) {
 	bool hard = false;
 	static time_t last_hard_try = 0;
 
-	for splay_each(node_t, n, node_tree) {
+	for splay_each(node_t, n, &node_tree) {
 		if(!n->status.reachable || n == myself) {
 			continue;
 		}

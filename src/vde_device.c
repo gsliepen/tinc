@@ -35,15 +35,15 @@ static char *group = NULL;
 static const char *device_info = "VDE socket";
 
 static bool setup_device(void) {
-	if(!get_config_string(lookup_config(config_tree, "Device"), &device)) {
+	if(!get_config_string(lookup_config(&config_tree, "Device"), &device)) {
 		xasprintf(&device, RUNSTATEDIR "/vde.ctl");
 	}
 
-	get_config_string(lookup_config(config_tree, "Interface"), &iface);
+	get_config_string(lookup_config(&config_tree, "Interface"), &iface);
 
-	get_config_int(lookup_config(config_tree, "VDEPort"), &port);
+	get_config_int(lookup_config(&config_tree, "VDEPort"), &port);
 
-	get_config_string(lookup_config(config_tree, "VDEGroup"), &group);
+	get_config_string(lookup_config(&config_tree, "VDEGroup"), &group);
 
 	struct vde_open_args args = {
 		.port = port,
