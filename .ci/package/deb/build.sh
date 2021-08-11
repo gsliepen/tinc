@@ -13,6 +13,8 @@ find_tag() {
   git describe --always --tags --match='release-*' "$@"
 }
 
+export DEBIAN_FRONTEND=noninteractive
+
 apt-get install -y devscripts git-buildpackage dh-make
 
 export USER=${USER:-$(whoami)}
