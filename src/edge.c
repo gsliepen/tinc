@@ -54,12 +54,10 @@ static int edge_compare(const edge_t *a, const edge_t *b) {
 	return strcmp(a->to->name, b->to->name);
 }
 
-splay_tree_t *new_edge_tree(void) {
-	return splay_alloc_tree((splay_compare_t) edge_compare, (splay_action_t) free_edge);
-}
-
-void free_edge_tree(splay_tree_t *edge_tree) {
-	splay_delete_tree(edge_tree);
+void init_edge_tree(splay_tree_t *tree) {
+	memset(tree, 0, sizeof(*tree));
+	tree->compare = (splay_compare_t) edge_compare;
+	tree->delete = (splay_action_t) free_edge;
 }
 
 void exit_edges(void) {
@@ -80,7 +78,7 @@ void free_edge(edge_t *e) {
 }
 
 void edge_add(edge_t *e) {
-	splay_node_t *node = splay_insert(e->from->edge_tree, e);
+	splay_node_t *node = splay_insert(&e->from->edge_tree, e);
 
 	if(!node) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Edge from %s to %s already exists in edge_tree\n", e->from->name, e->to->name);
@@ -108,7 +106,7 @@ void edge_del(edge_t *e) {
 	}
 
 	splay_delete(&edge_weight_tree, e);
-	splay_delete(e->from->edge_tree, e);
+	splay_delete(&e->from->edge_tree, e);
 }
 
 edge_t *lookup_edge(node_t *from, node_t *to) {
@@ -117,12 +115,12 @@ edge_t *lookup_edge(node_t *from, node_t *to) {
 	v.from = from;
 	v.to = to;
 
-	return splay_search(from->edge_tree, &v);
+	return splay_search(&from->edge_tree, &v);
 }
 
 bool dump_edges(connection_t *c) {
 	for splay_each(node_t, n, &node_tree) {
-		for splay_each(edge_t, e, n->edge_tree) {
+		for splay_each(edge_t, e, &n->edge_tree) {
 			char *address = sockaddr2hostname(&e->address);
 			char *local_address = sockaddr2hostname(&e->local_address);
 			send_request(c, "%d %d %s %s %s %s %x %d",

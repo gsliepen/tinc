@@ -44,8 +44,7 @@ extern splay_tree_t edge_weight_tree;          /* Tree with all known edges sort
 extern void exit_edges(void);
 extern edge_t *new_edge(void) __attribute__((__malloc__));
 extern void free_edge(edge_t *e);
-extern splay_tree_t *new_edge_tree(void) __attribute__((__malloc__));
-extern void free_edge_tree(splay_tree_t *edge_tree);
+extern void init_edge_tree(splay_tree_t *tree);
 extern void edge_add(edge_t *e);
 extern void edge_del(edge_t *e);
 extern edge_t *lookup_edge(struct node_t *from, struct node_t *to);

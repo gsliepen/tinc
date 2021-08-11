@@ -743,10 +743,10 @@ static void choose_udp_address(const node_t *n, const sockaddr_t **sa, size_t *s
 	   So we pick a random edge and a random socket. */
 
 	unsigned int i = 0;
-	unsigned int j = rand() % n->edge_tree->count;
+	unsigned int j = rand() % n->edge_tree.count;
 	edge_t *candidate = NULL;
 
-	for splay_each(edge_t, e, n->edge_tree) {
+	for splay_each(edge_t, e, &n->edge_tree) {
 		if(i++ == j) {
 			candidate = e->reverse;
 			break;
@@ -767,10 +767,10 @@ static void choose_local_address(const node_t *n, const sockaddr_t **sa, size_t 
 	/* Pick one of the edges from this node at random, then use its local address. */
 
 	unsigned int i = 0;
-	unsigned int j = rand() % n->edge_tree->count;
+	unsigned int j = rand() % n->edge_tree.count;
 	edge_t *candidate = NULL;
 
-	for splay_each(edge_t, e, n->edge_tree) {
+	for splay_each(edge_t, e, &n->edge_tree) {
 		if(i++ == j) {
 			candidate = e;
 			break;
@@ -1672,7 +1672,7 @@ static node_t *try_harder(const sockaddr_t *from, const vpn_packet_t *pkt) {
 
 		bool soft = false;
 
-		for splay_each(edge_t, e, n->edge_tree) {
+		for splay_each(edge_t, e, &n->edge_tree) {
 			if(!e->reverse) {
 				continue;
 			}

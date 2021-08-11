@@ -114,7 +114,7 @@ static void drop_superfluous_outgoing_connection() {
 	int count = 0;
 
 	for list_each(connection_t, c, &connection_list) {
-		if(!c->edge || !c->outgoing || !c->node || c->node->edge_tree->count < 2) {
+		if(!c->edge || !c->outgoing || !c->node || c->node->edge_tree.count < 2) {
 			continue;
 		}
 
@@ -128,7 +128,7 @@ static void drop_superfluous_outgoing_connection() {
 	int r = rand() % count;
 
 	for list_each(connection_t, c, &connection_list) {
-		if(!c->edge || !c->outgoing || !c->node || c->node->edge_tree->count < 2) {
+		if(!c->edge || !c->outgoing || !c->node || c->node->edge_tree.count < 2) {
 			continue;
 		}
 

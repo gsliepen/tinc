@@ -32,7 +32,7 @@ static struct addrinfo *get_known_addresses(node_t *n) {
 	struct addrinfo *ai = NULL;
 	struct addrinfo *oai = NULL;
 
-	for splay_each(edge_t, e, n->edge_tree) {
+	for splay_each(edge_t, e, &n->edge_tree) {
 		if(!e->reverse) {
 			continue;
 		}

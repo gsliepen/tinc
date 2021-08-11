@@ -66,12 +66,9 @@ void exit_subnets(void) {
 	hash_free(mac_cache);
 }
 
-splay_tree_t *new_subnet_tree(void) {
-	return splay_alloc_tree((splay_compare_t) subnet_compare, NULL);
-}
-
-void free_subnet_tree(splay_tree_t *subnet_tree) {
-	splay_delete_tree(subnet_tree);
+void init_subnet_tree(splay_tree_t *tree) {
+	memset(tree, 0, sizeof(*tree));
+	tree->compare = (splay_compare_t) subnet_compare;
 }
 
 /* Allocating and freeing space for subnets */
@@ -92,7 +89,7 @@ void subnet_add(node_t *n, subnet_t *subnet) {
 	splay_insert(&subnet_tree, subnet);
 
 	if(n) {
-		splay_insert(n->subnet_tree, subnet);
+		splay_insert(&n->subnet_tree, subnet);
 	}
 
 	subnet_cache_flush();
@@ -100,7 +97,7 @@ void subnet_add(node_t *n, subnet_t *subnet) {
 
 void subnet_del(node_t *n, subnet_t *subnet) {
 	if(n) {
-		splay_delete(n->subnet_tree, subnet);
+		splay_delete(&n->subnet_tree, subnet);
 	}
 
 	splay_delete(&subnet_tree, subnet);
@@ -110,8 +107,8 @@ void subnet_del(node_t *n, subnet_t *subnet) {
 
 /* Subnet lookup routines */
 
-subnet_t *lookup_subnet(const node_t *owner, const subnet_t *subnet) {
-	return splay_search(owner->subnet_tree, subnet);
+subnet_t *lookup_subnet(node_t *owner, const subnet_t *subnet) {
+	return splay_search(&owner->subnet_tree, subnet);
 }
 
 subnet_t *lookup_subnet_mac(const node_t *owner, const mac_t *address) {
@@ -125,7 +122,7 @@ subnet_t *lookup_subnet_mac(const node_t *owner, const mac_t *address) {
 
 	// Search all subnets for a matching one
 
-	for splay_each(subnet_t, p, owner ? owner->subnet_tree : &subnet_tree) {
+	for splay_each(subnet_t, p, owner ? &owner->subnet_tree : &subnet_tree) {
 		if(!p || p->type != SUBNET_MAC) {
 			continue;
 		}
@@ -241,7 +238,7 @@ void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 	name = up ? "subnet-up" : "subnet-down";
 
 	if(!subnet) {
-		for splay_each(subnet_t, subnet, owner->subnet_tree) {
+		for splay_each(subnet_t, subnet, &owner->subnet_tree) {
 			if(!net2str(netstr, sizeof(netstr), subnet)) {
 				continue;
 			}

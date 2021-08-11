@@ -77,9 +77,9 @@ typedef struct node_t {
 	struct edge_t *prevedge;                /* nearest node from him to us */
 	struct node_t *via;                     /* next hop for UDP packets */
 
-	splay_tree_t *subnet_tree;              /* Pointer to a tree of subnets belonging to this node */
+	splay_tree_t subnet_tree;               /* Pointer to a tree of subnets belonging to this node */
 
-	splay_tree_t *edge_tree;                /* Edges with this node as one of the endpoints */
+	splay_tree_t edge_tree;                 /* Edges with this node as one of the endpoints */
 
 	struct connection_t *connection;        /* Connection associated with this node (if a direct connection exists) */
 
