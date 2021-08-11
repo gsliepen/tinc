@@ -886,7 +886,7 @@ static void send_everything(connection_t *c) {
 	}
 
 	if(tunnelserver) {
-		for splay_each(subnet_t, s, myself->subnet_tree) {
+		for splay_each(subnet_t, s, &myself->subnet_tree) {
 			send_add_subnet(c, s);
 		}
 
@@ -894,11 +894,11 @@ static void send_everything(connection_t *c) {
 	}
 
 	for splay_each(node_t, n, &node_tree) {
-		for splay_each(subnet_t, s, n->subnet_tree) {
+		for splay_each(subnet_t, s, &n->subnet_tree) {
 			send_add_subnet(c, s);
 		}
 
-		for splay_each(edge_t, e, n->edge_tree) {
+		for splay_each(edge_t, e, &n->edge_tree) {
 			send_add_edge(c, e);
 		}
 	}

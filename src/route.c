@@ -494,7 +494,7 @@ static void age_subnets(void *data) {
 	(void)data;
 	bool left = false;
 
-	for splay_each(subnet_t, s, myself->subnet_tree) {
+	for splay_each(subnet_t, s, &myself->subnet_tree) {
 		if(s->expires && s->expires < now.tv_sec) {
 			if(debug_level >= DEBUG_TRAFFIC) {
 				char netstr[MAXNETSTR];

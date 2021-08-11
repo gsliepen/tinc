@@ -54,7 +54,7 @@ void purge(void) {
 		if(!n->status.reachable) {
 			logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Purging node %s (%s)", n->name, n->hostname);
 
-			for splay_each(subnet_t, s, n->subnet_tree) {
+			for splay_each(subnet_t, s, &n->subnet_tree) {
 				send_del_subnet(everyone, s);
 
 				if(!strictsubnets) {
@@ -62,7 +62,7 @@ void purge(void) {
 				}
 			}
 
-			for splay_each(edge_t, e, n->edge_tree) {
+			for splay_each(edge_t, e, &n->edge_tree) {
 				if(!tunnelserver) {
 					send_del_edge(everyone, e);
 				}
@@ -81,7 +81,7 @@ void purge(void) {
 					return;
 				}
 
-			if(!autoconnect && (!strictsubnets || !n->subnet_tree->head))
+			if(!autoconnect && (!strictsubnets || !n->subnet_tree.head))
 				/* in strictsubnets mode do not delete nodes with subnets */
 			{
 				node_del(n);
@@ -391,7 +391,7 @@ int reload_configuration(void) {
 			}
 		}
 	} else { /* Only read our own subnets back in */
-		for splay_each(subnet_t, subnet, myself->subnet_tree)
+		for splay_each(subnet_t, subnet, &myself->subnet_tree)
 			if(!subnet->expires) {
 				subnet->expires = 1;
 			}
@@ -418,7 +418,7 @@ int reload_configuration(void) {
 			cfg = lookup_config_next(&config_tree, cfg);
 		}
 
-		for splay_each(subnet_t, subnet, myself->subnet_tree) {
+		for splay_each(subnet_t, subnet, &myself->subnet_tree) {
 			if(subnet->expires == 1) {
 				send_del_subnet(everyone, subnet);
 				subnet_update(myself, subnet, false);
