@@ -177,8 +177,8 @@ void upnp_init(bool tcp, bool udp) {
 	upnp_tcp = tcp;
 	upnp_udp = udp;
 
-	get_config_int(lookup_config(config_tree, "UPnPDiscoverWait"), &upnp_discover_wait);
-	get_config_int(lookup_config(config_tree, "UPnPRefreshPeriod"), &upnp_refresh_period);
+	get_config_int(lookup_config(&config_tree, "UPnPDiscoverWait"), &upnp_discover_wait);
+	get_config_int(lookup_config(&config_tree, "UPnPRefreshPeriod"), &upnp_refresh_period);
 
 #ifdef HAVE_MINGW
 	HANDLE handle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)upnp_thread, NULL, 0, NULL);

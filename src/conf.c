@@ -34,8 +34,6 @@
 #include "protocol.h"
 #include "xalloc.h"
 
-splay_tree_t *config_tree = NULL;
-
 int pinginterval = 0;           /* seconds between pings */
 int pingtimeout = 0;            /* seconds to wait for response */
 
@@ -72,8 +70,21 @@ static int config_compare(const config_t *a, const config_t *b) {
 	}
 }
 
-void init_configuration(splay_tree_t **config_tree) {
-	*config_tree = splay_alloc_tree((splay_compare_t) config_compare, (splay_action_t) free_config);
+splay_tree_t config_tree = {
+	.compare = (splay_compare_t) config_compare,
+	.delete = (splay_action_t) free_config,
+};
+
+splay_tree_t *create_configuration() {
+	splay_tree_t *tree = splay_alloc_tree(NULL, NULL);
+	init_configuration(tree);
+	return tree;
+}
+
+void init_configuration(splay_tree_t *tree) {
+	memset(tree, 0, sizeof(*tree));
+	tree->compare = (splay_compare_t) config_compare;
+	tree->delete = (splay_action_t) free_config;
 }
 
 void exit_configuration(splay_tree_t **config_tree) {

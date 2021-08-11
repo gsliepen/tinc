@@ -50,7 +50,7 @@ void send_key_changed(void) {
 	/* Force key exchange for connections using SPTPS */
 
 	if(experimental) {
-		for splay_each(node_t, n, node_tree) {
+		for splay_each(node_t, n, &node_tree) {
 			if(n->status.reachable && n->status.validkey && n->status.sptps) {
 				sptps_force_kex(&n->sptps);
 			}

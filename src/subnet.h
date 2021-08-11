@@ -63,7 +63,7 @@ typedef struct subnet_t {
 
 #define MAXNETSTR 64
 
-extern splay_tree_t *subnet_tree;
+extern splay_tree_t subnet_tree;
 
 extern int subnet_compare(const struct subnet_t *a, const struct subnet_t *b);
 extern subnet_t *new_subnet(void) __attribute__((__malloc__));

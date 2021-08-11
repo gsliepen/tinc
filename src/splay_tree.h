@@ -85,6 +85,7 @@ extern void splay_delete_node(splay_tree_t *tree, splay_node_t *node);
 
 /* Fast tree cleanup */
 
+extern void splay_empty_tree(splay_tree_t *tree);
 extern void splay_delete_tree(splay_tree_t *tree);
 
 /* Searching */

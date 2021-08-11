@@ -150,7 +150,7 @@ static bool setup_device(void) {
 		return false;
 	}
 
-	if(!get_config_string(lookup_config(config_tree, "Device"), &device)) {
+	if(!get_config_string(lookup_config(&config_tree, "Device"), &device)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not read device from configuration!");
 		return false;
 	}

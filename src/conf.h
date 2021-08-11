@@ -32,8 +32,7 @@ typedef struct config_t {
 	int line;
 } config_t;
 
-
-extern splay_tree_t *config_tree;
+extern splay_tree_t config_tree;
 
 extern int pinginterval;
 extern int pingtimeout;
@@ -41,7 +40,8 @@ extern int maxtimeout;
 extern bool bypass_security;
 extern list_t cmdline_conf;
 
-extern void init_configuration(splay_tree_t **config_tree);
+extern splay_tree_t *create_configuration();
+extern void init_configuration(splay_tree_t *);
 extern void exit_configuration(splay_tree_t **config_tree);
 extern config_t *new_config(void) __attribute__((__malloc__));
 extern void free_config(config_t *config);

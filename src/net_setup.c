@@ -71,20 +71,20 @@ bool node_read_ecdsa_public_key(node_t *n) {
 		return true;
 	}
 
-	splay_tree_t *config_tree;
 	FILE *fp;
 	char *pubname = NULL;
 	char *p;
 
-	init_configuration(&config_tree);
+	splay_tree_t config;
+	init_configuration(&config);
 
-	if(!read_host_config(config_tree, n->name, true)) {
+	if(!read_host_config(&config, n->name, true)) {
 		goto exit;
 	}
 
 	/* First, check for simple Ed25519PublicKey statement */
 
-	if(get_config_string(lookup_config(config_tree, "Ed25519PublicKey"), &p)) {
+	if(get_config_string(lookup_config(&config, "Ed25519PublicKey"), &p)) {
 		n->ecdsa = ecdsa_set_base64_public_key(p);
 		free(p);
 		goto exit;
@@ -92,7 +92,7 @@ bool node_read_ecdsa_public_key(node_t *n) {
 
 	/* Else, check for Ed25519PublicKeyFile statement and read it */
 
-	if(!get_config_string(lookup_config(config_tree, "Ed25519PublicKeyFile"), &pubname)) {
+	if(!get_config_string(lookup_config(&config, "Ed25519PublicKeyFile"), &pubname)) {
 		xasprintf(&pubname, "%s" SLASH "hosts" SLASH "%s", confbase, n->name);
 	}
 
@@ -106,7 +106,7 @@ bool node_read_ecdsa_public_key(node_t *n) {
 	fclose(fp);
 
 exit:
-	exit_configuration(&config_tree);
+	splay_empty_tree(&config);
 	free(pubname);
 	return n->ecdsa;
 }
@@ -151,7 +151,7 @@ void regenerate_key(void) {
 	logger(DEBUG_STATUS, LOG_INFO, "Expiring symmetric keys");
 	send_key_changed();
 
-	for splay_each(node_t, n, node_tree) {
+	for splay_each(node_t, n, &node_tree) {
 		n->status.validkey_in = false;
 	}
 }
@@ -176,10 +176,10 @@ void load_all_nodes(void) {
 
 		node_t *n = lookup_node(ent->d_name);
 
-		splay_tree_t *config_tree;
-		init_configuration(&config_tree);
-		read_config_options(config_tree, ent->d_name);
-		read_host_config(config_tree, ent->d_name, true);
+		splay_tree_t config;
+		init_configuration(&config);
+		read_config_options(&config, ent->d_name);
+		read_host_config(&config, ent->d_name, true);
 
 		if(!n) {
 			n = new_node();
@@ -188,7 +188,7 @@ void load_all_nodes(void) {
 		}
 
 		if(strictsubnets) {
-			for(config_t *cfg = lookup_config(config_tree, "Subnet"); cfg; cfg = lookup_config_next(config_tree, cfg)) {
+			for(config_t *cfg = lookup_config(&config, "Subnet"); cfg; cfg = lookup_config_next(&config, cfg)) {
 				subnet_t *s, *s2;
 
 				if(!get_config_subnet(cfg, &s)) {
@@ -204,11 +204,11 @@ void load_all_nodes(void) {
 			}
 		}
 
-		if(lookup_config(config_tree, "Address")) {
+		if(lookup_config(&config, "Address")) {
 			n->status.has_address = true;
 		}
 
-		exit_configuration(&config_tree);
+		splay_empty_tree(&config);
 	}
 
 	closedir(dir);
@@ -218,7 +218,7 @@ char *get_name(void) {
 	char *name = NULL;
 	char *returned_name;
 
-	get_config_string(lookup_config(config_tree, "Name"), &name);
+	get_config_string(lookup_config(&config_tree, "Name"), &name);
 
 	if(!name) {
 		return NULL;
@@ -233,17 +233,17 @@ bool setup_myself_reloadable(void) {
 	free(scriptinterpreter);
 	scriptinterpreter = NULL;
 
-	get_config_string(lookup_config(config_tree, "ScriptsInterpreter"), &scriptinterpreter);
+	get_config_string(lookup_config(&config_tree, "ScriptsInterpreter"), &scriptinterpreter);
 
 	free(scriptextension);
 
-	if(!get_config_string(lookup_config(config_tree, "ScriptsExtension"), &scriptextension)) {
+	if(!get_config_string(lookup_config(&config_tree, "ScriptsExtension"), &scriptextension)) {
 		scriptextension = xstrdup("");
 	}
 
 	char *proxy = NULL;
 
-	get_config_string(lookup_config(config_tree, "Proxy"), &proxy);
+	get_config_string(lookup_config(&config_tree, "Proxy"), &proxy);
 
 	if(proxy) {
 		char *space;
@@ -342,11 +342,11 @@ bool setup_myself_reloadable(void) {
 
 	bool choice;
 
-	if(get_config_bool(lookup_config(config_tree, "IndirectData"), &choice) && choice) {
+	if(get_config_bool(lookup_config(&config_tree, "IndirectData"), &choice) && choice) {
 		myself->options |= OPTION_INDIRECT;
 	}
 
-	if(get_config_bool(lookup_config(config_tree, "TCPOnly"), &choice) && choice) {
+	if(get_config_bool(lookup_config(&config_tree, "TCPOnly"), &choice) && choice) {
 		myself->options |= OPTION_TCPONLY;
 	}
 
@@ -354,20 +354,20 @@ bool setup_myself_reloadable(void) {
 		myself->options |= OPTION_INDIRECT;
 	}
 
-	get_config_bool(lookup_config(config_tree, "UDPDiscovery"), &udp_discovery);
-	get_config_int(lookup_config(config_tree, "UDPDiscoveryKeepaliveInterval"), &udp_discovery_keepalive_interval);
-	get_config_int(lookup_config(config_tree, "UDPDiscoveryInterval"), &udp_discovery_interval);
-	get_config_int(lookup_config(config_tree, "UDPDiscoveryTimeout"), &udp_discovery_timeout);
+	get_config_bool(lookup_config(&config_tree, "UDPDiscovery"), &udp_discovery);
+	get_config_int(lookup_config(&config_tree, "UDPDiscoveryKeepaliveInterval"), &udp_discovery_keepalive_interval);
+	get_config_int(lookup_config(&config_tree, "UDPDiscoveryInterval"), &udp_discovery_interval);
+	get_config_int(lookup_config(&config_tree, "UDPDiscoveryTimeout"), &udp_discovery_timeout);
 
-	get_config_int(lookup_config(config_tree, "MTUInfoInterval"), &mtu_info_interval);
-	get_config_int(lookup_config(config_tree, "UDPInfoInterval"), &udp_info_interval);
+	get_config_int(lookup_config(&config_tree, "MTUInfoInterval"), &mtu_info_interval);
+	get_config_int(lookup_config(&config_tree, "UDPInfoInterval"), &udp_info_interval);
 
-	get_config_bool(lookup_config(config_tree, "DirectOnly"), &directonly);
-	get_config_bool(lookup_config(config_tree, "LocalDiscovery"), &localdiscovery);
+	get_config_bool(lookup_config(&config_tree, "DirectOnly"), &directonly);
+	get_config_bool(lookup_config(&config_tree, "LocalDiscovery"), &localdiscovery);
 
 	char *rmode = NULL;
 
-	if(get_config_string(lookup_config(config_tree, "Mode"), &rmode)) {
+	if(get_config_string(lookup_config(&config_tree, "Mode"), &rmode)) {
 		if(!strcasecmp(rmode, "router")) {
 			routing_mode = RMODE_ROUTER;
 		} else if(!strcasecmp(rmode, "switch")) {
@@ -385,7 +385,7 @@ bool setup_myself_reloadable(void) {
 
 	char *fmode = NULL;
 
-	if(get_config_string(lookup_config(config_tree, "Forwarding"), &fmode)) {
+	if(get_config_string(lookup_config(&config_tree, "Forwarding"), &fmode)) {
 		if(!strcasecmp(fmode, "off")) {
 			forwarding_mode = FMODE_OFF;
 		} else if(!strcasecmp(fmode, "internal")) {
@@ -402,25 +402,25 @@ bool setup_myself_reloadable(void) {
 	}
 
 	choice = !(myself->options & OPTION_TCPONLY);
-	get_config_bool(lookup_config(config_tree, "PMTUDiscovery"), &choice);
+	get_config_bool(lookup_config(&config_tree, "PMTUDiscovery"), &choice);
 
 	if(choice) {
 		myself->options |= OPTION_PMTU_DISCOVERY;
 	}
 
 	choice = true;
-	get_config_bool(lookup_config(config_tree, "ClampMSS"), &choice);
+	get_config_bool(lookup_config(&config_tree, "ClampMSS"), &choice);
 
 	if(choice) {
 		myself->options |= OPTION_CLAMP_MSS;
 	}
 
-	get_config_bool(lookup_config(config_tree, "PriorityInheritance"), &priorityinheritance);
-	get_config_bool(lookup_config(config_tree, "DecrementTTL"), &decrement_ttl);
+	get_config_bool(lookup_config(&config_tree, "PriorityInheritance"), &priorityinheritance);
+	get_config_bool(lookup_config(&config_tree, "DecrementTTL"), &decrement_ttl);
 
 	char *bmode = NULL;
 
-	if(get_config_string(lookup_config(config_tree, "Broadcast"), &bmode)) {
+	if(get_config_string(lookup_config(&config_tree, "Broadcast"), &bmode)) {
 		if(!strcasecmp(bmode, "no")) {
 			broadcast_mode = BMODE_NONE;
 		} else if(!strcasecmp(bmode, "yes") || !strcasecmp(bmode, "mst")) {
@@ -438,9 +438,9 @@ bool setup_myself_reloadable(void) {
 
 	/* Delete all broadcast subnets before re-adding them */
 
-	for splay_each(subnet_t, s, subnet_tree) {
+	for splay_each(subnet_t, s, &subnet_tree) {
 		if(!s->owner) {
-			splay_delete_node(subnet_tree, node);
+			splay_delete_node(&subnet_tree, node);
 		}
 	}
 
@@ -456,7 +456,7 @@ bool setup_myself_reloadable(void) {
 		subnet_add(NULL, s);
 	}
 
-	for(config_t *cfg = lookup_config(config_tree, "BroadcastSubnet"); cfg; cfg = lookup_config_next(config_tree, cfg)) {
+	for(config_t *cfg = lookup_config(&config_tree, "BroadcastSubnet"); cfg; cfg = lookup_config_next(&config_tree, cfg)) {
 		subnet_t *s;
 
 		if(!get_config_subnet(cfg, &s)) {
@@ -482,11 +482,11 @@ bool setup_myself_reloadable(void) {
 
 #endif
 
-	if(!get_config_int(lookup_config(config_tree, "MACExpire"), &macexpire)) {
+	if(!get_config_int(lookup_config(&config_tree, "MACExpire"), &macexpire)) {
 		macexpire = 600;
 	}
 
-	if(get_config_int(lookup_config(config_tree, "MaxTimeout"), &maxtimeout)) {
+	if(get_config_int(lookup_config(&config_tree, "MaxTimeout"), &maxtimeout)) {
 		if(maxtimeout <= 0) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Bogus maximum timeout!");
 			return false;
@@ -497,7 +497,7 @@ bool setup_myself_reloadable(void) {
 
 	char *afname = NULL;
 
-	if(get_config_string(lookup_config(config_tree, "AddressFamily"), &afname)) {
+	if(get_config_string(lookup_config(&config_tree, "AddressFamily"), &afname)) {
 		if(!strcasecmp(afname, "IPv4")) {
 			addressfamily = AF_INET;
 		} else if(!strcasecmp(afname, "IPv6")) {
@@ -513,19 +513,19 @@ bool setup_myself_reloadable(void) {
 		free(afname);
 	}
 
-	get_config_bool(lookup_config(config_tree, "Hostnames"), &hostnames);
+	get_config_bool(lookup_config(&config_tree, "Hostnames"), &hostnames);
 
-	if(!get_config_int(lookup_config(config_tree, "KeyExpire"), &keylifetime)) {
+	if(!get_config_int(lookup_config(&config_tree, "KeyExpire"), &keylifetime)) {
 		keylifetime = 3600;
 	}
 
-	if(!get_config_bool(lookup_config(config_tree, "AutoConnect"), &autoconnect)) {
+	if(!get_config_bool(lookup_config(&config_tree, "AutoConnect"), &autoconnect)) {
 		autoconnect = true;
 	}
 
-	get_config_bool(lookup_config(config_tree, "DisableBuggyPeers"), &disablebuggypeers);
+	get_config_bool(lookup_config(&config_tree, "DisableBuggyPeers"), &disablebuggypeers);
 
-	if(!get_config_int(lookup_config(config_tree, "InvitationExpire"), &invitation_lifetime)) {
+	if(!get_config_int(lookup_config(&config_tree, "InvitationExpire"), &invitation_lifetime)) {
 		invitation_lifetime = 604800;        // 1 week
 	}
 
@@ -669,9 +669,9 @@ static bool setup_myself(void) {
 	myself->connection = new_connection();
 	myself->name = name;
 	myself->connection->name = xstrdup(name);
-	read_host_config(config_tree, name, true);
+	read_host_config(&config_tree, name, true);
 
-	if(!get_config_string(lookup_config(config_tree, "Port"), &myport)) {
+	if(!get_config_string(lookup_config(&config_tree, "Port"), &myport)) {
 		myport = xstrdup("655");
 	} else {
 		port_specified = true;
@@ -684,7 +684,7 @@ static bool setup_myself(void) {
 	myself->options |= PROT_MINOR << 24;
 
 #ifdef DISABLE_LEGACY
-	myself->connection->ecdsa = read_ecdsa_private_key(config_tree, NULL);
+	myself->connection->ecdsa = read_ecdsa_private_key(&config_tree, NULL);
 	experimental = myself->connection->ecdsa != NULL;
 
 	if(!experimental) {
@@ -694,8 +694,8 @@ static bool setup_myself(void) {
 
 #else
 
-	if(!get_config_bool(lookup_config(config_tree, "ExperimentalProtocol"), &experimental)) {
-		myself->connection->ecdsa = read_ecdsa_private_key(config_tree, NULL);
+	if(!get_config_bool(lookup_config(&config_tree, "ExperimentalProtocol"), &experimental)) {
+		myself->connection->ecdsa = read_ecdsa_private_key(&config_tree, NULL);
 		experimental = myself->connection->ecdsa != NULL;
 
 		if(!experimental) {
@@ -703,7 +703,7 @@ static bool setup_myself(void) {
 		}
 	} else {
 		if(experimental) {
-			myself->connection->ecdsa = read_ecdsa_private_key(config_tree, NULL);
+			myself->connection->ecdsa = read_ecdsa_private_key(&config_tree, NULL);
 
 			if(!myself->connection->ecdsa) {
 				return false;
@@ -711,7 +711,7 @@ static bool setup_myself(void) {
 		}
 	}
 
-	myself->connection->rsa = read_rsa_private_key(config_tree, NULL);
+	myself->connection->rsa = read_rsa_private_key(&config_tree, NULL);
 
 	if(!myself->connection->rsa) {
 		if(experimental) {
@@ -742,7 +742,7 @@ static bool setup_myself(void) {
 
 	/* Read in all the subnets specified in the host configuration file */
 
-	for(config_t *cfg = lookup_config(config_tree, "Subnet"); cfg; cfg = lookup_config_next(config_tree, cfg)) {
+	for(config_t *cfg = lookup_config(&config_tree, "Subnet"); cfg; cfg = lookup_config_next(&config_tree, cfg)) {
 		subnet_t *subnet;
 
 		if(!get_config_subnet(cfg, &subnet)) {
@@ -758,18 +758,18 @@ static bool setup_myself(void) {
 		return false;
 	}
 
-	get_config_bool(lookup_config(config_tree, "StrictSubnets"), &strictsubnets);
-	get_config_bool(lookup_config(config_tree, "TunnelServer"), &tunnelserver);
+	get_config_bool(lookup_config(&config_tree, "StrictSubnets"), &strictsubnets);
+	get_config_bool(lookup_config(&config_tree, "TunnelServer"), &tunnelserver);
 	strictsubnets |= tunnelserver;
 
-	if(get_config_int(lookup_config(config_tree, "MaxConnectionBurst"), &max_connection_burst)) {
+	if(get_config_int(lookup_config(&config_tree, "MaxConnectionBurst"), &max_connection_burst)) {
 		if(max_connection_burst <= 0) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "MaxConnectionBurst cannot be negative!");
 			return false;
 		}
 	}
 
-	if(get_config_int(lookup_config(config_tree, "UDPRcvBuf"), &udp_rcvbuf)) {
+	if(get_config_int(lookup_config(&config_tree, "UDPRcvBuf"), &udp_rcvbuf)) {
 		if(udp_rcvbuf < 0) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "UDPRcvBuf cannot be negative!");
 			return false;
@@ -778,7 +778,7 @@ static bool setup_myself(void) {
 		udp_rcvbuf_warnings = true;
 	}
 
-	if(get_config_int(lookup_config(config_tree, "UDPSndBuf"), &udp_sndbuf)) {
+	if(get_config_int(lookup_config(&config_tree, "UDPSndBuf"), &udp_sndbuf)) {
 		if(udp_sndbuf < 0) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "UDPSndBuf cannot be negative!");
 			return false;
@@ -787,7 +787,7 @@ static bool setup_myself(void) {
 		udp_sndbuf_warnings = true;
 	}
 
-	get_config_int(lookup_config(config_tree, "FWMark"), &fwmark);
+	get_config_int(lookup_config(&config_tree, "FWMark"), &fwmark);
 #ifndef SO_MARK
 
 	if(fwmark) {
@@ -799,7 +799,7 @@ static bool setup_myself(void) {
 
 	int replaywin_int;
 
-	if(get_config_int(lookup_config(config_tree, "ReplayWindow"), &replaywin_int)) {
+	if(get_config_int(lookup_config(&config_tree, "ReplayWindow"), &replaywin_int)) {
 		if(replaywin_int < 0) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "ReplayWindow cannot be negative!");
 			return false;
@@ -814,7 +814,7 @@ static bool setup_myself(void) {
 
 	char *cipher;
 
-	if(!get_config_string(lookup_config(config_tree, "Cipher"), &cipher)) {
+	if(!get_config_string(lookup_config(&config_tree, "Cipher"), &cipher)) {
 		cipher = xstrdup("aes-256-cbc");
 	}
 
@@ -835,7 +835,7 @@ static bool setup_myself(void) {
 	/* Check if we want to use message authentication codes... */
 
 	int maclength = 4;
-	get_config_int(lookup_config(config_tree, "MACLength"), &maclength);
+	get_config_int(lookup_config(&config_tree, "MACLength"), &maclength);
 
 	if(maclength < 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Bogus MAC length!");
@@ -844,7 +844,7 @@ static bool setup_myself(void) {
 
 	char *digest;
 
-	if(!get_config_string(lookup_config(config_tree, "Digest"), &digest)) {
+	if(!get_config_string(lookup_config(&config_tree, "Digest"), &digest)) {
 		digest = xstrdup("sha256");
 	}
 
@@ -860,7 +860,7 @@ static bool setup_myself(void) {
 #endif
 
 	/* Compression */
-	if(get_config_int(lookup_config(config_tree, "Compression"), &myself->incompression)) {
+	if(get_config_int(lookup_config(&config_tree, "Compression"), &myself->incompression)) {
 		switch(myself->incompression) {
 		case COMPRESS_LZ4:
 #ifdef HAVE_LZ4
@@ -929,7 +929,7 @@ static bool setup_myself(void) {
 
 	devops = os_devops;
 
-	if(get_config_string(lookup_config(config_tree, "DeviceType"), &type)) {
+	if(get_config_string(lookup_config(&config_tree, "DeviceType"), &type)) {
 		if(!strcasecmp(type, "dummy")) {
 			devops = dummy_devops;
 		} else if(!strcasecmp(type, "raw_socket")) {
@@ -959,7 +959,7 @@ static bool setup_myself(void) {
 		free(type);
 	}
 
-	get_config_bool(lookup_config(config_tree, "DeviceStandby"), &device_standby);
+	get_config_bool(lookup_config(&config_tree, "DeviceStandby"), &device_standby);
 
 	if(!devops.setup()) {
 		return false;
@@ -1018,7 +1018,7 @@ static bool setup_myself(void) {
 		listen_sockets = 0;
 		int cfgs = 0;
 
-		for(config_t *cfg = lookup_config(config_tree, "BindToAddress"); cfg; cfg = lookup_config_next(config_tree, cfg)) {
+		for(config_t *cfg = lookup_config(&config_tree, "BindToAddress"); cfg; cfg = lookup_config_next(&config_tree, cfg)) {
 			cfgs++;
 			get_config_string(cfg, &address);
 
@@ -1027,7 +1027,7 @@ static bool setup_myself(void) {
 			}
 		}
 
-		for(config_t *cfg = lookup_config(config_tree, "ListenAddress"); cfg; cfg = lookup_config_next(config_tree, cfg)) {
+		for(config_t *cfg = lookup_config(&config_tree, "ListenAddress"); cfg; cfg = lookup_config_next(&config_tree, cfg)) {
 			cfgs++;
 			get_config_string(cfg, &address);
 
@@ -1067,7 +1067,7 @@ static bool setup_myself(void) {
 	myself->connection->hostname = xstrdup(myself->hostname);
 
 	char *upnp = NULL;
-	get_config_string(lookup_config(config_tree, "UPnP"), &upnp);
+	get_config_string(lookup_config(&config_tree, "UPnP"), &upnp);
 	bool upnp_tcp = false;
 	bool upnp_udp = false;
 
@@ -1102,11 +1102,8 @@ static bool setup_myself(void) {
 bool setup_network(void) {
 	init_connections();
 	init_subnets();
-	init_nodes();
-	init_edges();
-	init_requests();
 
-	if(get_config_int(lookup_config(config_tree, "PingInterval"), &pinginterval)) {
+	if(get_config_int(lookup_config(&config_tree, "PingInterval"), &pinginterval)) {
 		if(pinginterval < 1) {
 			pinginterval = 86400;
 		}
@@ -1114,7 +1111,7 @@ bool setup_network(void) {
 		pinginterval = 60;
 	}
 
-	if(!get_config_int(lookup_config(config_tree, "PingTimeout"), &pingtimeout)) {
+	if(!get_config_int(lookup_config(&config_tree, "PingTimeout"), &pingtimeout)) {
 		pingtimeout = 5;
 	}
 
@@ -1122,7 +1119,7 @@ bool setup_network(void) {
 		pingtimeout = pinginterval;
 	}
 
-	if(!get_config_int(lookup_config(config_tree, "MaxOutputBufferSize"), &maxoutbufsize)) {
+	if(!get_config_int(lookup_config(&config_tree, "MaxOutputBufferSize"), &maxoutbufsize)) {
 		maxoutbufsize = 10 * MTU;
 	}
 

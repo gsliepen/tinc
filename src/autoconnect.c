@@ -28,7 +28,7 @@ static void make_new_connection() {
 	/* Select a random node we haven't connected to yet. */
 	int count = 0;
 
-	for splay_each(node_t, n, node_tree) {
+	for splay_each(node_t, n, &node_tree) {
 		if(n == myself || n->connection || !(n->status.has_address || n->status.reachable)) {
 			continue;
 		}
@@ -42,7 +42,7 @@ static void make_new_connection() {
 
 	int r = rand() % count;
 
-	for splay_each(node_t, n, node_tree) {
+	for splay_each(node_t, n, &node_tree) {
 		if(n == myself || n->connection || !(n->status.has_address || n->status.reachable)) {
 			continue;
 		}
@@ -80,9 +80,9 @@ static void connect_to_unreachable() {
 	 * are only a few reachable nodes, and many unreachable ones, we're
 	 * going to try harder to connect to them. */
 
-	unsigned int r = rand() % node_tree->count;
+	unsigned int r = rand() % node_tree.count;
 
-	for splay_each(node_t, n, node_tree) {
+	for splay_each(node_t, n, &node_tree) {
 		if(r--) {
 			continue;
 		}

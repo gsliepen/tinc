@@ -44,11 +44,11 @@ static char ifrname[IFNAMSIZ];
 static const char *device_info;
 
 static bool setup_device(void) {
-	if(!get_config_string(lookup_config(config_tree, "Device"), &device)) {
+	if(!get_config_string(lookup_config(&config_tree, "Device"), &device)) {
 		device = xstrdup(DEFAULT_DEVICE);
 	}
 
-	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
+	if(!get_config_string(lookup_config(&config_tree, "Interface"), &iface))
 		if(netname) {
 			iface = xstrdup(netname);
 		}
@@ -66,7 +66,7 @@ static bool setup_device(void) {
 
 	struct ifreq ifr = {0};
 
-	get_config_string(lookup_config(config_tree, "DeviceType"), &type);
+	get_config_string(lookup_config(&config_tree, "DeviceType"), &type);
 
 	if(type && strcasecmp(type, "tun") && strcasecmp(type, "tap")) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Unknown device type %s!", type);
@@ -92,7 +92,7 @@ static bool setup_device(void) {
 
 	bool t1q = false;
 
-	if(get_config_bool(lookup_config(config_tree, "IffOneQueue"), &t1q) && t1q) {
+	if(get_config_bool(lookup_config(&config_tree, "IffOneQueue"), &t1q) && t1q) {
 		ifr.ifr_flags |= IFF_ONE_QUEUE;
 	}
 

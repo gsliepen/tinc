@@ -56,7 +56,19 @@ static char (*request_name[]) = {
 	"REQ_PUBKEY", "ANS_PUBKEY", "SPTPS_PACKET", "UDP_INFO", "MTU_INFO",
 };
 
-static splay_tree_t *past_request_tree;
+static int past_request_compare(const past_request_t *a, const past_request_t *b) {
+	return strcmp(a->request, b->request);
+}
+
+static void free_past_request(past_request_t *r) {
+	free((char *)r->request);
+	free(r);
+}
+
+static splay_tree_t past_request_tree = {
+	.compare = (splay_compare_t) past_request_compare,
+	.delete = (splay_action_t) free_past_request,
+};
 
 /* Generic request routines - takes care of logging and error
    detection as well */
@@ -159,24 +171,15 @@ bool receive_request(connection_t *c, const char *request) {
 	return true;
 }
 
-static int past_request_compare(const past_request_t *a, const past_request_t *b) {
-	return strcmp(a->request, b->request);
-}
-
-static void free_past_request(past_request_t *r) {
-	free((char *)r->request);
-	free(r);
-}
-
 static timeout_t past_request_timeout;
 
 static void age_past_requests(void *data) {
 	(void)data;
 	int left = 0, deleted = 0;
 
-	for splay_each(past_request_t, p, past_request_tree) {
+	for splay_each(past_request_t, p, &past_request_tree) {
 		if(p->firstseen + pinginterval <= now.tv_sec) {
-			splay_delete_node(past_request_tree, node), deleted++;
+			splay_delete_node(&past_request_tree, node), deleted++;
 		} else {
 			left++;
 		}
@@ -197,14 +200,14 @@ bool seen_request(const char *request) {
 
 	p.request = request;
 
-	if(splay_search(past_request_tree, &p)) {
+	if(splay_search(&past_request_tree, &p)) {
 		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Already seen request");
 		return true;
 	} else {
 		new = xmalloc(sizeof(*new));
 		new->request = xstrdup(request);
 		new->firstseen = now.tv_sec;
-		splay_insert(past_request_tree, new);
+		splay_insert(&past_request_tree, new);
 		timeout_add(&past_request_timeout, age_past_requests, NULL, &(struct timeval) {
 			10, rand() % 100000
 		});
@@ -212,12 +215,8 @@ bool seen_request(const char *request) {
 	}
 }
 
-void init_requests(void) {
-	past_request_tree = splay_alloc_tree((splay_compare_t) past_request_compare, (splay_action_t) free_past_request);
-}
-
 void exit_requests(void) {
-	splay_delete_tree(past_request_tree);
+	splay_empty_tree(&past_request_tree);
 
 	timeout_del(&past_request_timeout);
 }

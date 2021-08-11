@@ -37,11 +37,11 @@ static bool setup_device(void) {
 	struct ifreq ifr;
 	struct sockaddr_ll sa;
 
-	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface)) {
+	if(!get_config_string(lookup_config(&config_tree, "Interface"), &iface)) {
 		iface = xstrdup("eth0");
 	}
 
-	if(!get_config_string(lookup_config(config_tree, "Device"), &device)) {
+	if(!get_config_string(lookup_config(&config_tree, "Device"), &device)) {
 		device = xstrdup(iface);
 	}
 

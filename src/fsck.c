@@ -119,19 +119,19 @@ static int strtailcmp(const char *str, const char *tail) {
 }
 
 static void check_conffile(const char *nodename, bool server) {
-	splay_tree_t *config = NULL;
+	splay_tree_t config;
 	init_configuration(&config);
 
 	bool read;
 
 	if(server) {
-		read = read_server_config(config);
+		read = read_server_config(&config);
 	} else {
-		read = read_host_config(config, nodename, true);
+		read = read_host_config(&config, nodename, true);
 	}
 
 	if(!read) {
-		exit_configuration(&config);
+		splay_empty_tree(&config);
 		return;
 	}
 
@@ -144,7 +144,7 @@ static void check_conffile(const char *nodename, bool server) {
 	int count[total_vars];
 	memset(count, 0, sizeof(count));
 
-	for splay_each(config_t, conf, config) {
+	for splay_each(config_t, conf, &config) {
 		int var_type = 0;
 
 		for(size_t i = 0; variables[i].name; ++i) {
@@ -181,7 +181,7 @@ static void check_conffile(const char *nodename, bool server) {
 		}
 	}
 
-	exit_configuration(&config);
+	splay_empty_tree(&config);
 }
 
 #ifdef HAVE_MINGW
@@ -649,17 +649,17 @@ int fsck(const char *argv0) {
 
 	// Avoid touching global configuration here. Read the config files into
 	// a temporary configuration tree, then throw it away after fsck is done.
-	splay_tree_t *config = NULL;
+	splay_tree_t config;
 	init_configuration(&config);
 
 	// Read the server configuration file and append host configuration for our node.
-	bool success = read_server_config(config) &&
-	               read_host_config(config, name, true);
+	bool success = read_server_config(&config) &&
+	               read_host_config(&config, name, true);
 
 	// Check both RSA and EC key pairs.
 	// We need working configuration to run this check.
 	if(success) {
-		success = check_keypairs(config, name);
+		success = check_keypairs(&config, name);
 	}
 
 	// Check that scripts are executable and check the config for invalid variables.
@@ -667,7 +667,7 @@ int fsck(const char *argv0) {
 	// This way, we can diagnose more issues on the first run.
 	success = success & check_scripts_and_configs();
 
-	exit_configuration(&config);
+	splay_empty_tree(&config);
 	free(name);
 	exe_name = NULL;
 

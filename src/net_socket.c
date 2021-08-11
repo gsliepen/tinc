@@ -115,7 +115,7 @@ static bool bind_to_interface(int sd) {
 	int status;
 #endif /* defined(SOL_SOCKET) && defined(SO_BINDTODEVICE) */
 
-	if(!get_config_string(lookup_config(config_tree, "BindToInterface"), &iface)) {
+	if(!get_config_string(lookup_config(&config_tree, "BindToInterface"), &iface)) {
 		return true;
 	}
 
@@ -216,7 +216,7 @@ int setup_listen_socket(const sockaddr_t *sa) {
 #endif
 
 	if(get_config_string
-	                (lookup_config(config_tree, "BindToInterface"), &iface)) {
+	                (lookup_config(&config_tree, "BindToInterface"), &iface)) {
 #if defined(SOL_SOCKET) && defined(SO_BINDTODEVICE)
 		struct ifreq ifr;
 
@@ -829,7 +829,7 @@ void try_outgoing_connections(void) {
 
 	/* Make sure there is one outgoing_t in the list for each ConnectTo. */
 
-	for(config_t *cfg = lookup_config(config_tree, "ConnectTo"); cfg; cfg = lookup_config_next(config_tree, cfg)) {
+	for(config_t *cfg = lookup_config(&config_tree, "ConnectTo"); cfg; cfg = lookup_config_next(&config_tree, cfg)) {
 		char *name;
 		get_config_string(cfg, &name);
 

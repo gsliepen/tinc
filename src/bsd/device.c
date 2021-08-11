@@ -125,13 +125,13 @@ static bool setup_utun(void) {
 #endif
 
 static bool setup_device(void) {
-	get_config_string(lookup_config(config_tree, "Device"), &device);
+	get_config_string(lookup_config(&config_tree, "Device"), &device);
 
 	// Find out if it's supposed to be a tun or a tap device
 
 	char *type;
 
-	if(get_config_string(lookup_config(config_tree, "DeviceType"), &type)) {
+	if(get_config_string(lookup_config(&config_tree, "DeviceType"), &type)) {
 		if(!strcasecmp(type, "tun"))
 			/* use default */;
 
@@ -233,7 +233,7 @@ static bool setup_device(void) {
 		realname = device;
 	}
 
-	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface)) {
+	if(!get_config_string(lookup_config(&config_tree, "Interface"), &iface)) {
 		iface = xstrdup(strrchr(realname, '/') ? strrchr(realname, '/') + 1 : realname);
 	} else if(strcmp(iface, strrchr(realname, '/') ? strrchr(realname, '/') + 1 : realname)) {
 		logger(DEBUG_ALWAYS, LOG_WARNING, "Warning: Interface does not match Device. $INTERFACE might be set incorrectly.");

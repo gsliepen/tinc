@@ -177,9 +177,9 @@ bool add_edge_h(connection_t *c, const char *request) {
 		}
 
 		if(e->weight != weight) {
-			splay_node_t *node = splay_unlink(edge_weight_tree, e);
+			splay_node_t *node = splay_unlink(&edge_weight_tree, e);
 			e->weight = weight;
-			splay_insert_node(edge_weight_tree, node);
+			splay_insert_node(&edge_weight_tree, node);
 		}
 	} else if(from == myself) {
 		logger(DEBUG_PROTOCOL, LOG_WARNING, "Got %s from %s (%s) for ourself which does not exist",

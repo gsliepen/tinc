@@ -39,9 +39,9 @@ static bool setup_device(void) {
 	char *space;
 	int ttl = 1;
 
-	get_config_string(lookup_config(config_tree, "Interface"), &iface);
+	get_config_string(lookup_config(&config_tree, "Interface"), &iface);
 
-	if(!get_config_string(lookup_config(config_tree, "Device"), &device)) {
+	if(!get_config_string(lookup_config(&config_tree, "Device"), &device)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Device variable required for %s", device_info);
 		goto error;
 	}

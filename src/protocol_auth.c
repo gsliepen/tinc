@@ -427,7 +427,7 @@ bool id_h(connection_t *c, const char *request) {
 
 	if(bypass_security) {
 		if(!c->config_tree) {
-			init_configuration(&c->config_tree);
+			c->config_tree = create_configuration();
 		}
 
 		c->allow_request = ACK;
@@ -444,7 +444,7 @@ bool id_h(connection_t *c, const char *request) {
 	}
 
 	if(!c->config_tree) {
-		init_configuration(&c->config_tree);
+		c->config_tree = create_configuration();
 
 		if(!read_host_config(c->config_tree, c->name, false)) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Peer %s had unknown identity (%s)", c->hostname, c->name);
@@ -865,7 +865,7 @@ bool send_ack(connection_t *c) {
 	}
 
 	if(!get_config_int(lookup_config(c->config_tree, "Weight"), &c->estimated_weight)) {
-		get_config_int(lookup_config(config_tree, "Weight"), &c->estimated_weight);
+		get_config_int(lookup_config(&config_tree, "Weight"), &c->estimated_weight);
 	}
 
 	return send_request(c, "%d %s %d %x", ACK, myport, c->estimated_weight, (c->options & 0xffffff) | (experimental ? (PROT_MINOR << 24) : 0));
@@ -893,7 +893,7 @@ static void send_everything(connection_t *c) {
 		return;
 	}
 
-	for splay_each(node_t, n, node_tree) {
+	for splay_each(node_t, n, &node_tree) {
 		for splay_each(subnet_t, s, n->subnet_tree) {
 			send_add_subnet(c, s);
 		}
@@ -1005,7 +1005,7 @@ bool ack_h(connection_t *c, const char *request) {
 		n->mtu = mtu;
 	}
 
-	if(get_config_int(lookup_config(config_tree, "PMTU"), &mtu) && mtu < n->mtu) {
+	if(get_config_int(lookup_config(&config_tree, "PMTU"), &mtu) && mtu < n->mtu) {
 		n->mtu = mtu;
 	}
 

@@ -39,9 +39,8 @@ typedef struct edge_t {
 	struct edge_t *reverse;                 /* edge in the opposite direction, if available */
 } edge_t;
 
-extern splay_tree_t *edge_weight_tree;          /* Tree with all known edges sorted on weight */
+extern splay_tree_t edge_weight_tree;          /* Tree with all known edges sorted on weight */
 
-extern void init_edges(void);
 extern void exit_edges(void);
 extern edge_t *new_edge(void) __attribute__((__malloc__));
 extern void free_edge(edge_t *e);

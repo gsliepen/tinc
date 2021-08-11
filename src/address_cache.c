@@ -147,7 +147,7 @@ const sockaddr_t *get_recent_address(address_cache_t *cache) {
 
 	// Otherwise, check if there are any known Address statements
 	if(!cache->config_tree) {
-		init_configuration(&cache->config_tree);
+		cache->config_tree = create_configuration();
 		read_host_config(cache->config_tree, cache->node->name, false);
 		cache->cfg = lookup_config(cache->config_tree, "Address");
 	}
