@@ -74,9 +74,9 @@ void chacha_keysetup(chacha_ctx *x, const uint8_t *k, uint32_t kbits) {
 
 void chacha_ivsetup(chacha_ctx *x, const uint8_t *iv, const uint8_t *counter) {
 	x->input[12] = counter == NULL ? 0 : U8TO32_LITTLE(counter + 0);
-	x->input[13] = counter == NULL ? 0 : U8TO32_LITTLE(counter + 4);
-	x->input[14] = U8TO32_LITTLE(iv + 0);
-	x->input[15] = U8TO32_LITTLE(iv + 4);
+	x->input[13] = U8TO32_LITTLE(iv + 0);
+	x->input[14] = U8TO32_LITTLE(iv + 4);
+	x->input[15] = U8TO32_LITTLE(iv + 8);
 }
 
 void
