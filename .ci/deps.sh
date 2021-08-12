@@ -6,9 +6,8 @@ deps_linux_alpine() {
   apk upgrade
 
   apk add \
-    git binutils make autoconf automake gcc linux-headers diffutils texinfo \
-    procps socat shadow sudo \
-    openssl-dev zlib-dev lzo-dev ncurses-dev readline-dev musl-dev lz4-dev vde2-dev
+    git binutils make autoconf automake gcc linux-headers diffutils texinfo procps socat shadow sudo \
+    openssl-dev zlib-dev lzo-dev ncurses-dev readline-dev musl-dev lz4-dev vde2-dev gettext-dev
 }
 
 deps_linux_debian() {
@@ -24,7 +23,7 @@ deps_linux_debian() {
   apt-get upgrade -y
 
   apt-get install -y \
-    git binutils make autoconf automake gcc diffutils sudo texinfo netcat procps socat \
+    git binutils make autoconf automake gcc diffutils sudo texinfo netcat procps socat gettext autopoint \
     zlib1g-dev:"$HOST" \
     libssl-dev:"$HOST" \
     liblzo2-dev:"$HOST" \
@@ -55,7 +54,7 @@ deps_linux_rhel() {
 
   yum install -y \
     git binutils make autoconf automake gcc diffutils sudo texinfo netcat procps systemd \
-    findutils socat lzo-devel zlib-devel lz4-devel ncurses-devel readline-devel "$@"
+    findutils socat gettext-devel lzo-devel zlib-devel lz4-devel ncurses-devel readline-devel "$@"
 
   if yum info openssl11-devel; then
     yum install -y openssl11-devel
@@ -89,7 +88,8 @@ deps_linux() {
 }
 
 deps_macos() {
-  brew install coreutils netcat automake lzo lz4 miniupnpc "$@"
+  brew install coreutils netcat automake lzo lz4 miniupnpc gettext "$@"
+  brew link --force --overwrite gettext
   pip3 install --user compiledb
 }
 

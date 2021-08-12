@@ -13,6 +13,7 @@ packages:
   - libgcrypt
   - llvm12
   - py38-pip
+  - gettext
 
 environment:
   CFLAGS: -I/usr/local/include -L/usr/local/lib

@@ -54,6 +54,7 @@ conf_macos() {
   add_flag \
     --with-openssl="$(brew --prefix openssl)" \
     --with-miniupnpc="$(brew --prefix miniupnpc)" \
+    --with-libintl-prefix="$(brew --prefix gettext)" \
     --enable-tunemu \
     --enable-miniupnpc \
     "$@"

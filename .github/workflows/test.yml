@@ -290,6 +290,7 @@ jobs:
             mingw-w64-x86_64-ncurses
             mingw-w64-x86_64-miniupnpc
             mingw-w64-x86_64-nsis
+            mingw-w64-x86_64-gettext
             git
             netcat
             procps

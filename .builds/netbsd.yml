@@ -10,6 +10,8 @@ packages:
   - miniupnpc
   - readline
   - gtexinfo
+  - gettext
+  - gettext-m4
 
 environment:
   CFLAGS: -I/usr/pkg/include -L/usr/pkg/lib
