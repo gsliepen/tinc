@@ -1,0 +1,4768 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR Guus Sliepen
+# This file is distributed under the same license as the tinc package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: tinc 1.1pre18-88-g8aa2affa\n"
+"Report-Msgid-Bugs-To: guus@tinc-vpn.org\n"
+"POT-Creation-Date: 2021-08-12 15:41+0600\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/autoconnect.c:64 src/autoconnect.c:102
+#, c-format
+msgid "Autoconnecting to %s"
+msgstr ""
+
+#: src/autoconnect.c:139
+#, c-format
+msgid "Autodisconnecting from %s"
+msgstr ""
+
+#: src/autoconnect.c:163
+#, c-format
+msgid "Cancelled outgoing connection to %s"
+msgstr ""
+
+#: src/bsd/device.c:75
+#, c-format
+msgid "Could not open %s socket: %s\n"
+msgstr ""
+
+#: src/bsd/device.c:84
+#, c-format
+msgid "%s failed: %s"
+msgstr ""
+
+#: src/bsd/device.c:108
+#, c-format
+msgid "Could not connect utun socket: %s\n"
+msgstr ""
+
+#: src/bsd/device.c:121 src/bsd/device.c:328 src/linux/device.c:116
+#: src/multicast_device.c:145 src/raw_socket_device.c:80
+#: src/solaris/device.c:293 src/uml_device.c:159 src/vde_device.c:69
+#, c-format
+msgid "%s is a %s"
+msgstr ""
+
+#: src/bsd/device.c:128
+msgid "OS X utun device"
+msgstr ""
+
+#: src/bsd/device.c:159 src/linux/device.c:72 src/solaris/device.c:75
+#, c-format
+msgid "Unknown device type %s!"
+msgstr ""
+
+#: src/bsd/device.c:175
+msgid "Only tap devices support switch mode!"
+msgstr ""
+
+#: src/bsd/device.c:211 src/linux/device.c:59 src/net_setup.c:168
+#: src/raw_socket_device.c:49 src/uml_device.c:123
+#, c-format
+msgid "Could not open %s: %s"
+msgstr ""
+
+#: src/bsd/device.c:241
+msgid ""
+"Warning: Interface does not match Device. $INTERFACE might be set "
+"incorrectly."
+msgstr ""
+
+#: src/bsd/device.c:256 src/bsd/device.c:278 src/net_packet.c:906
+#: src/net_packet.c:917 src/net_setup.c:575 src/net_socket.c:249
+#: src/net_socket.c:307 src/process.c:158 src/process.c:188 src/script.c:232
+#: src/tincd.c:329 src/tincd.c:345 src/tincd.c:356 src/tincd.c:473
+#: src/tincd.c:578 src/tincd.c:596 src/tincd.c:601 src/tincd.c:606
+#: src/uml_device.c:87 src/uml_device.c:105 src/uml_device.c:135
+#: src/uml_device.c:220
+#, c-format
+msgid "System call `%s' failed: %s"
+msgstr ""
+
+#: src/bsd/device.c:269 src/bsd/device.c:291
+msgid "Generic BSD tun device"
+msgstr ""
+
+#: src/bsd/device.c:299
+msgid "Generic BSD tap device"
+msgstr ""
+
+#: src/bsd/device.c:315
+msgid "BSD tunemu device"
+msgstr ""
+
+#: src/bsd/device.c:369 src/bsd/device.c:399 src/bsd/device.c:429
+#: src/linux/device.c:152 src/linux/device.c:170 src/mingw/device.c:61
+#: src/multicast_device.c:185 src/raw_socket_device.c:100
+#: src/solaris/device.c:333 src/solaris/device.c:362 src/uml_device.c:265
+#: src/vde_device.c:97
+#, c-format
+msgid "Error while reading from %s %s: %s"
+msgstr ""
+
+#: src/bsd/device.c:387 src/bsd/device.c:417 src/solaris/device.c:349
+#, c-format
+msgid "Unknown IP version %d while reading packet from %s %s"
+msgstr ""
+
+#: src/bsd/device.c:441 src/linux/device.c:182 src/multicast_device.c:197
+#: src/raw_socket_device.c:107 src/solaris/device.c:373 src/uml_device.c:273
+#: src/vde_device.c:116
+#, c-format
+msgid "Read packet of %d bytes from %s"
+msgstr ""
+
+#: src/bsd/device.c:448 src/linux/device.c:189 src/mingw/device.c:315
+#: src/multicast_device.c:204 src/raw_socket_device.c:114
+#: src/solaris/device.c:379 src/uml_device.c:292
+#, c-format
+msgid "Writing packet of %d bytes to %s"
+msgstr ""
+
+#: src/bsd/device.c:454 src/bsd/device.c:495 src/bsd/device.c:506
+#: src/mingw/device.c:344
+#, c-format
+msgid "Error while writing to %s %s: %s"
+msgstr ""
+
+#: src/bsd/device.c:477
+#, c-format
+msgid "Unknown address family %x while writing packet to %s %s"
+msgstr ""
+
+#: src/bsd/device.c:485 src/linux/device.c:197 src/linux/device.c:206
+#: src/multicast_device.c:208 src/raw_socket_device.c:118
+#: src/solaris/device.c:389 src/solaris/device.c:400 src/uml_device.c:297
+#: src/vde_device.c:124
+#, c-format
+msgid "Can't write to %s %s: %s"
+msgstr ""
+
+#: src/bsd/tunemu.c:110
+#, c-format
+msgid "fork for ppp kext: %s"
+msgstr ""
+
+#: src/bsd/tunemu.c:127
+#, c-format
+msgid "waitpid for ppp kext: %s"
+msgstr ""
+
+#: src/bsd/tunemu.c:132
+#, c-format
+msgid "could not load ppp kext '%s'"
+msgstr ""
+
+#: src/bsd/tunemu.c:152
+#, c-format
+msgid "creating ppp socket: %s"
+msgstr ""
+
+#: src/bsd/tunemu.c:165
+#, c-format
+msgid "connecting ppp socket: %s"
+msgstr ""
+
+#: src/bsd/tunemu.c:183
+#, c-format
+msgid "creating ppp unit: %s"
+msgstr ""
+
+#: src/bsd/tunemu.c:197
+#, c-format
+msgid "setting ppp loopback mode: %s"
+msgstr ""
+
+#: src/bsd/tunemu.c:207
+#, c-format
+msgid "starting ppp unit: %s"
+msgstr ""
+
+#: src/bsd/tunemu.c:226
+#, c-format
+msgid "opening pcap: %s"
+msgstr ""
+
+#: src/bsd/tunemu.c:285
+#, c-format
+msgid "invalid device name '%s'"
+msgstr ""
+
+#: src/bsd/tunemu.c:329
+#, c-format
+msgid "reading packet: %s"
+msgstr ""
+
+#: src/bsd/tunemu.c:357
+msgid "pcap not open"
+msgstr ""
+
+#: src/bsd/tunemu.c:364
+#, c-format
+msgid "injecting packet: %s"
+msgstr ""
+
+#: src/conf.c:162
+#, c-format
+msgid "\"yes\" or \"no\" expected for configuration variable %s in %s line %d"
+msgstr ""
+
+#: src/conf.c:177
+#, c-format
+msgid "Integer expected for configuration variable %s in %s line %d"
+msgstr ""
+
+#: src/conf.c:207
+#, c-format
+msgid ""
+"Hostname or IP address expected for configuration variable %s in %s line %d"
+msgstr ""
+
+#: src/conf.c:269
+msgid "No value for variable"
+msgstr ""
+
+#: src/conf.c:272
+#, c-format
+msgid "%s `%s' on line %d while reading config file %s"
+msgstr ""
+
+#: src/conf.c:275
+#, c-format
+msgid "%s `%s' in command line option %d"
+msgstr ""
+
+#: src/conf.c:307 src/conf.c:450
+#, c-format
+msgid "Cannot open config file %s: %s"
+msgstr ""
+
+#: src/conf.c:416
+#, c-format
+msgid "Pathname too long: %s/%s"
+msgstr ""
+
+#: src/conf.c:429
+#, c-format
+msgid "Failed to read `%s': %s"
+msgstr ""
+
+#: src/conf.c:454
+msgid "The following line was automatically added by tinc"
+msgstr ""
+
+#: src/conf_net.c:12
+#, c-format
+msgid "Subnet expected for configuration variable %s in %s line %d"
+msgstr ""
+
+#: src/conf_net.c:22
+#, c-format
+msgid ""
+"Network address and prefix length do not match for configuration variable %s "
+"in %s line %d"
+msgstr ""
+
+#: src/connection.c:45
+msgid "everyone"
+msgstr ""
+
+#: src/control.c:48
+#, c-format
+msgid "Unauthorized control request from %s (%s)"
+msgstr ""
+
+#: src/control.c:53 src/protocol_auth.c:342 src/protocol_auth.c:596
+#: src/protocol_auth.c:682 src/protocol_auth.c:737 src/protocol_auth.c:911
+#: src/protocol_auth.c:960 src/protocol_edge.c:80 src/protocol_edge.c:235
+#: src/protocol_key.c:66 src/protocol_key.c:266 src/protocol_key.c:409
+#: src/protocol_misc.c:101 src/protocol_misc.c:133 src/protocol_misc.c:216
+#: src/protocol_misc.c:327 src/protocol_subnet.c:50 src/protocol_subnet.c:166
+#, c-format
+msgid "Got bad %s from %s (%s)"
+msgstr ""
+
+#: src/control.c:99
+#, c-format
+msgid "Got '%s' command"
+msgstr ""
+
+#: src/control.c:153
+#, c-format
+msgid "Cannot write control socket cookie file %s: %s"
+msgstr ""
+
+#: src/control.c:192
+#, c-format
+msgid "Could not create UNIX socket: %s"
+msgstr ""
+
+#: src/control.c:201 src/tincctl.c:779
+#, c-format
+msgid "UNIX socket filename %s is too long!"
+msgstr ""
+
+#: src/control.c:208
+#, c-format
+msgid "UNIX socket %s is still in use!"
+msgstr ""
+
+#: src/control.c:219
+#, c-format
+msgid "Could not bind UNIX socket to %s: %s"
+msgstr ""
+
+#: src/control.c:224
+#, c-format
+msgid "Could not listen on UNIX socket %s: %s"
+msgstr ""
+
+#: src/dummy_device.c:32 src/mingw/device.c:238
+#, c-format
+msgid "%s (%s) is a %s"
+msgstr ""
+
+#: src/ed25519/ecdsa.c:41
+#, c-format
+msgid "Invalid size %zu for public key!"
+msgstr ""
+
+#: src/ed25519/ecdsa.c:49
+#, c-format
+msgid "Invalid format of public key! len = %zu"
+msgstr ""
+
+#: src/ed25519/ecdsa.c:94
+msgid "Invalid base64 data in PEM file\n"
+msgstr ""
+
+#: src/ed25519/ecdsa.c:100
+msgid "Too much base64 data in PEM file\n"
+msgstr ""
+
+#: src/ed25519/ecdsa.c:113
+msgid "Too little base64 data in PEM file\n"
+msgstr ""
+
+#: src/edge.c:84
+#, c-format
+msgid "Edge from %s to %s already exists in edge_tree\n"
+msgstr ""
+
+#: src/edge.c:98
+#, c-format
+msgid "Edge from %s to %s already exists in edge_weight_tree\n"
+msgstr ""
+
+#: src/fd_device.c:56
+#, c-format
+msgid "Could not read from unix socket (error %zd)!"
+msgstr ""
+
+#: src/fd_device.c:67
+#, c-format
+msgid "Error while receiving message (flags %d)!"
+msgstr ""
+
+#: src/fd_device.c:74
+#, c-format
+msgid "Wrong CMSG level: %d, expected %d!"
+msgstr ""
+
+#: src/fd_device.c:80
+#, c-format
+msgid "Wrong CMSG type: %d, expected %d!"
+msgstr ""
+
+#: src/fd_device.c:86
+#, c-format
+msgid "Wrong CMSG data length: %zu, expected %zu!"
+msgstr ""
+
+#: src/fd_device.c:100
+#, c-format
+msgid "Could not open stream socket (error %d)!"
+msgstr ""
+
+#: src/fd_device.c:105
+#, c-format
+msgid "Could not connect to Unix socket (error %d)!"
+msgstr ""
+
+#: src/fd_device.c:124
+msgid "Unix socket path too long!"
+msgstr ""
+
+#: src/fd_device.c:149
+msgid "Switch mode not supported (requires unsupported TAP device)!"
+msgstr ""
+
+#: src/fd_device.c:154
+msgid "Could not read device from configuration!"
+msgstr ""
+
+#: src/fd_device.c:160
+#, c-format
+msgid "Receiving fd from Unix socket at %s."
+msgstr ""
+
+#: src/fd_device.c:165
+#, c-format
+msgid "Could not open %s: %s!"
+msgstr ""
+
+#: src/fd_device.c:169
+#, c-format
+msgid "fd/%d adapter set up."
+msgstr ""
+
+#: src/fd_device.c:207
+#, c-format
+msgid "Error while reading from fd/%d: %s!"
+msgstr ""
+
+#: src/fd_device.c:214
+#, c-format
+msgid "Unknown IP version while reading packet from fd/%d!"
+msgstr ""
+
+#: src/fd_device.c:221
+#, c-format
+msgid "Read packet of %d bytes from fd/%d."
+msgstr ""
+
+#: src/fd_device.c:227
+#, c-format
+msgid "Writing packet of %d bytes to fd/%d."
+msgstr ""
+
+#: src/fd_device.c:230
+#, c-format
+msgid "Error while writing to fd/%d: %s!"
+msgstr ""
+
+#: src/fsck.c:48
+#, c-format
+msgid "Fix y/n? "
+msgstr ""
+
+#: src/fsck.c:94
+msgid "You can generate a new RSA keypair with:"
+msgstr ""
+
+#: src/fsck.c:99
+msgid "You can generate a new Ed25519 keypair with:"
+msgstr ""
+
+#: src/fsck.c:104
+msgid "You can generate new keys with:"
+msgstr ""
+
+#: src/fsck.c:162
+#, c-format
+msgid "WARNING: obsolete variable %s in %s line %d\n"
+msgstr ""
+
+#: src/fsck.c:167
+#, c-format
+msgid "WARNING: host variable %s found in server config %s line %d \n"
+msgstr ""
+
+#: src/fsck.c:172
+#, c-format
+msgid "WARNING: server variable %s found in host config %s line %d \n"
+msgstr ""
+
+#: src/fsck.c:179
+#, c-format
+msgid "WARNING: multiple instances of variable %s in %s\n"
+msgstr ""
+
+#: src/fsck.c:203
+#, c-format
+msgid "ERROR: could not stat private key file %s\n"
+msgstr ""
+
+#: src/fsck.c:208
+#, c-format
+msgid "WARNING: unsafe file permissions on %s.\n"
+msgstr ""
+
+#: src/fsck.c:211
+#, c-format
+msgid "You are not running %s as the same uid as %s.\n"
+msgstr ""
+
+#: src/fsck.c:214
+#, c-format
+msgid "ERROR: could not change permissions of %s: %s\n"
+msgstr ""
+
+#: src/fsck.c:216
+#, c-format
+msgid "Fixed permissions of %s.\n"
+msgstr ""
+
+#: src/fsck.c:228
+#, c-format
+msgid "ERROR: cannot read %s: %s\n"
+msgstr ""
+
+#: src/fsck.c:231
+#, c-format
+msgid ""
+"No tinc configuration found. Create a new one with:\n"
+"\n"
+msgstr ""
+
+#: src/fsck.c:240
+#, c-format
+msgid "You are currently not running tinc as root. Use sudo?\n"
+msgstr ""
+
+#: src/fsck.c:242
+#, c-format
+msgid "Check the permissions of each component of the path %s.\n"
+msgstr ""
+
+#: src/fsck.c:253 src/fsck.c:645
+#, c-format
+msgid "ERROR: tinc cannot run without a valid Name.\n"
+msgstr ""
+
+#: src/fsck.c:274 src/fsck.c:303
+#, c-format
+msgid "ERROR: could not append to %s: %s\n"
+msgstr ""
+
+#: src/fsck.c:282
+#, c-format
+msgid "Wrote Ed25519 public key to %s.\n"
+msgstr ""
+
+#: src/fsck.c:284
+#, c-format
+msgid "ERROR: could not write Ed25519 public key to %s.\n"
+msgstr ""
+
+#: src/fsck.c:311
+#, c-format
+msgid "Wrote RSA public key to %s.\n"
+msgstr ""
+
+#: src/fsck.c:313
+#, c-format
+msgid "ERROR: could not write RSA public key to %s.\n"
+msgstr ""
+
+#: src/fsck.c:323
+#, c-format
+msgid "ERROR: public and private RSA key lengths do not match.\n"
+msgstr ""
+
+#: src/fsck.c:340
+#, c-format
+msgid "ERROR: public and private RSA keys do not match.\n"
+msgstr ""
+
+#: src/fsck.c:344
+msgid "ERROR: private RSA key does not work."
+msgstr ""
+
+#: src/fsck.c:347
+#, c-format
+msgid "ERROR: public RSA key does not work.\n"
+msgstr ""
+
+#: src/fsck.c:360
+#, c-format
+msgid "WARNING: No (usable) public RSA key found.\n"
+msgstr ""
+
+#: src/fsck.c:365
+#, c-format
+msgid "WARNING: A public RSA key was found but no private key is known.\n"
+msgstr ""
+
+#: src/fsck.c:378
+msgid "ERROR: private Ed25519 key does not work."
+msgstr ""
+
+#: src/fsck.c:386
+#, c-format
+msgid "ERROR: public Ed25519 key does not work.\n"
+msgstr ""
+
+#: src/fsck.c:399
+#, c-format
+msgid "ERROR: public and private Ed25519 keys do not match.\n"
+msgstr ""
+
+#: src/fsck.c:406
+msgid "WARNING: A public Ed25519 key was found but no private key is known."
+msgstr ""
+
+#: src/fsck.c:416
+#, c-format
+msgid "WARNING: No (usable) public Ed25519 key found.\n"
+msgstr ""
+
+#: src/fsck.c:426
+#, c-format
+msgid "ERROR: cannot access %s: %s\n"
+msgstr ""
+
+#: src/fsck.c:430
+#, c-format
+msgid "WARNING: cannot read and execute %s: %s\n"
+msgstr ""
+
+#: src/fsck.c:434
+#, c-format
+msgid "ERROR: cannot change permissions on %s: %s\n"
+msgstr ""
+
+#: src/fsck.c:446 src/fsck.c:493
+#, c-format
+msgid "ERROR: cannot read directory %s: %s\n"
+msgstr ""
+
+#: src/fsck.c:468
+#, c-format
+msgid "WARNING: Unknown script %s%s%s found.\n"
+msgstr ""
+
+#: src/fsck.c:471
+#, c-format
+msgid "The only scripts in %s executed by tinc are:\n"
+msgstr ""
+
+#: src/fsck.c:472
+#, c-format
+msgid "tinc-up, tinc-down, host-up, host-down, subnet-up and subnet-down.\n"
+msgstr ""
+
+#: src/fsck.c:535
+#, c-format
+msgid "WARNING: cannot read %s\n"
+msgstr ""
+
+#: src/gcrypt/cipher.c:100
+#, c-format
+msgid "Cipher %d mode %d has no corresponding nid!"
+msgstr ""
+
+#: src/gcrypt/cipher.c:105
+#, c-format
+msgid "Unable to initialise cipher %d mode %d: %s"
+msgstr ""
+
+#: src/gcrypt/cipher.c:121 src/openssl/cipher.c:51
+#, c-format
+msgid "Unknown cipher name '%s'!"
+msgstr ""
+
+#: src/gcrypt/cipher.c:132
+#, c-format
+msgid "Unknown cipher ID %d!"
+msgstr ""
+
+#: src/gcrypt/cipher.c:201
+msgid "Error while encrypting: not enough room for padding"
+msgstr ""
+
+#: src/gcrypt/cipher.c:221 src/gcrypt/cipher.c:227 src/openssl/cipher.c:172
+#, c-format
+msgid "Error while encrypting: %s"
+msgstr ""
+
+#: src/gcrypt/cipher.c:246 src/openssl/cipher.c:201
+#, c-format
+msgid "Error while decrypting: %s"
+msgstr ""
+
+#: src/gcrypt/cipher.c:258 src/gcrypt/cipher.c:266
+msgid "Error while decrypting: invalid padding"
+msgstr ""
+
+#: src/gcrypt/digest.c:74
+#, c-format
+msgid "Digest %d has no corresponding nid!"
+msgstr ""
+
+#: src/gcrypt/digest.c:96 src/openssl/digest.c:49
+#, c-format
+msgid "Unknown digest name '%s'!"
+msgstr ""
+
+#: src/gcrypt/digest.c:107
+#, c-format
+msgid "Unknown digest ID %d!"
+msgstr ""
+
+#: src/gcrypt/rsa.c:211 src/gcrypt/rsa.c:226
+#, c-format
+msgid "Error while reading RSA public key: %s"
+msgstr ""
+
+#: src/gcrypt/rsa.c:240 src/openssl/rsa.c:89
+#, c-format
+msgid "Unable to read RSA public key: %s"
+msgstr ""
+
+#: src/gcrypt/rsa.c:248
+msgid "Error while decoding RSA public key"
+msgstr ""
+
+#: src/gcrypt/rsa.c:260 src/openssl/rsa.c:99
+#, c-format
+msgid "Unable to read RSA private key: %s"
+msgstr ""
+
+#: src/gcrypt/rsa.c:275
+msgid "Error while decoding RSA private key"
+msgstr ""
+
+#: src/gcrypt/rsa.c:291
+#, c-format
+msgid "gcrypt error %s/%s at %s:%d"
+msgstr ""
+
+#: src/gcrypt/rsagen.c:184
+msgid "Error while encoding RSA public key"
+msgstr ""
+
+#: src/gcrypt/rsagen.c:189
+#, c-format
+msgid "Unable to write RSA public key: %s"
+msgstr ""
+
+#: src/gcrypt/rsagen.c:213
+msgid "Error while encoding RSA private key"
+msgstr ""
+
+#: src/gcrypt/rsagen.c:220
+#, c-format
+msgid "Unable to write RSA private key: %s"
+msgstr ""
+
+#: src/gcrypt/rsagen.c:237
+#, c-format
+msgid "Generating RSA keys with libgcrypt not implemented yet\n"
+msgstr ""
+
+#: src/getopt.c:674
+#, c-format
+msgid "%s: option `%s' is ambiguous\n"
+msgstr ""
+
+#: src/getopt.c:697
+#, c-format
+msgid "%s: option `--%s' doesn't allow an argument\n"
+msgstr ""
+
+#: src/getopt.c:702
+#, c-format
+msgid "%s: option `%c%s' doesn't allow an argument\n"
+msgstr ""
+
+#: src/getopt.c:717 src/getopt.c:889
+#, c-format
+msgid "%s: option `%s' requires an argument\n"
+msgstr ""
+
+#: src/getopt.c:749
+#, c-format
+msgid "%s: unrecognized option `--%s'\n"
+msgstr ""
+
+#: src/getopt.c:753
+#, c-format
+msgid "%s: unrecognized option `%c%s'\n"
+msgstr ""
+
+#: src/getopt.c:779
+#, c-format
+msgid "%s: illegal option -- %c\n"
+msgstr ""
+
+#: src/getopt.c:782
+#, c-format
+msgid "%s: invalid option -- %c\n"
+msgstr ""
+
+#: src/getopt.c:809 src/getopt.c:937
+#, c-format
+msgid "%s: option requires an argument -- %c\n"
+msgstr ""
+
+#: src/getopt.c:858
+#, c-format
+msgid "%s: option `-W %s' is ambiguous\n"
+msgstr ""
+
+#: src/getopt.c:877
+#, c-format
+msgid "%s: option `-W %s' doesn't allow an argument\n"
+msgstr ""
+
+#: src/graph.c:71
+msgid "Running Kruskal's algorithm:"
+msgstr ""
+
+#: src/graph.c:109
+#, c-format
+msgid "Adding edge %s - %s weight %d"
+msgstr ""
+
+#: src/graph.c:146
+#, c-format
+msgid "Examining edges from %s"
+msgstr ""
+
+#: src/graph.c:222
+#, c-format
+msgid "Node %s (%s) became reachable"
+msgstr ""
+
+#: src/graph.c:229
+#, c-format
+msgid "Node %s (%s) became unreachable"
+msgstr ""
+
+#: src/ifconfig.c:54 src/tincctl.c:2274
+msgid "Unconfigured tinc-up script, please edit '$0'!"
+msgstr ""
+
+#: src/ifconfig.c:55 src/tincctl.c:2275
+msgid "<your vpn IP address> netmask <netmask of whole VPN>"
+msgstr ""
+
+#: src/ifconfig.c:77
+#, c-format
+msgid "DHCPv6 requested, but not supported by tinc on this platform\n"
+msgstr ""
+
+#: src/ifconfig.c:97
+#, c-format
+msgid "Could not parse address in Ifconfig statement\n"
+msgstr ""
+
+#: src/ifconfig.c:184
+#, c-format
+msgid "Could not parse subnet in Route statement\n"
+msgstr ""
+
+#: src/ifconfig.c:190
+#, c-format
+msgid "Could not parse gateway in Route statement\n"
+msgstr ""
+
+#: src/ifconfig.c:267 src/ifconfig.c:276
+#, c-format
+msgid "Route requested but no Ifconfig\n"
+msgstr ""
+
+#: src/info.c:87
+#, c-format
+msgid "Unable to parse node dump from tincd.\n"
+msgstr ""
+
+#: src/info.c:98
+#, c-format
+msgid "Unknown node %s.\n"
+msgstr ""
+
+#: src/info.c:108
+#, c-format
+msgid "Node:         %s\n"
+msgstr ""
+
+#: src/info.c:109
+#, c-format
+msgid "Node ID:      %s\n"
+msgstr ""
+
+#: src/info.c:110
+#, c-format
+msgid "Address:      %s port %s\n"
+msgstr ""
+
+#: src/info.c:113
+msgid "never"
+msgstr ""
+
+#: src/info.c:124
+#, c-format
+msgid "Online since: %s\n"
+msgstr ""
+
+#: src/info.c:126
+#, c-format
+msgid "Last seen:    %s\n"
+msgstr ""
+
+#: src/info.c:129
+#, c-format
+msgid "Status:      "
+msgstr ""
+
+#: src/info.c:132
+#, c-format
+msgid " validkey"
+msgstr ""
+
+#: src/info.c:136
+#, c-format
+msgid " visited"
+msgstr ""
+
+#: src/info.c:140
+#, c-format
+msgid " reachable"
+msgstr ""
+
+#: src/info.c:144 src/info.c:160
+#, c-format
+msgid " indirect"
+msgstr ""
+
+#: src/info.c:148
+#, c-format
+msgid " sptps"
+msgstr ""
+
+#: src/info.c:152
+#, c-format
+msgid " udp_confirmed"
+msgstr ""
+
+#: src/info.c:157
+#, c-format
+msgid "Options:     "
+msgstr ""
+
+#: src/info.c:164
+#, c-format
+msgid " tcponly"
+msgstr ""
+
+#: src/info.c:168
+#, c-format
+msgid " pmtu_discovery"
+msgstr ""
+
+#: src/info.c:172
+#, c-format
+msgid " clamp_mss"
+msgstr ""
+
+#: src/info.c:177
+#, c-format
+msgid "Protocol:     %d.%d\n"
+msgstr ""
+
+#: src/info.c:178
+#, c-format
+msgid "Reachability: "
+msgstr ""
+
+#: src/info.c:181
+#, c-format
+msgid "can reach itself\n"
+msgstr ""
+
+#: src/info.c:183
+#, c-format
+msgid "unreachable\n"
+msgstr ""
+
+#: src/info.c:185
+#, c-format
+msgid "indirectly via %s\n"
+msgstr ""
+
+#: src/info.c:187
+#, c-format
+msgid "unknown\n"
+msgstr ""
+
+#: src/info.c:189
+#, c-format
+msgid "directly with UDP\n"
+msgstr ""
+
+#: src/info.c:190
+#, c-format
+msgid "PMTU:         %d\n"
+msgstr ""
+
+#: src/info.c:193
+#, c-format
+msgid "RTT:          %d.%03d\n"
+msgstr ""
+
+#: src/info.c:196
+#, c-format
+msgid "directly with TCP\n"
+msgstr ""
+
+#: src/info.c:198
+#, c-format
+msgid "none, forwarded via %s\n"
+msgstr ""
+
+#: src/info.c:201
+#, c-format
+msgid "RX:           %<PRIu64> packets  %<PRIu64> bytes\n"
+msgstr ""
+
+#: src/info.c:202
+#, c-format
+msgid "TX:           %<PRIu64> packets  %<PRIu64> bytes\n"
+msgstr ""
+
+#: src/info.c:205
+#, c-format
+msgid "Edges:       "
+msgstr ""
+
+#: src/info.c:216
+#, c-format
+msgid ""
+"Unable to parse edge dump from tincd.\n"
+"%s\n"
+msgstr ""
+
+#: src/info.c:228
+#, c-format
+msgid "Subnets:     "
+msgstr ""
+
+#: src/info.c:239 src/info.c:281 src/tincctl.c:1346
+#, c-format
+msgid "Unable to parse subnet dump from tincd.\n"
+msgstr ""
+
+#: src/info.c:257
+#, c-format
+msgid "Could not parse subnet or address '%s'.\n"
+msgstr ""
+
+#: src/info.c:332
+#, c-format
+msgid "Subnet: %s\n"
+msgstr ""
+
+#: src/info.c:333
+#, c-format
+msgid "Owner:  %s\n"
+msgstr ""
+
+#: src/info.c:338
+#, c-format
+msgid "Unknown address %s.\n"
+msgstr ""
+
+#: src/info.c:340
+#, c-format
+msgid "Unknown subnet %s.\n"
+msgstr ""
+
+#: src/info.c:358
+#, c-format
+msgid "Argument is not a node name, subnet or address.\n"
+msgstr ""
+
+#: src/invitation.c:122
+#, c-format
+msgid "Trying to discover externally visible hostname...\n"
+msgstr ""
+
+#: src/invitation.c:186
+#, c-format
+msgid ""
+"Could not determine the external address or hostname. Please set Address "
+"manually.\n"
+msgstr ""
+
+#: src/invitation.c:195
+#, c-format
+msgid "Please enter your host's external address or hostname"
+msgstr ""
+
+#: src/invitation.c:204 src/invitation.c:972 src/invitation.c:1183
+#: src/tincctl.c:286 src/tincctl.c:2192
+#, c-format
+msgid "Error while reading stdin: %s\n"
+msgstr ""
+
+#: src/invitation.c:223
+#, c-format
+msgid "Invalid address or hostname.\n"
+msgstr ""
+
+#: src/invitation.c:239
+#, c-format
+msgid "Could not append Address to %s: %s\n"
+msgstr ""
+
+#: src/invitation.c:268 src/solaris/device.c:93 src/solaris/device.c:98
+#: src/solaris/device.c:150 src/solaris/device.c:227 src/sptps_test.c:514
+#: src/sptps_test.c:529 src/tincctl.c:1595 src/tincctl.c:2161
+#: src/tincctl.c:2770 src/tincctl.c:2790 src/tincctl.c:2878 src/tincctl.c:2943
+#: src/utils.c:301
+#, c-format
+msgid "Could not open %s: %s\n"
+msgstr ""
+
+#: src/invitation.c:285 src/tincctl.c:2842
+#, c-format
+msgid "Not enough arguments!\n"
+msgstr ""
+
+#: src/invitation.c:291 src/tincctl.c:1451 src/tincctl.c:1476
+#: src/tincctl.c:1896
+#, c-format
+msgid "Invalid name for node.\n"
+msgstr ""
+
+#: src/invitation.c:307
+#, c-format
+msgid "A host config file for %s already exists!\n"
+msgstr ""
+
+#: src/invitation.c:330
+#, c-format
+msgid "A node with name %s is already known!\n"
+msgstr ""
+
+#: src/invitation.c:338 src/invitation.c:718 src/invitation.c:723
+#: src/invitation.c:1150 src/invitation.c:1155 src/tincctl.c:2223
+#: src/tincctl.c:2228 src/tincctl.c:2233
+#, c-format
+msgid "Could not create directory %s: %s\n"
+msgstr ""
+
+#: src/invitation.c:346 src/tincctl.c:2684
+#, c-format
+msgid "Could not read directory %s: %s\n"
+msgstr ""
+
+#: src/invitation.c:364 src/tincctl.c:312 src/tincctl.c:1133 src/tincctl.c:2581
+#, c-format
+msgid "Filename too long: %s%s%s\n"
+msgstr ""
+
+#: src/invitation.c:375
+#, c-format
+msgid "Could not stat %s: %s\n"
+msgstr ""
+
+#: src/invitation.c:383
+#, c-format
+msgid "Error while reading directory %s: %s\n"
+msgstr ""
+
+#: src/invitation.c:400
+#, c-format
+msgid "Could not read %s: %s\n"
+msgstr ""
+
+#: src/invitation.c:413
+#, c-format
+msgid "Could not write %s: %s\n"
+msgstr ""
+
+#: src/invitation.c:421 src/sptps_keypair.c:105
+#, c-format
+msgid "Could not write ECDSA private key\n"
+msgstr ""
+
+#: src/invitation.c:432
+#, c-format
+msgid ""
+"Could not signal the tinc daemon. Please restart or reload it manually.\n"
+msgstr ""
+
+#: src/invitation.c:439 src/tincctl.c:2777
+#, c-format
+msgid "Could not read private key from %s\n"
+msgstr ""
+
+#: src/invitation.c:476
+#, c-format
+msgid "Could not create invitation file %s: %s\n"
+msgstr ""
+
+#: src/invitation.c:571 src/invitation.c:649
+#, c-format
+msgid "Maximum line length exceeded!\n"
+msgstr ""
+
+#: src/invitation.c:662
+#, c-format
+msgid "No Name found in invitation!\n"
+msgstr ""
+
+#: src/invitation.c:672
+#, c-format
+msgid "Invalid Name found in invitation!\n"
+msgstr ""
+
+#: src/invitation.c:680
+#, c-format
+msgid "Unsafe NetName found in invitation!\n"
+msgstr ""
+
+#: src/invitation.c:704 src/invitation.c:1166 src/tincctl.c:2179
+#, c-format
+msgid "Configuration file %s already exists!\n"
+msgstr ""
+
+#: src/invitation.c:730 src/invitation.c:741 src/invitation.c:750
+#: src/invitation.c:763 src/invitation.c:880 src/tincctl.c:2240
+#: src/tincctl.c:2269
+#, c-format
+msgid "Could not create file %s: %s\n"
+msgstr ""
+
+#: src/invitation.c:846
+#, c-format
+msgid "Ignoring unknown variable '%s' in invitation.\n"
+msgstr ""
+
+#: src/invitation.c:850
+#, c-format
+msgid "Warning: unsafe variable '%s' in invitation.\n"
+msgstr ""
+
+#: src/invitation.c:852
+#, c-format
+msgid "Ignoring unsafe variable '%s' in invitation.\n"
+msgstr ""
+
+#: src/invitation.c:867
+#, c-format
+msgid "Invalid Name found in invitation.\n"
+msgstr ""
+
+#: src/invitation.c:872
+#, c-format
+msgid "Secondary chunk would overwrite our own host config file.\n"
+msgstr ""
+
+#: src/invitation.c:932 src/tincctl.c:364 src/tincctl.c:439
+#, c-format
+msgid "Error writing private key!\n"
+msgstr ""
+
+#: src/invitation.c:952
+#, c-format
+msgid "Could not write private RSA key\n"
+msgstr ""
+
+#: src/invitation.c:954
+#, c-format
+msgid "Could not write public RSA key\n"
+msgstr ""
+
+#: src/invitation.c:969
+#, c-format
+msgid "Enter a new netname: "
+msgstr ""
+
+#: src/invitation.c:985
+#, c-format
+msgid "Filename too long: %s%stinc%s%s\n"
+msgstr ""
+
+#: src/invitation.c:990
+#, c-format
+msgid "Error trying to rename %s to %s: %s\n"
+msgstr ""
+
+#: src/invitation.c:1012
+#, c-format
+msgid ""
+"\n"
+"Please review the following tinc-up script:\n"
+"\n"
+msgstr ""
+
+#: src/invitation.c:1025
+#, c-format
+msgid ""
+"\n"
+"Do you want to use this script [y]es/[n]o/[e]dit? "
+msgstr ""
+
+#: src/invitation.c:1061 src/invitation.c:1070
+#, c-format
+msgid "tinc-up enabled.\n"
+msgstr ""
+
+#: src/invitation.c:1063
+#, c-format
+msgid "tinc-up has been left disabled.\n"
+msgstr ""
+
+#: src/invitation.c:1072
+#, c-format
+msgid "A tinc-up script was generated, but has been left disabled.\n"
+msgstr ""
+
+#: src/invitation.c:1081
+#, c-format
+msgid "Configuration stored in: %s\n"
+msgstr ""
+
+#: src/invitation.c:1126
+#, c-format
+msgid "Invitation successfully accepted.\n"
+msgstr ""
+
+#: src/invitation.c:1144 src/tincctl.c:1049 src/tincctl.c:1085
+#: src/tincctl.c:1380 src/tincctl.c:1426 src/tincctl.c:1498 src/tincctl.c:1518
+#: src/tincctl.c:1541 src/tincctl.c:1568 src/tincctl.c:2184 src/tincctl.c:2294
+#: src/tincctl.c:2320 src/tincctl.c:2336 src/tincctl.c:2359 src/tincctl.c:2488
+#: src/tincctl.c:2512 src/tincctl.c:2554 src/tincctl.c:2673 src/tincctl.c:2717
+#: src/tincctl.c:2753 src/tincctl.c:2847
+#, c-format
+msgid "Too many arguments!\n"
+msgstr ""
+
+#: src/invitation.c:1160
+#, c-format
+msgid "No permission to write in directory %s: %s\n"
+msgstr ""
+
+#: src/invitation.c:1177
+#, c-format
+msgid "Enter invitation URL: "
+msgstr ""
+
+#: src/invitation.c:1272
+#, c-format
+msgid "Could not open socket: %s\n"
+msgstr ""
+
+#: src/invitation.c:1279
+#, c-format
+msgid "Could not connect to %s port %s: %s\n"
+msgstr ""
+
+#: src/invitation.c:1286
+#, c-format
+msgid "Connected to %s port %s...\n"
+msgstr ""
+
+#: src/invitation.c:1296
+#, c-format
+msgid "Error sending request to %s port %s: %s\n"
+msgstr ""
+
+#: src/invitation.c:1305
+#, c-format
+msgid "Cannot read greeting from peer\n"
+msgstr ""
+
+#: src/invitation.c:1322
+#, c-format
+msgid ""
+"Could not create digest\n"
+"%s\n"
+msgstr ""
+
+#: src/invitation.c:1327
+#, c-format
+msgid ""
+"Peer has an invalid key!\n"
+"%s\n"
+msgstr ""
+
+#: src/invitation.c:1364
+#, c-format
+msgid "Error reading data from %s port %s: %s\n"
+msgstr ""
+
+#: src/invitation.c:1388
+#, c-format
+msgid "Connection closed by peer, invitation cancelled.\n"
+msgstr ""
+
+#: src/invitation.c:1395
+#, c-format
+msgid "Invalid invitation URL.\n"
+msgstr ""
+
+#: src/keys.c:73 src/keys.c:93
+#, c-format
+msgid "Warning: old key(s) found, remove them by hand!\n"
+msgstr ""
+
+#: src/keys.c:101
+#, c-format
+msgid "Warning: old key(s) found and disabled.\n"
+msgstr ""
+
+#: src/keys.c:121
+#, c-format
+msgid "Error reading Ed25519 private key file `%s': %s"
+msgstr ""
+
+#: src/keys.c:124
+#, c-format
+msgid "Create an Ed25519 key pair with `tinc -n %s generate-ed25519-keys'."
+msgstr ""
+
+#: src/keys.c:135
+#, c-format
+msgid "Could not stat Ed25519 private key file `%s': %s'"
+msgstr ""
+
+#: src/keys.c:141
+#, c-format
+msgid "Warning: insecure file permissions for Ed25519 private key file `%s'!"
+msgstr ""
+
+#: src/keys.c:150 src/net_setup.c:132
+#, c-format
+msgid "Reading Ed25519 private key file `%s' failed"
+msgstr ""
+
+#: src/keys.c:198
+#, c-format
+msgid "Error reading Ed25519 public key file `%s': %s"
+msgstr ""
+
+#: src/keys.c:207
+#, c-format
+msgid "Parsing Ed25519 public key file `%s' failed."
+msgstr ""
+
+#: src/keys.c:229
+msgid "PrivateKey used but no PublicKey found!"
+msgstr ""
+
+#: src/keys.c:254
+#, c-format
+msgid "Error reading RSA private key file `%s': %s"
+msgstr ""
+
+#: src/keys.c:258
+#, c-format
+msgid "Create an RSA key pair with `tinc -n %s generate-rsa-keys'."
+msgstr ""
+
+#: src/keys.c:269
+#, c-format
+msgid "Could not stat RSA private key file `%s': %s'"
+msgstr ""
+
+#: src/keys.c:275
+#, c-format
+msgid "Warning: insecure file permissions for RSA private key file `%s'!"
+msgstr ""
+
+#: src/keys.c:284
+#, c-format
+msgid "Reading RSA private key file `%s' failed: %s"
+msgstr ""
+
+#: src/keys.c:320
+#, c-format
+msgid "Error reading RSA public key file `%s': %s"
+msgstr ""
+
+#: src/keys.c:329
+#, c-format
+msgid "Reading RSA public key file `%s' failed: %s"
+msgstr ""
+
+#: src/linux/device.c:79
+msgid "Linux tun/tap device (tun mode)"
+msgstr ""
+
+#: src/linux/device.c:87
+msgid "Linux tun/tap device (tap mode)"
+msgstr ""
+
+#: src/linux/device.c:112
+#, c-format
+msgid "Could not create a tun/tap interface from %s: %s"
+msgstr ""
+
+#: src/linux/device.c:124
+#, c-format
+msgid "Could not get MAC address of %s: %s"
+msgstr ""
+
+#: src/logger.c:188
+#, c-format
+msgid "Could not open log file %s: %s\n"
+msgstr ""
+
+#: src/logger.c:199
+#, c-format
+msgid "Could not open log handle!\n"
+msgstr ""
+
+#: src/logger.c:232
+#, c-format
+msgid "Unable to reopen log file %s: %s"
+msgstr ""
+
+#: src/meta.c:43
+msgid "send_meta_sptps() called with NULL pointer!"
+msgstr ""
+
+#: src/meta.c:55 src/meta.c:99
+msgid "send_meta() called with NULL pointer!"
+msgstr ""
+
+#: src/meta.c:59
+#, c-format
+msgid "Sending %zu bytes of metadata to %s (%s)"
+msgstr ""
+
+#: src/meta.c:73
+#, c-format
+msgid "Byte limit exceeded for encryption to %s (%s)"
+msgstr ""
+
+#: src/meta.c:82
+#, c-format
+msgid "Error while encrypting metadata to %s (%s)"
+msgstr ""
+
+#: src/meta.c:103
+#, c-format
+msgid "Sending %zu bytes of raw metadata to %s (%s)"
+msgstr ""
+
+#: src/meta.c:123
+msgid "receive_meta_sptps() called with NULL pointer!"
+msgstr ""
+
+#: src/meta.c:179
+#, c-format
+msgid "Input buffer full for %s (%s)"
+msgstr ""
+
+#: src/meta.c:187 src/net_socket.c:490
+#, c-format
+msgid "Connection closed by %s (%s)"
+msgstr ""
+
+#: src/meta.c:192
+#, c-format
+msgid "Metadata socket read error for %s (%s): %s"
+msgstr ""
+
+#: src/meta.c:253
+#, c-format
+msgid "Byte limit exceeded for decryption from %s (%s)"
+msgstr ""
+
+#: src/meta.c:262
+#, c-format
+msgid "Error while decrypting metadata from %s (%s)"
+msgstr ""
+
+#: src/meta.c:284 src/meta.c:306 src/protocol.c:133
+msgid "Proxy request granted"
+msgstr ""
+
+#: src/meta.c:286 src/meta.c:308
+msgid "Proxy request rejected"
+msgstr ""
+
+#: src/meta.c:291 src/meta.c:301
+msgid "Invalid response from proxy server"
+msgstr ""
+
+#: src/meta.c:296
+msgid "Proxy request rejected: unsuitable authentication method"
+msgstr ""
+
+#: src/meta.c:312
+msgid "c->tcplen set but c->node is NULL!"
+msgstr ""
+
+#: src/meta.c:319
+#, c-format
+msgid "Got unauthorized TCP packet from %s (%s)"
+msgstr ""
+
+#: src/mingw/device.c:80
+#, c-format
+msgid "Error getting read result from %s %s: %s"
+msgstr ""
+
+#: src/mingw/device.c:98
+msgid "Windows tap device"
+msgstr ""
+
+#: src/mingw/device.c:117
+msgid ""
+"Warning: both Device and Interface specified, results may not be as expected"
+msgstr ""
+
+#: src/mingw/device.c:123
+#, c-format
+msgid "Unable to read registry: %s"
+msgstr ""
+
+#: src/mingw/device.c:181
+msgid "No Windows tap device found!"
+msgstr ""
+
+#: src/mingw/device.c:201
+#, c-format
+msgid "%s (%s) is not a usable Windows tap device: %s"
+msgstr ""
+
+#: src/mingw/device.c:212
+#, c-format
+msgid "Could not get version information from Windows tap device %s (%s): %s"
+msgstr ""
+
+#: src/mingw/device.c:214
+#, c-format
+msgid "TAP-Windows driver version: %lu.%lu%s"
+msgstr ""
+
+#: src/mingw/device.c:228
+#, c-format
+msgid "Could not get MAC address from Windows tap device %s (%s): %s"
+msgstr ""
+
+#: src/mingw/device.c:247
+#, c-format
+msgid "Enabling %s"
+msgstr ""
+
+#: src/mingw/device.c:260
+#, c-format
+msgid "Disabling %s"
+msgstr ""
+
+#: src/mingw/device.c:285
+#, c-format
+msgid "Could not wait for %s %s read to cancel: %s"
+msgstr ""
+
+#: src/mingw/device.c:289
+#, c-format
+msgid "Could not wait for %s %s write to cancel: %s"
+msgstr ""
+
+#: src/mingw/device.c:325
+#, c-format
+msgid "Error completing previously queued write to %s %s: %s"
+msgstr ""
+
+#: src/mingw/device.c:327
+#, c-format
+msgid "Previous overlapped write to %s %s still in progress"
+msgstr ""
+
+#: src/multicast_device.c:45
+#, c-format
+msgid "Device variable required for %s"
+msgstr ""
+
+#: src/multicast_device.c:53
+#, c-format
+msgid "Port number required for %s"
+msgstr ""
+
+#: src/multicast_device.c:75
+#, c-format
+msgid "Creating socket failed: %s"
+msgstr ""
+
+#: src/multicast_device.c:87
+#, c-format
+msgid "Can't bind to %s %s: %s"
+msgstr ""
+
+#: src/multicast_device.c:102 src/multicast_device.c:126
+#, c-format
+msgid "Cannot join multicast group %s %s: %s"
+msgstr ""
+
+#: src/multicast_device.c:141
+#, c-format
+msgid "Multicast for address family %x unsupported"
+msgstr ""
+
+#: src/multicast_device.c:191
+#, c-format
+msgid "Ignoring loopback packet of %zd bytes from %s"
+msgstr ""
+
+#: src/names.c:50
+msgid "Both netname and configuration directory given, using the latter..."
+msgstr ""
+
+#: src/names.c:144
+#, c-format
+msgid "Could not access %s%s (%s), storing pid and socket files in %s%s"
+msgstr ""
+
+#: src/net.c:49
+msgid "Purging unreachable nodes"
+msgstr ""
+
+#: src/net.c:55
+#, c-format
+msgid "Purging node %s (%s)"
+msgstr ""
+
+#: src/net.c:117
+#, c-format
+msgid "Closing connection with %s (%s)"
+msgstr ""
+
+#: src/net.c:197
+#, c-format
+msgid "Awaking from dead after %ld seconds of sleep"
+msgstr ""
+
+#: src/net.c:219
+#, c-format
+msgid "Forcing connection close after sleep time %s (%s)"
+msgstr ""
+
+#: src/net.c:232
+#, c-format
+msgid "Timeout while connecting to %s (%s)"
+msgstr ""
+
+#: src/net.c:234
+#, c-format
+msgid "Timeout from %s (%s) during authentication"
+msgstr ""
+
+#: src/net.c:247
+#, c-format
+msgid "%s (%s) didn't respond to PING in %ld seconds"
+msgstr ""
+
+#: src/net.c:270
+#, c-format
+msgid "Possible node with same Name as us! Sleeping %d seconds."
+msgstr ""
+
+#: src/net.c:314 src/net.c:319 src/net.c:328
+#, c-format
+msgid "Got %s signal"
+msgstr ""
+
+#: src/net.c:341
+msgid "Unable to reread configuration file."
+msgstr ""
+
+#: src/net.c:445
+#, c-format
+msgid "Host config file of %s has been changed"
+msgstr ""
+
+#: src/net.c:506
+#, c-format
+msgid "Error while waiting for input: %s"
+msgstr ""
+
+#: src/net_packet.c:102
+#, c-format
+msgid "Fixing MTU of %s (%s) to %d after %d probes"
+msgstr ""
+
+#: src/net_packet.c:114
+#, c-format
+msgid ""
+"Too much time has elapsed since last UDP ping response from %s (%s), "
+"stopping UDP communication"
+msgstr ""
+
+#: src/net_packet.c:125
+#, c-format
+msgid "Trying to send UDP probe reply to %s (%s) but we don't have his key yet"
+msgstr ""
+
+#: src/net_packet.c:135
+#, c-format
+msgid "Sending type 2 probe reply length %u to %s (%s)"
+msgstr ""
+
+#: src/net_packet.c:140
+#, c-format
+msgid "Sending type 1 probe reply length %u to %s (%s)"
+msgstr ""
+
+#: src/net_packet.c:154
+#, c-format
+msgid "Got UDP probe request %d from %s (%s)"
+msgstr ""
+
+#: src/net_packet.c:172
+#, c-format
+msgid "Got type %d UDP probe reply %d from %s (%s) rtt=%d.%03d"
+msgstr ""
+
+#: src/net_packet.c:174
+#, c-format
+msgid "Got type %d UDP probe reply %d from %s (%s)"
+msgstr ""
+
+#: src/net_packet.c:200
+#, c-format
+msgid "Increase in PMTU to %s (%s) detected, restarting PMTU discovery"
+msgstr ""
+
+#: src/net_packet.c:232
+#, c-format
+msgid "Failed to allocate lz4_state, error: %i"
+msgstr ""
+
+#: src/net_packet.c:376
+#, c-format
+msgid "Received packet of %d bytes from %s (%s)"
+msgstr ""
+
+#: src/net_packet.c:406
+#, c-format
+msgid "Got packet from %s (%s) but we haven't exchanged keys yet"
+msgstr ""
+
+#: src/net_packet.c:409 src/net_packet.c:446
+#, c-format
+msgid "Got packet from %s (%s) but he hasn't got our key yet"
+msgstr ""
+
+#: src/net_packet.c:425 src/net_packet.c:649
+#, c-format
+msgid "Failed to decode raw TCP packet from %s (%s), restarting SPTPS"
+msgstr ""
+
+#: src/net_packet.c:453 src/route.c:107
+#, c-format
+msgid "Got too short packet from %s (%s)"
+msgstr ""
+
+#: src/net_packet.c:468
+#, c-format
+msgid "Got unauthenticated packet from %s (%s)"
+msgstr ""
+
+#: src/net_packet.c:480
+#, c-format
+msgid "Error decrypting packet from %s (%s)"
+msgstr ""
+
+#: src/net_packet.c:499
+#, c-format
+msgid "Packet from %s (%s) is %d seqs in the future, dropped (%u)"
+msgstr ""
+
+#: src/net_packet.c:504
+#, c-format
+msgid "Lost %d packets from %s (%s)"
+msgstr ""
+
+#: src/net_packet.c:509
+#, c-format
+msgid "Got late or replayed packet from %s (%s), seqno %d, last received %d"
+msgstr ""
+
+#: src/net_packet.c:542
+#, c-format
+msgid "Error while uncompressing packet from %s (%s)"
+msgstr ""
+
+#: src/net_packet.c:595
+#, c-format
+msgid "Got too short TCP SPTPS packet from %s (%s)"
+msgstr ""
+
+#: src/net_packet.c:604
+#, c-format
+msgid "Got TCP SPTPS packet from %s (%s) with unknown destination ID"
+msgstr ""
+
+#: src/net_packet.c:613
+#, c-format
+msgid "Got TCP SPTPS packet from %s (%s) with unknown source ID"
+msgstr ""
+
+#: src/net_packet.c:620
+#, c-format
+msgid ""
+"Cannot relay TCP packet from %s (%s) because the destination, %s (%s), is "
+"unreachable"
+msgstr ""
+
+#: src/net_packet.c:690 src/net_packet.c:843
+#, c-format
+msgid "Error while compressing packet to %s (%s)"
+msgstr ""
+
+#: src/net_packet.c:789
+#, c-format
+msgid "Trying to send UDP packet to unreachable node %s (%s)"
+msgstr ""
+
+#: src/net_packet.c:817
+#, c-format
+msgid "No valid key known yet for %s (%s), forwarding via TCP"
+msgstr ""
+
+#: src/net_packet.c:825
+#, c-format
+msgid "Packet for %s (%s) larger than minimum MTU, forwarding via %s"
+msgstr ""
+
+#: src/net_packet.c:864 src/net_packet.c:876
+#, c-format
+msgid "Error while encrypting packet to %s (%s)"
+msgstr ""
+
+#: src/net_packet.c:903
+#, c-format
+msgid "Setting IPv4 outgoing packet priority to %d"
+msgstr ""
+
+#: src/net_packet.c:914
+#, c-format
+msgid "Setting IPv6 outgoing packet priority to %d"
+msgstr ""
+
+#: src/net_packet.c:940
+#, c-format
+msgid "Error sending packet to %s (%s): %s"
+msgstr ""
+
+#: src/net_packet.c:966
+#, c-format
+msgid "Sending packet from %s (%s) to %s (%s) via %s (%s) (TCP)"
+msgstr ""
+
+#: src/net_packet.c:1024
+#, c-format
+msgid "Sending packet from %s (%s) to %s (%s) via %s (%s) (UDP)"
+msgstr ""
+
+#: src/net_packet.c:1041
+#, c-format
+msgid "Error sending UDP SPTPS packet to %s (%s): %s"
+msgstr ""
+
+#: src/net_packet.c:1056
+#, c-format
+msgid "SPTPS key exchange with %s (%s) successful"
+msgstr ""
+
+#: src/net_packet.c:1063
+#, c-format
+msgid "Packet from %s (%s) larger than maximum supported size (%d > %d)"
+msgstr ""
+
+#: src/net_packet.c:1073
+#, c-format
+msgid "Got SPTPS PROBE packet from %s (%s) via TCP"
+msgstr ""
+
+#: src/net_packet.c:1089
+#, c-format
+msgid "Unexpected SPTPS record type %d len %d from %s (%s)"
+msgstr ""
+
+#: src/net_packet.c:1095
+#, c-format
+msgid ""
+"Received packet from %s (%s) without MAC header (maybe Mode is not set "
+"correctly)"
+msgstr ""
+
+#: src/net_packet.c:1098
+#, c-format
+msgid ""
+"Received packet from %s (%s) with MAC header (maybe Mode is not set "
+"correctly)"
+msgstr ""
+
+#: src/net_packet.c:1135
+#, c-format
+msgid "Unknown IP version %d while reading packet from %s (%s)"
+msgstr ""
+
+#: src/net_packet.c:1156
+#, c-format
+msgid "No valid key known yet for %s (%s)"
+msgstr ""
+
+#: src/net_packet.c:1161
+#, c-format
+msgid "No key from %s after 10 seconds, restarting SPTPS"
+msgstr ""
+
+#: src/net_packet.c:1174
+#, c-format
+msgid "Truncating probe length %zu to %s (%s)"
+msgstr ""
+
+#: src/net_packet.c:1184
+#, c-format
+msgid "Sending UDP probe length %zu to %s (%s)"
+msgstr ""
+
+#: src/net_packet.c:1257
+#, c-format
+msgid "Creating MTU assessment socket for %s (%s) failed: %s"
+msgstr ""
+
+#: src/net_packet.c:1262
+#, c-format
+msgid "Connecting MTU assessment socket for %s (%s) failed: %s"
+msgstr ""
+
+#: src/net_packet.c:1271
+#, c-format
+msgid "getsockopt(IP_MTU) on %s (%s) failed: %s"
+msgstr ""
+
+#: src/net_packet.c:1315
+#, c-format
+msgid "getsockopt(IP_MTU) on %s (%s) returned absurdly small value: %d"
+msgstr ""
+
+#: src/net_packet.c:1323
+#, c-format
+msgid "Using system-provided maximum tinc MTU for %s (%s): %hd"
+msgstr ""
+
+#: src/net_packet.c:1382
+#, c-format
+msgid "Decrease in PMTU to %s (%s) detected, restarting PMTU discovery"
+msgstr ""
+
+#: src/net_packet.c:1562
+#, c-format
+msgid "Sending packet of %d bytes to %s (%s)"
+msgstr ""
+
+#: src/net_packet.c:1567
+#, c-format
+msgid "Node %s (%s) is not reachable"
+msgstr ""
+
+#: src/net_packet.c:1589
+#, c-format
+msgid "Sending packet to %s via %s (%s)"
+msgstr ""
+
+#: src/net_packet.c:1618
+#, c-format
+msgid "Broadcasting packet of %d bytes from %s (%s)"
+msgstr ""
+
+#: src/net_packet.c:1749
+#, c-format
+msgid "Received UDP packet from unknown source %s"
+msgstr ""
+
+#: src/net_packet.c:1776
+#, c-format
+msgid ""
+"Received UDP packet from %s (%s) with unknown source and/or destination ID"
+msgstr ""
+
+#: src/net_packet.c:1783
+#, c-format
+msgid ""
+"Cannot relay packet from %s (%s) because the destination, %s (%s), is "
+"unreachable"
+msgstr ""
+
+#: src/net_packet.c:1860 src/net_packet.c:1886
+#, c-format
+msgid "Receiving packet failed: %s"
+msgstr ""
+
+#: src/net_packet.c:1916
+#, c-format
+msgid "Too many errors from %s, exiting!"
+msgstr ""
+
+#: src/net_setup.c:151
+msgid "Expiring symmetric keys"
+msgstr ""
+
+#: src/net_setup.c:268
+#, c-format
+msgid "Unknown proxy type %s!"
+msgstr ""
+
+#: src/net_setup.c:292
+msgid "Argument expected for proxy type exec!"
+msgstr ""
+
+#: src/net_setup.c:311
+msgid "Host and port argument expected for proxy!"
+msgstr ""
+
+#: src/net_setup.c:378
+msgid "Invalid routing mode!"
+msgstr ""
+
+#: src/net_setup.c:396
+msgid "Invalid forwarding mode!"
+msgstr ""
+
+#: src/net_setup.c:431
+msgid "Invalid broadcast mode!"
+msgstr ""
+
+#: src/net_setup.c:472
+#, c-format
+msgid "%s not supported on this platform for IPv4 connections"
+msgstr ""
+
+#: src/net_setup.c:480
+#, c-format
+msgid "%s not supported on this platform for IPv6 connections"
+msgstr ""
+
+#: src/net_setup.c:491
+msgid "Bogus maximum timeout!"
+msgstr ""
+
+#: src/net_setup.c:508
+msgid "Invalid address family!"
+msgstr ""
+
+#: src/net_setup.c:594 src/net_setup.c:984
+msgid "Too many listening sockets"
+msgstr ""
+
+#: src/net_setup.c:617 src/net_setup.c:1011
+#, c-format
+msgid "Listening on %s"
+msgstr ""
+
+#: src/net_setup.c:663
+msgid "Name for tinc daemon required!"
+msgstr ""
+
+#: src/net_setup.c:691
+msgid "No private key available, cannot start tinc!"
+msgstr ""
+
+#: src/net_setup.c:702
+msgid "Support for SPTPS disabled."
+msgstr ""
+
+#: src/net_setup.c:718
+msgid "Support for legacy protocol disabled."
+msgstr ""
+
+#: src/net_setup.c:720
+msgid "No private keys available, cannot start tinc!"
+msgstr ""
+
+#: src/net_setup.c:767
+msgid "MaxConnectionBurst cannot be negative!"
+msgstr ""
+
+#: src/net_setup.c:774
+msgid "UDPRcvBuf cannot be negative!"
+msgstr ""
+
+#: src/net_setup.c:783
+msgid "UDPSndBuf cannot be negative!"
+msgstr ""
+
+#: src/net_setup.c:794
+msgid "FWMark not supported on this platform!"
+msgstr ""
+
+#: src/net_setup.c:804
+msgid "ReplayWindow cannot be negative!"
+msgstr ""
+
+#: src/net_setup.c:824
+msgid "Unrecognized cipher type!"
+msgstr ""
+
+#: src/net_setup.c:841
+msgid "Bogus MAC length!"
+msgstr ""
+
+#: src/net_setup.c:854
+msgid "Unrecognized digest type!"
+msgstr ""
+
+#: src/net_setup.c:869 src/net_setup.c:879 src/net_setup.c:896
+#: src/net_setup.c:905
+msgid "Bogus compression level!"
+msgstr ""
+
+#: src/net_setup.c:870 src/protocol_key.c:477
+msgid "LZ4 compression is unavailable on this node."
+msgstr ""
+
+#: src/net_setup.c:880 src/protocol_key.c:487
+msgid "LZO compression is unavailable on this node."
+msgstr ""
+
+#: src/net_setup.c:897 src/protocol_key.c:504
+msgid "ZLIB compression is unavailable on this node."
+msgstr ""
+
+#: src/net_setup.c:906 src/protocol_key.c:513
+#, c-format
+msgid "Compression level %i is unrecognized by this node."
+msgstr ""
+
+#: src/net_setup.c:992
+#, c-format
+msgid "Could not get address of listen fd %d: %s"
+msgstr ""
+
+#: src/net_setup.c:1046
+msgid "Unable to create any listening socket!"
+msgstr ""
+
+#: src/net_setup.c:1066
+#, c-format
+msgid "MYSELF port %s"
+msgstr ""
+
+#: src/net_setup.c:1088
+msgid "UPnP was requested, but tinc isn't built with miniupnpc support!"
+msgstr ""
+
+#: src/net_socket.c:74
+#, c-format
+msgid "fcntl for %s fd %d: %s"
+msgstr ""
+
+#: src/net_socket.c:81
+#, c-format
+msgid "ioctlsocket for %s fd %d: %s"
+msgstr ""
+
+#: src/net_socket.c:130 src/net_socket.c:229
+#, c-format
+msgid "Can't bind to interface %s: %s"
+msgstr ""
+
+#: src/net_socket.c:137 src/net_socket.c:235
+#, c-format
+msgid "%s not supported on this platform"
+msgstr ""
+
+#: src/net_socket.c:171
+#, c-format
+msgid "Can't bind outgoing socket: %s"
+msgstr ""
+
+#: src/net_socket.c:187
+#, c-format
+msgid "Creating metasocket failed: %s"
+msgstr ""
+
+#: src/net_socket.c:242
+#, c-format
+msgid "Can't bind to %s/tcp: %s"
+msgstr ""
+
+#: src/net_socket.c:262
+#, c-format
+msgid "Can't set UDP %s to %i: %s"
+msgstr ""
+
+#: src/net_socket.c:276
+#, c-format
+msgid "Can't read back UDP %s: %s"
+msgstr ""
+
+#: src/net_socket.c:278
+#, c-format
+msgid "Can't read back UDP %s: unexpected returned optlen %d"
+msgstr ""
+
+#: src/net_socket.c:280
+#, c-format
+msgid "Can't set UDP %s to %i, the system set it to %i instead"
+msgstr ""
+
+#: src/net_socket.c:293
+#, c-format
+msgid "Creating UDP socket failed: %s"
+msgstr ""
+
+#: src/net_socket.c:318
+#, c-format
+msgid "Call to `%s' failed: %s"
+msgstr ""
+
+#: src/net_socket.c:391
+#, c-format
+msgid "Can't bind to %s/udp: %s"
+msgstr ""
+
+#: src/net_socket.c:414
+#, c-format
+msgid "Trying to re-establish outgoing connection in %d seconds"
+msgstr ""
+
+#: src/net_socket.c:418
+#, c-format
+msgid "Connected to %s (%s)"
+msgstr ""
+
+#: src/net_socket.c:431
+#, c-format
+msgid "Could not create socketpair: %s"
+msgstr ""
+
+#: src/net_socket.c:438
+#, c-format
+msgid "Using proxy %s"
+msgstr ""
+
+#: src/net_socket.c:467
+#, c-format
+msgid "Could not execute %s: %s"
+msgstr ""
+
+#: src/net_socket.c:469
+#, c-format
+msgid "%s exited with non-zero status %d"
+msgstr ""
+
+#: src/net_socket.c:476
+msgid "Proxy type exec not supported on this platform!"
+msgstr ""
+
+#: src/net_socket.c:492
+#, c-format
+msgid "Sending %d bytes to %s (%s) would block"
+msgstr ""
+
+#: src/net_socket.c:495
+#, c-format
+msgid "Could not send %d bytes of data to %s (%s): %s"
+msgstr ""
+
+#: src/net_socket.c:541
+#, c-format
+msgid "Error while connecting to %s (%s): %s"
+msgstr ""
+
+#: src/net_socket.c:568
+#, c-format
+msgid "Could not set up a meta connection to %s"
+msgstr ""
+
+#: src/net_socket.c:578
+#, c-format
+msgid "Trying to connect to %s (%s)"
+msgstr ""
+
+#: src/net_socket.c:593
+#, c-format
+msgid "Using proxy at %s port %s"
+msgstr ""
+
+#: src/net_socket.c:599
+#, c-format
+msgid "Creating socket for %s failed: %s"
+msgstr ""
+
+#: src/net_socket.c:638
+#, c-format
+msgid "Could not connect to %s (%s): %s"
+msgstr ""
+
+#: src/net_socket.c:675
+#, c-format
+msgid "Already connected to %s"
+msgstr ""
+
+#: src/net_socket.c:707 src/net_socket.c:800
+#, c-format
+msgid "Accepting a new connection failed: %s"
+msgstr ""
+
+#: src/net_socket.c:761
+msgid "<unknown>"
+msgstr ""
+
+#: src/net_socket.c:774 src/net_socket.c:813
+#, c-format
+msgid "Connection from %s"
+msgstr ""
+
+#: src/net_socket.c:838
+#, c-format
+msgid "Invalid name for outgoing connection in %s line %d"
+msgstr ""
+
+#: src/net_socket.c:882
+#, c-format
+msgid "No more outgoing connection to %s"
+msgstr ""
+
+#: src/netutl.c:47
+#, c-format
+msgid "Error looking up %s port %s: %s"
+msgstr ""
+
+#: src/netutl.c:66
+#, c-format
+msgid "Unknown type address %s port %s"
+msgstr ""
+
+#: src/netutl.c:110
+#, c-format
+msgid "Error while translating addresses: %s"
+msgstr ""
+
+#: src/netutl.c:136
+msgid "unspec port unspec"
+msgstr ""
+
+#: src/netutl.c:139 src/netutl.c:150
+msgid "port"
+msgstr ""
+
+#: src/netutl.c:147
+#, c-format
+msgid "Error while looking up hostname: %s"
+msgstr ""
+
+#: src/netutl.c:178 src/netutl.c:225
+#, c-format
+msgid "sockaddrcmp() was called with unknown address family %d, exitting!"
+msgstr ""
+
+#: src/node.c:164
+msgid "Trying to update UDP address of myself!"
+msgstr ""
+
+#: src/node.c:184
+#, c-format
+msgid "UDP address of %s set to %s"
+msgstr ""
+
+#: src/nolegacy/crypto.c:36 src/openssl/crypto.c:39
+#, c-format
+msgid "Could not open source of random numbers: %s\n"
+msgstr ""
+
+#: src/nolegacy/crypto.c:56 src/openssl/crypto.c:59
+#, c-format
+msgid "Could not read random numbers: %s\n"
+msgstr ""
+
+#: src/nolegacy/crypto.c:72 src/openssl/crypto.c:75
+#, c-format
+msgid "%s failed!\n"
+msgstr ""
+
+#: src/nolegacy/crypto.c:83 src/openssl/crypto.c:86
+#, c-format
+msgid "%s failed\n"
+msgstr ""
+
+#: src/openssl/cipher.c:62
+#, c-format
+msgid "Unknown cipher nid %d!"
+msgstr ""
+
+#: src/openssl/cipher.c:126 src/openssl/cipher.c:143
+#, c-format
+msgid "Error while setting key: %s"
+msgstr ""
+
+#: src/openssl/crypto.c:99
+#, c-format
+msgid "Not enough entropy for the PRNG!\n"
+msgstr ""
+
+#: src/openssl/digest.c:60
+#, c-format
+msgid "Unknown digest nid %d!"
+msgstr ""
+
+#: src/openssl/digest.c:102 src/openssl/digest.c:117
+#, c-format
+msgid "Error creating digest: %s"
+msgstr ""
+
+#: src/openssl/rsa.c:114
+#, c-format
+msgid "Unable to perform RSA encryption: %s"
+msgstr ""
+
+#: src/openssl/rsa.c:123
+#, c-format
+msgid "Unable to perform RSA decryption: %s"
+msgstr ""
+
+#: src/openssl/rsagen.c:90 src/tincctl.c:350 src/tincctl.c:425
+#, c-format
+msgid "Error during key generation!\n"
+msgstr ""
+
+#: src/process.c:51
+msgid "Virtual Private Network daemon"
+msgstr ""
+
+#: src/process.c:56
+#, c-format
+msgid "Could not open service manager: %s"
+msgstr ""
+
+#: src/process.c:87
+#, c-format
+msgid "Could not create %s service: %s"
+msgstr ""
+
+#: src/process.c:96
+#, c-format
+msgid "%s service installed"
+msgstr ""
+
+#: src/process.c:102
+#, c-format
+msgid "Could not start %s service: %s"
+msgstr ""
+
+#: src/process.c:104
+#, c-format
+msgid "%s service started"
+msgstr ""
+
+#: src/process.c:123 src/process.c:127
+#, c-format
+msgid "Got %s request"
+msgstr ""
+
+#: src/process.c:131
+#, c-format
+msgid "Got unexpected request %d"
+msgstr ""
+
+#: src/process.c:215
+#, c-format
+msgid "Couldn't detach from terminal: %s"
+msgstr ""
+
+#: src/process.c:238
+#, c-format
+msgid "tincd %s (%s %s) starting, debug level %d"
+msgstr ""
+
+#: src/protocol_auth.c:67
+msgid "Cannot connect to an IPv6 host through a SOCKS 4 proxy!"
+msgstr ""
+
+#: src/protocol_auth.c:132
+#, c-format
+msgid "Address family %x not supported for SOCKS 5 proxies!"
+msgstr ""
+
+#: src/protocol_auth.c:144
+msgid "Proxy type not implemented yet"
+msgstr ""
+
+#: src/protocol_auth.c:151
+msgid "Unknown proxy type"
+msgstr ""
+
+#: src/protocol_auth.c:181
+#, c-format
+msgid "Received invalid key from invited node %s (%s)!\n"
+msgstr ""
+
+#: src/protocol_auth.c:190
+#, c-format
+msgid "Host config file for %s (%s) already exists!\n"
+msgstr ""
+
+#: src/protocol_auth.c:197
+#, c-format
+msgid "Error trying to create %s: %s\n"
+msgstr ""
+
+#: src/protocol_auth.c:204
+#, c-format
+msgid "Key successfully received from %s (%s)"
+msgstr ""
+
+#: src/protocol_auth.c:259
+#, c-format
+msgid "Peer %s tried to use non-existing invitation %s\n"
+msgstr ""
+
+#: src/protocol_auth.c:261
+#, c-format
+msgid "Error trying to rename invitation %s\n"
+msgstr ""
+
+#: src/protocol_auth.c:271
+#, c-format
+msgid "Could not stat %s"
+msgstr ""
+
+#: src/protocol_auth.c:276
+#, c-format
+msgid "Peer %s tried to use expired invitation %s"
+msgstr ""
+
+#: src/protocol_auth.c:284
+#, c-format
+msgid "Error trying to open invitation %s\n"
+msgstr ""
+
+#: src/protocol_auth.c:312 src/tincctl.c:1147 src/tincctl.c:1161
+#, c-format
+msgid "Invalid invitation file %s\n"
+msgstr ""
+
+#: src/protocol_auth.c:334
+#, c-format
+msgid "Invitation %s successfully sent to %s (%s)"
+msgstr ""
+
+#: src/protocol_auth.c:366
+#, c-format
+msgid "Got invitation from %s but we don't have an invitation key"
+msgstr ""
+
+#: src/protocol_auth.c:373
+#, c-format
+msgid "Got bad invitation from %s"
+msgstr ""
+
+#: src/protocol_auth.c:402 src/protocol_key.c:213 src/protocol_key.c:237
+#: src/protocol_key.c:272 src/protocol_key.c:415 src/protocol_misc.c:221
+#: src/protocol_misc.c:332 src/protocol_misc.c:339 src/protocol_subnet.c:58
+#: src/protocol_subnet.c:66 src/protocol_subnet.c:174 src/protocol_subnet.c:182
+#, c-format
+msgid "Got bad %s from %s (%s): %s"
+msgstr ""
+
+#: src/protocol_auth.c:403 src/protocol_key.c:273 src/protocol_key.c:415
+#: src/protocol_misc.c:221 src/protocol_misc.c:339 src/protocol_subnet.c:59
+#: src/protocol_subnet.c:175
+msgid "invalid name"
+msgstr ""
+
+#: src/protocol_auth.c:411
+#, c-format
+msgid "Peer %s is %s instead of %s"
+msgstr ""
+
+#: src/protocol_auth.c:423
+#, c-format
+msgid "Peer %s (%s) uses incompatible version %d.%d"
+msgstr ""
+
+#: src/protocol_auth.c:450
+#, c-format
+msgid "Peer %s had unknown identity (%s)"
+msgstr ""
+
+#: src/protocol_auth.c:468
+#, c-format
+msgid "Peer %s (%s) tries to roll back protocol version to %d.%d"
+msgstr ""
+
+#: src/protocol_auth.c:498
+#, c-format
+msgid "Peer %s (%s) uses legacy protocol which we don't support"
+msgstr ""
+
+#: src/protocol_auth.c:554
+#, c-format
+msgid "Generated random meta key (unencrypted): %s"
+msgstr ""
+
+#: src/protocol_auth.c:565
+#, c-format
+msgid "Error during encryption of meta key for %s (%s)"
+msgstr ""
+
+#: src/protocol_auth.c:607 src/protocol_auth.c:631 src/protocol_auth.c:689
+#: src/protocol_auth.c:749 src/protocol_auth.c:757
+#, c-format
+msgid "Possible intruder %s (%s): %s"
+msgstr ""
+
+#: src/protocol_auth.c:614
+#, c-format
+msgid "Error during decryption of meta key for %s (%s)"
+msgstr ""
+
+#: src/protocol_auth.c:620
+#, c-format
+msgid "Received random meta key (unencrypted): %s"
+msgstr ""
+
+#: src/protocol_auth.c:627
+#, c-format
+msgid "Error during initialisation of cipher from %s (%s)"
+msgstr ""
+
+#: src/protocol_auth.c:639
+#, c-format
+msgid "Error during initialisation of digest from %s (%s)"
+msgstr ""
+
+#: src/protocol_auth.c:643
+#, c-format
+msgid "Possible intruder %s (%s): null digest"
+msgstr ""
+
+#: src/protocol_auth.c:921
+#, c-format
+msgid ""
+"Already have an Ed25519 public key from %s (%s) which is different from the "
+"one presented now!"
+msgstr ""
+
+#: src/protocol_auth.c:925
+#, c-format
+msgid "Already have Ed25519 public key from %s (%s), ignoring."
+msgstr ""
+
+#: src/protocol_auth.c:933
+#, c-format
+msgid "Got bad Ed25519 public key from %s (%s), not upgrading."
+msgstr ""
+
+#: src/protocol_auth.c:937
+#, c-format
+msgid "Got Ed25519 public key from %s (%s), upgrading!"
+msgstr ""
+
+#: src/protocol_auth.c:976
+#, c-format
+msgid "Established a second connection with %s (%s), closing old connection"
+msgstr ""
+
+#: src/protocol_auth.c:980
+msgid "Two outgoing connections to the same node!"
+msgstr ""
+
+#: src/protocol_auth.c:1024
+#, c-format
+msgid "Connection with %s (%s) activated"
+msgstr ""
+
+#: src/protocol_auth.c:1042
+#, c-format
+msgid "Could not get local socket address for connection with %s"
+msgstr ""
+
+#: src/protocol.c:91
+#, c-format
+msgid "Output buffer overflow while sending request to %s (%s)"
+msgstr ""
+
+#: src/protocol.c:97
+#, c-format
+msgid "Sending %s to %s (%s): %s"
+msgstr ""
+
+#: src/protocol.c:115
+#, c-format
+msgid "Forwarding %s from %s (%s): %s"
+msgstr ""
+
+#: src/protocol.c:136
+#, c-format
+msgid "Proxy request rejected: %s"
+msgstr ""
+
+#: src/protocol.c:146
+#, c-format
+msgid "Unknown request from %s (%s): %s"
+msgstr ""
+
+#: src/protocol.c:149
+#, c-format
+msgid "Got %s from %s (%s): %s"
+msgstr ""
+
+#: src/protocol.c:153
+#, c-format
+msgid "Unauthorized request from %s (%s)"
+msgstr ""
+
+#: src/protocol.c:161
+#, c-format
+msgid "Error while processing %s from %s (%s)"
+msgstr ""
+
+#: src/protocol.c:167
+#, c-format
+msgid "Bogus data received from %s (%s)"
+msgstr ""
+
+#: src/protocol.c:189
+#, c-format
+msgid "Aging past requests: deleted %d, left %d"
+msgstr ""
+
+#: src/protocol.c:204
+msgid "Already seen request"
+msgstr ""
+
+#: src/protocol_edge.c:87 src/protocol_edge.c:243
+#, c-format
+msgid "Got bad %s from %s (%s): invalid name"
+msgstr ""
+
+#: src/protocol_edge.c:106 src/protocol_edge.c:261
+#, c-format
+msgid "Ignoring indirect %s from %s (%s)"
+msgstr ""
+
+#: src/protocol_edge.c:152
+#, c-format
+msgid "Got %s from %s (%s) for ourself which does not match existing entry"
+msgstr ""
+
+#: src/protocol_edge.c:161
+#, c-format
+msgid "Got %s from %s (%s) which does not match existing entry"
+msgstr ""
+
+#: src/protocol_edge.c:187
+#, c-format
+msgid "Got %s from %s (%s) for ourself which does not exist"
+msgstr ""
+
+#: src/protocol_edge.c:268 src/protocol_edge.c:275 src/protocol_edge.c:286
+#, c-format
+msgid "Got %s from %s (%s) which does not appear in the edge tree"
+msgstr ""
+
+#: src/protocol_edge.c:293 src/protocol_subnet.c:101 src/protocol_subnet.c:228
+#, c-format
+msgid "Got %s from %s (%s) for ourself"
+msgstr ""
+
+#: src/protocol_key.c:78
+#, c-format
+msgid "Got %s from %s (%s) origin %s which does not exist"
+msgstr ""
+
+#: src/protocol_key.c:115 src/protocol_key.c:224
+#, c-format
+msgid "No Ed25519 key known for %s (%s)"
+msgstr ""
+
+#: src/protocol_key.c:152
+#, c-format
+msgid "Got bad %s from %s (%s) to %s (%s): %s"
+msgstr ""
+
+#: src/protocol_key.c:169
+#, c-format
+msgid "Failed to decode TCP packet from %s (%s), restarting SPTPS"
+msgstr ""
+
+#: src/protocol_key.c:194
+#, c-format
+msgid "Preemptively requesting Ed25519 key for %s (%s)"
+msgstr ""
+
+#: src/protocol_key.c:206
+#, c-format
+msgid "Got ANS_PUBKEY from %s (%s) even though we already have his pubkey"
+msgstr ""
+
+#: src/protocol_key.c:217
+#, c-format
+msgid "Learned Ed25519 public key from %s (%s)"
+msgstr ""
+
+#: src/protocol_key.c:230
+#, c-format
+msgid "Got REQ_KEY from %s while we already started a SPTPS session!"
+msgstr ""
+
+#: src/protocol_key.c:254
+#, c-format
+msgid "Unknown extended REQ_KEY request from %s (%s): %s"
+msgstr ""
+
+#: src/protocol_key.c:280 src/protocol_key.c:422 src/protocol_misc.c:228
+#: src/protocol_misc.c:346
+#, c-format
+msgid ""
+"Got %s from %s (%s) origin %s which does not exist in our connection list"
+msgstr ""
+
+#: src/protocol_key.c:288 src/protocol_key.c:430 src/protocol_misc.c:251
+#: src/protocol_misc.c:361
+#, c-format
+msgid ""
+"Got %s from %s (%s) destination %s which does not exist in our connection "
+"list"
+msgstr ""
+
+#: src/protocol_key.c:297
+#, c-format
+msgid "Got %s from %s (%s) origin %s which is not reachable"
+msgstr ""
+
+#: src/protocol_key.c:315 src/protocol_key.c:443
+#, c-format
+msgid "Got %s from %s (%s) destination %s which is not reachable"
+msgstr ""
+
+#: src/protocol_key.c:450
+#, c-format
+msgid "Appending reflexive UDP address to ANS_KEY from %s to %s"
+msgstr ""
+
+#: src/protocol_key.c:476 src/protocol_key.c:486 src/protocol_key.c:503
+#: src/protocol_key.c:512
+#, c-format
+msgid "Node %s (%s) uses bogus compression level!"
+msgstr ""
+
+#: src/protocol_key.c:532
+#, c-format
+msgid "Failed to decode handshake TCP packet from %s (%s), restarting SPTPS"
+msgstr ""
+
+#: src/protocol_key.c:541 src/protocol_key.c:604
+#, c-format
+msgid "Using reflexive UDP address from %s: %s port %s"
+msgstr ""
+
+#: src/protocol_key.c:553
+#, c-format
+msgid "Node %s (%s) uses legacy protocol!"
+msgstr ""
+
+#: src/protocol_key.c:560
+#, c-format
+msgid "Node %s (%s) uses unknown cipher!"
+msgstr ""
+
+#: src/protocol_key.c:569
+#, c-format
+msgid "Node %s (%s) uses unknown digest!"
+msgstr ""
+
+#: src/protocol_key.c:577
+#, c-format
+msgid "Node %s (%s) uses bogus MAC length!"
+msgstr ""
+
+#: src/protocol_key.c:586
+#, c-format
+msgid "Node %s (%s) uses wrong keylength!"
+msgstr ""
+
+#: src/protocol_misc.c:153
+msgid "Something went wrong when selecting relay - possible fake UDP_INFO"
+msgstr ""
+
+#: src/protocol_misc.c:234
+#, c-format
+msgid "Got UDP info message from %s (%s) which we can't reach directly"
+msgstr ""
+
+#: src/protocol_misc.c:332
+msgid "invalid MTU"
+msgstr ""
+
+#: src/protocol_misc.c:354
+#, c-format
+msgid "Using provisional MTU %d for node %s (%s)"
+msgstr ""
+
+#: src/protocol_subnet.c:67 src/protocol_subnet.c:183
+msgid "invalid subnet string"
+msgstr ""
+
+#: src/protocol_subnet.c:81 src/protocol_subnet.c:197
+#, c-format
+msgid "Ignoring indirect %s from %s (%s) for %s"
+msgstr ""
+
+#: src/protocol_subnet.c:111 src/protocol_subnet.c:119
+#, c-format
+msgid "Ignoring unauthorized %s from %s (%s): %s"
+msgstr ""
+
+#: src/protocol_subnet.c:203
+#, c-format
+msgid "Got %s from %s (%s) for %s which is not in our node tree"
+msgstr ""
+
+#: src/protocol_subnet.c:215
+#, c-format
+msgid "Got %s from %s (%s) for %s which does not appear in his subnet tree"
+msgstr ""
+
+#: src/raw_socket_device.c:65
+#, c-format
+msgid "Can't find interface %s: %s"
+msgstr ""
+
+#: src/raw_socket_device.c:76 src/uml_device.c:147
+#, c-format
+msgid "Could not bind %s to %s: %s"
+msgstr ""
+
+#: src/raw_socket_device.c:136
+msgid "Raw socket device not supported on this platform"
+msgstr ""
+
+#: src/route.c:476
+#, c-format
+msgid "Clamping MSS of packet from %s to %s to %d"
+msgstr ""
+
+#: src/route.c:503
+#, c-format
+msgid "Subnet %s expired"
+msgstr ""
+
+#: src/route.c:532
+#, c-format
+msgid "Learned new MAC address %x:%x:%x:%x:%x:%x"
+msgstr ""
+
+#: src/route.c:590
+#, c-format
+msgid "Length of packet (%d) doesn't match length in IPv4 header (%zu)"
+msgstr ""
+
+#: src/route.c:594
+#, c-format
+msgid "Fragmenting packet of %d bytes to %s (%s)"
+msgstr ""
+
+#: src/route.c:635
+#, c-format
+msgid ""
+"Cannot route packet from %s (%s): unknown IPv4 destination address %d.%d.%d."
+"%d"
+msgstr ""
+
+#: src/route.c:652 src/route.c:746 src/route.c:1050
+#, c-format
+msgid "Packet looping back to %s (%s)!"
+msgstr ""
+
+#: src/route.c:678 src/route.c:772
+#, c-format
+msgid "Routing loop for packet from %s (%s)!"
+msgstr ""
+
+#: src/route.c:688 src/route.c:782 src/route.c:1082
+#, c-format
+msgid "Packet for %s (%s) length %d larger than MTU %d"
+msgstr ""
+
+#: src/route.c:725
+#, c-format
+msgid ""
+"Cannot route packet from %s (%s): unknown IPv6 destination address %hx:%hx:"
+"%hx:%hx:%hx:%hx:%hx:%hx"
+msgstr ""
+
+#: src/route.c:817
+#, c-format
+msgid "Got neighbor solicitation request from %s (%s) while in router mode!"
+msgstr ""
+
+#: src/route.c:840
+msgid ""
+"Cannot route packet: received unknown type neighbor solicitation request"
+msgstr ""
+
+#: src/route.c:868
+msgid "Cannot route packet: checksum error for neighbor solicitation request"
+msgstr ""
+
+#: src/route.c:877
+#, c-format
+msgid ""
+"Cannot route packet: neighbor solicitation request for unknown address %hx:"
+"%hx:%hx:%hx:%hx:%hx:%hx:%hx"
+msgstr ""
+
+#: src/route.c:967
+#, c-format
+msgid "Got ARP request from %s (%s) while in router mode!"
+msgstr ""
+
+#: src/route.c:985
+msgid "Cannot route packet: received unknown type ARP request"
+msgstr ""
+
+#: src/route.c:994
+#, c-format
+msgid "Cannot route packet: ARP request for unknown address %d.%d.%d.%d"
+msgstr ""
+
+#: src/route.c:1164
+#, c-format
+msgid "Cannot route packet from %s (%s): unknown type %hx"
+msgstr ""
+
+#: src/script.c:188
+#, c-format
+msgid "Executing script %s"
+msgstr ""
+
+#: src/script.c:217
+#, c-format
+msgid "Script %s exited with non-zero status %d"
+msgstr ""
+
+#: src/script.c:222
+#, c-format
+msgid "Script %s was killed by signal %d (%s)"
+msgstr ""
+
+#: src/script.c:226
+#, c-format
+msgid "Script %s terminated abnormally"
+msgstr ""
+
+#: src/solaris/device.c:85
+msgid "Solaris tun device"
+msgstr ""
+
+#: src/solaris/device.c:87
+msgid "Solaris tap device"
+msgstr ""
+
+#: src/solaris/device.c:137
+#, c-format
+msgid "Could not find free PPA for %s %s!"
+msgstr ""
+
+#: src/solaris/device.c:142
+#, c-format
+msgid "Could not assign PPA %d for %s %s!"
+msgstr ""
+
+#: src/solaris/device.c:155
+#, c-format
+msgid "Could not push IP module onto %s %s!"
+msgstr ""
+
+#: src/solaris/device.c:177 src/solaris/device.c:197
+#, c-format
+msgid "Could not set PPA %d on %s %s!"
+msgstr ""
+
+#: src/solaris/device.c:188 src/solaris/device.c:202
+#, c-format
+msgid "Could not set flags on %s %s!"
+msgstr ""
+
+#: src/solaris/device.c:208 src/solaris/device.c:233
+#, c-format
+msgid "Could not push ARP module onto %s %s!"
+msgstr ""
+
+#: src/solaris/device.c:221
+#, c-format
+msgid "Could not push ARP module onto %s!"
+msgstr ""
+
+#: src/solaris/device.c:245
+#, c-format
+msgid "Could not set ifname to %s %s"
+msgstr ""
+
+#: src/solaris/device.c:253
+#, c-format
+msgid "Could not link %s %s to IP"
+msgstr ""
+
+#: src/solaris/device.c:259
+#, c-format
+msgid "Could not link %s %s to ARP"
+msgstr ""
+
+#: src/solaris/device.c:282
+#, c-format
+msgid "Could not set multiplexor id for %s %s"
+msgstr ""
+
+#: src/sptps.c:145
+msgid "Handshake phase not finished yet"
+msgstr ""
+
+#: src/sptps.c:149
+msgid "Invalid application record type"
+msgstr ""
+
+#: src/sptps.c:178
+msgid "Failed to generate ECDH public key"
+msgstr ""
+
+#: src/sptps.c:200
+msgid "Failed to sign SIG record"
+msgstr ""
+
+#: src/sptps.c:215
+msgid "Failed to open cipher"
+msgstr ""
+
+#: src/sptps.c:244
+msgid "Failed to generate key material"
+msgstr ""
+
+#: src/sptps.c:260
+msgid "Invalid ACK record length"
+msgstr ""
+
+#: src/sptps.c:265 src/sptps.c:269
+msgid "Failed to set counter"
+msgstr ""
+
+#: src/sptps.c:284 src/sptps.c:316
+msgid "Invalid KEX record length"
+msgstr ""
+
+#: src/sptps.c:291
+msgid "Received a second KEX message before first has been processed"
+msgstr ""
+
+#: src/sptps.c:329
+msgid "Failed to verify SIG record"
+msgstr ""
+
+#: src/sptps.c:336
+msgid "Failed to compute ECDH shared secret"
+msgstr ""
+
+#: src/sptps.c:364 src/sptps.c:368
+msgid "Failed to set key"
+msgstr ""
+
+#: src/sptps.c:378
+msgid "Cannot force KEX in current state"
+msgstr ""
+
+#: src/sptps.c:442
+#, c-format
+msgid "Invalid session state %d"
+msgstr ""
+
+#: src/sptps.c:464
+#, c-format
+msgid "Packet is %d seqs in the future, dropped (%u)\n"
+msgstr ""
+
+#: src/sptps.c:470
+#, c-format
+msgid "Lost %d packets\n"
+msgstr ""
+
+#: src/sptps.c:481
+#, c-format
+msgid "Received late or replayed packet, seqno %d, last received %d\n"
+msgstr ""
+
+#: src/sptps.c:517 src/sptps.c:537
+msgid "Received short packet"
+msgstr ""
+
+#: src/sptps.c:548
+#, c-format
+msgid "Invalid packet seqno: %d != %d"
+msgstr ""
+
+#: src/sptps.c:557 src/sptps.c:587 src/sptps.c:689
+msgid "Application record received before handshake finished"
+msgstr ""
+
+#: src/sptps.c:569
+msgid "Failed to decrypt and verify packet"
+msgstr ""
+
+#: src/sptps.c:598 src/sptps.c:700
+#, c-format
+msgid "Invalid record type %d"
+msgstr ""
+
+#: src/sptps.c:610
+msgid "Invalid session state zero"
+msgstr ""
+
+#: src/sptps.c:678
+msgid "Failed to decrypt and verify record"
+msgstr ""
+
+#: src/sptps_keypair.c:44
+#, c-format
+msgid ""
+"Usage: %s [options] private_key_file public_key_file\n"
+"\n"
+msgstr ""
+
+#: src/sptps_keypair.c:47 src/sptps_test.c:126 src/tincctl.c:138
+msgid "Valid options are:"
+msgstr ""
+
+#: src/sptps_keypair.c:48 src/tincctl.c:144 src/tincd.c:150
+msgid "Display this help and exit."
+msgstr ""
+
+#: src/sptps_keypair.c:51 src/sptps_test.c:144 src/tincctl.c:198
+#: src/tincd.c:154
+#, c-format
+msgid "Report bugs to %s.\n"
+msgstr ""
+
+#: src/sptps_keypair.c:88 src/sptps_test.c:382
+#, c-format
+msgid "Wrong number of arguments.\n"
+msgstr ""
+
+#: src/sptps_keypair.c:112 src/sptps_keypair.c:128
+#, c-format
+msgid "Could not open '%s' for writing: %s\n"
+msgstr ""
+
+#: src/sptps_keypair.c:121
+#, c-format
+msgid "Could not write ECDSA public key\n"
+msgstr ""
+
+#: src/sptps_speed.c:112
+#, c-format
+msgid "Generating keys for %lg seconds: "
+msgstr ""
+
+#: src/sptps_speed.c:118
+#, c-format
+msgid "%17.2lf op/s\n"
+msgstr ""
+
+#: src/sptps_speed.c:125
+#, c-format
+msgid "Ed25519 sign for %lg seconds: "
+msgstr ""
+
+#: src/sptps_speed.c:132
+#, c-format
+msgid "%20.2lf op/s\n"
+msgstr ""
+
+#: src/sptps_speed.c:134
+#, c-format
+msgid "Ed25519 verify for %lg seconds: "
+msgstr ""
+
+#: src/sptps_speed.c:138
+#, c-format
+msgid "Signature verification failed\n"
+msgstr ""
+
+#: src/sptps_speed.c:142
+#, c-format
+msgid "%18.2lf op/s\n"
+msgstr ""
+
+#: src/sptps_speed.c:145
+#, c-format
+msgid "ECDH for %lg seconds: "
+msgstr ""
+
+#: src/sptps_speed.c:159
+#, c-format
+msgid "%28.2lf op/s\n"
+msgstr ""
+
+#: src/sptps_speed.c:167 src/sptps_speed.c:239
+#, c-format
+msgid "Could not create a UNIX socket pair: %s\n"
+msgstr ""
+
+#: src/sptps_speed.c:173
+#, c-format
+msgid "SPTPS/TCP authenticate for %lg seconds: "
+msgstr ""
+
+#: src/sptps_speed.c:193 src/sptps_speed.c:263
+#, c-format
+msgid "%10.2lf op/s\n"
+msgstr ""
+
+#: src/sptps_speed.c:210
+#, c-format
+msgid "SPTPS/TCP transmit for %lg seconds: "
+msgstr ""
+
+#: src/sptps_speed.c:223 src/sptps_speed.c:293
+#, c-format
+msgid "%14.2lf Gbit/s\n"
+msgstr ""
+
+#: src/sptps_speed.c:225 src/sptps_speed.c:295
+#, c-format
+msgid "%14.2lf Mbit/s\n"
+msgstr ""
+
+#: src/sptps_speed.c:227 src/sptps_speed.c:297
+#, c-format
+msgid "%14.2lf kbit/s\n"
+msgstr ""
+
+#: src/sptps_speed.c:243
+#, c-format
+msgid "SPTPS/UDP authenticate for %lg seconds: "
+msgstr ""
+
+#: src/sptps_speed.c:280
+#, c-format
+msgid "SPTPS/UDP transmit for %lg seconds: "
+msgstr ""
+
+#: src/sptps_test.c:80
+#, c-format
+msgid ""
+"Sending %zu bytes of data:\n"
+"%s\n"
+msgstr ""
+
+#: src/sptps_test.c:96
+#, c-format
+msgid "Received type %d record of %u bytes:\n"
+msgstr ""
+
+#: src/sptps_test.c:122
+#, c-format
+msgid ""
+"Usage: %s [options] my_ed25519_key_file his_ed25519_key_file [host] port\n"
+"\n"
+msgstr ""
+
+#: src/sptps_test.c:127
+msgid "Enable datagram mode."
+msgstr ""
+
+#: src/sptps_test.c:128
+msgid "Quit when EOF occurs on stdin."
+msgstr ""
+
+#: src/sptps_test.c:129
+msgid "Only send data from the socket to stdout."
+msgstr ""
+
+#: src/sptps_test.c:130
+msgid "Only send data from stdin to the socket."
+msgstr ""
+
+#: src/sptps_test.c:131
+msgid "Fake packet loss of RATE percent."
+msgstr ""
+
+#: src/sptps_test.c:132
+msgid "Set replay window to N bytes."
+msgstr ""
+
+#: src/sptps_test.c:133
+msgid "Enable special handling of lines starting with #, ^ and $."
+msgstr ""
+
+#: src/sptps_test.c:134
+msgid "Display debug messages."
+msgstr ""
+
+#: src/sptps_test.c:135
+msgid "Use IPv4."
+msgstr ""
+
+#: src/sptps_test.c:136
+msgid "Use IPv6."
+msgstr ""
+
+#: src/sptps_test.c:138
+msgid "Use a tun device instead of stdio."
+msgstr ""
+
+#: src/sptps_test.c:164 src/sptps_test.c:436 test/splice.c:84
+#, c-format
+msgid "%s failed: %s\n"
+msgstr ""
+
+#: src/sptps_test.c:169
+#, c-format
+msgid "New connection received from :%d\n"
+msgstr ""
+
+#: src/sptps_test.c:177
+#, c-format
+msgid "Read %lld bytes from input\n"
+msgstr ""
+
+#: src/sptps_test.c:199
+#, c-format
+msgid "Could not send data: %s\n"
+msgstr ""
+
+#: src/sptps_test.c:204
+#, c-format
+msgid "Sent %lld bytes to peer\n"
+msgstr ""
+
+#: src/sptps_test.c:217
+#, c-format
+msgid "stdin thread can only be started once.\n"
+msgstr ""
+
+#: src/sptps_test.c:224
+#, c-format
+msgid "Could not create server socket: %s\n"
+msgstr ""
+
+#: src/sptps_test.c:239 src/sptps_test.c:470
+#, c-format
+msgid "Could not bind socket: %s\n"
+msgstr ""
+
+#: src/sptps_test.c:244
+#, c-format
+msgid "Could not listen: %s\n"
+msgstr ""
+
+#: src/sptps_test.c:253
+#, c-format
+msgid "Could not determine the address of the stdin thread socket\n"
+msgstr ""
+
+#: src/sptps_test.c:258
+#, c-format
+msgid "stdin thread is listening on :%d\n"
+msgstr ""
+
+#: src/sptps_test.c:265
+#, c-format
+msgid "Could not start reader thread: %s\n"
+msgstr ""
+
+#: src/sptps_test.c:272
+#, c-format
+msgid "Could not create client socket: %s\n"
+msgstr ""
+
+#: src/sptps_test.c:277
+#, c-format
+msgid "Could not connect: %s\n"
+msgstr ""
+
+#: src/sptps_test.c:331
+#, c-format
+msgid "--tun is only supported on Linux.\n"
+msgstr ""
+
+#: src/sptps_test.c:399
+#, c-format
+msgid "Could not open tun device: %s\n"
+msgstr ""
+
+#: src/sptps_test.c:408
+#, c-format
+msgid "Could not configure tun interface: %s\n"
+msgstr ""
+
+#: src/sptps_test.c:413
+#, c-format
+msgid "Using tun interface %s\n"
+msgstr ""
+
+#: src/sptps_test.c:443 test/splice.c:91
+#, c-format
+msgid "Could not create socket: %s\n"
+msgstr ""
+
+#: src/sptps_test.c:458
+#, c-format
+msgid "Could not connect to peer: %s\n"
+msgstr ""
+
+#: src/sptps_test.c:462 src/sptps_test.c:506
+#, c-format
+msgid "Connected\n"
+msgstr ""
+
+#: src/sptps_test.c:476
+#, c-format
+msgid "Could not listen on socket: %s\n"
+msgstr ""
+
+#: src/sptps_test.c:480 src/sptps_test.c:489
+#, c-format
+msgid "Listening...\n"
+msgstr ""
+
+#: src/sptps_test.c:485 src/sptps_test.c:501
+#, c-format
+msgid "Could not accept connection: %s\n"
+msgstr ""
+
+#: src/sptps_test.c:496 src/sptps_test.c:646
+#, c-format
+msgid "Could not read from socket: %s\n"
+msgstr ""
+
+#: src/sptps_test.c:544
+#, c-format
+msgid "Keys loaded\n"
+msgstr ""
+
+#: src/sptps_test.c:561
+#, c-format
+msgid "Could not init stdin reader thread\n"
+msgstr ""
+
+#: src/sptps_test.c:603
+#, c-format
+msgid "Could not read from stdin: %s\n"
+msgstr ""
+
+#: src/sptps_test.c:653
+#, c-format
+msgid "Connection terminated by peer.\n"
+msgstr ""
+
+#: src/sptps_test.c:660
+#, c-format
+msgid ""
+"Received %zd bytes of data:\n"
+"%s\n"
+msgstr ""
+
+#: src/sptps_test.c:665
+#, c-format
+msgid "Dropped.\n"
+msgstr ""
+
+#: src/subnet_parse.c:203
+#, c-format
+msgid "subnet_compare() was called with unknown subnet type %d, exitting!"
+msgstr ""
+
+#: src/subnet_parse.c:315
+#, c-format
+msgid "net2str() was called with netstr=%p, subnet=%p!"
+msgstr ""
+
+#: src/subnet_parse.c:355
+#, c-format
+msgid "net2str() was called with unknown subnet type %d, exiting!"
+msgstr ""
+
+#: src/tincctl.c:96 src/tincd.c:409
+#, c-format
+msgid "%s version %s (built %s %s, protocol %d.%d)\n"
+msgstr ""
+
+#: src/tincctl.c:99 src/tincd.c:412
+msgid "Features"
+msgstr ""
+
+#: src/tincctl.c:114 src/tincd.c:451
+#, c-format
+msgid ""
+"Copyright (C) 1998-%d Ivo Timmermans, Guus Sliepen and others.\n"
+"See the AUTHORS file for a complete list.\n"
+"\n"
+"tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
+"and you are welcome to redistribute it under certain conditions;\n"
+"see the file COPYING for details.\n"
+msgstr ""
+
+#: src/tincctl.c:123 src/tincd.c:120
+#, c-format
+msgid "Try `%s --help' for more information.\n"
+msgstr ""
+
+#: src/tincctl.c:127
+#, c-format
+msgid ""
+"Usage: %s [options] command\n"
+"\n"
+msgstr ""
+
+#: src/tincctl.c:139
+msgid "Don't ask for anything (non-interactive mode)."
+msgstr ""
+
+#: src/tincctl.c:140 src/tincd.c:129
+msgid "Read configuration options from DIR."
+msgstr ""
+
+#: src/tincctl.c:141 src/tincd.c:132
+msgid "Connect to net NETNAME."
+msgstr ""
+
+#: src/tincctl.c:142
+msgid "Read control cookie from FILENAME."
+msgstr ""
+
+#: src/tincctl.c:143
+msgid "Force some commands to work despite warnings."
+msgstr ""
+
+#: src/tincctl.c:145 src/tincd.c:151
+msgid "Output version information and exit."
+msgstr ""
+
+#: src/tincctl.c:147
+msgid "Valid commands are:"
+msgstr ""
+
+#: src/tincctl.c:148
+msgid "Create initial configuration files."
+msgstr ""
+
+#: src/tincctl.c:149
+msgid "Print current value of VARIABLE"
+msgstr ""
+
+#: src/tincctl.c:150
+msgid "Set VARIABLE to VALUE"
+msgstr ""
+
+#: src/tincctl.c:151
+msgid "Add VARIABLE with the given VALUE"
+msgstr ""
+
+#: src/tincctl.c:152
+msgid "Remove VARIABLE [only ones with watching VALUE]"
+msgstr ""
+
+#: src/tincctl.c:153
+msgid "Start tincd."
+msgstr ""
+
+#: src/tincctl.c:154
+msgid "Stop tincd."
+msgstr ""
+
+#: src/tincctl.c:155
+msgid "Restart tincd."
+msgstr ""
+
+#: src/tincctl.c:156
+msgid "Partially reload configuration of running tincd."
+msgstr ""
+
+#: src/tincctl.c:157
+msgid "Show PID of currently running tincd."
+msgstr ""
+
+#: src/tincctl.c:159
+msgid "Generate a new Ed25519 public/private key pair.\n"
+msgstr ""
+
+#: src/tincctl.c:162
+msgid "Generate new RSA and Ed25519 public/private key pairs."
+msgstr ""
+
+#: src/tincctl.c:163
+msgid "Generate a new RSA public/private key pair."
+msgstr ""
+
+#: src/tincctl.c:165
+msgid "Generate a new Ed25519 public/private key pair."
+msgstr ""
+
+#: src/tincctl.c:166
+msgid "Dump a list of one of the following things:"
+msgstr ""
+
+#: src/tincctl.c:167
+msgid "- all known nodes in the VPN"
+msgstr ""
+
+#: src/tincctl.c:168
+msgid "- all known connections in the VPN"
+msgstr ""
+
+#: src/tincctl.c:169
+msgid "- all known subnets in the VPN"
+msgstr ""
+
+#: src/tincctl.c:170
+msgid "- all meta connections with ourself"
+msgstr ""
+
+#: src/tincctl.c:171
+msgid "- graph of the VPN in dotty format"
+msgstr ""
+
+#: src/tincctl.c:172
+msgid "- outstanding invitations"
+msgstr ""
+
+#: src/tincctl.c:173
+msgid "Give information about a particular NODE, SUBNET or ADDRESS."
+msgstr ""
+
+#: src/tincctl.c:174
+msgid "Purge unreachable nodes"
+msgstr ""
+
+#: src/tincctl.c:175
+msgid "Set debug level"
+msgstr ""
+
+#: src/tincctl.c:176
+msgid "Retry all outgoing connections"
+msgstr ""
+
+#: src/tincctl.c:177
+msgid "Close meta connection with NODE"
+msgstr ""
+
+#: src/tincctl.c:179
+msgid "Show real-time statistics"
+msgstr ""
+
+#: src/tincctl.c:183
+msgid "Dump traffic in pcap format [up to snaplen bytes per packet]"
+msgstr ""
+
+#: src/tincctl.c:184
+msgid "Dump log output [up to the specified level]"
+msgstr ""
+
+#: src/tincctl.c:185
+msgid "Export host configuration of local node to standard output"
+msgstr ""
+
+#: src/tincctl.c:186
+msgid "Export all host configuration files to standard output"
+msgstr ""
+
+#: src/tincctl.c:187
+msgid "Import host configuration file(s) from standard input"
+msgstr ""
+
+#: src/tincctl.c:188
+msgid "Same as export followed by import"
+msgstr ""
+
+#: src/tincctl.c:189
+msgid "Same as export-all followed by import"
+msgstr ""
+
+#: src/tincctl.c:190
+msgid "Generate an invitation for NODE"
+msgstr ""
+
+#: src/tincctl.c:191
+msgid "Join a VPN using an INVITATION"
+msgstr ""
+
+#: src/tincctl.c:192
+msgid "List all known networks, or switch to the one named NETNAME."
+msgstr ""
+
+#: src/tincctl.c:193
+msgid "Check the configuration files for problems."
+msgstr ""
+
+#: src/tincctl.c:194
+msgid "Generate a signed version of a file."
+msgstr ""
+
+#: src/tincctl.c:195
+msgid "Verify that a file was signed by the given NODE."
+msgstr ""
+
+#: src/tincctl.c:264 src/tincctl.c:2642 src/tincd.c:295
+#, c-format
+msgid "Invalid character in netname!\n"
+msgstr ""
+
+#: src/tincctl.c:283
+#, c-format
+msgid "Please enter a file to save %s to [%s]: "
+msgstr ""
+
+#: src/tincctl.c:331
+#, c-format
+msgid "Error opening file `%s': %s\n"
+msgstr ""
+
+#: src/tincctl.c:347
+#, c-format
+msgid "Generating Ed25519 key pair:\n"
+msgstr ""
+
+#: src/tincctl.c:353 src/tincctl.c:428
+#, c-format
+msgid "Done.\n"
+msgstr ""
+
+#: src/tincctl.c:416
+#, c-format
+msgid ""
+"Invalid key size %d specified! It should be between 1024 and 8192 bits.\n"
+msgstr ""
+
+#: src/tincctl.c:419
+#, c-format
+msgid ""
+"WARNING: generating a weak %d bits RSA key! 2048 or more bits are "
+"recommended.\n"
+msgstr ""
+
+#: src/tincctl.c:422
+#, c-format
+msgid "Generating %d bits keys:\n"
+msgstr ""
+
+#: src/tincctl.c:458
+#, c-format
+msgid "Error writing public key!\n"
+msgstr ""
+
+#: src/tincctl.c:677
+#, c-format
+msgid "Could not open service manager: %s\n"
+msgstr ""
+
+#: src/tincctl.c:687
+#, c-format
+msgid "Could not open %s service: %s\n"
+msgstr ""
+
+#: src/tincctl.c:694
+#, c-format
+msgid "Could not stop %s service: %s\n"
+msgstr ""
+
+#: src/tincctl.c:696
+#, c-format
+msgid "%s service stopped\n"
+msgstr ""
+
+#: src/tincctl.c:700
+#, c-format
+msgid "Could not remove %s service: %s\n"
+msgstr ""
+
+#: src/tincctl.c:717
+#, c-format
+msgid "%s service removed\n"
+msgstr ""
+
+#: src/tincctl.c:732
+#, c-format
+msgid "Previous connection to tincd lost, reconnecting.\n"
+msgstr ""
+
+#: src/tincctl.c:744
+#, c-format
+msgid "Could not open pid file %s: %s\n"
+msgstr ""
+
+#: src/tincctl.c:755
+#, c-format
+msgid "Could not parse pid file %s\n"
+msgstr ""
+
+#: src/tincctl.c:767
+#, c-format
+msgid "Could not find tincd running at pid %d\n"
+msgstr ""
+
+#: src/tincctl.c:789
+#, c-format
+msgid "Cannot create UNIX socket: %s\n"
+msgstr ""
+
+#: src/tincctl.c:797
+#, c-format
+msgid "Cannot connect to UNIX socket %s: %s\n"
+msgstr ""
+
+#: src/tincctl.c:817
+#, c-format
+msgid "Cannot resolve %s port %s: %s\n"
+msgstr ""
+
+#: src/tincctl.c:827
+#, c-format
+msgid "Cannot create TCP socket: %s\n"
+msgstr ""
+
+#: src/tincctl.c:837 src/tincctl.c:3325
+#, c-format
+msgid "System call `%s' failed: %s\n"
+msgstr ""
+
+#: src/tincctl.c:843
+#, c-format
+msgid "Cannot connect to %s port %s: %s\n"
+msgstr ""
+
+#: src/tincctl.c:866
+#, c-format
+msgid "Cannot read greeting from control socket: %s\n"
+msgstr ""
+
+#: src/tincctl.c:876
+#, c-format
+msgid "Could not fully establish control socket connection\n"
+msgstr ""
+
+#: src/tincctl.c:891
+#, c-format
+msgid "A tincd is already running for net `%s' with pid %d.\n"
+msgstr ""
+
+#: src/tincctl.c:893
+#, c-format
+msgid "A tincd is already running with pid %d.\n"
+msgstr ""
+
+#: src/tincctl.c:953
+#, c-format
+msgid "Error starting %s: %s\n"
+msgstr ""
+
+#: src/tincctl.c:962
+#, c-format
+msgid "Could not create umbilical socket: %s\n"
+msgstr ""
+
+#: src/tincctl.c:975
+#, c-format
+msgid "Could not fork: %s\n"
+msgstr ""
+
+#: src/tincctl.c:1034
+#, c-format
+msgid "Error starting %s\n"
+msgstr ""
+
+#: src/tincctl.c:1060
+#, c-format
+msgid "Could not send TERM signal to process with PID %d: %s\n"
+msgstr ""
+
+#: src/tincctl.c:1064
+#, c-format
+msgid "Sent TERM signal to process with PID %d.\n"
+msgstr ""
+
+#: src/tincctl.c:1096
+#, c-format
+msgid "Could not reload configuration.\n"
+msgstr ""
+
+#: src/tincctl.c:1111 src/tincctl.c:1172
+#, c-format
+msgid "No outstanding invitations.\n"
+msgstr ""
+
+#: src/tincctl.c:1115
+#, c-format
+msgid "Cannot not read directory %s: %s\n"
+msgstr ""
+
+#: src/tincctl.c:1140
+#, c-format
+msgid "Cannot open %s: %s\n"
+msgstr ""
+
+#: src/tincctl.c:1183
+#, c-format
+msgid "`reachable' only supported for nodes.\n"
+msgstr ""
+
+#: src/tincctl.c:1194 src/tincctl.c:1400 src/tincctl.c:1446 src/tincctl.c:1471
+#: src/tincctl.c:1752 src/tincctl.c:1773 src/tincctl.c:2369 src/tincctl.c:2393
+#, c-format
+msgid "Invalid number of arguments.\n"
+msgstr ""
+
+#: src/tincctl.c:1226
+#, c-format
+msgid "Unknown dump type '%s'.\n"
+msgstr ""
+
+#: src/tincctl.c:1281
+#, c-format
+msgid "Unable to parse node dump from tincd: %s\n"
+msgstr ""
+
+#: src/tincctl.c:1324
+#, c-format
+msgid "Unable to parse edge dump from tincd.\n"
+msgstr ""
+
+#: src/tincctl.c:1350
+#, c-format
+msgid "%s owner %s\n"
+msgstr ""
+
+#: src/tincctl.c:1358
+#, c-format
+msgid "Unable to parse connection dump from tincd.\n"
+msgstr ""
+
+#: src/tincctl.c:1367
+#, c-format
+msgid "Unable to parse dump from tincd.\n"
+msgstr ""
+
+#: src/tincctl.c:1372
+#, c-format
+msgid "Error receiving dump.\n"
+msgstr ""
+
+#: src/tincctl.c:1391
+#, c-format
+msgid "Could not purge old information.\n"
+msgstr ""
+
+#: src/tincctl.c:1414
+#, c-format
+msgid "Could not set debug level.\n"
+msgstr ""
+
+#: src/tincctl.c:1418
+#, c-format
+msgid "Old level %d, new level %d.\n"
+msgstr ""
+
+#: src/tincctl.c:1437
+#, c-format
+msgid "Could not retry outgoing connections.\n"
+msgstr ""
+
+#: src/tincctl.c:1462
+#, c-format
+msgid "Could not connect to %s.\n"
+msgstr ""
+
+#: src/tincctl.c:1487
+#, c-format
+msgid "Could not disconnect %s.\n"
+msgstr ""
+
+#: src/tincctl.c:1511
+#, c-format
+msgid ""
+"This version of tinc was compiled without support for the curses library.\n"
+msgstr ""
+
+#: src/tincctl.c:1633
+#, c-format
+msgid "Could not find Name in %s.\n"
+msgstr ""
+
+#: src/tincctl.c:1811
+#, c-format
+msgid "No variable given.\n"
+msgstr ""
+
+#: src/tincctl.c:1816
+#, c-format
+msgid "No value for variable given.\n"
+msgstr ""
+
+#: src/tincctl.c:1840
+#, c-format
+msgid "Malformed subnet definition %s\n"
+msgstr ""
+
+#: src/tincctl.c:1845
+#, c-format
+msgid "Network address and prefix length do not match: %s\n"
+msgstr ""
+
+#: src/tincctl.c:1854
+#, c-format
+msgid "Warning: %s is an obsolete variable!\n"
+msgstr ""
+
+#: src/tincctl.c:1856
+#, c-format
+msgid "%s is an obsolete variable! Use --force to use it anyway.\n"
+msgstr ""
+
+#: src/tincctl.c:1865
+#, c-format
+msgid "Warning: %s is not a host configuration variable!\n"
+msgstr ""
+
+#: src/tincctl.c:1867
+#, c-format
+msgid ""
+"%s is not a host configuration variable! Use --force to use it anyway.\n"
+msgstr ""
+
+#: src/tincctl.c:1907
+#, c-format
+msgid "Warning: %s is not a known configuration variable!\n"
+msgstr ""
+
+#: src/tincctl.c:1909
+#, c-format
+msgid ""
+"%s: is not a known configuration variable! Use --force to use it anyway.\n"
+msgstr ""
+
+#: src/tincctl.c:1936 src/tincctl.c:2461
+#, c-format
+msgid "Could not open configuration file %s: %s\n"
+msgstr ""
+
+#: src/tincctl.c:1945
+#, c-format
+msgid "Filename too long: %s.config.tmp\n"
+msgstr ""
+
+#: src/tincctl.c:1952
+#, c-format
+msgid "Could not open temporary file %s: %s\n"
+msgstr ""
+
+#: src/tincctl.c:2001
+#, c-format
+msgid "Warning: removing %s = %s\n"
+msgstr ""
+
+#: src/tincctl.c:2011 src/tincctl.c:2029 src/tincctl.c:2036 src/tincctl.c:2057
+#, c-format
+msgid "Error writing to temporary file %s: %s\n"
+msgstr ""
+
+#: src/tincctl.c:2045
+#, c-format
+msgid "Error while reading from configuration file %s: %s\n"
+msgstr ""
+
+#: src/tincctl.c:2050
+#, c-format
+msgid "Error closing configuration file %s: %s\n"
+msgstr ""
+
+#: src/tincctl.c:2066
+#, c-format
+msgid "No matching configuration variables found.\n"
+msgstr ""
+
+#: src/tincctl.c:2073
+#, c-format
+msgid "Error closing temporary file %s: %s\n"
+msgstr ""
+
+#: src/tincctl.c:2080
+#, c-format
+msgid "No configuration variables deleted.\n"
+msgstr ""
+
+#: src/tincctl.c:2088
+#, c-format
+msgid "Error replacing file %s: %s\n"
+msgstr ""
+
+#: src/tincctl.c:2095
+#, c-format
+msgid "Error renaming temporary file %s to configuration file %s: %s\n"
+msgstr ""
+
+#: src/tincctl.c:2150
+#, c-format
+msgid "Warning: could not bind to port 655. "
+msgstr ""
+
+#: src/tincctl.c:2162 src/tincctl.c:2173
+#, c-format
+msgid "Please change tinc's Port manually.\n"
+msgstr ""
+
+#: src/tincctl.c:2168
+#, c-format
+msgid "Tinc will instead listen on port %d.\n"
+msgstr ""
+
+#: src/tincctl.c:2189
+#, c-format
+msgid "Enter the Name you want your tinc node to have: "
+msgstr ""
+
+#: src/tincctl.c:2199
+#, c-format
+msgid "No name given!\n"
+msgstr ""
+
+#: src/tincctl.c:2205 src/tincctl.c:2212
+#, c-format
+msgid "No Name given!\n"
+msgstr ""
+
+#: src/tincctl.c:2218
+#, c-format
+msgid "Invalid Name! Only a-z, A-Z, 0-9 and _ are allowed characters.\n"
+msgstr ""
+
+#: src/tincctl.c:2418
+#, c-format
+msgid "Invalid configuration filename.\n"
+msgstr ""
+
+#: src/tincctl.c:2475
+#, c-format
+msgid "Error while reading configuration file %s: %s\n"
+msgstr ""
+
+#: src/tincctl.c:2519
+#, c-format
+msgid "Could not open host configuration directory %s: %s\n"
+msgstr ""
+
+#: src/tincctl.c:2572
+#, c-format
+msgid "Invalid Name in input!\n"
+msgstr ""
+
+#: src/tincctl.c:2586
+#, c-format
+msgid "Host configuration file %s already exists, skipping.\n"
+msgstr ""
+
+#: src/tincctl.c:2594
+#, c-format
+msgid "Error creating configuration file %s: %s\n"
+msgstr ""
+
+#: src/tincctl.c:2601
+#, c-format
+msgid "Junk at the beginning of the input, ignoring.\n"
+msgstr ""
+
+#: src/tincctl.c:2612
+#, c-format
+msgid "Error writing to host configuration file %s: %s\n"
+msgstr ""
+
+#: src/tincctl.c:2623
+#, c-format
+msgid "Imported %d host configuration files.\n"
+msgstr ""
+
+#: src/tincctl.c:2626
+#, c-format
+msgid "No host configuration files imported.\n"
+msgstr ""
+
+#: src/tincctl.c:2647 src/tincd.c:300
+#, c-format
+msgid "Warning: unsafe character in netname!\n"
+msgstr ""
+
+#: src/tincctl.c:2806 src/tincctl.c:2893
+#, c-format
+msgid "Error reading %s: %s\n"
+msgstr ""
+
+#: src/tincctl.c:2824
+#, c-format
+msgid "Error generating signature\n"
+msgstr ""
+
+#: src/tincctl.c:2867
+#, c-format
+msgid "Invalid node name\n"
+msgstr ""
+
+#: src/tincctl.c:2900 src/tincctl.c:2913
+#, c-format
+msgid "Invalid input\n"
+msgstr ""
+
+#: src/tincctl.c:2919
+#, c-format
+msgid "Signature is not made by %s\n"
+msgstr ""
+
+#: src/tincctl.c:2956
+#, c-format
+msgid "Could not read public key from %s\n"
+msgstr ""
+
+#: src/tincctl.c:2965
+#, c-format
+msgid "Invalid signature\n"
+msgstr ""
+
+#: src/tincctl.c:3130
+#, c-format
+msgid "Unable to parse dump from tincd, n = %d, i = %d.\n"
+msgstr ""
+
+#: src/tincctl.c:3272 src/tincctl.c:3345
+#, c-format
+msgid "Unknown command `%s'.\n"
+msgstr ""
+
+#: src/tincd.c:124
+#, c-format
+msgid ""
+"Usage: %s [option]...\n"
+"\n"
+msgstr ""
+
+#: src/tincd.c:130
+msgid "Don't fork and detach."
+msgstr ""
+
+#: src/tincd.c:131
+msgid "Increase debug level or set it to LEVEL."
+msgstr ""
+
+#: src/tincd.c:134
+msgid "Lock tinc into main memory."
+msgstr ""
+
+#: src/tincd.c:138
+msgid "Write log entries to a logfile."
+msgstr ""
+
+#: src/tincd.c:139
+msgid "Use syslog instead of stderr with --no-detach."
+msgstr ""
+
+#: src/tincd.c:140
+msgid "Write PID and control socket cookie to FILENAME."
+msgstr ""
+
+#: src/tincd.c:141
+msgid "Disables meta protocol security, for debugging."
+msgstr ""
+
+#: src/tincd.c:142
+msgid "Set global/host configuration value."
+msgstr ""
+
+#: src/tincd.c:144
+msgid "chroot to NET dir at startup."
+msgstr ""
+
+#: src/tincd.c:145
+msgid "setuid to given USER at startup."
+msgstr ""
+
+#: src/tincd.c:179 src/tincd.c:223
+#, c-format
+msgid "The %s option is not supported on this platform."
+msgstr ""
+
+#: src/tincd.c:278
+#, c-format
+msgid "%s: unrecognized argument '%s'\n"
+msgstr ""
+
+#: src/tincd.c:319
+#, c-format
+msgid "unknown user `%s'"
+msgstr ""
+
+#: src/tincd.c:378
+msgid "Got console shutdown request"
+msgstr ""
+
+#: src/tincd.c:532
+msgid "Error initializing LZO compressor!"
+msgstr ""
+
+#: src/tincd.c:610
+#, c-format
+msgid "Invalid priority `%s`!"
+msgstr ""
+
+#: src/tincd.c:622
+msgid "Ready"
+msgstr ""
+
+#: src/tincd.c:639
+msgid "Terminating"
+msgstr ""
+
+#: src/top.c:242
+#, c-format
+msgid "Tinc %-16s  Nodes: %4d  Sort: %-10s  %s"
+msgstr ""
+
+#: src/top.c:244
+msgid "Cumulative"
+msgstr ""
+
+#: src/top.c:244
+msgid "Current"
+msgstr ""
+
+#: src/top.c:248
+#, c-format
+msgid "Node                IN %s   IN %s   OUT %s  OUT %s"
+msgstr ""
+
+#: src/top.c:303 src/top.c:370
+msgid "bytes"
+msgstr ""
+
+#: src/top.c:304 src/top.c:372 src/top.c:379
+msgid "pkts"
+msgstr ""
+
+#: src/top.c:325
+#, c-format
+msgid "Change delay from %.1fs to: "
+msgstr ""
+
+#: src/top.c:377
+msgid "kbyte"
+msgstr ""
+
+#: src/top.c:384
+msgid "Mbyte"
+msgstr ""
+
+#: src/top.c:386
+msgid "kpkt"
+msgstr ""
+
+#: src/top.c:391
+msgid "Gbyte"
+msgstr ""
+
+#: src/top.c:393
+msgid "Mpkt"
+msgstr ""
+
+#: src/uml_device.c:55
+msgid "UML network socket"
+msgstr ""
+
+#: src/uml_device.c:75
+#, c-format
+msgid "Could not open write %s: %s"
+msgstr ""
+
+#: src/uml_device.c:93
+#, c-format
+msgid "Could not open data %s: %s"
+msgstr ""
+
+#: src/uml_device.c:117
+#, c-format
+msgid "Could not bind data %s: %s"
+msgstr ""
+
+#: src/uml_device.c:140
+#, c-format
+msgid "UML socket filename %s is too long!"
+msgstr ""
+
+#: src/uml_device.c:152
+#, c-format
+msgid "Could not listen on %s %s: %s"
+msgstr ""
+
+#: src/uml_device.c:211
+#, c-format
+msgid "Could not accept connection to %s %s: %s"
+msgstr ""
+
+#: src/uml_device.c:235
+#, c-format
+msgid "Error while reading request from %s %s: %s"
+msgstr ""
+
+#: src/uml_device.c:242
+#, c-format
+msgid "Unknown magic %x, version %d, request type %d from %s %s"
+msgstr ""
+
+#: src/uml_device.c:249
+#, c-format
+msgid "Could not bind write %s: %s"
+msgstr ""
+
+#: src/uml_device.c:257
+msgid "Connection with UML established"
+msgstr ""
+
+#: src/uml_device.c:280
+#, c-format
+msgid "Invalid value for state variable in %s"
+msgstr ""
+
+#: src/uml_device.c:287
+#, c-format
+msgid "Dropping packet of %d bytes to %s: not connected to UML yet"
+msgstr ""
+
+#: src/upnp.c:83
+#, c-format
+msgid "[upnp] Unable to get socket address: [%d] %s"
+msgstr ""
+
+#: src/upnp.c:91
+msgid "[upnp] Unable to get socket port"
+msgstr ""
+
+#: src/upnp.c:102
+#, c-format
+msgid "[upnp] Successfully set port mapping (%s:%s %s for %s seconds)"
+msgstr ""
+
+#: src/upnp.c:104
+#, c-format
+msgid "[upnp] Failed to set port mapping (%s:%s %s for %s seconds): [%d] %s"
+msgstr ""
+
+#: src/upnp.c:111
+msgid "[upnp] Discovering IGD devices"
+msgstr ""
+
+#: src/upnp.c:117
+#, c-format
+msgid "[upnp] Unable to find IGD devices: [%d] %s"
+msgstr ""
+
+#: src/upnp.c:131
+msgid "[upnp] No IGD found"
+msgstr ""
+
+#: src/upnp.c:136
+#, c-format
+msgid "[upnp] IGD found: [%d] %s (local address: %s, service type: %s)"
+msgstr ""
+
+#: src/upnp.c:187
+msgid "Unable to start UPnP-IGD client thread"
+msgstr ""
+
+#: src/upnp.c:195
+#, c-format
+msgid "Unable to start UPnP-IGD client thread: [%d] %s"
+msgstr ""
+
+#: src/utils.c:187 test/splice.c:30
+msgid "(unable to format errormessage)"
+msgstr ""
+
+#: src/utils.c:258
+#, c-format
+msgid "Invalid Name: environment variable %s does not exist\n"
+msgstr ""
+
+#: src/utils.c:263
+#, c-format
+msgid "Could not get hostname: %s\n"
+msgstr ""
+
+#: src/utils.c:282
+msgid "Invalid name for myself!"
+msgstr ""
+
+#: src/vde_device.c:38
+msgid "VDE socket"
+msgstr ""
+
+#: src/vde_device.c:59
+#, c-format
+msgid "Could not open VDE socket %s"
+msgstr ""
+
+#: src/vde_device.c:104
+#, c-format
+msgid ""
+"Dropped a packet received from %s - the sender was not allowed to send that "
+"packet."
+msgstr ""
+
+#: src/vde_device.c:110
+#, c-format
+msgid ""
+"Received an invalid packet from %s - packet shorter than an ethernet header)."
+msgstr ""
+
+#: test/splice.c:50
+#, c-format
+msgid "Usage: %s name1 host1 port1 name2 host2 port2 [protocol]\n"
+msgstr ""
+
+#: test/splice.c:97
+#, c-format
+msgid "Could not connect to %s: %s\n"
+msgstr ""
+
+#: test/splice.c:104
+#, c-format
+msgid "Connected to %s\n"
+msgstr ""
+
+#: test/splice.c:110
+#, c-format
+msgid "Error sending data to %s: %s\n"
+msgstr ""
+
+#: test/splice.c:117
+#, c-format
+msgid "Error reading data from %s: %s\n"
+msgstr ""
+
+#: test/splice.c:123
+#, c-format
+msgid "Splicing...\n"
+msgstr ""
+
+#: test/splice.c:142
+#, c-format
+msgid "Error while reading from %s: %s\n"
+msgstr ""
+
+#: test/splice.c:147
+#, c-format
+msgid "Connection closed by %s\n"
+msgstr ""
+
+#: test/splice.c:152
+#, c-format
+msgid "Error while writing to %s: %s\n"
+msgstr ""
