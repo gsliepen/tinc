@@ -340,6 +340,7 @@ message, and stop.
 * zlib::
 * LZO::
 * LZ4::
+* gettext::
 * libcurses::
 * libreadline::
 @end menu
@@ -480,6 +481,22 @@ or disable it completely with `--disable-lz4-builtin`.
 LZ4 support can be completely disabled with `--disable-lz4`. Note that the
 resulting binary will not work correctly on VPNs where LZ4 compression is used
 by other peers.
+
+
+@c ==================================================================
+@node       gettext
+@subsection gettext
+
+@cindex gettext
+Localization support is provided by the GNU gettext library.
+
+You may have to install a gettext package, and the `autopoint` program. Please
+consult your operating system documentation for details. On some operating
+systems (like most Linux distributions), gettext support is often provided by
+the C library.
+
+If you do not require support for languages other than English, localization
+can be disabled by passing `--disable-nls` to `configure`.
 
 
 @c ==================================================================
