@@ -46,12 +46,14 @@ static SERVICE_STATUS_HANDLE statushandle = 0;
 
 static bool install_service(void) {
 	char command[4096] = "\"";
-	SERVICE_DESCRIPTION description = {"Virtual Private Network daemon"};
+
+	SERVICE_DESCRIPTION description;
+	description.lpDescription = _("Virtual Private Network daemon");
 
 	manager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
 
 	if(!manager) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open service manager: %s", winerror(GetLastError()));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not open service manager: %s"), winerror(GetLastError()));
 		return false;
 	}
 
@@ -82,7 +84,7 @@ static bool install_service(void) {
 
 	if(!service) {
 		DWORD lasterror = GetLastError();
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not create %s service: %s", identname, winerror(lasterror));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not create %s service: %s"), identname, winerror(lasterror));
 
 		if(lasterror != ERROR_SERVICE_EXISTS) {
 			return false;
@@ -91,15 +93,15 @@ static bool install_service(void) {
 
 	if(service) {
 		ChangeServiceConfig2(service, SERVICE_CONFIG_DESCRIPTION, &description);
-		logger(DEBUG_ALWAYS, LOG_INFO, "%s service installed", identname);
+		logger(DEBUG_ALWAYS, LOG_INFO, _("%s service installed"), identname);
 	} else {
 		service = OpenService(manager, identname, SERVICE_ALL_ACCESS);
 	}
 
 	if(!StartService(service, 0, NULL)) {
-		logger(DEBUG_ALWAYS, LOG_WARNING, "Could not start %s service: %s", identname, winerror(GetLastError()));
+		logger(DEBUG_ALWAYS, LOG_WARNING, _("Could not start %s service: %s"), identname, winerror(GetLastError()));
 	} else {
-		logger(DEBUG_ALWAYS, LOG_INFO, "%s service started", identname);
+		logger(DEBUG_ALWAYS, LOG_INFO, _("%s service started"), identname);
 	}
 
 	return true;
@@ -118,15 +120,15 @@ DWORD WINAPI controlhandler(DWORD request, DWORD type, LPVOID data, LPVOID conte
 		return NO_ERROR;
 
 	case SERVICE_CONTROL_STOP:
-		logger(DEBUG_ALWAYS, LOG_NOTICE, "Got %s request", "SERVICE_CONTROL_STOP");
+		logger(DEBUG_ALWAYS, LOG_NOTICE, _("Got %s request"), "SERVICE_CONTROL_STOP");
 		break;
 
 	case SERVICE_CONTROL_SHUTDOWN:
-		logger(DEBUG_ALWAYS, LOG_NOTICE, "Got %s request", "SERVICE_CONTROL_SHUTDOWN");
+		logger(DEBUG_ALWAYS, LOG_NOTICE, _("Got %s request"), "SERVICE_CONTROL_SHUTDOWN");
 		break;
 
 	default:
-		logger(DEBUG_ALWAYS, LOG_WARNING, "Got unexpected request %d", (int)request);
+		logger(DEBUG_ALWAYS, LOG_WARNING, _("Got unexpected request %d"), (int)request);
 		return ERROR_CALL_NOT_IMPLEMENTED;
 	}
 
@@ -153,7 +155,7 @@ VOID WINAPI run_service(DWORD argc, LPTSTR *argv) {
 	statushandle = RegisterServiceCtrlHandlerEx(identname, controlhandler, NULL);
 
 	if(!statushandle) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "RegisterServiceCtrlHandlerEx", winerror(GetLastError()));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("System call `%s' failed: %s"), "RegisterServiceCtrlHandlerEx", winerror(GetLastError()));
 	} else {
 		status.dwWaitHint = 30000;
 		status.dwCurrentState = SERVICE_START_PENDING;
@@ -183,7 +185,7 @@ bool init_service(void) {
 		if(GetLastError() == ERROR_FAILED_SERVICE_CONTROLLER_CONNECT) {
 			return false;
 		} else {
-			logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "StartServiceCtrlDispatcher", winerror(GetLastError()));
+			logger(DEBUG_ALWAYS, LOG_ERR, _("System call `%s' failed: %s"), "StartServiceCtrlDispatcher", winerror(GetLastError()));
 		}
 	}
 
@@ -210,7 +212,7 @@ bool detach(void) {
 #ifndef HAVE_MINGW
 
 		if(daemon(1, 0)) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Couldn't detach from terminal: %s", strerror(errno));
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Couldn't detach from terminal: %s"), strerror(errno));
 			return false;
 		}
 
@@ -233,7 +235,7 @@ bool detach(void) {
 
 	openlogger(identname, logmode);
 
-	logger(DEBUG_ALWAYS, LOG_NOTICE, "tincd %s (%s %s) starting, debug level %d",
+	logger(DEBUG_ALWAYS, LOG_NOTICE, _("tincd %s (%s %s) starting, debug level %d"),
 	       BUILD_VERSION, BUILD_DATE, BUILD_TIME, debug_level);
 
 	return true;

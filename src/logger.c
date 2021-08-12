@@ -185,7 +185,7 @@ void openlogger(const char *ident, logmode_t mode) {
 		logfile = fopen(logfilename, "a");
 
 		if(!logfile) {
-			fprintf(stderr, "Could not open log file %s: %s\n", logfilename, strerror(errno));
+			fprintf(stderr, _("Could not open log file %s: %s\n"), logfilename, strerror(errno));
 			logmode = LOGMODE_NULL;
 		}
 
@@ -196,7 +196,7 @@ void openlogger(const char *ident, logmode_t mode) {
 		loghandle = RegisterEventSource(NULL, logident);
 
 		if(!loghandle) {
-			fprintf(stderr, "Could not open log handle!\n");
+			fprintf(stderr, _("Could not open log handle!\n"));
 			logmode = LOGMODE_NULL;
 		}
 
@@ -229,7 +229,7 @@ void reopenlogger() {
 	FILE *newfile = fopen(logfilename, "a");
 
 	if(!newfile) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to reopen log file %s: %s", logfilename, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Unable to reopen log file %s: %s"), logfilename, strerror(errno));
 		return;
 	}
 

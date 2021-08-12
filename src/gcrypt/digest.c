@@ -71,7 +71,7 @@ static bool digesttonid(enum gcry_md_algos algo, int *nid) {
 
 static bool digest_open(digest_t *digest, enum gcry_md_algos algo, size_t maclength) {
 	if(!digesttonid(algo, &digest->nid)) {
-		logger(DEBUG_ALWAYS, LOG_DEBUG, "Digest %d has no corresponding nid!", algo);
+		logger(DEBUG_ALWAYS, LOG_DEBUG, _("Digest %d has no corresponding nid!"), algo);
 		return false;
 	}
 
@@ -93,7 +93,7 @@ bool digest_open_by_name(digest_t *digest, const char *name, size_t maclength) {
 	enum gcry_md_algos algo;
 
 	if(!nametodigest(name, &algo)) {
-		logger(DEBUG_ALWAYS, LOG_DEBUG, "Unknown digest name '%s'!", name);
+		logger(DEBUG_ALWAYS, LOG_DEBUG, _("Unknown digest name '%s'!"), name);
 		return false;
 	}
 
@@ -104,7 +104,7 @@ bool digest_open_by_nid(digest_t *digest, int nid, size_t maclength) {
 	enum gcry_md_algos algo;
 
 	if(!nidtodigest(nid, &algo)) {
-		logger(DEBUG_ALWAYS, LOG_DEBUG, "Unknown digest ID %d!", nid);
+		logger(DEBUG_ALWAYS, LOG_DEBUG, _("Unknown digest ID %d!"), nid);
 		return false;
 	}
 

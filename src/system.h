@@ -32,6 +32,7 @@
 /* Other functions */
 
 #define _(STRING) gettext(STRING)
+#define MAINTAINER_EMAIL "tinc@tinc-vpn.org"
 
 #include "dropin.h"
 

@@ -46,7 +46,7 @@ static bool setup_device(void) {
 	}
 
 	if((device_fd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open %s: %s", device_info,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not open %s: %s"), device_info,
 		       strerror(errno));
 		return false;
 	}
@@ -62,7 +62,7 @@ static bool setup_device(void) {
 
 	if(ioctl(device_fd, SIOCGIFINDEX, &ifr)) {
 		close(device_fd);
-		logger(DEBUG_ALWAYS, LOG_ERR, "Can't find interface %s: %s", iface,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Can't find interface %s: %s"), iface,
 		       strerror(errno));
 		return false;
 	}
@@ -73,11 +73,11 @@ static bool setup_device(void) {
 	sa.sll_ifindex = ifr.ifr_ifindex;
 
 	if(bind(device_fd, (struct sockaddr *) &sa, (socklen_t) sizeof(sa))) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not bind %s to %s: %s", device, iface, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not bind %s to %s: %s"), device, iface, strerror(errno));
 		return false;
 	}
 
-	logger(DEBUG_ALWAYS, LOG_INFO, "%s is a %s", device, device_info);
+	logger(DEBUG_ALWAYS, LOG_INFO, _("%s is a %s"), device, device_info);
 
 	return true;
 }
@@ -97,25 +97,25 @@ static bool read_packet(vpn_packet_t *packet) {
 	ssize_t inlen;
 
 	if((inlen = read(device_fd, DATA(packet), MTU)) <= 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Error while reading from %s %s: %s"), device_info,
 		       device, strerror(errno));
 		return false;
 	}
 
 	packet->len = inlen;
 
-	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Read packet of %d bytes from %s", packet->len,
+	logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Read packet of %d bytes from %s"), packet->len,
 	       device_info);
 
 	return true;
 }
 
 static bool write_packet(vpn_packet_t *packet) {
-	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Writing packet of %d bytes to %s",
+	logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Writing packet of %d bytes to %s"),
 	       packet->len, device_info);
 
 	if(write(device_fd, DATA(packet), packet->len) < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Can't write to %s %s: %s", device_info, device,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Can't write to %s %s: %s"), device_info, device,
 		       strerror(errno));
 		return false;
 	}
@@ -133,7 +133,7 @@ const devops_t raw_socket_devops = {
 #else
 
 static bool not_supported(void) {
-	logger(DEBUG_ALWAYS, LOG_ERR, "Raw socket device not supported on this platform");
+	logger(DEBUG_ALWAYS, LOG_ERR, _("Raw socket device not supported on this platform"));
 	return false;
 }
 

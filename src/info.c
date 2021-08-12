@@ -24,6 +24,7 @@
 #include "tincctl.h"
 #include "info.h"
 #include "utils.h"
+#include "xalloc.h"
 
 void logger(int level, int priority, const char *format, ...) {
 	(void)level;
@@ -83,7 +84,7 @@ static int info_node(int fd, const char *item) {
 		}
 
 		if(n != 24) {
-			fprintf(stderr, "Unable to parse node dump from tincd.\n");
+			fprintf(stderr, _("Unable to parse node dump from tincd.\n"));
 			return 1;
 		}
 
@@ -94,7 +95,7 @@ static int info_node(int fd, const char *item) {
 	}
 
 	if(!found) {
-		fprintf(stderr, "Unknown node %s.\n", item);
+		fprintf(stderr, _("Unknown node %s.\n"), item);
 		return 1;
 	}
 
@@ -104,11 +105,13 @@ static int info_node(int fd, const char *item) {
 		}
 	}
 
-	printf("Node:         %s\n", item);
-	printf("Node ID:      %s\n", id);
-	printf("Address:      %s port %s\n", host, port);
+	printf(_("Node:         %s\n"), item);
+	printf(_("Node ID:      %s\n"), id);
+	printf(_("Address:      %s port %s\n"), host, port);
 
-	char timestr[32] = "never";
+	char timestr[32];
+	strncpy(timestr, _("never"), sizeof(timestr));
+
 	time_t lsc_time = last_state_change;
 
 	if(last_state_change) {
@@ -118,86 +121,88 @@ static int info_node(int fd, const char *item) {
 	status = status_union.bits;
 
 	if(status.reachable) {
-		printf("Online since: %s\n", timestr);
+		printf(_("Online since: %s\n"), timestr);
 	} else {
-		printf("Last seen:    %s\n", timestr);
+		printf(_("Last seen:    %s\n"), timestr);
 	}
 
-	printf("Status:      ");
+	printf(_("Status:      "));
 
 	if(status.validkey) {
-		printf(" validkey");
+		printf(_(" validkey"));
 	}
 
 	if(status.visited) {
-		printf(" visited");
+		printf(_(" visited"));
 	}
 
 	if(status.reachable) {
-		printf(" reachable");
+		printf(_(" reachable"));
 	}
 
 	if(status.indirect) {
-		printf(" indirect");
+		printf(_(" indirect"));
 	}
 
 	if(status.sptps) {
-		printf(" sptps");
+		printf(_(" sptps"));
 	}
 
 	if(status.udp_confirmed) {
-		printf(" udp_confirmed");
+		printf(_(" udp_confirmed"));
 	}
 
 	printf("\n");
 
-	printf("Options:     ");
+	printf(_("Options:     "));
 
 	if(options & OPTION_INDIRECT) {
-		printf(" indirect");
+		printf(_(" indirect"));
 	}
 
 	if(options & OPTION_TCPONLY) {
-		printf(" tcponly");
+		printf(_(" tcponly"));
 	}
 
 	if(options & OPTION_PMTU_DISCOVERY) {
-		printf(" pmtu_discovery");
+		printf(_(" pmtu_discovery"));
 	}
 
 	if(options & OPTION_CLAMP_MSS) {
-		printf(" clamp_mss");
+		printf(_(" clamp_mss"));
 	}
 
 	printf("\n");
-	printf("Protocol:     %d.%d\n", PROT_MAJOR, OPTION_VERSION(options));
-	printf("Reachability: ");
+
+	printf(_("Protocol:     %d.%d\n"), PROT_MAJOR, OPTION_VERSION(options));
+	printf(_("Reachability: "));
 
 	if(!strcmp(host, "MYSELF")) {
-		printf("can reach itself\n");
+		printf(_("can reach itself\n"));
 	} else if(!status.reachable) {
-		printf("unreachable\n");
+		printf(_("unreachable\n"));
 	} else if(strcmp(via, item)) {
-		printf("indirectly via %s\n", via);
+		printf(_("indirectly via %s\n"), via);
 	} else if(!status.validkey) {
-		printf("unknown\n");
+		printf(_("unknown\n"));
 	} else if(minmtu > 0) {
-		printf("directly with UDP\nPMTU:         %d\n", pmtu);
+		printf(_("directly with UDP\n"));
+		printf(_("PMTU:         %d\n"), pmtu);
 
 		if(udp_ping_rtt != -1) {
-			printf("RTT:          %d.%03d\n", udp_ping_rtt / 1000, udp_ping_rtt % 1000);
+			printf(_("RTT:          %d.%03d\n"), udp_ping_rtt / 1000, udp_ping_rtt % 1000);
 		}
 	} else if(!strcmp(nexthop, item)) {
-		printf("directly with TCP\n");
+		printf(_("directly with TCP\n"));
 	} else {
-		printf("none, forwarded via %s\n", nexthop);
+		printf(_("none, forwarded via %s\n"), nexthop);
 	}
 
-	printf("RX:           %"PRIu64" packets  %"PRIu64" bytes\n", in_packets, in_bytes);
-	printf("TX:           %"PRIu64" packets  %"PRIu64" bytes\n", out_packets, out_bytes);
+	printf(_("RX:           %"PRIu64" packets  %"PRIu64" bytes\n"), in_packets, in_bytes);
+	printf(_("TX:           %"PRIu64" packets  %"PRIu64" bytes\n"), out_packets, out_bytes);
 
 	// List edges
-	printf("Edges:       ");
+	printf(_("Edges:       "));
 	sendline(fd, "%d %d %s", CONTROL, REQ_DUMP_EDGES, item);
 
 	while(recvline(fd, line, sizeof(line))) {
@@ -208,7 +213,7 @@ static int info_node(int fd, const char *item) {
 		}
 
 		if(n != 4) {
-			fprintf(stderr, "Unable to parse edge dump from tincd.\n%s\n", line);
+			fprintf(stderr, _("Unable to parse edge dump from tincd.\n%s\n"), line);
 			return 1;
 		}
 
@@ -220,7 +225,7 @@ static int info_node(int fd, const char *item) {
 	printf("\n");
 
 	// List subnets
-	printf("Subnets:     ");
+	printf(_("Subnets:     "));
 	sendline(fd, "%d %d %s", CONTROL, REQ_DUMP_SUBNETS, item);
 
 	while(recvline(fd, line, sizeof(line))) {
@@ -231,7 +236,7 @@ static int info_node(int fd, const char *item) {
 		}
 
 		if(n != 4) {
-			fprintf(stderr, "Unable to parse subnet dump from tincd.\n");
+			fprintf(stderr, _("Unable to parse subnet dump from tincd.\n"));
 			return 1;
 		}
 
@@ -249,7 +254,7 @@ static int info_subnet(int fd, const char *item) {
 	subnet_t subnet, find;
 
 	if(!str2net(&find, item)) {
-		fprintf(stderr, "Could not parse subnet or address '%s'.\n", item);
+		fprintf(stderr, _("Could not parse subnet or address '%s'.\n"), item);
 		return 1;
 	}
 
@@ -273,7 +278,7 @@ static int info_subnet(int fd, const char *item) {
 		}
 
 		if(n != 4 || !str2net(&subnet, netstr)) {
-			fprintf(stderr, "Unable to parse subnet dump from tincd.\n");
+			fprintf(stderr, _("Unable to parse subnet dump from tincd.\n"));
 			return 1;
 		}
 
@@ -324,15 +329,15 @@ static int info_subnet(int fd, const char *item) {
 		}
 
 		found = true;
-		printf("Subnet: %s\n", strip_weight(netstr));
-		printf("Owner:  %s\n", owner);
+		printf(_("Subnet: %s\n"), strip_weight(netstr));
+		printf(_("Owner:  %s\n"), owner);
 	}
 
 	if(!found) {
 		if(address) {
-			fprintf(stderr, "Unknown address %s.\n", item);
+			fprintf(stderr, _("Unknown address %s.\n"), item);
 		} else {
-			fprintf(stderr, "Unknown subnet %s.\n", item);
+			fprintf(stderr, _("Unknown subnet %s.\n"), item);
 		}
 
 		return 1;
@@ -350,6 +355,6 @@ int info(int fd, const char *item) {
 		return info_subnet(fd, item);
 	}
 
-	fprintf(stderr, "Argument is not a node name, subnet or address.\n");
+	fprintf(stderr, _("Argument is not a node name, subnet or address.\n"));
 	return 1;
 }

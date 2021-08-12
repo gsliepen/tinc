@@ -33,7 +33,7 @@ static void random_init(void) {
 	}
 
 	if(random_fd < 0) {
-		fprintf(stderr, "Could not open source of random numbers: %s\n", strerror(errno));
+		fprintf(stderr, _("Could not open source of random numbers: %s\n"), strerror(errno));
 		abort();
 	}
 }
@@ -53,7 +53,7 @@ void randomize(void *vout, size_t outlen) {
 				continue;
 			}
 
-			fprintf(stderr, "Could not read random numbers: %s\n", strerror(errno));
+			fprintf(stderr, _("Could not read random numbers: %s\n"), strerror(errno));
 			abort();
 		}
 
@@ -69,7 +69,7 @@ HCRYPTPROV prov;
 
 void random_init(void) {
 	if(!CryptAcquireContext(&prov, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT)) {
-		fprintf(stderr, "CryptAcquireContext() failed!\n");
+		fprintf(stderr, _("%s failed!\n"), "CryptAcquireContext()");
 		abort();
 	}
 }
@@ -80,7 +80,7 @@ void random_exit(void) {
 
 void randomize(void *out, size_t outlen) {
 	if(!CryptGenRandom(prov, outlen, out)) {
-		fprintf(stderr, "CryptGenRandom() failed\n");
+		fprintf(stderr, _("%s failed\n"), "CryptGenRandom()");
 		abort();
 	}
 }

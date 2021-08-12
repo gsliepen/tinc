@@ -200,7 +200,7 @@ int subnet_compare(const subnet_t *a, const subnet_t *b) {
 		return subnet_compare_ipv6(a, b);
 
 	default:
-		logger(DEBUG_ALWAYS, LOG_ERR, "subnet_compare() was called with unknown subnet type %d, exitting!", a->type);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("subnet_compare() was called with unknown subnet type %d, exitting!"), a->type);
 		exit(1);
 	}
 
@@ -312,7 +312,7 @@ bool str2net(subnet_t *subnet, const char *subnetstr) {
 
 bool net2str(char *netstr, size_t len, const subnet_t *subnet) {
 	if(!netstr || !subnet) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "net2str() was called with netstr=%p, subnet=%p!", (void *)netstr, (void *)subnet);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("net2str() was called with netstr=%p, subnet=%p!"), (void *)netstr, (void *)subnet);
 		return false;
 	}
 
@@ -352,7 +352,7 @@ bool net2str(char *netstr, size_t len, const subnet_t *subnet) {
 	}
 
 	default:
-		logger(DEBUG_ALWAYS, LOG_ERR, "net2str() was called with unknown subnet type %d, exiting!", subnet->type);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("net2str() was called with unknown subnet type %d, exiting!"), subnet->type);
 		exit(1);
 	}
 

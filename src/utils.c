@@ -184,7 +184,7 @@ const char *winerror(int err) {
 
 	if(!FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 	                  NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), ptr, sizeof(buf) - (ptr - buf), NULL)) {
-		strncpy(buf, "(unable to format errormessage)", sizeof(buf));
+		strncpy(buf, _("(unable to format errormessage)"), sizeof(buf));
 	};
 
 	if((ptr = strchr(buf, '\r'))) {
@@ -255,12 +255,12 @@ char *replace_name(const char *name) {
 
 		if(!envname) {
 			if(strcmp(name + 1, "HOST")) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "Invalid Name: environment variable %s does not exist\n", name + 1);
+				logger(DEBUG_ALWAYS, LOG_ERR, _("Invalid Name: environment variable %s does not exist\n"), name + 1);
 				return NULL;
 			}
 
 			if(gethostname(hostname, sizeof(hostname)) || !*hostname) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "Could not get hostname: %s\n", sockstrerror(sockerrno));
+				logger(DEBUG_ALWAYS, LOG_ERR, _("Could not get hostname: %s\n"), sockstrerror(sockerrno));
 				return NULL;
 			}
 
@@ -279,7 +279,7 @@ char *replace_name(const char *name) {
 	}
 
 	if(!check_id(ret_name)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Invalid name for myself!");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Invalid name for myself!"));
 		free(ret_name);
 		return NULL;
 	}
@@ -298,7 +298,7 @@ FILE *fopenmask(const char *filename, const char *mode, mode_t perms) {
 	FILE *f = fopen(filename, mode);
 
 	if(!f) {
-		fprintf(stderr, "Could not open %s: %s\n", filename, strerror(errno));
+		fprintf(stderr, _("Could not open %s: %s\n"), filename, strerror(errno));
 		return NULL;
 	}
 

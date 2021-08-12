@@ -46,13 +46,13 @@ static struct timeval last_periodic_run_time;
 /* Purge edges and subnets of unreachable nodes. Use carefully. */
 
 void purge(void) {
-	logger(DEBUG_PROTOCOL, LOG_DEBUG, "Purging unreachable nodes");
+	logger(DEBUG_PROTOCOL, LOG_DEBUG, _("Purging unreachable nodes"));
 
 	/* Remove all edges and subnets owned by unreachable nodes. */
 
 	for splay_each(node_t, n, &node_tree) {
 		if(!n->status.reachable) {
-			logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Purging node %s (%s)", n->name, n->hostname);
+			logger(DEBUG_SCARY_THINGS, LOG_DEBUG, _("Purging node %s (%s)"), n->name, n->hostname);
 
 			for splay_each(subnet_t, s, &n->subnet_tree) {
 				send_del_subnet(everyone, s);
@@ -114,7 +114,7 @@ void tarpit(int fd) {
   - Check if we need to retry making an outgoing connection
 */
 void terminate_connection(connection_t *c, bool report) {
-	logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Closing connection with %s (%s)", c->name, c->hostname);
+	logger(DEBUG_CONNECTIONS, LOG_NOTICE, _("Closing connection with %s (%s)"), c->name, c->hostname);
 
 	if(c->node) {
 		if(c->node->connection == c) {
@@ -194,7 +194,7 @@ static void timeout_handler(void *data) {
 	         by default
 	*/
 	if(sleep_time > 2 * udp_discovery_timeout) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Awaking from dead after %ld seconds of sleep", sleep_time);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Awaking from dead after %ld seconds of sleep"), sleep_time);
 		/*
 		        Do not send any packets to tinc after we wake up.
 		        The other node probably closed our connection but we still
@@ -216,7 +216,7 @@ static void timeout_handler(void *data) {
 		}
 
 		if(close_all_connections) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Forcing connection close after sleep time %s (%s)", c->name, c->hostname);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Forcing connection close after sleep time %s (%s)"), c->name, c->hostname);
 			terminate_connection(c, c->edge);
 			continue;
 		}
@@ -229,9 +229,9 @@ static void timeout_handler(void *data) {
 		// timeout during connection establishing
 		if(!c->edge) {
 			if(c->status.connecting) {
-				logger(DEBUG_CONNECTIONS, LOG_WARNING, "Timeout while connecting to %s (%s)", c->name, c->hostname);
+				logger(DEBUG_CONNECTIONS, LOG_WARNING, _("Timeout while connecting to %s (%s)"), c->name, c->hostname);
 			} else {
-				logger(DEBUG_CONNECTIONS, LOG_WARNING, "Timeout from %s (%s) during authentication", c->name, c->hostname);
+				logger(DEBUG_CONNECTIONS, LOG_WARNING, _("Timeout from %s (%s) during authentication"), c->name, c->hostname);
 				c->status.tarpit = true;
 			}
 
@@ -244,7 +244,7 @@ static void timeout_handler(void *data) {
 
 		// timeout during ping
 		if(c->status.pinged) {
-			logger(DEBUG_CONNECTIONS, LOG_INFO, "%s (%s) didn't respond to PING in %ld seconds", c->name, c->hostname, (long)(now.tv_sec - c->last_ping_time));
+			logger(DEBUG_CONNECTIONS, LOG_INFO, _("%s (%s) didn't respond to PING in %ld seconds"), c->name, c->hostname, (long)(now.tv_sec - c->last_ping_time));
 			terminate_connection(c, c->edge);
 			continue;
 		}
@@ -267,7 +267,7 @@ static void periodic_handler(void *data) {
 	*/
 
 	if(contradicting_del_edge > 100 && contradicting_add_edge > 100) {
-		logger(DEBUG_ALWAYS, LOG_WARNING, "Possible node with same Name as us! Sleeping %d seconds.", sleeptime);
+		logger(DEBUG_ALWAYS, LOG_WARNING, _("Possible node with same Name as us! Sleeping %d seconds."), sleeptime);
 		nanosleep(&(struct timespec) {
 			sleeptime, 0
 		}, NULL);
@@ -311,12 +311,12 @@ void handle_meta_connection_data(connection_t *c) {
 
 #ifndef HAVE_MINGW
 static void sigterm_handler(void *data) {
-	logger(DEBUG_ALWAYS, LOG_NOTICE, "Got %s signal", strsignal(((signal_t *)data)->signum));
+	logger(DEBUG_ALWAYS, LOG_NOTICE, _("Got %s signal"), strsignal(((signal_t *)data)->signum));
 	event_exit();
 }
 
 static void sighup_handler(void *data) {
-	logger(DEBUG_ALWAYS, LOG_NOTICE, "Got %s signal", strsignal(((signal_t *)data)->signum));
+	logger(DEBUG_ALWAYS, LOG_NOTICE, _("Got %s signal"), strsignal(((signal_t *)data)->signum));
 	reopenlogger();
 
 	if(reload_configuration()) {
@@ -325,7 +325,7 @@ static void sighup_handler(void *data) {
 }
 
 static void sigalrm_handler(void *data) {
-	logger(DEBUG_ALWAYS, LOG_NOTICE, "Got %s signal", strsignal(((signal_t *)data)->signum));
+	logger(DEBUG_ALWAYS, LOG_NOTICE, _("Got %s signal"), strsignal(((signal_t *)data)->signum));
 	retry();
 }
 #endif
@@ -338,7 +338,7 @@ int reload_configuration(void) {
 	splay_empty_tree(&config_tree);
 
 	if(!read_server_config(&config_tree)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to reread configuration file.");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Unable to reread configuration file."));
 		return EINVAL;
 	}
 
@@ -442,7 +442,7 @@ int reload_configuration(void) {
 		struct stat s;
 
 		if(stat(fname, &s) || s.st_mtime > last_config_check) {
-			logger(DEBUG_CONNECTIONS, LOG_INFO, "Host config file of %s has been changed", c->name);
+			logger(DEBUG_CONNECTIONS, LOG_INFO, _("Host config file of %s has been changed"), c->name);
 			terminate_connection(c, c->edge);
 		}
 	}
@@ -503,7 +503,7 @@ int main_loop(void) {
 #endif
 
 	if(!event_loop()) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error while waiting for input: %s", sockstrerror(sockerrno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Error while waiting for input: %s"), sockstrerror(sockerrno));
 		return 1;
 	}
 

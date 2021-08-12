@@ -159,7 +159,7 @@ bool get_config_bool(const config_t *cfg, bool *result) {
 		return true;
 	}
 
-	logger(DEBUG_ALWAYS, LOG_ERR, "\"yes\" or \"no\" expected for configuration variable %s in %s line %d",
+	logger(DEBUG_ALWAYS, LOG_ERR, _("\"yes\" or \"no\" expected for configuration variable %s in %s line %d"),
 	       cfg->variable, cfg->file, cfg->line);
 
 	return false;
@@ -174,7 +174,7 @@ bool get_config_int(const config_t *cfg, int *result) {
 		return true;
 	}
 
-	logger(DEBUG_ALWAYS, LOG_ERR, "Integer expected for configuration variable %s in %s line %d",
+	logger(DEBUG_ALWAYS, LOG_ERR, _("Integer expected for configuration variable %s in %s line %d"),
 	       cfg->variable, cfg->file, cfg->line);
 
 	return false;
@@ -204,7 +204,7 @@ bool get_config_address(const config_t *cfg, struct addrinfo **result) {
 		return true;
 	}
 
-	logger(DEBUG_ALWAYS, LOG_ERR, "Hostname or IP address expected for configuration variable %s in %s line %d",
+	logger(DEBUG_ALWAYS, LOG_ERR, _("Hostname or IP address expected for configuration variable %s in %s line %d"),
 	       cfg->variable, cfg->file, cfg->line);
 
 	return false;
@@ -266,13 +266,13 @@ config_t *parse_config_line(char *line, const char *fname, int lineno) {
 	variable[len] = '\0';
 
 	if(!*value) {
-		const char err[] = "No value for variable";
+		const char *err = _("No value for variable");
 
 		if(fname)
-			logger(DEBUG_ALWAYS, LOG_ERR, "%s `%s' on line %d while reading config file %s",
+			logger(DEBUG_ALWAYS, LOG_ERR, _("%s `%s' on line %d while reading config file %s"),
 			       err, variable, lineno, fname);
 		else
-			logger(DEBUG_ALWAYS, LOG_ERR, "%s `%s' in command line option %d",
+			logger(DEBUG_ALWAYS, LOG_ERR, _("%s `%s' in command line option %d"),
 			       err, variable, lineno);
 
 		return NULL;
@@ -303,7 +303,8 @@ bool read_config_file(splay_tree_t *config_tree, const char *fname, bool verbose
 	fp = fopen(fname, "r");
 
 	if(!fp) {
-		logger(verbose ? DEBUG_ALWAYS : DEBUG_CONNECTIONS, LOG_ERR, "Cannot open config file %s: %s", fname, strerror(errno));
+		logger(verbose ? DEBUG_ALWAYS : DEBUG_CONNECTIONS, LOG_ERR,
+		       _("Cannot open config file %s: %s"), fname, strerror(errno));
 		return false;
 	}
 
@@ -412,7 +413,7 @@ bool read_server_config(splay_tree_t *config_tree) {
 				// And we try to read the ones that end with ".conf"
 				if(l > 5 && !strcmp(".conf", & ep->d_name[ l - 5 ])) {
 					if((size_t)snprintf(fname, sizeof(fname), "%s" SLASH "%s", dname, ep->d_name) >= sizeof(fname)) {
-						logger(DEBUG_ALWAYS, LOG_ERR, "Pathname too long: %s/%s", dname, ep->d_name);
+						logger(DEBUG_ALWAYS, LOG_ERR, _("Pathname too long: %s/%s"), dname, ep->d_name);
 						return false;
 					}
 
@@ -425,7 +426,7 @@ bool read_server_config(splay_tree_t *config_tree) {
 	}
 
 	if(!x && errno) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Failed to read `%s': %s", fname, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Failed to read `%s': %s"), fname, strerror(errno));
 	}
 
 	return x;
@@ -446,11 +447,11 @@ bool append_config_file(const char *name, const char *key, const char *value) {
 	FILE *fp = fopen(fname, "a");
 
 	if(!fp) {
-		logger(DEBUG_ALWAYS, LOG_DEBUG, "Cannot open config file %s: %s", fname, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_DEBUG, _("Cannot open config file %s: %s"), fname, strerror(errno));
 		return false;
 	}
 
-	fprintf(fp, "\n# The following line was automatically added by tinc\n%s = %s\n", key, value);
+	fprintf(fp, "\n# %s\n%s = %s\n", _("The following line was automatically added by tinc"), key, value);
 	fclose(fp);
 	return true;
 }

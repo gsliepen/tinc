@@ -32,9 +32,11 @@
 static struct vdeconn *conn = NULL;
 static int port = 0;
 static char *group = NULL;
-static const char *device_info = "VDE socket";
+static const char *device_info = NULL;
 
 static bool setup_device(void) {
+	device_info = _("VDE socket");
+
 	if(!get_config_string(lookup_config(&config_tree, "Device"), &device)) {
 		xasprintf(&device, RUNSTATEDIR "/vde.ctl");
 	}
@@ -54,7 +56,7 @@ static bool setup_device(void) {
 	conn = vde_open(device, identname, &args);
 
 	if(!conn) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open VDE socket %s", device);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not open VDE socket %s"), device);
 		return false;
 	}
 
@@ -64,7 +66,7 @@ static bool setup_device(void) {
 	fcntl(device_fd, F_SETFD, FD_CLOEXEC);
 #endif
 
-	logger(DEBUG_ALWAYS, LOG_INFO, "%s is a %s", device, device_info);
+	logger(DEBUG_ALWAYS, LOG_INFO, _("%s is a %s"), device, device_info);
 
 	if(routing_mode == RMODE_ROUTER) {
 		overwrite_mac = true;
@@ -92,26 +94,26 @@ static bool read_packet(vpn_packet_t *packet) {
 	ssize_t lenin = vde_recv(conn, DATA(packet), MTU, 0);
 
 	if(lenin <= 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info, device, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Error while reading from %s %s: %s"), device_info, device, strerror(errno));
 		event_exit();
 		return false;
 	}
 
 	if(lenin == 1) {
 		logger(DEBUG_TRAFFIC, LOG_DEBUG,
-		       "Dropped a packet received from %s - the sender was not allowed to send that packet.", device_info);
+		       _("Dropped a packet received from %s - the sender was not allowed to send that packet."), device_info);
 		return false;
 	}
 
 	if(lenin < 14) {
 		logger(DEBUG_TRAFFIC, LOG_DEBUG,
-		       "Received an invalid packet from %s - packet shorter than an ethernet header).", device_info);
+		       _("Received an invalid packet from %s - packet shorter than an ethernet header)."), device_info);
 		return false;
 	}
 
 	packet->len = lenin;
 
-	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Read packet of %d bytes from %s", packet->len, device_info);
+	logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Read packet of %d bytes from %s"), packet->len, device_info);
 
 	return true;
 }
@@ -119,7 +121,7 @@ static bool read_packet(vpn_packet_t *packet) {
 static bool write_packet(vpn_packet_t *packet) {
 	if(vde_send(conn, DATA(packet), packet->len, 0) < 0) {
 		if(errno != EINTR && errno != EAGAIN) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Can't write to %s %s: %s", device_info, device, strerror(errno));
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Can't write to %s %s: %s"), device_info, device, strerror(errno));
 			event_exit();
 		}
 

@@ -27,7 +27,7 @@ static const char *winerror(int err) {
 
 	if(!FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 	                  NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), ptr, sizeof(buf) - (ptr - buf), NULL)) {
-		strncpy(buf, "(unable to format errormessage)", sizeof(buf));
+		strncpy(buf, _("(unable to format errormessage)"), sizeof(buf));
 	};
 
 	if((ptr = strchr(buf, '\r'))) {
@@ -47,7 +47,7 @@ static const char *winerror(int err) {
 
 int main(int argc, char *argv[]) {
 	if(argc < 7) {
-		fprintf(stderr, "Usage: %s name1 host1 port1 name2 host2 port2 [protocol]\n", argv[0]);
+		fprintf(stderr, _("Usage: %s name1 host1 port1 name2 host2 port2 [protocol]\n"), argv[0]);
 		return 1;
 	}
 
@@ -81,46 +81,46 @@ int main(int argc, char *argv[]) {
 		struct addrinfo *ai;
 
 		if(getaddrinfo(argv[2 + 3 * i], argv[3 + 3 * i], &hint, &ai) || !ai) {
-			fprintf(stderr, "getaddrinfo() failed: %s\n", sockstrerror(sockerrno));
+			fprintf(stderr, _("%s failed: %s\n"), "getaddrinfo()", sockstrerror(sockerrno));
 			return 1;
 		}
 
 		sock[i] = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 
 		if(sock[i] == -1) {
-			fprintf(stderr, "Could not create socket: %s\n", sockstrerror(sockerrno));
+			fprintf(stderr, _("Could not create socket: %s\n"), sockstrerror(sockerrno));
 			freeaddrinfo(ai);
 			return 1;
 		}
 
 		if(connect(sock[i], ai->ai_addr, ai->ai_addrlen)) {
-			fprintf(stderr, "Could not connect to %s: %s\n", argv[i + 3 * i], sockstrerror(sockerrno));
+			fprintf(stderr, _("Could not connect to %s: %s\n"), argv[i + 3 * i], sockstrerror(sockerrno));
 			freeaddrinfo(ai);
 			return 1;
 		}
 
 		freeaddrinfo(ai);
 
-		fprintf(stderr, "Connected to %s\n", argv[1 + 3 * i]);
+		fprintf(stderr, _("Connected to %s\n"), argv[1 + 3 * i]);
 
 		/* Pretend to be the other one */
 		int len = snprintf(buf, sizeof buf, "0 %s %s\n", argv[4 - 3 * i], protocol);
 
 		if(send(sock[i], buf, len, 0) != len) {
-			fprintf(stderr, "Error sending data to %s: %s\n", argv[1 + 3 * i], sockstrerror(sockerrno));
+			fprintf(stderr, _("Error sending data to %s: %s\n"), argv[1 + 3 * i], sockstrerror(sockerrno));
 			return 1;
 		}
 
 		/* Ignore the response */
 		do {
 			if(recv(sock[i], buf, 1, 0) != 1) {
-				fprintf(stderr, "Error reading data from %s: %s\n", argv[1 + 3 * i], sockstrerror(sockerrno));
+				fprintf(stderr, _("Error reading data from %s: %s\n"), argv[1 + 3 * i], sockstrerror(sockerrno));
 				return 1;
 			}
 		} while(*buf != '\n');
 	}
 
-	fprintf(stderr, "Splicing...\n");
+	fprintf(stderr, _("Splicing...\n"));
 
 	int nfds = (sock[0] > sock[1] ? sock[0] : sock[1]) + 1;
 
@@ -139,17 +139,17 @@ int main(int argc, char *argv[]) {
 				ssize_t len = recv(sock[i], buf, sizeof buf, 0);
 
 				if(len < 0) {
-					fprintf(stderr, "Error while reading from %s: %s\n", argv[1 + i * 3], sockstrerror(sockerrno));
+					fprintf(stderr, _("Error while reading from %s: %s\n"), argv[1 + i * 3], sockstrerror(sockerrno));
 					return 1;
 				}
 
 				if(len == 0) {
-					fprintf(stderr, "Connection closed by %s\n", argv[1 + i * 3]);
+					fprintf(stderr, _("Connection closed by %s\n"), argv[1 + i * 3]);
 					return 0;
 				}
 
 				if(send(sock[i ^ 1], buf, len, 0) != len) {
-					fprintf(stderr, "Error while writing to %s: %s\n", argv[4 - i * 3], sockstrerror(sockerrno));
+					fprintf(stderr, _("Error while writing to %s: %s\n"), argv[4 - i * 3], sockstrerror(sockerrno));
 					return 1;
 				}
 			}

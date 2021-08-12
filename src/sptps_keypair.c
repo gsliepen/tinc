@@ -41,11 +41,14 @@ void logger(debug_t level, int priority, const char *format, ...) {
 }
 
 static void usage() {
-	fprintf(stderr, "Usage: %s [options] private_key_file public_key_file\n\n", program_name);
-	fprintf(stderr, "Valid options are:\n"
-	        "  --help  Display this help and exit.\n"
-	        "\n");
-	fprintf(stderr, "Report bugs to tinc@tinc-vpn.org.\n");
+	fprintf(stderr, _("Usage: %s [options] private_key_file public_key_file\n\n"), program_name);
+
+	fprintf(stderr, "%s\n%s%s\n\n",
+	        _("Valid options are:"),
+	        "  --help  ", _("Display this help and exit.")
+	       );
+
+	fprintf(stderr, _("Report bugs to %s.\n"), MAINTAINER_EMAIL);
 }
 
 static struct option const long_options[] = {
@@ -82,7 +85,7 @@ int main(int argc, char *argv[]) {
 	argv += optind - 1;
 
 	if(argc != 3) {
-		fprintf(stderr, "Wrong number of arguments.\n");
+		fprintf(stderr, _("Wrong number of arguments.\n"));
 		usage();
 		return 1;
 	}
@@ -99,14 +102,14 @@ int main(int argc, char *argv[]) {
 
 	if(fp) {
 		if(!ecdsa_write_pem_private_key(key, fp)) {
-			fprintf(stderr, "Could not write ECDSA private key\n");
+			fprintf(stderr, _("Could not write ECDSA private key\n"));
 			free(key);
 			return 1;
 		}
 
 		fclose(fp);
 	} else {
-		fprintf(stderr, "Could not open '%s' for writing: %s\n", argv[1], strerror(errno));
+		fprintf(stderr, _("Could not open '%s' for writing: %s\n"), argv[1], strerror(errno));
 		free(key);
 		return 1;
 	}
@@ -115,14 +118,14 @@ int main(int argc, char *argv[]) {
 
 	if(fp) {
 		if(!ecdsa_write_pem_public_key(key, fp)) {
-			fprintf(stderr, "Could not write ECDSA public key\n");
+			fprintf(stderr, _("Could not write ECDSA public key\n"));
 		}
 
 		free(key);
 		fclose(fp);
 		return 0;
 	} else {
-		fprintf(stderr, "Could not open '%s' for writing: %s\n", argv[2], strerror(errno));
+		fprintf(stderr, _("Could not open '%s' for writing: %s\n"), argv[2], strerror(errno));
 		free(key);
 		return 1;
 	}

@@ -80,7 +80,7 @@ static void upnp_add_mapping(struct UPNPUrls *urls, struct IGDdatas *data, const
 	socklen_t salen = sizeof(sa);
 
 	if(getsockname(socket, &sa.sa, &salen)) {
-		logger(DEBUG_PROTOCOL, LOG_ERR, "[upnp] Unable to get socket address: [%d] %s", sockerrno, sockstrerror(sockerrno));
+		logger(DEBUG_PROTOCOL, LOG_ERR, _("[upnp] Unable to get socket address: [%d] %s"), sockerrno, sockstrerror(sockerrno));
 		return;
 	}
 
@@ -88,7 +88,7 @@ static void upnp_add_mapping(struct UPNPUrls *urls, struct IGDdatas *data, const
 	sockaddr2str(&sa, NULL, &port);
 
 	if(!port) {
-		logger(DEBUG_PROTOCOL, LOG_ERR, "[upnp] Unable to get socket port");
+		logger(DEBUG_PROTOCOL, LOG_ERR, _("[upnp] Unable to get socket port"));
 		return;
 	}
 
@@ -99,22 +99,22 @@ static void upnp_add_mapping(struct UPNPUrls *urls, struct IGDdatas *data, const
 	int error = UPNP_AddPortMapping(urls->controlURL, data->first.servicetype, port, port, myaddr, identname, proto, NULL, lease_duration);
 
 	if(error == 0) {
-		logger(DEBUG_PROTOCOL, LOG_INFO, "[upnp] Successfully set port mapping (%s:%s %s for %s seconds)", myaddr, port, proto, lease_duration);
+		logger(DEBUG_PROTOCOL, LOG_INFO, _("[upnp] Successfully set port mapping (%s:%s %s for %s seconds)"), myaddr, port, proto, lease_duration);
 	} else {
-		logger(DEBUG_PROTOCOL, LOG_ERR, "[upnp] Failed to set port mapping (%s:%s %s for %s seconds): [%d] %s", myaddr, port, proto, lease_duration, error, strupnperror(error));
+		logger(DEBUG_PROTOCOL, LOG_ERR, _("[upnp] Failed to set port mapping (%s:%s %s for %s seconds): [%d] %s"), myaddr, port, proto, lease_duration, error, strupnperror(error));
 	}
 
 	free(port);
 }
 
 static void upnp_refresh() {
-	logger(DEBUG_PROTOCOL, LOG_INFO, "[upnp] Discovering IGD devices");
+	logger(DEBUG_PROTOCOL, LOG_INFO, _("[upnp] Discovering IGD devices"));
 
 	int error;
 	struct UPNPDev *devices = upnp_discover(upnp_discover_wait * 1000, &error);
 
 	if(!devices) {
-		logger(DEBUG_PROTOCOL, LOG_WARNING, "[upnp] Unable to find IGD devices: [%d] %s", error, strupnperror(error));
+		logger(DEBUG_PROTOCOL, LOG_WARNING, _("[upnp] Unable to find IGD devices: [%d] %s"), error, strupnperror(error));
 		freeUPNPDevlist(devices);
 		return;
 	}
@@ -128,12 +128,12 @@ static void upnp_refresh() {
 	int result = UPNP_GetValidIGD(devices, &urls, &data, myaddr, sizeof(myaddr));
 
 	if(result <= 0) {
-		logger(DEBUG_PROTOCOL, LOG_WARNING, "[upnp] No IGD found");
+		logger(DEBUG_PROTOCOL, LOG_WARNING, _("[upnp] No IGD found"));
 		freeUPNPDevlist(devices);
 		return;
 	}
 
-	logger(DEBUG_PROTOCOL, LOG_INFO, "[upnp] IGD found: [%d] %s (local address: %s, service type: %s)", result, urls.controlURL, myaddr, data.first.servicetype);
+	logger(DEBUG_PROTOCOL, LOG_INFO, _("[upnp] IGD found: [%d] %s (local address: %s, service type: %s)"), result, urls.controlURL, myaddr, data.first.servicetype);
 
 	for(int i = 0; i < listen_sockets; i++) {
 		if(upnp_tcp) {
@@ -184,7 +184,7 @@ void upnp_init(bool tcp, bool udp) {
 	HANDLE handle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)upnp_thread, NULL, 0, NULL);
 
 	if(!handle) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to start UPnP-IGD client thread");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Unable to start UPnP-IGD client thread"));
 	}
 
 #else
@@ -192,7 +192,7 @@ void upnp_init(bool tcp, bool udp) {
 	int error = pthread_create(&thread, NULL, upnp_thread, NULL);
 
 	if(error) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to start UPnP-IGD client thread: [%d] %s", error, strerror(error));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Unable to start UPnP-IGD client thread: [%d] %s"), error, strerror(error));
 	}
 
 #endif

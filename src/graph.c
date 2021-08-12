@@ -68,7 +68,7 @@ static void mst_kruskal(void) {
 		c->status.mst = false;
 	}
 
-	logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Running Kruskal's algorithm:");
+	logger(DEBUG_SCARY_THINGS, LOG_DEBUG, _("Running Kruskal's algorithm:"));
 
 	/* Clear visited status on nodes */
 
@@ -106,7 +106,7 @@ static void mst_kruskal(void) {
 			e->reverse->connection->status.mst = true;
 		}
 
-		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, " Adding edge %s - %s weight %d", e->from->name, e->to->name, e->weight);
+		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, _("Adding edge %s - %s weight %d"), e->from->name, e->to->name, e->weight);
 
 		if(skipped) {
 			skipped = false;
@@ -143,7 +143,7 @@ static void sssp_bfs(void) {
 	/* Loop while todo_list is filled */
 
 	for list_each(node_t, n, todo_list) {                   /* "n" is the node from which we start */
-		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, " Examining edges from %s", n->name);
+		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, _("Examining edges from %s"), n->name);
 
 		if(n->distance < 0) {
 			abort();
@@ -219,14 +219,14 @@ static void check_reachability(void) {
 			n->last_state_change = now.tv_sec;
 
 			if(n->status.reachable) {
-				logger(DEBUG_TRAFFIC, LOG_DEBUG, "Node %s (%s) became reachable",
+				logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Node %s (%s) became reachable"),
 				       n->name, n->hostname);
 
 				if(n != myself) {
 					became_reachable_count++;
 				}
 			} else {
-				logger(DEBUG_TRAFFIC, LOG_DEBUG, "Node %s (%s) became unreachable",
+				logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Node %s (%s) became unreachable"),
 				       n->name, n->hostname);
 
 				if(n != myself) {

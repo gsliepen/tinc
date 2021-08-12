@@ -129,7 +129,7 @@ static bool read_invitation_key(void) {
 		fclose(fp);
 
 		if(!invitation_key) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Reading Ed25519 private key file `%s' failed", fname);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Reading Ed25519 private key file `%s' failed"), fname);
 		}
 	}
 
@@ -148,7 +148,7 @@ static void keyexpire_handler(void *data) {
 #endif
 
 void regenerate_key(void) {
-	logger(DEBUG_STATUS, LOG_INFO, "Expiring symmetric keys");
+	logger(DEBUG_STATUS, LOG_INFO, _("Expiring symmetric keys"));
 	send_key_changed();
 
 	for splay_each(node_t, n, &node_tree) {
@@ -165,7 +165,7 @@ void load_all_nodes(void) {
 	dir = opendir(dname);
 
 	if(!dir) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open %s: %s", dname, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not open %s: %s"), dname, strerror(errno));
 		return;
 	}
 
@@ -265,7 +265,7 @@ bool setup_myself_reloadable(void) {
 		} else if(!strcasecmp(proxy, "exec")) {
 			proxytype = PROXY_EXEC;
 		} else {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Unknown proxy type %s!", proxy);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Unknown proxy type %s!"), proxy);
 			free(proxy);
 			return false;
 		}
@@ -289,7 +289,7 @@ bool setup_myself_reloadable(void) {
 
 		case PROXY_EXEC:
 			if(!space || !*space) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "Argument expected for proxy type exec!");
+				logger(DEBUG_ALWAYS, LOG_ERR, _("Argument expected for proxy type exec!"));
 				free(proxy);
 				return false;
 			}
@@ -308,7 +308,7 @@ bool setup_myself_reloadable(void) {
 			}
 
 			if(!proxyhost || !*proxyhost || !proxyport || !*proxyport) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "Host and port argument expected for proxy!");
+				logger(DEBUG_ALWAYS, LOG_ERR, _("Host and port argument expected for proxy!"));
 				proxyport = NULL;
 				proxyhost = NULL;
 				free(proxy);
@@ -375,7 +375,7 @@ bool setup_myself_reloadable(void) {
 		} else if(!strcasecmp(rmode, "hub")) {
 			routing_mode = RMODE_HUB;
 		} else {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Invalid routing mode!");
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Invalid routing mode!"));
 			free(rmode);
 			return false;
 		}
@@ -393,7 +393,7 @@ bool setup_myself_reloadable(void) {
 		} else if(!strcasecmp(fmode, "kernel")) {
 			forwarding_mode = FMODE_KERNEL;
 		} else {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Invalid forwarding mode!");
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Invalid forwarding mode!"));
 			free(fmode);
 			return false;
 		}
@@ -428,7 +428,7 @@ bool setup_myself_reloadable(void) {
 		} else if(!strcasecmp(bmode, "direct")) {
 			broadcast_mode = BMODE_DIRECT;
 		} else {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Invalid broadcast mode!");
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Invalid broadcast mode!"));
 			free(bmode);
 			return false;
 		}
@@ -469,7 +469,7 @@ bool setup_myself_reloadable(void) {
 #if !defined(IP_TOS)
 
 	if(priorityinheritance) {
-		logger(DEBUG_ALWAYS, LOG_WARNING, "%s not supported on this platform for IPv4 connections", "PriorityInheritance");
+		logger(DEBUG_ALWAYS, LOG_WARNING, _("%s not supported on this platform for IPv4 connections"), "PriorityInheritance");
 	}
 
 #endif
@@ -477,7 +477,7 @@ bool setup_myself_reloadable(void) {
 #if !defined(IPV6_TCLASS)
 
 	if(priorityinheritance) {
-		logger(DEBUG_ALWAYS, LOG_WARNING, "%s not supported on this platform for IPv6 connections", "PriorityInheritance");
+		logger(DEBUG_ALWAYS, LOG_WARNING, _("%s not supported on this platform for IPv6 connections"), "PriorityInheritance");
 	}
 
 #endif
@@ -488,7 +488,7 @@ bool setup_myself_reloadable(void) {
 
 	if(get_config_int(lookup_config(&config_tree, "MaxTimeout"), &maxtimeout)) {
 		if(maxtimeout <= 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Bogus maximum timeout!");
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Bogus maximum timeout!"));
 			return false;
 		}
 	} else {
@@ -505,7 +505,7 @@ bool setup_myself_reloadable(void) {
 		} else if(!strcasecmp(afname, "any")) {
 			addressfamily = AF_UNSPEC;
 		} else {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Invalid address family!");
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Invalid address family!"));
 			free(afname);
 			return false;
 		}
@@ -572,7 +572,7 @@ static bool add_listen_address(char *address, bool bindto) {
 	free(address);
 
 	if(err || !ai) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "getaddrinfo", err == EAI_SYSTEM ? strerror(err) : gai_strerror(err));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("System call `%s' failed: %s"), "getaddrinfo", err == EAI_SYSTEM ? strerror(err) : gai_strerror(err));
 		return false;
 	}
 
@@ -591,7 +591,7 @@ static bool add_listen_address(char *address, bool bindto) {
 		}
 
 		if(listen_sockets >= MAXSOCKETS) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Too many listening sockets");
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Too many listening sockets"));
 			freeaddrinfo(ai);
 			return false;
 		}
@@ -614,7 +614,7 @@ static bool add_listen_address(char *address, bool bindto) {
 
 		if(debug_level >= DEBUG_CONNECTIONS) {
 			char *hostname = sockaddr2hostname((sockaddr_t *) aip->ai_addr);
-			logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Listening on %s", hostname);
+			logger(DEBUG_CONNECTIONS, LOG_NOTICE, _("Listening on %s"), hostname);
 			free(hostname);
 		}
 
@@ -660,7 +660,7 @@ static bool setup_myself(void) {
 	bool port_specified = false;
 
 	if(!(name = get_name())) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Name for tinc daemon required!");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Name for tinc daemon required!"));
 		return false;
 	}
 
@@ -688,7 +688,7 @@ static bool setup_myself(void) {
 	experimental = myself->connection->ecdsa != NULL;
 
 	if(!experimental) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "No private key available, cannot start tinc!");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("No private key available, cannot start tinc!"));
 		return false;
 	}
 
@@ -699,7 +699,7 @@ static bool setup_myself(void) {
 		experimental = myself->connection->ecdsa != NULL;
 
 		if(!experimental) {
-			logger(DEBUG_ALWAYS, LOG_WARNING, "Support for SPTPS disabled.");
+			logger(DEBUG_ALWAYS, LOG_WARNING, _("Support for SPTPS disabled."));
 		}
 	} else {
 		if(experimental) {
@@ -715,9 +715,9 @@ static bool setup_myself(void) {
 
 	if(!myself->connection->rsa) {
 		if(experimental) {
-			logger(DEBUG_ALWAYS, LOG_WARNING, "Support for legacy protocol disabled.");
+			logger(DEBUG_ALWAYS, LOG_WARNING, _("Support for legacy protocol disabled."));
 		} else {
-			logger(DEBUG_ALWAYS, LOG_ERR, "No private keys available, cannot start tinc!");
+			logger(DEBUG_ALWAYS, LOG_ERR, _("No private keys available, cannot start tinc!"));
 			return false;
 		}
 	}
@@ -764,14 +764,14 @@ static bool setup_myself(void) {
 
 	if(get_config_int(lookup_config(&config_tree, "MaxConnectionBurst"), &max_connection_burst)) {
 		if(max_connection_burst <= 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "MaxConnectionBurst cannot be negative!");
+			logger(DEBUG_ALWAYS, LOG_ERR, _("MaxConnectionBurst cannot be negative!"));
 			return false;
 		}
 	}
 
 	if(get_config_int(lookup_config(&config_tree, "UDPRcvBuf"), &udp_rcvbuf)) {
 		if(udp_rcvbuf < 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "UDPRcvBuf cannot be negative!");
+			logger(DEBUG_ALWAYS, LOG_ERR, _("UDPRcvBuf cannot be negative!"));
 			return false;
 		}
 
@@ -780,7 +780,7 @@ static bool setup_myself(void) {
 
 	if(get_config_int(lookup_config(&config_tree, "UDPSndBuf"), &udp_sndbuf)) {
 		if(udp_sndbuf < 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "UDPSndBuf cannot be negative!");
+			logger(DEBUG_ALWAYS, LOG_ERR, _("UDPSndBuf cannot be negative!"));
 			return false;
 		}
 
@@ -791,7 +791,7 @@ static bool setup_myself(void) {
 #ifndef SO_MARK
 
 	if(fwmark) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "FWMark not supported on this platform!");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("FWMark not supported on this platform!"));
 		return false;
 	}
 
@@ -801,7 +801,7 @@ static bool setup_myself(void) {
 
 	if(get_config_int(lookup_config(&config_tree, "ReplayWindow"), &replaywin_int)) {
 		if(replaywin_int < 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "ReplayWindow cannot be negative!");
+			logger(DEBUG_ALWAYS, LOG_ERR, _("ReplayWindow cannot be negative!"));
 			return false;
 		}
 
@@ -821,7 +821,7 @@ static bool setup_myself(void) {
 	if(!strcasecmp(cipher, "none")) {
 		myself->incipher = NULL;
 	} else if(!(myself->incipher = cipher_open_by_name(cipher))) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Unrecognized cipher type!");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Unrecognized cipher type!"));
 		free(cipher);
 		return false;
 	}
@@ -838,7 +838,7 @@ static bool setup_myself(void) {
 	get_config_int(lookup_config(&config_tree, "MACLength"), &maclength);
 
 	if(maclength < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Bogus MAC length!");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Bogus MAC length!"));
 		return false;
 	}
 
@@ -851,7 +851,7 @@ static bool setup_myself(void) {
 	if(!strcasecmp(digest, "none")) {
 		myself->indigest = NULL;
 	} else if(!(myself->indigest = digest_open_by_name(digest, maclength))) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Unrecognized digest type!");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Unrecognized digest type!"));
 		free(digest);
 		return false;
 	}
@@ -866,8 +866,8 @@ static bool setup_myself(void) {
 #ifdef HAVE_LZ4
 			break;
 #else
-			logger(DEBUG_ALWAYS, LOG_ERR, "Bogus compression level!");
-			logger(DEBUG_ALWAYS, LOG_ERR, "LZ4 compression is unavailable on this node.");
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Bogus compression level!"));
+			logger(DEBUG_ALWAYS, LOG_ERR, _("LZ4 compression is unavailable on this node."));
 			return false;
 #endif
 
@@ -876,8 +876,8 @@ static bool setup_myself(void) {
 #ifdef HAVE_LZO
 			break;
 #else
-			logger(DEBUG_ALWAYS, LOG_ERR, "Bogus compression level!");
-			logger(DEBUG_ALWAYS, LOG_ERR, "LZO compression is unavailable on this node.");
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Bogus compression level!"));
+			logger(DEBUG_ALWAYS, LOG_ERR, _("LZO compression is unavailable on this node."));
 			return false;
 #endif
 
@@ -893,8 +893,8 @@ static bool setup_myself(void) {
 #ifdef HAVE_ZLIB
 			break;
 #else
-			logger(DEBUG_ALWAYS, LOG_ERR, "Bogus compression level!");
-			logger(DEBUG_ALWAYS, LOG_ERR, "ZLIB compression is unavailable on this node.");
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Bogus compression level!"));
+			logger(DEBUG_ALWAYS, LOG_ERR, _("ZLIB compression is unavailable on this node."));
 			return false;
 #endif
 
@@ -902,8 +902,8 @@ static bool setup_myself(void) {
 			break;
 
 		default:
-			logger(DEBUG_ALWAYS, LOG_ERR, "Bogus compression level!");
-			logger(DEBUG_ALWAYS, LOG_ERR, "Compression level %i is unrecognized by this node.", myself->incompression);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Bogus compression level!"));
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Compression level %i is unrecognized by this node."), myself->incompression);
 			return false;
 		}
 	} else {
@@ -981,7 +981,7 @@ static bool setup_myself(void) {
 #endif
 
 		if(listen_sockets > MAXSOCKETS) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Too many listening sockets");
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Too many listening sockets"));
 			return false;
 		}
 
@@ -989,7 +989,7 @@ static bool setup_myself(void) {
 			salen = sizeof(sa);
 
 			if(getsockname(i + 3, &sa.sa, &salen) < 0) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "Could not get address of listen fd %d: %s", i + 3, sockstrerror(sockerrno));
+				logger(DEBUG_ALWAYS, LOG_ERR, _("Could not get address of listen fd %d: %s"), i + 3, sockstrerror(sockerrno));
 				return false;
 			}
 
@@ -1008,7 +1008,7 @@ static bool setup_myself(void) {
 
 			if(debug_level >= DEBUG_CONNECTIONS) {
 				hostname = sockaddr2hostname(&sa);
-				logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Listening on %s", hostname);
+				logger(DEBUG_CONNECTIONS, LOG_NOTICE, _("Listening on %s"), hostname);
 				free(hostname);
 			}
 
@@ -1043,7 +1043,7 @@ static bool setup_myself(void) {
 	}
 
 	if(!listen_sockets) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to create any listening socket!");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Unable to create any listening socket!"));
 		return false;
 	}
 
@@ -1063,7 +1063,7 @@ static bool setup_myself(void) {
 		}
 	}
 
-	xasprintf(&myself->hostname, "MYSELF port %s", myport);
+	xasprintf(&myself->hostname, _("MYSELF port %s"), myport);
 	myself->connection->hostname = xstrdup(myself->hostname);
 
 	char *upnp = NULL;
@@ -1085,7 +1085,7 @@ static bool setup_myself(void) {
 #ifdef HAVE_MINIUPNPC
 		upnp_init(upnp_tcp, upnp_udp);
 #else
-		logger(DEBUG_ALWAYS, LOG_WARNING, "UPnP was requested, but tinc isn't built with miniupnpc support!");
+		logger(DEBUG_ALWAYS, LOG_WARNING, _("UPnP was requested, but tinc isn't built with miniupnpc support!"));
 #endif
 	}
 

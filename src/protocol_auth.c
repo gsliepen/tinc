@@ -64,7 +64,7 @@ static bool send_proxyrequest(connection_t *c) {
 
 	case PROXY_SOCKS4: {
 		if(c->address.sa.sa_family != AF_INET) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Cannot connect to an IPv6 host through a SOCKS 4 proxy!");
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Cannot connect to an IPv6 host through a SOCKS 4 proxy!"));
 			return false;
 		}
 
@@ -129,7 +129,7 @@ static bool send_proxyrequest(connection_t *c) {
 			i += 2;
 			c->tcplen += 22;
 		} else {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Address family %x not supported for SOCKS 5 proxies!", c->address.sa.sa_family);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Address family %x not supported for SOCKS 5 proxies!"), c->address.sa.sa_family);
 			return false;
 		}
 
@@ -141,14 +141,14 @@ static bool send_proxyrequest(connection_t *c) {
 	}
 
 	case PROXY_SOCKS4A:
-		logger(DEBUG_ALWAYS, LOG_ERR, "Proxy type not implemented yet");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Proxy type not implemented yet"));
 		return false;
 
 	case PROXY_EXEC:
 		return true;
 
 	default:
-		logger(DEBUG_ALWAYS, LOG_ERR, "Unknown proxy type");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Unknown proxy type"));
 		return false;
 	}
 }
@@ -178,7 +178,7 @@ static bool finalize_invitation(connection_t *c, const char *data, uint16_t len)
 	(void)len;
 
 	if(strchr(data, '\n')) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Received invalid key from invited node %s (%s)!\n", c->name, c->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Received invalid key from invited node %s (%s)!\n"), c->name, c->hostname);
 		return false;
 	}
 
@@ -187,21 +187,21 @@ static bool finalize_invitation(connection_t *c, const char *data, uint16_t len)
 	snprintf(filename, sizeof(filename), "%s" SLASH "hosts" SLASH "%s", confbase, c->name);
 
 	if(!access(filename, F_OK)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Host config file for %s (%s) already exists!\n", c->name, c->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Host config file for %s (%s) already exists!\n"), c->name, c->hostname);
 		return false;
 	}
 
 	FILE *f = fopen(filename, "w");
 
 	if(!f) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error trying to create %s: %s\n", filename, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Error trying to create %s: %s\n"), filename, strerror(errno));
 		return false;
 	}
 
 	fprintf(f, "Ed25519PublicKey = %s\n", data);
 	fclose(f);
 
-	logger(DEBUG_CONNECTIONS, LOG_INFO, "Key successfully received from %s (%s)", c->name, c->hostname);
+	logger(DEBUG_CONNECTIONS, LOG_INFO, _("Key successfully received from %s (%s)"), c->name, c->hostname);
 
 	// Call invitation-accepted script
 	environment_t env;
@@ -256,9 +256,9 @@ static bool receive_invitation_sptps(void *handle, uint8_t type, const void *dat
 	// Atomically rename the invitation file
 	if(rename(filename, usedname)) {
 		if(errno == ENOENT) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Peer %s tried to use non-existing invitation %s\n", c->hostname, cookie);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Peer %s tried to use non-existing invitation %s\n"), c->hostname, cookie);
 		} else {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Error trying to rename invitation %s\n", cookie);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Error trying to rename invitation %s\n"), cookie);
 		}
 
 		return false;
@@ -268,12 +268,12 @@ static bool receive_invitation_sptps(void *handle, uint8_t type, const void *dat
 	struct stat st;
 
 	if(stat(usedname, &st)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not stat %s", usedname);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not stat %s"), usedname);
 		return false;
 	}
 
 	if(st.st_mtime + invitation_lifetime < now.tv_sec) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Peer %s tried to use expired invitation %s", c->hostname, cookie);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Peer %s tried to use expired invitation %s"), c->hostname, cookie);
 		return false;
 	}
 
@@ -281,7 +281,7 @@ static bool receive_invitation_sptps(void *handle, uint8_t type, const void *dat
 	FILE *f = fopen(usedname, "r");
 
 	if(!f) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error trying to open invitation %s\n", cookie);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Error trying to open invitation %s\n"), cookie);
 		return false;
 	}
 
@@ -309,7 +309,7 @@ static bool receive_invitation_sptps(void *handle, uint8_t type, const void *dat
 
 	// Check that it is a valid Name
 	if(!*buf || !*name || strcasecmp(buf, "Name") || !check_id(name) || !strcmp(name, myself->name)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Invalid invitation file %s\n", cookie);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Invalid invitation file %s\n"), cookie);
 		fclose(f);
 		return false;
 	}
@@ -331,7 +331,7 @@ static bool receive_invitation_sptps(void *handle, uint8_t type, const void *dat
 
 	c->status.invitation_used = true;
 
-	logger(DEBUG_CONNECTIONS, LOG_INFO, "Invitation %s successfully sent to %s (%s)", cookie, c->name, c->hostname);
+	logger(DEBUG_CONNECTIONS, LOG_INFO, _("Invitation %s successfully sent to %s (%s)"), cookie, c->name, c->hostname);
 	return true;
 }
 
@@ -339,7 +339,7 @@ bool id_h(connection_t *c, const char *request) {
 	char name[MAX_STRING_SIZE];
 
 	if(sscanf(request, "%*d " MAX_STRING " %2d.%3d", name, &c->protocol_major, &c->protocol_minor) < 2) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "ID", c->name,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s)"), "ID", c->name,
 		       c->hostname);
 		return false;
 	}
@@ -363,14 +363,14 @@ bool id_h(connection_t *c, const char *request) {
 
 	if(name[0] == '?') {
 		if(!invitation_key) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Got invitation from %s but we don't have an invitation key", c->hostname);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Got invitation from %s but we don't have an invitation key"), c->hostname);
 			return false;
 		}
 
 		c->ecdsa = ecdsa_set_base64_public_key(name + 1);
 
 		if(!c->ecdsa) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Got bad invitation from %s", c->hostname);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad invitation from %s"), c->hostname);
 			return false;
 		}
 
@@ -399,8 +399,8 @@ bool id_h(connection_t *c, const char *request) {
 	/* Check if identity is a valid name */
 
 	if(!check_id(name) || !strcmp(name, myself->name)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s): %s", "ID", c->name,
-		       c->hostname, "invalid name");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s): %s"), "ID", c->name,
+		       c->hostname, _("invalid name"));
 		return false;
 	}
 
@@ -408,7 +408,7 @@ bool id_h(connection_t *c, const char *request) {
 
 	if(c->outgoing) {
 		if(strcmp(c->name, name)) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Peer %s is %s instead of %s", c->hostname, name,
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Peer %s is %s instead of %s"), c->hostname, name,
 			       c->name);
 			return false;
 		}
@@ -420,7 +420,7 @@ bool id_h(connection_t *c, const char *request) {
 	/* Check if version matches */
 
 	if(c->protocol_major != myself->connection->protocol_major) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Peer %s (%s) uses incompatible version %d.%d",
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Peer %s (%s) uses incompatible version %d.%d"),
 		       c->name, c->hostname, c->protocol_major, c->protocol_minor);
 		return false;
 	}
@@ -447,7 +447,7 @@ bool id_h(connection_t *c, const char *request) {
 		c->config_tree = create_configuration();
 
 		if(!read_host_config(c->config_tree, c->name, false)) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Peer %s had unknown identity (%s)", c->hostname, c->name);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Peer %s had unknown identity (%s)"), c->hostname, c->name);
 			return false;
 		}
 
@@ -465,7 +465,7 @@ bool id_h(connection_t *c, const char *request) {
 	/* Forbid version rollback for nodes whose Ed25519 key we know */
 
 	if(ecdsa_active(c->ecdsa) && c->protocol_minor < 1) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Peer %s (%s) tries to roll back protocol version to %d.%d",
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Peer %s (%s) tries to roll back protocol version to %d.%d"),
 		       c->name, c->hostname, c->protocol_major, c->protocol_minor);
 		return false;
 	}
@@ -495,7 +495,7 @@ bool id_h(connection_t *c, const char *request) {
 #ifndef DISABLE_LEGACY
 bool send_metakey(connection_t *c) {
 	if(!myself->connection->rsa) {
-		logger(DEBUG_CONNECTIONS, LOG_ERR, "Peer %s (%s) uses legacy protocol which we don't support", c->name, c->hostname);
+		logger(DEBUG_CONNECTIONS, LOG_ERR, _("Peer %s (%s) uses legacy protocol which we don't support"), c->name, c->hostname);
 		return false;
 	}
 
@@ -551,7 +551,7 @@ bool send_metakey(connection_t *c) {
 
 	if(debug_level >= DEBUG_SCARY_THINGS) {
 		bin2hex(key, hexkey, len);
-		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Generated random meta key (unencrypted): %s", hexkey);
+		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, _("Generated random meta key (unencrypted): %s"), hexkey);
 	}
 
 	/* Encrypt the random data
@@ -562,7 +562,7 @@ bool send_metakey(connection_t *c) {
 	 */
 
 	if(!rsa_public_encrypt(c->rsa, key, len, enckey)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error during encryption of meta key for %s (%s)", c->name, c->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Error during encryption of meta key for %s (%s)"), c->name, c->hostname);
 		return false;
 	}
 
@@ -593,7 +593,7 @@ bool metakey_h(connection_t *c, const char *request) {
 	char key[len];
 
 	if(sscanf(request, "%*d %d %d %d %d " MAX_STRING, &cipher, &digest, &maclength, &compression, hexkey) != 5) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "METAKEY", c->name, c->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s)"), "METAKEY", c->name, c->hostname);
 		return false;
 	}
 
@@ -604,31 +604,31 @@ bool metakey_h(connection_t *c, const char *request) {
 	/* Check if the length of the meta key is all right */
 
 	if(inlen != len) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Possible intruder %s (%s): %s", c->name, c->hostname, "wrong keylength");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Possible intruder %s (%s): %s"), c->name, c->hostname, "wrong keylength");
 		return false;
 	}
 
 	/* Decrypt the meta key */
 
 	if(!rsa_private_decrypt(myself->connection->rsa, enckey, len, key)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error during decryption of meta key for %s (%s)", c->name, c->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Error during decryption of meta key for %s (%s)"), c->name, c->hostname);
 		return false;
 	}
 
 	if(debug_level >= DEBUG_SCARY_THINGS) {
 		bin2hex(key, hexkey, len);
-		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Received random meta key (unencrypted): %s", hexkey);
+		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, _("Received random meta key (unencrypted): %s"), hexkey);
 	}
 
 	/* Check and lookup cipher and digest algorithms */
 
 	if(cipher) {
 		if(!(c->incipher = cipher_open_by_nid(cipher)) || !cipher_set_key_from_rsa(c->incipher, key, len, false)) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Error during initialisation of cipher from %s (%s)", c->name, c->hostname);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Error during initialisation of cipher from %s (%s)"), c->name, c->hostname);
 			return false;
 		}
 	} else {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Possible intruder %s (%s): %s", c->name, c->hostname, "null cipher");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Possible intruder %s (%s): %s"), c->name, c->hostname, "null cipher");
 		return false;
 	}
 
@@ -636,11 +636,11 @@ bool metakey_h(connection_t *c, const char *request) {
 
 	if(digest) {
 		if(!(c->indigest = digest_open_by_nid(digest, DIGEST_ALGO_SIZE))) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Error during initialisation of digest from %s (%s)", c->name, c->hostname);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Error during initialisation of digest from %s (%s)"), c->name, c->hostname);
 			return false;
 		}
 	} else {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Possible intruder %s (%s): %s", c->name, c->hostname, "null digest");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Possible intruder %s (%s): null digest"), c->name, c->hostname);
 		return false;
 	}
 
@@ -679,14 +679,14 @@ bool challenge_h(connection_t *c, const char *request) {
 	const size_t len = rsa_size(myself->connection->rsa);
 
 	if(sscanf(request, "%*d " MAX_STRING, buffer) != 1) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "CHALLENGE", c->name, c->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s)"), "CHALLENGE", c->name, c->hostname);
 		return false;
 	}
 
 	/* Check if the length of the challenge is all right */
 
 	if(strlen(buffer) != (size_t)len * 2) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Possible intruder %s (%s): %s", c->name, c->hostname, "wrong challenge length");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Possible intruder %s (%s): %s"), c->name, c->hostname, "wrong challenge length");
 		return false;
 	}
 
@@ -734,7 +734,7 @@ bool chal_reply_h(connection_t *c, const char *request) {
 	char hishash[MAX_STRING_SIZE];
 
 	if(sscanf(request, "%*d " MAX_STRING, hishash) != 1) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "CHAL_REPLY", c->name,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s)"), "CHAL_REPLY", c->name,
 		       c->hostname);
 		return false;
 	}
@@ -746,7 +746,7 @@ bool chal_reply_h(connection_t *c, const char *request) {
 	/* Check if the length of the hash is all right */
 
 	if(inlen != digest_length(c->outdigest)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Possible intruder %s (%s): %s", c->name, c->hostname, "wrong challenge reply length");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Possible intruder %s (%s): %s"), c->name, c->hostname, "wrong challenge reply length");
 		return false;
 	}
 
@@ -754,7 +754,7 @@ bool chal_reply_h(connection_t *c, const char *request) {
 	/* Verify the hash */
 
 	if(!digest_verify(c->outdigest, c->hischallenge, rsa_size(c->rsa), hishash)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Possible intruder %s (%s): %s", c->name, c->hostname, "wrong challenge reply");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Possible intruder %s (%s): %s"), c->name, c->hostname, "wrong challenge reply");
 		return false;
 	}
 
@@ -908,7 +908,7 @@ static bool upgrade_h(connection_t *c, const char *request) {
 	char pubkey[MAX_STRING_SIZE];
 
 	if(sscanf(request, "%*d " MAX_STRING, pubkey) != 1) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "ACK", c->name, c->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s)"), "ACK", c->name, c->hostname);
 		return false;
 	}
 
@@ -918,11 +918,11 @@ static bool upgrade_h(connection_t *c, const char *request) {
 		free(knownkey);
 
 		if(different) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Already have an Ed25519 public key from %s (%s) which is different from the one presented now!", c->name, c->hostname);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Already have an Ed25519 public key from %s (%s) which is different from the one presented now!"), c->name, c->hostname);
 			return false;
 		}
 
-		logger(DEBUG_ALWAYS, LOG_INFO, "Already have Ed25519 public key from %s (%s), ignoring.", c->name, c->hostname);
+		logger(DEBUG_ALWAYS, LOG_INFO, _("Already have Ed25519 public key from %s (%s), ignoring."), c->name, c->hostname);
 		c->allow_request = TERMREQ;
 		return send_termreq(c);
 	}
@@ -930,11 +930,11 @@ static bool upgrade_h(connection_t *c, const char *request) {
 	c->ecdsa = ecdsa_set_base64_public_key(pubkey);
 
 	if(!c->ecdsa) {
-		logger(DEBUG_ALWAYS, LOG_INFO, "Got bad Ed25519 public key from %s (%s), not upgrading.", c->name, c->hostname);
+		logger(DEBUG_ALWAYS, LOG_INFO, _("Got bad Ed25519 public key from %s (%s), not upgrading."), c->name, c->hostname);
 		return false;
 	}
 
-	logger(DEBUG_ALWAYS, LOG_INFO, "Got Ed25519 public key from %s (%s), upgrading!", c->name, c->hostname);
+	logger(DEBUG_ALWAYS, LOG_INFO, _("Got Ed25519 public key from %s (%s), upgrading!"), c->name, c->hostname);
 	append_config_file(c->name, "Ed25519PublicKey", pubkey);
 	c->allow_request = TERMREQ;
 
@@ -957,7 +957,7 @@ bool ack_h(connection_t *c, const char *request) {
 	bool choice;
 
 	if(sscanf(request, "%*d " MAX_STRING " %d %x", hisport, &weight, &options) != 3) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "ACK", c->name,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s)"), "ACK", c->name,
 		       c->hostname);
 		return false;
 	}
@@ -973,11 +973,11 @@ bool ack_h(connection_t *c, const char *request) {
 	} else {
 		if(n->connection) {
 			/* Oh dear, we already have a connection to this node. */
-			logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Established a second connection with %s (%s), closing old connection", n->connection->name, n->connection->hostname);
+			logger(DEBUG_CONNECTIONS, LOG_DEBUG, _("Established a second connection with %s (%s), closing old connection"), n->connection->name, n->connection->hostname);
 
 			if(n->connection->outgoing) {
 				if(c->outgoing) {
-					logger(DEBUG_ALWAYS, LOG_WARNING, "Two outgoing connections to the same node!");
+					logger(DEBUG_ALWAYS, LOG_WARNING, _("Two outgoing connections to the same node!"));
 				} else {
 					c->outgoing = n->connection->outgoing;
 				}
@@ -1021,7 +1021,7 @@ bool ack_h(connection_t *c, const char *request) {
 
 	c->allow_request = ALL;
 
-	logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Connection with %s (%s) activated", c->name,
+	logger(DEBUG_CONNECTIONS, LOG_NOTICE, _("Connection with %s (%s) activated"), c->name,
 	       c->hostname);
 
 	/* Send him everything we know */
@@ -1039,7 +1039,7 @@ bool ack_h(connection_t *c, const char *request) {
 	socklen_t local_salen = sizeof(local_sa);
 
 	if(getsockname(c->socket, &local_sa.sa, &local_salen) < 0) {
-		logger(DEBUG_ALWAYS, LOG_WARNING, "Could not get local socket address for connection with %s", c->name);
+		logger(DEBUG_ALWAYS, LOG_WARNING, _("Could not get local socket address for connection with %s"), c->name);
 	} else {
 		sockaddr_setport(&local_sa, myport);
 		c->edge->local_address = local_sa;

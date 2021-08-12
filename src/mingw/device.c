@@ -43,7 +43,7 @@ static vpn_packet_t device_read_packet;
 static vpn_packet_t device_write_packet;
 char *device = NULL;
 char *iface = NULL;
-static const char *device_info = "Windows tap device";
+static const char *device_info = NULL;
 
 extern char *myport;
 
@@ -58,7 +58,7 @@ static void device_issue_read() {
 
 		if(!status) {
 			if(GetLastError() != ERROR_IO_PENDING)
-				logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
+				logger(DEBUG_ALWAYS, LOG_ERR, _("Error while reading from %s %s: %s"), device_info,
 				       device, strerror(errno));
 
 			break;
@@ -77,7 +77,7 @@ static void device_handle_read(void *data, int flags) {
 	DWORD len;
 
 	if(!GetOverlappedResult(device_handle, &device_read_overlapped, &len, FALSE)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error getting read result from %s %s: %s", device_info,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Error getting read result from %s %s: %s"), device_info,
 		       device, strerror(errno));
 
 		if(GetLastError() != ERROR_IO_INCOMPLETE) {
@@ -95,6 +95,8 @@ static void device_handle_read(void *data, int flags) {
 }
 
 static bool setup_device(void) {
+	device_info = _("Windows tap device");
+
 	HKEY key, key2;
 	int i;
 
@@ -112,13 +114,13 @@ static bool setup_device(void) {
 	get_config_string(lookup_config(&config_tree, "Interface"), &iface);
 
 	if(device && iface) {
-		logger(DEBUG_ALWAYS, LOG_WARNING, "Warning: both Device and Interface specified, results may not be as expected");
+		logger(DEBUG_ALWAYS, LOG_WARNING, _("Warning: both Device and Interface specified, results may not be as expected"));
 	}
 
 	/* Open registry and look for network adapters */
 
 	if(RegOpenKeyEx(HKEY_LOCAL_MACHINE, NETWORK_CONNECTIONS_KEY, 0, KEY_READ, &key)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to read registry: %s", winerror(GetLastError()));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Unable to read registry: %s"), winerror(GetLastError()));
 		return false;
 	}
 
@@ -176,7 +178,7 @@ static bool setup_device(void) {
 	RegCloseKey(key);
 
 	if(!found) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "No Windows tap device found!");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("No Windows tap device found!"));
 		return false;
 	}
 
@@ -196,7 +198,7 @@ static bool setup_device(void) {
 	}
 
 	if(device_handle == INVALID_HANDLE_VALUE) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "%s (%s) is not a usable Windows tap device: %s", device, iface, winerror(GetLastError()));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("%s (%s) is not a usable Windows tap device: %s"), device, iface, winerror(GetLastError()));
 		return false;
 	}
 
@@ -207,9 +209,9 @@ static bool setup_device(void) {
 		DWORD len;
 
 		if(!DeviceIoControl(device_handle, TAP_IOCTL_GET_VERSION, &info, sizeof(info), &info, sizeof(info), &len, NULL)) {
-			logger(DEBUG_ALWAYS, LOG_WARNING, "Could not get version information from Windows tap device %s (%s): %s", device, iface, winerror(GetLastError()));
+			logger(DEBUG_ALWAYS, LOG_WARNING, _("Could not get version information from Windows tap device %s (%s): %s"), device, iface, winerror(GetLastError()));
 		} else {
-			logger(DEBUG_ALWAYS, LOG_INFO, "TAP-Windows driver version: %lu.%lu%s", info[0], info[1], info[2] ? " (DEBUG)" : "");
+			logger(DEBUG_ALWAYS, LOG_INFO, _("TAP-Windows driver version: %lu.%lu%s"), info[0], info[1], info[2] ? " (DEBUG)" : "");
 
 			/* Warn if using >=9.21. This is because starting from 9.21, TAP-Win32 seems to use a different, less efficient write path. */
 			if(info[0] == 9 && info[1] >= 21)
@@ -223,7 +225,7 @@ static bool setup_device(void) {
 	/* Get MAC address from tap device */
 
 	if(!DeviceIoControl(device_handle, TAP_IOCTL_GET_MAC, mymac.x, sizeof(mymac.x), mymac.x, sizeof(mymac.x), &len, 0)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not get MAC address from Windows tap device %s (%s): %s", device, iface, winerror(GetLastError()));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not get MAC address from Windows tap device %s (%s): %s"), device, iface, winerror(GetLastError()));
 		return false;
 	}
 
@@ -233,7 +235,7 @@ static bool setup_device(void) {
 
 	device_info = "Windows tap device";
 
-	logger(DEBUG_ALWAYS, LOG_INFO, "%s (%s) is a %s", device, iface, device_info);
+	logger(DEBUG_ALWAYS, LOG_INFO, _("%s (%s) is a %s"), device, iface, device_info);
 
 	device_read_overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 	device_write_overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
@@ -242,7 +244,7 @@ static bool setup_device(void) {
 }
 
 static void enable_device(void) {
-	logger(DEBUG_ALWAYS, LOG_INFO, "Enabling %s", device_info);
+	logger(DEBUG_ALWAYS, LOG_INFO, _("Enabling %s"), device_info);
 
 	ULONG status = 1;
 	DWORD len;
@@ -255,7 +257,7 @@ static void enable_device(void) {
 }
 
 static void disable_device(void) {
-	logger(DEBUG_ALWAYS, LOG_INFO, "Disabling %s", device_info);
+	logger(DEBUG_ALWAYS, LOG_INFO, _("Disabling %s"), device_info);
 
 	io_del(&device_read_io);
 
@@ -280,11 +282,11 @@ static void close_device(void) {
 	DWORD len;
 
 	if(!GetOverlappedResult(device_handle, &device_read_overlapped, &len, TRUE) && GetLastError() != ERROR_OPERATION_ABORTED) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not wait for %s %s read to cancel: %s", device_info, device, winerror(GetLastError()));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not wait for %s %s read to cancel: %s"), device_info, device, winerror(GetLastError()));
 	}
 
 	if(device_write_packet.len > 0 && !GetOverlappedResult(device_handle, &device_write_overlapped, &len, TRUE) && GetLastError() != ERROR_OPERATION_ABORTED) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not wait for %s %s write to cancel: %s", device_info, device, winerror(GetLastError()));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not wait for %s %s write to cancel: %s"), device_info, device, winerror(GetLastError()));
 	}
 
 	device_write_packet.len = 0;
@@ -310,7 +312,7 @@ static bool read_packet(vpn_packet_t *packet) {
 static bool write_packet(vpn_packet_t *packet) {
 	DWORD outlen;
 
-	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Writing packet of %d bytes to %s",
+	logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Writing packet of %d bytes to %s"),
 	       packet->len, device_info);
 
 	if(device_write_packet.len > 0) {
@@ -320,9 +322,9 @@ static bool write_packet(vpn_packet_t *packet) {
 
 		if(!GetOverlappedResult(device_handle, &device_write_overlapped, &outlen, FALSE)) {
 			if(GetLastError() != ERROR_IO_INCOMPLETE) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "Error completing previously queued write to %s %s: %s", device_info, device, winerror(GetLastError()));
+				logger(DEBUG_ALWAYS, LOG_ERR, _("Error completing previously queued write to %s %s: %s"), device_info, device, winerror(GetLastError()));
 			} else {
-				logger(DEBUG_TRAFFIC, LOG_ERR, "Previous overlapped write to %s %s still in progress", device_info, device);
+				logger(DEBUG_TRAFFIC, LOG_ERR, _("Previous overlapped write to %s %s still in progress"), device_info, device);
 				// drop this packet
 				return true;
 			}
@@ -339,7 +341,7 @@ static bool write_packet(vpn_packet_t *packet) {
 		// Write was completed immediately.
 		device_write_packet.len = 0;
 	} else if(GetLastError() != ERROR_IO_PENDING) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error while writing to %s %s: %s", device_info, device, winerror(GetLastError()));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Error while writing to %s %s: %s"), device_info, device, winerror(GetLastError()));
 		device_write_packet.len = 0;
 		return false;
 	}

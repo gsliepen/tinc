@@ -38,7 +38,7 @@ ecdsa_t *ecdsa_set_base64_public_key(const char *p) {
 	size_t len = strlen(p);
 
 	if(len != 43) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Invalid size %zu for public key!", len);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Invalid size %zu for public key!"), len);
 		return 0;
 	}
 
@@ -46,7 +46,7 @@ ecdsa_t *ecdsa_set_base64_public_key(const char *p) {
 	len = b64decode(p, ecdsa->public, len);
 
 	if(len != 32) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Invalid format of public key! len = %zu", len);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Invalid format of public key! len = %zu"), len);
 		free(ecdsa);
 		return 0;
 	}
@@ -91,13 +91,13 @@ static bool read_pem(FILE *fp, const char *type, void *vbuf, size_t size) {
 		size_t len = b64decode(line, line, linelen);
 
 		if(!len) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Invalid base64 data in PEM file\n");
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Invalid base64 data in PEM file\n"));
 			errno = EINVAL;
 			return false;
 		}
 
 		if(len > size) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Too much base64 data in PEM file\n");
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Too much base64 data in PEM file\n"));
 			errno = EINVAL;
 			return false;
 		}
@@ -110,7 +110,7 @@ static bool read_pem(FILE *fp, const char *type, void *vbuf, size_t size) {
 	if(size) {
 		if(data) {
 			errno = EINVAL;
-			logger(DEBUG_ALWAYS, LOG_ERR, "Too little base64 data in PEM file\n");
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Too little base64 data in PEM file\n"));
 		} else {
 			errno = ENOENT;
 		}

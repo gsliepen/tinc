@@ -88,13 +88,13 @@ bool send_request(connection_t *c, const char *format, ...) {
 	va_end(args);
 
 	if(len < 0 || (size_t)len > sizeof(request) - 1) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Output buffer overflow while sending request to %s (%s)",
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Output buffer overflow while sending request to %s (%s)"),
 		       c->name, c->hostname);
 		return false;
 	}
 
 	int id = atoi(request);
-	logger(DEBUG_META, LOG_DEBUG, "Sending %s to %s (%s): %s", request_name[id], c->name, c->hostname, request);
+	logger(DEBUG_META, LOG_DEBUG, _("Sending %s to %s (%s): %s"), request_name[id], c->name, c->hostname, request);
 
 	request[len++] = '\n';
 
@@ -112,7 +112,7 @@ bool send_request(connection_t *c, const char *format, ...) {
 }
 
 void forward_request(connection_t *from, const char *request) {
-	logger(DEBUG_META, LOG_DEBUG, "Forwarding %s from %s (%s): %s", request_name[atoi(request)], from->name, from->hostname, request);
+	logger(DEBUG_META, LOG_DEBUG, _("Forwarding %s from %s (%s): %s"), request_name[atoi(request)], from->name, from->hostname, request);
 
 	// Create a temporary newline-terminated copy of the request
 	size_t len = strlen(request);
@@ -130,10 +130,10 @@ bool receive_request(connection_t *c, const char *request) {
 
 		if(!strncasecmp(request, "HTTP/1.1 ", 9)) {
 			if(!strncmp(request + 9, "200", 3)) {
-				logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Proxy request granted");
+				logger(DEBUG_CONNECTIONS, LOG_DEBUG, _("Proxy request granted"));
 				return true;
 			} else {
-				logger(DEBUG_ALWAYS, LOG_DEBUG, "Proxy request rejected: %s", request + 9);
+				logger(DEBUG_ALWAYS, LOG_DEBUG, _("Proxy request rejected: %s"), request + 9);
 				return false;
 			}
 		}
@@ -143,14 +143,14 @@ bool receive_request(connection_t *c, const char *request) {
 
 	if(reqno || *request == '0') {
 		if((reqno < 0) || (reqno >= LAST) || !request_handlers[reqno]) {
-			logger(DEBUG_META, LOG_DEBUG, "Unknown request from %s (%s): %s", c->name, c->hostname, request);
+			logger(DEBUG_META, LOG_DEBUG, _("Unknown request from %s (%s): %s"), c->name, c->hostname, request);
 			return false;
 		} else {
-			logger(DEBUG_META, LOG_DEBUG, "Got %s from %s (%s): %s", request_name[reqno], c->name, c->hostname, request);
+			logger(DEBUG_META, LOG_DEBUG, _("Got %s from %s (%s): %s"), request_name[reqno], c->name, c->hostname, request);
 		}
 
 		if((c->allow_request != ALL) && (c->allow_request != reqno)) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Unauthorized request from %s (%s)", c->name, c->hostname);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Unauthorized request from %s (%s)"), c->name, c->hostname);
 			return false;
 		}
 
@@ -158,13 +158,13 @@ bool receive_request(connection_t *c, const char *request) {
 			/* Something went wrong. Probably scriptkiddies. Terminate. */
 
 			if(reqno != TERMREQ) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "Error while processing %s from %s (%s)", request_name[reqno], c->name, c->hostname);
+				logger(DEBUG_ALWAYS, LOG_ERR, _("Error while processing %s from %s (%s)"), request_name[reqno], c->name, c->hostname);
 			}
 
 			return false;
 		}
 	} else {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Bogus data received from %s (%s)", c->name, c->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Bogus data received from %s (%s)"), c->name, c->hostname);
 		return false;
 	}
 
@@ -186,7 +186,7 @@ static void age_past_requests(void *data) {
 	}
 
 	if(left || deleted) {
-		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Aging past requests: deleted %d, left %d", deleted, left);
+		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, _("Aging past requests: deleted %d, left %d"), deleted, left);
 	}
 
 	if(left)
@@ -201,7 +201,7 @@ bool seen_request(const char *request) {
 	p.request = request;
 
 	if(splay_search(&past_request_tree, &p)) {
-		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Already seen request");
+		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, _("Already seen request"));
 		return true;
 	} else {
 		new = xmalloc(sizeof(*new));

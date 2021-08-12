@@ -99,7 +99,7 @@ static void try_fix_mtu(node_t *n) {
 		}
 
 		n->mtu = n->minmtu;
-		logger(DEBUG_TRAFFIC, LOG_INFO, "Fixing MTU of %s (%s) to %d after %d probes", n->name, n->hostname, n->mtu, n->mtuprobes);
+		logger(DEBUG_TRAFFIC, LOG_INFO, _("Fixing MTU of %s (%s) to %d after %d probes"), n->name, n->hostname, n->mtu, n->mtuprobes);
 		n->mtuprobes = -1;
 	}
 }
@@ -111,7 +111,7 @@ static void udp_probe_timeout_handler(void *data) {
 		return;
 	}
 
-	logger(DEBUG_TRAFFIC, LOG_INFO, "Too much time has elapsed since last UDP ping response from %s (%s), stopping UDP communication", n->name, n->hostname);
+	logger(DEBUG_TRAFFIC, LOG_INFO, _("Too much time has elapsed since last UDP ping response from %s (%s), stopping UDP communication"), n->name, n->hostname);
 	n->status.udp_confirmed = false;
 	n->udp_ping_rtt = -1;
 	n->maxrecentlen = 0;
@@ -122,7 +122,7 @@ static void udp_probe_timeout_handler(void *data) {
 
 static void send_udp_probe_reply(node_t *n, vpn_packet_t *packet, length_t len) {
 	if(!n->status.sptps && !n->status.validkey) {
-		logger(DEBUG_TRAFFIC, LOG_INFO, "Trying to send UDP probe reply to %s (%s) but we don't have his key yet", n->name, n->hostname);
+		logger(DEBUG_TRAFFIC, LOG_INFO, _("Trying to send UDP probe reply to %s (%s) but we don't have his key yet"), n->name, n->hostname);
 		return;
 	}
 
@@ -132,12 +132,12 @@ static void send_udp_probe_reply(node_t *n, vpn_packet_t *packet, length_t len) 
 		uint16_t len16 = htons(len);
 		memcpy(DATA(packet) + 1, &len16, 2);
 		packet->len = MIN_PROBE_SIZE;
-		logger(DEBUG_TRAFFIC, LOG_INFO, "Sending type 2 probe reply length %u to %s (%s)", len, n->name, n->hostname);
+		logger(DEBUG_TRAFFIC, LOG_INFO, _("Sending type 2 probe reply length %u to %s (%s)"), len, n->name, n->hostname);
 
 	} else {
 		/* Legacy protocol: n won't understand type 2 probe replies. */
 		DATA(packet)[0] = 1;
-		logger(DEBUG_TRAFFIC, LOG_INFO, "Sending type 1 probe reply length %u to %s (%s)", len, n->name, n->hostname);
+		logger(DEBUG_TRAFFIC, LOG_INFO, _("Sending type 1 probe reply length %u to %s (%s)"), len, n->name, n->hostname);
 	}
 
 	/* Temporarily set udp_confirmed, so that the reply is sent
@@ -151,7 +151,7 @@ static void send_udp_probe_reply(node_t *n, vpn_packet_t *packet, length_t len) 
 
 static void udp_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 	if(!DATA(packet)[0]) {
-		logger(DEBUG_TRAFFIC, LOG_INFO, "Got UDP probe request %d from %s (%s)", packet->len, n->name, n->hostname);
+		logger(DEBUG_TRAFFIC, LOG_INFO, _("Got UDP probe request %d from %s (%s)"), packet->len, n->name, n->hostname);
 		send_udp_probe_reply(n, packet, len);
 		return;
 	}
@@ -169,9 +169,9 @@ static void udp_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 		timersub(&now, &n->udp_ping_sent, &rtt);
 		n->udp_ping_rtt = (int)(rtt.tv_sec * 1000000 + rtt.tv_usec);
 		n->status.ping_sent = false;
-		logger(DEBUG_TRAFFIC, LOG_INFO, "Got type %d UDP probe reply %d from %s (%s) rtt=%d.%03d", DATA(packet)[0], len, n->name, n->hostname, n->udp_ping_rtt / 1000, n->udp_ping_rtt % 1000);
+		logger(DEBUG_TRAFFIC, LOG_INFO, _("Got type %d UDP probe reply %d from %s (%s) rtt=%d.%03d"), DATA(packet)[0], len, n->name, n->hostname, n->udp_ping_rtt / 1000, n->udp_ping_rtt % 1000);
 	} else {
-		logger(DEBUG_TRAFFIC, LOG_INFO, "Got type %d UDP probe reply %d from %s (%s)", DATA(packet)[0], len, n->name, n->hostname);
+		logger(DEBUG_TRAFFIC, LOG_INFO, _("Got type %d UDP probe reply %d from %s (%s)"), DATA(packet)[0], len, n->name, n->hostname);
 	}
 
 	/* It's a valid reply: now we know bidirectional communication
@@ -197,7 +197,7 @@ static void udp_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 	}
 
 	if(len > n->maxmtu) {
-		logger(DEBUG_TRAFFIC, LOG_INFO, "Increase in PMTU to %s (%s) detected, restarting PMTU discovery", n->name, n->hostname);
+		logger(DEBUG_TRAFFIC, LOG_INFO, _("Increase in PMTU to %s (%s) detected, restarting PMTU discovery"), n->name, n->hostname);
 		n->minmtu = len;
 		n->maxmtu = MTU;
 		/* Set mtuprobes to 1 so that try_mtu() doesn't reset maxmtu */
@@ -229,7 +229,7 @@ static length_t compress_packet_lz4(uint8_t *dest, const uint8_t *source, length
 	}
 
 	if(lz4_state == NULL) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Failed to allocate lz4_state, error: %i", errno);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Failed to allocate lz4_state, error: %i"), errno);
 		return 0;
 	}
 
@@ -373,7 +373,7 @@ static length_t uncompress_packet(uint8_t *dest, const uint8_t *source, length_t
 /* VPN packet I/O */
 
 static void receive_packet(node_t *n, vpn_packet_t *packet) {
-	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Received packet of %d bytes from %s (%s)",
+	logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Received packet of %d bytes from %s (%s)"),
 	       packet->len, n->name, n->hostname);
 
 	n->in_packets++;
@@ -403,10 +403,10 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	if(n->status.sptps) {
 		if(!n->sptps.state) {
 			if(!n->status.waitingforkey) {
-				logger(DEBUG_TRAFFIC, LOG_DEBUG, "Got packet from %s (%s) but we haven't exchanged keys yet", n->name, n->hostname);
+				logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Got packet from %s (%s) but we haven't exchanged keys yet"), n->name, n->hostname);
 				send_req_key(n);
 			} else {
-				logger(DEBUG_TRAFFIC, LOG_DEBUG, "Got packet from %s (%s) but he hasn't got our key yet", n->name, n->hostname);
+				logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Got packet from %s (%s) but he hasn't got our key yet"), n->name, n->hostname);
 			}
 
 			return false;
@@ -422,7 +422,7 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 			   to prevent storms, and because that would make life a little too easy
 			   for external attackers trying to DoS us. */
 			if(n->last_req_key < now.tv_sec - 10) {
-				logger(DEBUG_PROTOCOL, LOG_ERR, "Failed to decode raw TCP packet from %s (%s), restarting SPTPS", n->name, n->hostname);
+				logger(DEBUG_PROTOCOL, LOG_ERR, _("Failed to decode raw TCP packet from %s (%s), restarting SPTPS"), n->name, n->hostname);
 				send_req_key(n);
 			}
 
@@ -443,14 +443,14 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	pkt2.offset = DEFAULT_PACKET_OFFSET;
 
 	if(!n->status.validkey_in) {
-		logger(DEBUG_TRAFFIC, LOG_DEBUG, "Got packet from %s (%s) but he hasn't got our key yet", n->name, n->hostname);
+		logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Got packet from %s (%s) but he hasn't got our key yet"), n->name, n->hostname);
 		return false;
 	}
 
 	/* Check packet length */
 
 	if((size_t)inpkt->len < sizeof(seqno_t) + digest_length(n->indigest)) {
-		logger(DEBUG_TRAFFIC, LOG_DEBUG, "Got too short packet from %s (%s)",
+		logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Got too short packet from %s (%s)"),
 		       n->name, n->hostname);
 		return false;
 	}
@@ -465,7 +465,7 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 		inpkt->len -= digest_length(n->indigest);
 
 		if(!digest_verify(n->indigest, SEQNO(inpkt), inpkt->len, SEQNO(inpkt) + inpkt->len)) {
-			logger(DEBUG_TRAFFIC, LOG_DEBUG, "Got unauthenticated packet from %s (%s)", n->name, n->hostname);
+			logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Got unauthenticated packet from %s (%s)"), n->name, n->hostname);
 			return false;
 		}
 	}
@@ -477,7 +477,7 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 		outlen = MAXSIZE;
 
 		if(!cipher_decrypt(n->incipher, SEQNO(inpkt), inpkt->len, SEQNO(outpkt), &outlen, true)) {
-			logger(DEBUG_TRAFFIC, LOG_DEBUG, "Error decrypting packet from %s (%s)", n->name, n->hostname);
+			logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Error decrypting packet from %s (%s)"), n->name, n->hostname);
 			return false;
 		}
 
@@ -496,17 +496,17 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 		if(seqno != n->received_seqno + 1) {
 			if(seqno >= n->received_seqno + replaywin * 8) {
 				if(n->farfuture++ < replaywin >> 2) {
-					logger(DEBUG_TRAFFIC, LOG_WARNING, "Packet from %s (%s) is %d seqs in the future, dropped (%u)",
+					logger(DEBUG_TRAFFIC, LOG_WARNING, _("Packet from %s (%s) is %d seqs in the future, dropped (%u)"),
 					       n->name, n->hostname, seqno - n->received_seqno - 1, n->farfuture);
 					return false;
 				}
 
-				logger(DEBUG_TRAFFIC, LOG_WARNING, "Lost %d packets from %s (%s)",
+				logger(DEBUG_TRAFFIC, LOG_WARNING, _("Lost %d packets from %s (%s)"),
 				       seqno - n->received_seqno - 1, n->name, n->hostname);
 				memset(n->late, 0, replaywin);
 			} else if(seqno <= n->received_seqno) {
 				if((n->received_seqno >= replaywin * 8 && seqno <= n->received_seqno - replaywin * 8) || !(n->late[(seqno / 8) % replaywin] & (1 << seqno % 8))) {
-					logger(DEBUG_TRAFFIC, LOG_WARNING, "Got late or replayed packet from %s (%s), seqno %d, last received %d",
+					logger(DEBUG_TRAFFIC, LOG_WARNING, _("Got late or replayed packet from %s (%s), seqno %d, last received %d"),
 					       n->name, n->hostname, seqno, n->received_seqno);
 					return false;
 				}
@@ -539,7 +539,7 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 		vpn_packet_t *outpkt = pkt[nextpkt++];
 
 		if(!(outpkt->len = uncompress_packet(DATA(outpkt), DATA(inpkt), inpkt->len, n->incompression))) {
-			logger(DEBUG_TRAFFIC, LOG_ERR, "Error while uncompressing packet from %s (%s)",
+			logger(DEBUG_TRAFFIC, LOG_ERR, _("Error while uncompressing packet from %s (%s)"),
 			       n->name, n->hostname);
 			return false;
 		}
@@ -592,7 +592,7 @@ void receive_tcppacket(connection_t *c, const char *buffer, size_t len) {
 
 bool receive_tcppacket_sptps(connection_t *c, const char *data, size_t len) {
 	if(len < sizeof(node_id_t) + sizeof(node_id_t)) {
-		logger(DEBUG_PROTOCOL, LOG_ERR, "Got too short TCP SPTPS packet from %s (%s)", c->name, c->hostname);
+		logger(DEBUG_PROTOCOL, LOG_ERR, _("Got too short TCP SPTPS packet from %s (%s)"), c->name, c->hostname);
 		return false;
 	}
 
@@ -601,7 +601,7 @@ bool receive_tcppacket_sptps(connection_t *c, const char *data, size_t len) {
 	len -= sizeof(node_id_t);
 
 	if(!to) {
-		logger(DEBUG_PROTOCOL, LOG_ERR, "Got TCP SPTPS packet from %s (%s) with unknown destination ID", c->name, c->hostname);
+		logger(DEBUG_PROTOCOL, LOG_ERR, _("Got TCP SPTPS packet from %s (%s) with unknown destination ID"), c->name, c->hostname);
 		return true;
 	}
 
@@ -610,14 +610,14 @@ bool receive_tcppacket_sptps(connection_t *c, const char *data, size_t len) {
 	len -= sizeof(node_id_t);
 
 	if(!from) {
-		logger(DEBUG_PROTOCOL, LOG_ERR, "Got TCP SPTPS packet from %s (%s) with unknown source ID", c->name, c->hostname);
+		logger(DEBUG_PROTOCOL, LOG_ERR, _("Got TCP SPTPS packet from %s (%s) with unknown source ID"), c->name, c->hostname);
 		return true;
 	}
 
 	if(!to->status.reachable) {
 		/* This can happen in the form of a race condition
 		   if the node just became unreachable. */
-		logger(DEBUG_TRAFFIC, LOG_WARNING, "Cannot relay TCP packet from %s (%s) because the destination, %s (%s), is unreachable", from->name, from->hostname, to->name, to->hostname);
+		logger(DEBUG_TRAFFIC, LOG_WARNING, _("Cannot relay TCP packet from %s (%s) because the destination, %s (%s), is unreachable"), from->name, from->hostname, to->name, to->hostname);
 		return true;
 	}
 
@@ -646,7 +646,7 @@ bool receive_tcppacket_sptps(connection_t *c, const char *data, size_t len) {
 		   so let's restart SPTPS in case that helps. But don't do that too often
 		   to prevent storms. */
 		if(from->last_req_key < now.tv_sec - 10) {
-			logger(DEBUG_PROTOCOL, LOG_ERR, "Failed to decode raw TCP packet from %s (%s), restarting SPTPS", from->name, from->hostname);
+			logger(DEBUG_PROTOCOL, LOG_ERR, _("Failed to decode raw TCP packet from %s (%s), restarting SPTPS"), from->name, from->hostname);
 			send_req_key(from);
 		}
 
@@ -687,7 +687,7 @@ static void send_sptps_packet(node_t *n, vpn_packet_t *origpkt) {
 		length_t len = compress_packet(DATA(&outpkt) + offset, DATA(origpkt) + offset, origpkt->len - offset, n->outcompression);
 
 		if(!len) {
-			logger(DEBUG_TRAFFIC, LOG_ERR, "Error while compressing packet to %s (%s)", n->name, n->hostname);
+			logger(DEBUG_TRAFFIC, LOG_ERR, _("Error while compressing packet to %s (%s)"), n->name, n->hostname);
 		} else if(len < origpkt->len - offset) {
 			outpkt.len = len + offset;
 			origpkt = &outpkt;
@@ -786,7 +786,7 @@ static void choose_local_address(const node_t *n, const sockaddr_t **sa, size_t 
 
 static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	if(!n->status.reachable) {
-		logger(DEBUG_TRAFFIC, LOG_INFO, "Trying to send UDP packet to unreachable node %s (%s)", n->name, n->hostname);
+		logger(DEBUG_TRAFFIC, LOG_INFO, _("Trying to send UDP packet to unreachable node %s (%s)"), n->name, n->hostname);
 		return;
 	}
 
@@ -814,7 +814,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 
 	if(!n->status.validkey) {
 		logger(DEBUG_TRAFFIC, LOG_INFO,
-		       "No valid key known yet for %s (%s), forwarding via TCP",
+		       _("No valid key known yet for %s (%s), forwarding via TCP"),
 		       n->name, n->hostname);
 		send_tcppacket(n->nexthop->connection, origpkt);
 		return;
@@ -822,7 +822,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 
 	if(n->options & OPTION_PMTU_DISCOVERY && inpkt->len > n->minmtu && (DATA(inpkt)[12] | DATA(inpkt)[13])) {
 		logger(DEBUG_TRAFFIC, LOG_INFO,
-		       "Packet for %s (%s) larger than minimum MTU, forwarding via %s",
+		       _("Packet for %s (%s) larger than minimum MTU, forwarding via %s"),
 		       n->name, n->hostname, n != n->nexthop ? n->nexthop->name : "TCP");
 
 		if(n != n->nexthop) {
@@ -840,7 +840,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 		outpkt = pkt[nextpkt++];
 
 		if(!(outpkt->len = compress_packet(DATA(outpkt), DATA(inpkt), inpkt->len, n->outcompression))) {
-			logger(DEBUG_TRAFFIC, LOG_ERR, "Error while compressing packet to %s (%s)",
+			logger(DEBUG_TRAFFIC, LOG_ERR, _("Error while compressing packet to %s (%s)"),
 			       n->name, n->hostname);
 			return;
 		}
@@ -861,7 +861,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 		outlen = MAXSIZE;
 
 		if(!cipher_encrypt(n->outcipher, SEQNO(inpkt), inpkt->len, SEQNO(outpkt), &outlen, true)) {
-			logger(DEBUG_TRAFFIC, LOG_ERR, "Error while encrypting packet to %s (%s)", n->name, n->hostname);
+			logger(DEBUG_TRAFFIC, LOG_ERR, _("Error while encrypting packet to %s (%s)"), n->name, n->hostname);
 			goto end;
 		}
 
@@ -873,7 +873,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 
 	if(digest_active(n->outdigest)) {
 		if(!digest_create(n->outdigest, SEQNO(inpkt), inpkt->len, SEQNO(inpkt) + inpkt->len)) {
-			logger(DEBUG_TRAFFIC, LOG_ERR, "Error while encrypting packet to %s (%s)", n->name, n->hostname);
+			logger(DEBUG_TRAFFIC, LOG_ERR, _("Error while encrypting packet to %s (%s)"), n->name, n->hostname);
 			goto end;
 		}
 
@@ -900,10 +900,10 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 #if defined(IP_TOS)
 
 		case AF_INET:
-			logger(DEBUG_TRAFFIC, LOG_DEBUG, "Setting IPv4 outgoing packet priority to %d", origpriority);
+			logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Setting IPv4 outgoing packet priority to %d"), origpriority);
 
 			if(setsockopt(listen_socket[sock].udp.fd, IPPROTO_IP, IP_TOS, (void *)&origpriority, sizeof(origpriority))) { /* SO_PRIORITY doesn't seem to work */
-				logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "setsockopt", sockstrerror(sockerrno));
+				logger(DEBUG_ALWAYS, LOG_ERR, _("System call `%s' failed: %s"), "setsockopt", sockstrerror(sockerrno));
 			}
 
 			break;
@@ -911,10 +911,10 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 #if defined(IPV6_TCLASS)
 
 		case AF_INET6:
-			logger(DEBUG_TRAFFIC, LOG_DEBUG, "Setting IPv6 outgoing packet priority to %d", origpriority);
+			logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Setting IPv6 outgoing packet priority to %d"), origpriority);
 
 			if(setsockopt(listen_socket[sock].udp.fd, IPPROTO_IPV6, IPV6_TCLASS, (void *)&origpriority, sizeof(origpriority))) { /* SO_PRIORITY doesn't seem to work */
-				logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "setsockopt", sockstrerror(sockerrno));
+				logger(DEBUG_ALWAYS, LOG_ERR, _("System call `%s' failed: %s"), "setsockopt", sockstrerror(sockerrno));
 			}
 
 			break;
@@ -937,7 +937,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 
 			try_fix_mtu(n);
 		} else {
-			logger(DEBUG_TRAFFIC, LOG_WARNING, "Error sending packet to %s (%s): %s", n->name, n->hostname, sockstrerror(sockerrno));
+			logger(DEBUG_TRAFFIC, LOG_WARNING, _("Error sending packet to %s (%s): %s"), n->name, n->hostname, sockstrerror(sockerrno));
 		}
 	}
 
@@ -963,7 +963,7 @@ bool send_sptps_data(node_t *to, node_t *from, int type, const void *data, size_
 			memcpy(buf_ptr, &from->id, sizeof(from->id));
 			buf_ptr += sizeof(from->id);
 			memcpy(buf_ptr, data, len);
-			logger(DEBUG_TRAFFIC, LOG_INFO, "Sending packet from %s (%s) to %s (%s) via %s (%s) (TCP)", from->name, from->hostname, to->name, to->hostname, to->nexthop->name, to->nexthop->hostname);
+			logger(DEBUG_TRAFFIC, LOG_INFO, _("Sending packet from %s (%s) to %s (%s) via %s (%s) (TCP)"), from->name, from->hostname, to->name, to->hostname, to->nexthop->name, to->nexthop->hostname);
 			return send_sptps_tcppacket(to->nexthop->connection, buf, sizeof(buf));
 		}
 
@@ -1021,7 +1021,7 @@ bool send_sptps_data(node_t *to, node_t *from, int type, const void *data, size_
 		choose_udp_address(relay, &sa, &sock);
 	}
 
-	logger(DEBUG_TRAFFIC, LOG_INFO, "Sending packet from %s (%s) to %s (%s) via %s (%s) (UDP)", from->name, from->hostname, to->name, to->hostname, relay->name, relay->hostname);
+	logger(DEBUG_TRAFFIC, LOG_INFO, _("Sending packet from %s (%s) to %s (%s) via %s (%s) (UDP)"), from->name, from->hostname, to->name, to->hostname, relay->name, relay->hostname);
 
 	if(sendto(listen_socket[sock].udp.fd, buf, buf_ptr - buf, 0, &sa->sa, SALEN(sa->sa)) < 0 && !sockwouldblock(sockerrno)) {
 		if(sockmsgsize(sockerrno)) {
@@ -1038,7 +1038,7 @@ bool send_sptps_data(node_t *to, node_t *from, int type, const void *data, size_
 
 			try_fix_mtu(relay);
 		} else {
-			logger(DEBUG_TRAFFIC, LOG_WARNING, "Error sending UDP SPTPS packet to %s (%s): %s", relay->name, relay->hostname, sockstrerror(sockerrno));
+			logger(DEBUG_TRAFFIC, LOG_WARNING, _("Error sending UDP SPTPS packet to %s (%s): %s"), relay->name, relay->hostname, sockstrerror(sockerrno));
 			return false;
 		}
 	}
@@ -1053,14 +1053,14 @@ bool receive_sptps_record(void *handle, uint8_t type, const void *data, uint16_t
 		if(!from->status.validkey) {
 			from->status.validkey = true;
 			from->status.waitingforkey = false;
-			logger(DEBUG_META, LOG_INFO, "SPTPS key exchange with %s (%s) successful", from->name, from->hostname);
+			logger(DEBUG_META, LOG_INFO, _("SPTPS key exchange with %s (%s) successful"), from->name, from->hostname);
 		}
 
 		return true;
 	}
 
 	if(len > MTU) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Packet from %s (%s) larger than maximum supported size (%d > %d)", from->name, from->hostname, len, MTU);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Packet from %s (%s) larger than maximum supported size (%d > %d)"), from->name, from->hostname, len, MTU);
 		return false;
 	}
 
@@ -1070,7 +1070,7 @@ bool receive_sptps_record(void *handle, uint8_t type, const void *data, uint16_t
 
 	if(type == PKT_PROBE) {
 		if(!from->status.udppacket) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Got SPTPS PROBE packet from %s (%s) via TCP", from->name, from->hostname);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Got SPTPS PROBE packet from %s (%s) via TCP"), from->name, from->hostname);
 			return false;
 		}
 
@@ -1086,16 +1086,16 @@ bool receive_sptps_record(void *handle, uint8_t type, const void *data, uint16_t
 	}
 
 	if(type & ~(PKT_COMPRESSED | PKT_MAC)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Unexpected SPTPS record type %d len %d from %s (%s)", type, len, from->name, from->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Unexpected SPTPS record type %d len %d from %s (%s)"), type, len, from->name, from->hostname);
 		return false;
 	}
 
 	/* Check if we have the headers we need */
 	if(routing_mode != RMODE_ROUTER && !(type & PKT_MAC)) {
-		logger(DEBUG_TRAFFIC, LOG_ERR, "Received packet from %s (%s) without MAC header (maybe Mode is not set correctly)", from->name, from->hostname);
+		logger(DEBUG_TRAFFIC, LOG_ERR, _("Received packet from %s (%s) without MAC header (maybe Mode is not set correctly)"), from->name, from->hostname);
 		return false;
 	} else if(routing_mode == RMODE_ROUTER && (type & PKT_MAC)) {
-		logger(DEBUG_TRAFFIC, LOG_WARNING, "Received packet from %s (%s) with MAC header (maybe Mode is not set correctly)", from->name, from->hostname);
+		logger(DEBUG_TRAFFIC, LOG_WARNING, _("Received packet from %s (%s) with MAC header (maybe Mode is not set correctly)"), from->name, from->hostname);
 	}
 
 	int offset = (type & PKT_MAC) ? 0 : 14;
@@ -1132,7 +1132,7 @@ bool receive_sptps_record(void *handle, uint8_t type, const void *data, uint16_t
 
 		default:
 			logger(DEBUG_TRAFFIC, LOG_ERR,
-			       "Unknown IP version %d while reading packet from %s (%s)",
+			       _("Unknown IP version %d while reading packet from %s (%s)"),
 			       DATA(&inpkt)[14] >> 4, from->name, from->hostname);
 			return false;
 		}
@@ -1153,12 +1153,12 @@ static void try_sptps(node_t *n) {
 		return;
 	}
 
-	logger(DEBUG_TRAFFIC, LOG_INFO, "No valid key known yet for %s (%s)", n->name, n->hostname);
+	logger(DEBUG_TRAFFIC, LOG_INFO, _("No valid key known yet for %s (%s)"), n->name, n->hostname);
 
 	if(!n->status.waitingforkey) {
 		send_req_key(n);
 	} else if(n->last_req_key + 10 < now.tv_sec) {
-		logger(DEBUG_ALWAYS, LOG_DEBUG, "No key from %s after 10 seconds, restarting SPTPS", n->name);
+		logger(DEBUG_ALWAYS, LOG_DEBUG, _("No key from %s after 10 seconds, restarting SPTPS"), n->name);
 		sptps_stop(&n->sptps);
 		n->status.waitingforkey = false;
 		send_req_key(n);
@@ -1171,7 +1171,7 @@ static void send_udp_probe_packet(node_t *n, size_t len) {
 	vpn_packet_t packet;
 
 	if(len > sizeof(packet.data)) {
-		logger(DEBUG_TRAFFIC, LOG_INFO, "Truncating probe length %zu to %s (%s)", len, n->name, n->hostname);
+		logger(DEBUG_TRAFFIC, LOG_INFO, _("Truncating probe length %zu to %s (%s)"), len, n->name, n->hostname);
 		len = sizeof(packet.data);
 	}
 
@@ -1181,7 +1181,7 @@ static void send_udp_probe_packet(node_t *n, size_t len) {
 	packet.len = len;
 	packet.priority = 0;
 
-	logger(DEBUG_TRAFFIC, LOG_INFO, "Sending UDP probe length %zu to %s (%s)", len, n->name, n->hostname);
+	logger(DEBUG_TRAFFIC, LOG_INFO, _("Sending UDP probe length %zu to %s (%s)"), len, n->name, n->hostname);
 
 	send_udppacket(n, &packet);
 }
@@ -1254,12 +1254,12 @@ static length_t choose_initial_maxmtu(node_t *n) {
 	sock = socket(sa->sa.sa_family, SOCK_DGRAM, IPPROTO_UDP);
 
 	if(sock < 0) {
-		logger(DEBUG_TRAFFIC, LOG_ERR, "Creating MTU assessment socket for %s (%s) failed: %s", n->name, n->hostname, sockstrerror(sockerrno));
+		logger(DEBUG_TRAFFIC, LOG_ERR, _("Creating MTU assessment socket for %s (%s) failed: %s"), n->name, n->hostname, sockstrerror(sockerrno));
 		return MTU;
 	}
 
 	if(connect(sock, &sa->sa, SALEN(sa->sa))) {
-		logger(DEBUG_TRAFFIC, LOG_ERR, "Connecting MTU assessment socket for %s (%s) failed: %s", n->name, n->hostname, sockstrerror(sockerrno));
+		logger(DEBUG_TRAFFIC, LOG_ERR, _("Connecting MTU assessment socket for %s (%s) failed: %s"), n->name, n->hostname, sockstrerror(sockerrno));
 		close(sock);
 		return MTU;
 	}
@@ -1268,7 +1268,7 @@ static length_t choose_initial_maxmtu(node_t *n) {
 	socklen_t ip_mtu_len = sizeof(ip_mtu);
 
 	if(getsockopt(sock, IPPROTO_IP, IP_MTU, &ip_mtu, &ip_mtu_len)) {
-		logger(DEBUG_TRAFFIC, LOG_ERR, "getsockopt(IP_MTU) on %s (%s) failed: %s", n->name, n->hostname, sockstrerror(sockerrno));
+		logger(DEBUG_TRAFFIC, LOG_ERR, _("getsockopt(IP_MTU) on %s (%s) failed: %s"), n->name, n->hostname, sockstrerror(sockerrno));
 		close(sock);
 		return MTU;
 	}
@@ -1312,7 +1312,7 @@ static length_t choose_initial_maxmtu(node_t *n) {
 	}
 
 	if(mtu < 512) {
-		logger(DEBUG_TRAFFIC, LOG_ERR, "getsockopt(IP_MTU) on %s (%s) returned absurdly small value: %d", n->name, n->hostname, ip_mtu);
+		logger(DEBUG_TRAFFIC, LOG_ERR, _("getsockopt(IP_MTU) on %s (%s) returned absurdly small value: %d"), n->name, n->hostname, ip_mtu);
 		return MTU;
 	}
 
@@ -1320,7 +1320,7 @@ static length_t choose_initial_maxmtu(node_t *n) {
 		return MTU;
 	}
 
-	logger(DEBUG_TRAFFIC, LOG_INFO, "Using system-provided maximum tinc MTU for %s (%s): %hd", n->name, n->hostname, mtu);
+	logger(DEBUG_TRAFFIC, LOG_INFO, _("Using system-provided maximum tinc MTU for %s (%s): %hd"), n->name, n->hostname, mtu);
 	return mtu;
 
 #else
@@ -1379,7 +1379,7 @@ static void try_mtu(node_t *n) {
 
 	if(n->mtuprobes < -3) {
 		/* We lost three MTU probes, restart discovery */
-		logger(DEBUG_TRAFFIC, LOG_INFO, "Decrease in PMTU to %s (%s) detected, restarting PMTU discovery", n->name, n->hostname);
+		logger(DEBUG_TRAFFIC, LOG_INFO, _("Decrease in PMTU to %s (%s) detected, restarting PMTU discovery"), n->name, n->hostname);
 		n->mtuprobes = 0;
 		n->minmtu = 0;
 	}
@@ -1559,12 +1559,12 @@ void send_packet(node_t *n, vpn_packet_t *packet) {
 		return;
 	}
 
-	logger(DEBUG_TRAFFIC, LOG_ERR, "Sending packet of %d bytes to %s (%s)", packet->len, n->name, n->hostname);
+	logger(DEBUG_TRAFFIC, LOG_ERR, _("Sending packet of %d bytes to %s (%s)"), packet->len, n->name, n->hostname);
 
 	// If the node is not reachable, drop it.
 
 	if(!n->status.reachable) {
-		logger(DEBUG_TRAFFIC, LOG_INFO, "Node %s (%s) is not reachable", n->name, n->hostname);
+		logger(DEBUG_TRAFFIC, LOG_INFO, _("Node %s (%s) is not reachable"), n->name, n->hostname);
 		return;
 	}
 
@@ -1586,7 +1586,7 @@ void send_packet(node_t *n, vpn_packet_t *packet) {
 	node_t *via = (packet->priority == -1 || n->via == myself) ? n->nexthop : n->via;
 
 	if(via != n) {
-		logger(DEBUG_TRAFFIC, LOG_INFO, "Sending packet to %s via %s (%s)", n->name, via->name, n->via->hostname);
+		logger(DEBUG_TRAFFIC, LOG_INFO, _("Sending packet to %s via %s (%s)"), n->name, via->name, n->via->hostname);
 	}
 
 	// Try to send via UDP, unless TCP is forced.
@@ -1615,7 +1615,7 @@ void broadcast_packet(const node_t *from, vpn_packet_t *packet) {
 		return;
 	}
 
-	logger(DEBUG_TRAFFIC, LOG_INFO, "Broadcasting packet of %d bytes from %s (%s)",
+	logger(DEBUG_TRAFFIC, LOG_INFO, _("Broadcasting packet of %d bytes from %s (%s)"),
 	       packet->len, from->name, from->hostname);
 
 	switch(broadcast_mode) {
@@ -1746,7 +1746,7 @@ skip_harder:
 	if(!n) {
 		if(debug_level >= DEBUG_PROTOCOL) {
 			hostname = sockaddr2hostname(addr);
-			logger(DEBUG_PROTOCOL, LOG_WARNING, "Received UDP packet from unknown source %s", hostname);
+			logger(DEBUG_PROTOCOL, LOG_WARNING, _("Received UDP packet from unknown source %s"), hostname);
 			free(hostname);
 		}
 
@@ -1773,14 +1773,14 @@ skip_harder:
 		}
 
 		if(!from || !to) {
-			logger(DEBUG_PROTOCOL, LOG_WARNING, "Received UDP packet from %s (%s) with unknown source and/or destination ID", n->name, n->hostname);
+			logger(DEBUG_PROTOCOL, LOG_WARNING, _("Received UDP packet from %s (%s) with unknown source and/or destination ID"), n->name, n->hostname);
 			return;
 		}
 
 		if(!to->status.reachable) {
 			/* This can happen in the form of a race condition
 			   if the node just became unreachable. */
-			logger(DEBUG_TRAFFIC, LOG_WARNING, "Cannot relay packet from %s (%s) because the destination, %s (%s), is unreachable", from->name, from->hostname, to->name, to->hostname);
+			logger(DEBUG_TRAFFIC, LOG_WARNING, _("Cannot relay packet from %s (%s) because the destination, %s (%s), is unreachable"), from->name, from->hostname, to->name, to->hostname);
 			return;
 		}
 
@@ -1857,7 +1857,7 @@ void handle_incoming_vpn_data(void *data, int flags) {
 
 	if(num < 0) {
 		if(!sockwouldblock(sockerrno)) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Receiving packet failed: %s", sockstrerror(sockerrno));
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Receiving packet failed: %s"), sockstrerror(sockerrno));
 		}
 
 		return;
@@ -1883,7 +1883,7 @@ void handle_incoming_vpn_data(void *data, int flags) {
 
 	if(len <= 0 || (size_t)len > MAXSIZE) {
 		if(!sockwouldblock(sockerrno)) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Receiving packet failed: %s", sockstrerror(sockerrno));
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Receiving packet failed: %s"), sockstrerror(sockerrno));
 		}
 
 		return;
@@ -1913,7 +1913,7 @@ void handle_device_data(void *data, int flags) {
 		errors++;
 
 		if(errors > 10) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Too many errors from %s, exiting!", device);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Too many errors from %s, exiting!"), device);
 			event_exit();
 		}
 	}

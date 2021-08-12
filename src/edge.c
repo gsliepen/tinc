@@ -81,7 +81,7 @@ void edge_add(edge_t *e) {
 	splay_node_t *node = splay_insert(&e->from->edge_tree, e);
 
 	if(!node) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Edge from %s to %s already exists in edge_tree\n", e->from->name, e->to->name);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Edge from %s to %s already exists in edge_tree\n"), e->from->name, e->to->name);
 		return;
 	}
 
@@ -95,7 +95,7 @@ void edge_add(edge_t *e) {
 	node = splay_insert(&edge_weight_tree, e);
 
 	if(!node) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Edge from %s to %s already exists in edge_weight_tree\n", e->from->name, e->to->name);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Edge from %s to %s already exists in edge_weight_tree\n"), e->from->name, e->to->name);
 		return;
 	}
 }

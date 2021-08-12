@@ -61,7 +61,7 @@ static void make_new_connection() {
 		}
 
 		if(!found) {
-			logger(DEBUG_CONNECTIONS, LOG_INFO, "Autoconnecting to %s", n->name);
+			logger(DEBUG_CONNECTIONS, LOG_INFO, _("Autoconnecting to %s"), n->name);
 			outgoing_t *outgoing = xzalloc(sizeof(*outgoing));
 			outgoing->node = n;
 			list_insert_tail(&outgoing_list, outgoing);
@@ -99,7 +99,7 @@ static void connect_to_unreachable() {
 			}
 		}
 
-		logger(DEBUG_CONNECTIONS, LOG_INFO, "Autoconnecting to %s", n->name);
+		logger(DEBUG_CONNECTIONS, LOG_INFO, _("Autoconnecting to %s"), n->name);
 		outgoing_t *outgoing = xzalloc(sizeof(*outgoing));
 		outgoing->node = n;
 		list_insert_tail(&outgoing_list, outgoing);
@@ -136,7 +136,7 @@ static void drop_superfluous_outgoing_connection() {
 			continue;
 		}
 
-		logger(DEBUG_CONNECTIONS, LOG_INFO, "Autodisconnecting from %s", c->name);
+		logger(DEBUG_CONNECTIONS, LOG_INFO, _("Autodisconnecting from %s"), c->name);
 		list_delete(&outgoing_list, c->outgoing);
 		c->outgoing = NULL;
 		terminate_connection(c, c->edge);
@@ -160,7 +160,7 @@ static void drop_superfluous_pending_connections() {
 			continue;
 		}
 
-		logger(DEBUG_CONNECTIONS, LOG_INFO, "Cancelled outgoing connection to %s", o->node->name);
+		logger(DEBUG_CONNECTIONS, LOG_INFO, _("Cancelled outgoing connection to %s"), o->node->name);
 		list_delete_node(&outgoing_list, node);
 	}
 }

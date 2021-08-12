@@ -70,7 +70,7 @@ bool disable_old_keys(const char *filename, const char *what) {
 
 	if(disabled) {
 		if(!w || error) {
-			fprintf(stderr, "Warning: old key(s) found, remove them by hand!\n");
+			fprintf(stderr, _("Warning: old key(s) found, remove them by hand!\n"));
 
 			if(w) {
 				unlink(tmpfile);
@@ -90,7 +90,7 @@ bool disable_old_keys(const char *filename, const char *what) {
 
 		if(rename(tmpfile, filename)) {
 #endif
-			fprintf(stderr, "Warning: old key(s) found, remove them by hand!\n");
+			fprintf(stderr, _("Warning: old key(s) found, remove them by hand!\n"));
 			unlink(tmpfile);
 			return false;
 		}
@@ -98,7 +98,7 @@ bool disable_old_keys(const char *filename, const char *what) {
 #ifdef HAVE_MINGW
 		unlink(bakfile);
 #endif
-		fprintf(stderr, "Warning: old key(s) found and disabled.\n");
+		fprintf(stderr, _("Warning: old key(s) found and disabled.\n"));
 	}
 
 	unlink(tmpfile);
@@ -118,10 +118,10 @@ ecdsa_t *read_ecdsa_private_key(splay_tree_t *config_tree, char **keyfile) {
 	fp = fopen(fname, "r");
 
 	if(!fp) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error reading Ed25519 private key file `%s': %s", fname, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Error reading Ed25519 private key file `%s': %s"), fname, strerror(errno));
 
 		if(errno == ENOENT) {
-			logger(DEBUG_ALWAYS, LOG_INFO, "Create an Ed25519 key pair with `tinc -n %s generate-ed25519-keys'.", netname ? netname : ".");
+			logger(DEBUG_ALWAYS, LOG_INFO, _("Create an Ed25519 key pair with `tinc -n %s generate-ed25519-keys'."), netname ? netname : ".");
 		}
 
 		free(fname);
@@ -132,13 +132,13 @@ ecdsa_t *read_ecdsa_private_key(splay_tree_t *config_tree, char **keyfile) {
 	struct stat s;
 
 	if(fstat(fileno(fp), &s)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not stat Ed25519 private key file `%s': %s'", fname, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not stat Ed25519 private key file `%s': %s'"), fname, strerror(errno));
 		free(fname);
 		return false;
 	}
 
 	if(s.st_mode & ~0100700u) {
-		logger(DEBUG_ALWAYS, LOG_WARNING, "Warning: insecure file permissions for Ed25519 private key file `%s'!", fname);
+		logger(DEBUG_ALWAYS, LOG_WARNING, _("Warning: insecure file permissions for Ed25519 private key file `%s'!"), fname);
 	}
 
 #endif
@@ -147,7 +147,7 @@ ecdsa_t *read_ecdsa_private_key(splay_tree_t *config_tree, char **keyfile) {
 	fclose(fp);
 
 	if(!key) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Reading Ed25519 private key file `%s' failed", fname);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Reading Ed25519 private key file `%s' failed"), fname);
 		free(fname);
 		return NULL;
 	}
@@ -195,7 +195,7 @@ bool read_ecdsa_public_key(ecdsa_t **ecdsa, splay_tree_t **config_tree, const ch
 	fp = fopen(fname, "r");
 
 	if(!fp) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error reading Ed25519 public key file `%s': %s",
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Error reading Ed25519 public key file `%s': %s"),
 		       fname, strerror(errno));
 		free(fname);
 		return false;
@@ -204,7 +204,7 @@ bool read_ecdsa_public_key(ecdsa_t **ecdsa, splay_tree_t **config_tree, const ch
 	*ecdsa = ecdsa_read_pem_public_key(fp);
 
 	if(!*ecdsa && errno != ENOENT) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Parsing Ed25519 public key file `%s' failed.", fname);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Parsing Ed25519 public key file `%s' failed."), fname);
 	}
 
 	fclose(fp);
@@ -226,7 +226,7 @@ rsa_t *read_rsa_private_key(splay_tree_t *config_tree, char **keyfile) {
 
 	if(get_config_string(rsa_priv_conf, &d)) {
 		if(!get_config_string(lookup_config(config_tree, "PublicKey"), &n)) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "PrivateKey used but no PublicKey found!");
+			logger(DEBUG_ALWAYS, LOG_ERR, _("PrivateKey used but no PublicKey found!"));
 			free(d);
 			return NULL;
 		}
@@ -251,11 +251,11 @@ rsa_t *read_rsa_private_key(splay_tree_t *config_tree, char **keyfile) {
 	fp = fopen(fname, "r");
 
 	if(!fp) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error reading RSA private key file `%s': %s",
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Error reading RSA private key file `%s': %s"),
 		       fname, strerror(errno));
 
 		if(errno == ENOENT) {
-			logger(DEBUG_ALWAYS, LOG_INFO, "Create an RSA key pair with `tinc -n %s generate-rsa-keys'.", netname ? netname : ".");
+			logger(DEBUG_ALWAYS, LOG_INFO, _("Create an RSA key pair with `tinc -n %s generate-rsa-keys'."), netname ? netname : ".");
 		}
 
 		free(fname);
@@ -266,13 +266,13 @@ rsa_t *read_rsa_private_key(splay_tree_t *config_tree, char **keyfile) {
 	struct stat s;
 
 	if(fstat(fileno(fp), &s)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not stat RSA private key file `%s': %s'", fname, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not stat RSA private key file `%s': %s'"), fname, strerror(errno));
 		free(fname);
 		return NULL;
 	}
 
 	if(s.st_mode & ~0100700u) {
-		logger(DEBUG_ALWAYS, LOG_WARNING, "Warning: insecure file permissions for RSA private key file `%s'!", fname);
+		logger(DEBUG_ALWAYS, LOG_WARNING, _("Warning: insecure file permissions for RSA private key file `%s'!"), fname);
 	}
 
 #endif
@@ -281,7 +281,7 @@ rsa_t *read_rsa_private_key(splay_tree_t *config_tree, char **keyfile) {
 	fclose(fp);
 
 	if(!key) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Reading RSA private key file `%s' failed: %s", fname, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Reading RSA private key file `%s' failed: %s"), fname, strerror(errno));
 		free(fname);
 		return NULL;
 	}
@@ -317,7 +317,7 @@ bool read_rsa_public_key(rsa_t **rsa, splay_tree_t *config_tree, const char *nam
 	fp = fopen(fname, "r");
 
 	if(!fp) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error reading RSA public key file `%s': %s", fname, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Error reading RSA public key file `%s': %s"), fname, strerror(errno));
 		free(fname);
 		return false;
 	}
@@ -326,7 +326,7 @@ bool read_rsa_public_key(rsa_t **rsa, splay_tree_t *config_tree, const char *nam
 	fclose(fp);
 
 	if(!*rsa) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Reading RSA public key file `%s' failed: %s", fname, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Reading RSA public key file `%s' failed: %s"), fname, strerror(errno));
 	}
 
 	free(fname);

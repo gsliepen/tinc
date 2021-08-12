@@ -116,31 +116,42 @@ int main2(int argc, char **argv);
 #endif
 
 static void usage(bool status) {
-	if(status)
-		fprintf(stderr, "Try `%s --help\' for more information.\n",
-		        program_name);
-	else {
-		printf("Usage: %s [option]...\n\n", program_name);
-		printf("  -c, --config=DIR              Read configuration options from DIR.\n"
-		       "  -D, --no-detach               Don't fork and detach.\n"
-		       "  -d, --debug[=LEVEL]           Increase debug level or set it to LEVEL.\n"
-		       "  -n, --net=NETNAME             Connect to net NETNAME.\n"
-#ifdef HAVE_MLOCKALL
-		       "  -L, --mlock                   Lock tinc into main memory.\n"
-#endif
-		       "      --logfile[=FILENAME]      Write log entries to a logfile.\n"
-		       "  -s  --syslog                  Use syslog instead of stderr with --no-detach.\n"
-		       "      --pidfile=FILENAME        Write PID and control socket cookie to FILENAME.\n"
-		       "      --bypass-security         Disables meta protocol security, for debugging.\n"
-		       "  -o, --option[HOST.]KEY=VALUE  Set global/host configuration value.\n"
-#ifndef HAVE_MINGW
-		       "  -R, --chroot                  chroot to NET dir at startup.\n"
-		       "  -U, --user=USER               setuid to given USER at startup.\n"
-#endif
-		       "      --help                    Display this help and exit.\n"
-		       "      --version                 Output version information and exit.\n\n");
-		printf("Report bugs to tinc@tinc-vpn.org.\n");
+	if(status) {
+		fprintf(stderr, _("Try `%s --help' for more information.\n"), program_name);
+		return;
 	}
+
+	printf(_("Usage: %s [option]...\n\n"), program_name);
+
+	printf("%s%s\n%s%s\n%s%s\n%s%s\n%s%s\n%s%s\n%s%s\n"
+	       "%s%s\n%s%s\n%s%s\n%s%s\n%s%s\n%s%s\n%s%s\n\n",
+
+	       "  -c, --config=DIR              ", _("Read configuration options from DIR."),
+	       "  -D, --no-detach               ", _("Don't fork and detach."),
+	       "  -d, --debug[=LEVEL]           ", _("Increase debug level or set it to LEVEL."),
+	       "  -n, --net=NETNAME             ", _("Connect to net NETNAME."),
+#ifdef HAVE_MLOCKALL
+	       "  -L, --mlock                   ", _("Lock tinc into main memory."),
+#else
+	       "", "",
+#endif
+	       "      --logfile[=FILENAME]      ", _("Write log entries to a logfile."),
+	       "  -s  --syslog                  ", _("Use syslog instead of stderr with --no-detach."),
+	       "      --pidfile=FILENAME        ", _("Write PID and control socket cookie to FILENAME."),
+	       "      --bypass-security         ", _("Disables meta protocol security, for debugging."),
+	       "  -o, --option[HOST.]KEY=VALUE  ", _("Set global/host configuration value."),
+#ifndef HAVE_MINGW
+	       "  -R, --chroot                  ", _("chroot to NET dir at startup."),
+	       "  -U, --user=USER               ", _("setuid to given USER at startup."),
+#else
+	       "", "",
+	       "", "",
+#endif
+	       "      --help                    ", _("Display this help and exit."),
+	       "      --version                 ", _("Output version information and exit.")
+	      );
+
+	printf(_("Report bugs to %s.\n"), MAINTAINER_EMAIL);
 }
 
 static bool parse_options(int argc, char **argv) {
@@ -165,7 +176,7 @@ static bool parse_options(int argc, char **argv) {
 
 		case 'L': /* no detach */
 #ifndef HAVE_MLOCKALL
-			logger(DEBUG_ALWAYS, LOG_ERR, "The %s option is not supported on this platform.", argv[optind - 1]);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("The %s option is not supported on this platform."), argv[optind - 1]);
 			goto exit_fail;
 #else
 			do_mlock = true;
@@ -209,7 +220,7 @@ static bool parse_options(int argc, char **argv) {
 
 		case 'R':
 		case 'U':
-			logger(DEBUG_ALWAYS, LOG_ERR, "The %s option is not supported on this platform.", argv[optind - 1]);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("The %s option is not supported on this platform."), argv[optind - 1]);
 			goto exit_fail;
 #else
 
@@ -264,7 +275,7 @@ static bool parse_options(int argc, char **argv) {
 	}
 
 	if(optind < argc) {
-		fprintf(stderr, "%s: unrecognized argument '%s'\n", argv[0], argv[optind]);
+		fprintf(stderr, _("%s: unrecognized argument '%s'\n"), argv[0], argv[optind]);
 		usage(true);
 		goto exit_fail;
 	}
@@ -281,12 +292,12 @@ static bool parse_options(int argc, char **argv) {
 	}
 
 	if(netname && !check_netname(netname, false)) {
-		fprintf(stderr, "Invalid character in netname!\n");
+		fprintf(stderr, _("Invalid character in netname!\n"));
 		goto exit_fail;
 	}
 
 	if(netname && !check_netname(netname, true)) {
-		fprintf(stderr, "Warning: unsafe character in netname!\n");
+		fprintf(stderr, _("Warning: unsafe character in netname!\n"));
 	}
 
 	return true;
@@ -305,7 +316,7 @@ static bool drop_privs(void) {
 		struct passwd *pw = getpwnam(switchuser);
 
 		if(!pw) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "unknown user `%s'", switchuser);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("unknown user `%s'"), switchuser);
 			return false;
 		}
 
@@ -315,7 +326,7 @@ static bool drop_privs(void) {
 		// but __gid_t is unsigned int. There's not much we can do here.
 		if(initgroups(switchuser, pw->pw_gid) != 0 || // NOLINT(bugprone-narrowing-conversions)
 		                setgid(pw->pw_gid) != 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s",
+			logger(DEBUG_ALWAYS, LOG_ERR, _("System call `%s' failed: %s"),
 			       "initgroups", strerror(errno));
 			return false;
 		}
@@ -331,7 +342,7 @@ static bool drop_privs(void) {
 		tzset();        /* for proper timestamps in logs */
 
 		if(chroot(confbase) != 0 || chdir("/") != 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s",
+			logger(DEBUG_ALWAYS, LOG_ERR, _("System call `%s' failed: %s"),
 			       "chroot", strerror(errno));
 			return false;
 		}
@@ -342,7 +353,7 @@ static bool drop_privs(void) {
 
 	if(switchuser)
 		if(setuid(uid) != 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s",
+			logger(DEBUG_ALWAYS, LOG_ERR, _("System call `%s' failed: %s"),
 			       "setuid", strerror(errno));
 			return false;
 		}
@@ -364,7 +375,7 @@ static void stop_handler(void *data, int flags) {
 static BOOL WINAPI console_ctrl_handler(DWORD type) {
 	(void)type;
 
-	logger(DEBUG_ALWAYS, LOG_NOTICE, "Got console shutdown request");
+	logger(DEBUG_ALWAYS, LOG_NOTICE, _("Got console shutdown request"));
 
 	if(WSASetEvent(stop_io.event) == FALSE) {
 		abort();
@@ -395,9 +406,10 @@ int main(int argc, char **argv) {
 	}
 
 	if(show_version) {
-		printf("%s version %s (built %s %s, protocol %d.%d)\n", PACKAGE,
+		printf(_("%s version %s (built %s %s, protocol %d.%d)\n"), PACKAGE,
 		       BUILD_VERSION, BUILD_DATE, BUILD_TIME, PROT_MAJOR, PROT_MINOR);
-		printf("Features:"
+
+		printf("%s:%s\n\n", _("Features"),
 #ifdef HAVE_OPENSSL
 		       " openssl"
 #endif
@@ -431,12 +443,16 @@ int main(int argc, char **argv) {
 #ifdef ENABLE_VDE
 		       " vde"
 #endif
-		       "\n\n");
-		printf("Copyright (C) 1998-2021 Ivo Timmermans, Guus Sliepen and others.\n"
-		       "See the AUTHORS file for a complete list.\n\n"
-		       "tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
-		       "and you are welcome to redistribute it under certain conditions;\n"
-		       "see the file COPYING for details.\n");
+		      );
+
+		const time_t now = time(NULL);
+		const struct tm t = *localtime(&now);
+
+		printf(_("Copyright (C) 1998-%d Ivo Timmermans, Guus Sliepen and others.\n"
+		         "See the AUTHORS file for a complete list.\n\n"
+		         "tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
+		         "and you are welcome to redistribute it under certain conditions;\n"
+		         "see the file COPYING for details.\n"), t.tm_year + 1900);
 
 		return 0;
 	}
@@ -454,7 +470,7 @@ int main(int argc, char **argv) {
 #ifdef HAVE_MINGW
 
 	if(WSAStartup(MAKEWORD(2, 2), &wsa_state)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "WSAStartup", winerror(GetLastError()));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("System call `%s' failed: %s"), "WSAStartup", winerror(GetLastError()));
 		return 1;
 	}
 
@@ -513,7 +529,7 @@ int main(int argc, char **argv) {
 #ifdef HAVE_LZO
 
 	if(lzo_init() != LZO_E_OK) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error initializing LZO compressor!");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Error initializing LZO compressor!"));
 		return 1;
 	}
 
@@ -559,7 +575,7 @@ int main2(int argc, char **argv) {
 	 * This has to be done after daemon()/fork() so it works for child.
 	 * No need to do that in parent as it's very short-lived. */
 	if(do_mlock && mlockall(MCL_CURRENT | MCL_FUTURE) != 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "mlockall",
+		logger(DEBUG_ALWAYS, LOG_ERR, _("System call `%s' failed: %s"), "mlockall",
 		       strerror(errno));
 		return 1;
 	}
@@ -577,21 +593,21 @@ int main2(int argc, char **argv) {
 	if(get_config_string(lookup_config(&config_tree, "ProcessPriority"), &priority)) {
 		if(!strcasecmp(priority, "Normal")) {
 			if(setpriority(NORMAL_PRIORITY_CLASS) != 0) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "setpriority", strerror(errno));
+				logger(DEBUG_ALWAYS, LOG_ERR, _("System call `%s' failed: %s"), "setpriority", strerror(errno));
 				goto end;
 			}
 		} else if(!strcasecmp(priority, "Low")) {
 			if(setpriority(BELOW_NORMAL_PRIORITY_CLASS) != 0) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "setpriority", strerror(errno));
+				logger(DEBUG_ALWAYS, LOG_ERR, _("System call `%s' failed: %s"), "setpriority", strerror(errno));
 				goto end;
 			}
 		} else if(!strcasecmp(priority, "High")) {
 			if(setpriority(HIGH_PRIORITY_CLASS) != 0) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "setpriority", strerror(errno));
+				logger(DEBUG_ALWAYS, LOG_ERR, _("System call `%s' failed: %s"), "setpriority", strerror(errno));
 				goto end;
 			}
 		} else {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Invalid priority `%s`!", priority);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Invalid priority `%s`!"), priority);
 			goto end;
 		}
 	}
@@ -603,7 +619,7 @@ int main2(int argc, char **argv) {
 
 	/* Start main loop. It only exits when tinc is killed. */
 
-	logger(DEBUG_ALWAYS, LOG_NOTICE, "Ready");
+	logger(DEBUG_ALWAYS, LOG_NOTICE, _("Ready"));
 
 	if(umbilical) { // snip!
 		write(umbilical, "", 1);
@@ -620,7 +636,7 @@ int main2(int argc, char **argv) {
 end:
 	close_network_connections();
 
-	logger(DEBUG_ALWAYS, LOG_NOTICE, "Terminating");
+	logger(DEBUG_ALWAYS, LOG_NOTICE, _("Terminating"));
 
 	free(priority);
 

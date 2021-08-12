@@ -63,7 +63,7 @@ bool key_changed_h(connection_t *c, const char *request) {
 	node_t *n;
 
 	if(sscanf(request, "%*d %*x " MAX_STRING, name) != 1) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "KEY_CHANGED",
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s)"), "KEY_CHANGED",
 		       c->name, c->hostname);
 		return false;
 	}
@@ -75,7 +75,7 @@ bool key_changed_h(connection_t *c, const char *request) {
 	n = lookup_node(name);
 
 	if(!n) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got %s from %s (%s) origin %s which does not exist",
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got %s from %s (%s) origin %s which does not exist"),
 		       "KEY_CHANGED", c->name, c->hostname, name);
 		return true;
 	}
@@ -112,7 +112,7 @@ static bool send_initial_sptps_data(void *handle, uint8_t type, const void *data
 bool send_req_key(node_t *to) {
 	if(to->status.sptps) {
 		if(!node_read_ecdsa_public_key(to)) {
-			logger(DEBUG_PROTOCOL, LOG_DEBUG, "No Ed25519 key known for %s (%s)", to->name, to->hostname);
+			logger(DEBUG_PROTOCOL, LOG_DEBUG, _("No Ed25519 key known for %s (%s)"), to->name, to->hostname);
 			send_request(to->nexthop->connection, "%d %s %s %d", REQ_KEY, myself->name, to->name, REQ_PUBKEY);
 			return true;
 		}
@@ -149,7 +149,7 @@ static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, no
 		size_t len;
 
 		if(sscanf(request, "%*d %*s %*s %*d " MAX_STRING, buf) != 1 || !(len = b64decode(buf, buf, strlen(buf)))) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s) to %s (%s): %s", "SPTPS_PACKET", from->name, from->hostname, to->name, to->hostname, "invalid SPTPS data");
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s) to %s (%s): %s"), "SPTPS_PACKET", from->name, from->hostname, to->name, to->hostname, "invalid SPTPS data");
 			return true;
 		}
 
@@ -166,7 +166,7 @@ static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, no
 				   so let's restart SPTPS in case that helps. But don't do that too often
 				   to prevent storms. */
 				if(from->last_req_key < now.tv_sec - 10) {
-					logger(DEBUG_PROTOCOL, LOG_ERR, "Failed to decode TCP packet from %s (%s), restarting SPTPS", from->name, from->hostname);
+					logger(DEBUG_PROTOCOL, LOG_ERR, _("Failed to decode TCP packet from %s (%s), restarting SPTPS"), from->name, from->hostname);
 					send_req_key(from);
 				}
 
@@ -191,7 +191,7 @@ static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, no
 	case REQ_PUBKEY: {
 		if(!node_read_ecdsa_public_key(from)) {
 			/* Request their key *before* we send our key back. Otherwise the first SPTPS packet from them will get dropped. */
-			logger(DEBUG_PROTOCOL, LOG_DEBUG, "Preemptively requesting Ed25519 key for %s (%s)", from->name, from->hostname);
+			logger(DEBUG_PROTOCOL, LOG_DEBUG, _("Preemptively requesting Ed25519 key for %s (%s)"), from->name, from->hostname);
 			send_request(from->nexthop->connection, "%d %s %s %d", REQ_KEY, myself->name, from->name, REQ_PUBKEY);
 		}
 
@@ -203,38 +203,38 @@ static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, no
 
 	case ANS_PUBKEY: {
 		if(node_read_ecdsa_public_key(from)) {
-			logger(DEBUG_PROTOCOL, LOG_WARNING, "Got ANS_PUBKEY from %s (%s) even though we already have his pubkey", from->name, from->hostname);
+			logger(DEBUG_PROTOCOL, LOG_WARNING, _("Got ANS_PUBKEY from %s (%s) even though we already have his pubkey"), from->name, from->hostname);
 			return true;
 		}
 
 		char pubkey[MAX_STRING_SIZE];
 
 		if(sscanf(request, "%*d %*s %*s %*d " MAX_STRING, pubkey) != 1 || !(from->ecdsa = ecdsa_set_base64_public_key(pubkey))) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s): %s", "ANS_PUBKEY", from->name, from->hostname, "invalid pubkey");
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s): %s"), "ANS_PUBKEY", from->name, from->hostname, "invalid pubkey");
 			return true;
 		}
 
-		logger(DEBUG_PROTOCOL, LOG_INFO, "Learned Ed25519 public key from %s (%s)", from->name, from->hostname);
+		logger(DEBUG_PROTOCOL, LOG_INFO, _("Learned Ed25519 public key from %s (%s)"), from->name, from->hostname);
 		append_config_file(from->name, "Ed25519PublicKey", pubkey);
 		return true;
 	}
 
 	case REQ_KEY: {
 		if(!node_read_ecdsa_public_key(from)) {
-			logger(DEBUG_PROTOCOL, LOG_DEBUG, "No Ed25519 key known for %s (%s)", from->name, from->hostname);
+			logger(DEBUG_PROTOCOL, LOG_DEBUG, _("No Ed25519 key known for %s (%s)"), from->name, from->hostname);
 			send_request(from->nexthop->connection, "%d %s %s %d", REQ_KEY, myself->name, from->name, REQ_PUBKEY);
 			return true;
 		}
 
 		if(from->sptps.label) {
-			logger(DEBUG_ALWAYS, LOG_DEBUG, "Got REQ_KEY from %s while we already started a SPTPS session!", from->name);
+			logger(DEBUG_ALWAYS, LOG_DEBUG, _("Got REQ_KEY from %s while we already started a SPTPS session!"), from->name);
 		}
 
 		char buf[MAX_STRING_SIZE];
 		size_t len;
 
 		if(sscanf(request, "%*d %*s %*s %*d " MAX_STRING, buf) != 1 || !(len = b64decode(buf, buf, strlen(buf)))) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s): %s", "REQ_SPTPS_START", from->name, from->hostname, "invalid SPTPS data");
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s): %s"), "REQ_SPTPS_START", from->name, from->hostname, "invalid SPTPS data");
 			return true;
 		}
 
@@ -251,7 +251,7 @@ static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, no
 	}
 
 	default:
-		logger(DEBUG_ALWAYS, LOG_ERR, "Unknown extended REQ_KEY request from %s (%s): %s", from->name, from->hostname, request);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Unknown extended REQ_KEY request from %s (%s): %s"), from->name, from->hostname, request);
 		return true;
 	}
 }
@@ -263,20 +263,21 @@ bool req_key_h(connection_t *c, const char *request) {
 	int reqno = 0;
 
 	if(sscanf(request, "%*d " MAX_STRING " " MAX_STRING " %d", from_name, to_name, &reqno) < 2) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "REQ_KEY", c->name,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s)"), "REQ_KEY", c->name,
 		       c->hostname);
 		return false;
 	}
 
 	if(!check_id(from_name) || !check_id(to_name)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s): %s", "REQ_KEY", c->name, c->hostname, "invalid name");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s): %s"), "REQ_KEY",
+		       c->name, c->hostname, _("invalid name"));
 		return false;
 	}
 
 	from = lookup_node(from_name);
 
 	if(!from) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got %s from %s (%s) origin %s which does not exist in our connection list",
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got %s from %s (%s) origin %s which does not exist in our connection list"),
 		       "REQ_KEY", c->name, c->hostname, from_name);
 		return true;
 	}
@@ -284,7 +285,7 @@ bool req_key_h(connection_t *c, const char *request) {
 	to = lookup_node(to_name);
 
 	if(!to) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got %s from %s (%s) destination %s which does not exist in our connection list",
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got %s from %s (%s) destination %s which does not exist in our connection list"),
 		       "REQ_KEY", c->name, c->hostname, to_name);
 		return true;
 	}
@@ -293,7 +294,7 @@ bool req_key_h(connection_t *c, const char *request) {
 
 	if(to == myself) {                      /* Yes */
 		if(!from->status.reachable) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Got %s from %s (%s) origin %s which is not reachable",
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Got %s from %s (%s) origin %s which is not reachable"),
 			       "REQ_KEY", c->name, c->hostname, from_name);
 			return true;
 		}
@@ -311,7 +312,7 @@ bool req_key_h(connection_t *c, const char *request) {
 		}
 
 		if(!to->status.reachable) {
-			logger(DEBUG_PROTOCOL, LOG_WARNING, "Got %s from %s (%s) destination %s which is not reachable",
+			logger(DEBUG_PROTOCOL, LOG_WARNING, _("Got %s from %s (%s) destination %s which is not reachable"),
 			       "REQ_KEY", c->name, c->hostname, to_name);
 			return true;
 		}
@@ -405,20 +406,20 @@ bool ans_key_h(connection_t *c, const char *request) {
 	if(sscanf(request, "%*d "MAX_STRING" "MAX_STRING" "MAX_STRING" %d %d %zu %d "MAX_STRING" "MAX_STRING,
 	                from_name, to_name, key, &cipher, &digest, &maclength,
 	                &compression, address, port) < 7) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "ANS_KEY", c->name,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s)"), "ANS_KEY", c->name,
 		       c->hostname);
 		return false;
 	}
 
 	if(!check_id(from_name) || !check_id(to_name)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s): %s", "ANS_KEY", c->name, c->hostname, "invalid name");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s): %s"), "ANS_KEY", c->name, c->hostname, _("invalid name"));
 		return false;
 	}
 
 	from = lookup_node(from_name);
 
 	if(!from) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got %s from %s (%s) origin %s which does not exist in our connection list",
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got %s from %s (%s) origin %s which does not exist in our connection list"),
 		       "ANS_KEY", c->name, c->hostname, from_name);
 		return true;
 	}
@@ -426,7 +427,7 @@ bool ans_key_h(connection_t *c, const char *request) {
 	to = lookup_node(to_name);
 
 	if(!to) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got %s from %s (%s) destination %s which does not exist in our connection list",
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got %s from %s (%s) destination %s which does not exist in our connection list"),
 		       "ANS_KEY", c->name, c->hostname, to_name);
 		return true;
 	}
@@ -439,14 +440,14 @@ bool ans_key_h(connection_t *c, const char *request) {
 		}
 
 		if(!to->status.reachable) {
-			logger(DEBUG_ALWAYS, LOG_WARNING, "Got %s from %s (%s) destination %s which is not reachable",
+			logger(DEBUG_ALWAYS, LOG_WARNING, _("Got %s from %s (%s) destination %s which is not reachable"),
 			       "ANS_KEY", c->name, c->hostname, to_name);
 			return true;
 		}
 
 		if(!*address && from->address.sa.sa_family != AF_UNSPEC && to->minmtu) {
 			char *address, *port;
-			logger(DEBUG_PROTOCOL, LOG_DEBUG, "Appending reflexive UDP address to ANS_KEY from %s to %s", from->name, to->name);
+			logger(DEBUG_PROTOCOL, LOG_DEBUG, _("Appending reflexive UDP address to ANS_KEY from %s to %s"), from->name, to->name);
 			sockaddr2str(&from->address, &address, &port);
 			send_request(to->nexthop->connection, "%s %s %s", request, address, port);
 			free(address);
@@ -472,8 +473,8 @@ bool ans_key_h(connection_t *c, const char *request) {
 #ifdef HAVE_LZ4
 		break;
 #else
-		logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses bogus compression level!", from->name, from->hostname);
-		logger(DEBUG_ALWAYS, LOG_ERR, "LZ4 compression is unavailable on this node.");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Node %s (%s) uses bogus compression level!"), from->name, from->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("LZ4 compression is unavailable on this node."));
 		return true;
 #endif
 
@@ -482,8 +483,8 @@ bool ans_key_h(connection_t *c, const char *request) {
 #ifdef HAVE_LZO
 		break;
 #else
-		logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses bogus compression level!", from->name, from->hostname);
-		logger(DEBUG_ALWAYS, LOG_ERR, "LZO compression is unavailable on this node.");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Node %s (%s) uses bogus compression level!"), from->name, from->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("LZO compression is unavailable on this node."));
 		return true;
 #endif
 
@@ -499,8 +500,8 @@ bool ans_key_h(connection_t *c, const char *request) {
 #ifdef HAVE_ZLIB
 		break;
 #else
-		logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses bogus compression level!", from->name, from->hostname);
-		logger(DEBUG_ALWAYS, LOG_ERR, "ZLIB compression is unavailable on this node.");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Node %s (%s) uses bogus compression level!"), from->name, from->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("ZLIB compression is unavailable on this node."));
 		return true;
 #endif
 
@@ -508,8 +509,8 @@ bool ans_key_h(connection_t *c, const char *request) {
 		break;
 
 	default:
-		logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses bogus compression level!", from->name, from->hostname);
-		logger(DEBUG_ALWAYS, LOG_ERR, "Compression level %i is unrecognized by this node.", compression);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Node %s (%s) uses bogus compression level!"), from->name, from->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Compression level %i is unrecognized by this node."), compression);
 		return true;
 	}
 
@@ -528,7 +529,7 @@ bool ans_key_h(connection_t *c, const char *request) {
 			   Note that simply relying on handshake timeout is not enough, because
 			   that doesn't apply to key regeneration. */
 			if(from->last_req_key < now.tv_sec - 10) {
-				logger(DEBUG_PROTOCOL, LOG_ERR, "Failed to decode handshake TCP packet from %s (%s), restarting SPTPS", from->name, from->hostname);
+				logger(DEBUG_PROTOCOL, LOG_ERR, _("Failed to decode handshake TCP packet from %s (%s), restarting SPTPS"), from->name, from->hostname);
 				send_req_key(from);
 			}
 
@@ -537,7 +538,7 @@ bool ans_key_h(connection_t *c, const char *request) {
 
 		if(from->status.validkey) {
 			if(*address && *port) {
-				logger(DEBUG_PROTOCOL, LOG_DEBUG, "Using reflexive UDP address from %s: %s port %s", from->name, address, port);
+				logger(DEBUG_PROTOCOL, LOG_DEBUG, _("Using reflexive UDP address from %s: %s port %s"), from->name, address, port);
 				sockaddr_t sa = str2sockaddr(address, port);
 				update_node_udp(from, &sa);
 			}
@@ -549,14 +550,14 @@ bool ans_key_h(connection_t *c, const char *request) {
 	}
 
 #ifdef DISABLE_LEGACY
-	logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses legacy protocol!", from->name, from->hostname);
+	logger(DEBUG_ALWAYS, LOG_ERR, _("Node %s (%s) uses legacy protocol!"), from->name, from->hostname);
 	return false;
 #else
 	/* Check and lookup cipher and digest algorithms */
 
 	if(cipher) {
 		if(!(from->outcipher = cipher_open_by_nid(cipher))) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses unknown cipher!", from->name, from->hostname);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Node %s (%s) uses unknown cipher!"), from->name, from->hostname);
 			return false;
 		}
 	} else {
@@ -565,7 +566,7 @@ bool ans_key_h(connection_t *c, const char *request) {
 
 	if(digest) {
 		if(!(from->outdigest = digest_open_by_nid(digest, maclength))) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses unknown digest!", from->name, from->hostname);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Node %s (%s) uses unknown digest!"), from->name, from->hostname);
 			return false;
 		}
 	} else {
@@ -573,7 +574,7 @@ bool ans_key_h(connection_t *c, const char *request) {
 	}
 
 	if(maclength != digest_length(from->outdigest)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses bogus MAC length!", from->name, from->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Node %s (%s) uses bogus MAC length!"), from->name, from->hostname);
 		return false;
 	}
 
@@ -582,7 +583,7 @@ bool ans_key_h(connection_t *c, const char *request) {
 	size_t keylen = hex2bin(key, key, sizeof(key));
 
 	if(keylen != (from->outcipher ? cipher_keylength(from->outcipher) : 1)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses wrong keylength!", from->name, from->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Node %s (%s) uses wrong keylength!"), from->name, from->hostname);
 		return true;
 	}
 
@@ -600,7 +601,7 @@ bool ans_key_h(connection_t *c, const char *request) {
 	from->sent_seqno = 0;
 
 	if(*address && *port) {
-		logger(DEBUG_PROTOCOL, LOG_DEBUG, "Using reflexive UDP address from %s: %s port %s", from->name, address, port);
+		logger(DEBUG_PROTOCOL, LOG_DEBUG, _("Using reflexive UDP address from %s: %s port %s"), from->name, address, port);
 		sockaddr_t sa = str2sockaddr(address, port);
 		update_node_udp(from, &sa);
 	}

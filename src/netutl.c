@@ -44,7 +44,7 @@ struct addrinfo *str2addrinfo(const char *address, const char *service, int sock
 	err = getaddrinfo(address, service, &hint, &ai);
 
 	if(err) {
-		logger(DEBUG_ALWAYS, LOG_WARNING, "Error looking up %s port %s: %s", address, service, err == EAI_SYSTEM ? strerror(errno) : gai_strerror(err));
+		logger(DEBUG_ALWAYS, LOG_WARNING, _("Error looking up %s port %s: %s"), address, service, err == EAI_SYSTEM ? strerror(errno) : gai_strerror(err));
 		return NULL;
 	}
 
@@ -63,7 +63,7 @@ sockaddr_t str2sockaddr(const char *address, const char *port) {
 	err = getaddrinfo(address, port, &hint, &ai);
 
 	if(err || !ai) {
-		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Unknown type address %s port %s", address, port);
+		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, _("Unknown type address %s port %s"), address, port);
 		result.sa.sa_family = AF_UNKNOWN;
 		result.unknown.address = xstrdup(address);
 		result.unknown.port = xstrdup(port);
@@ -107,7 +107,7 @@ void sockaddr2str(const sockaddr_t *sa, char **addrstr, char **portstr) {
 	err = getnameinfo(&sa->sa, SALEN(sa->sa), address, sizeof(address), port, sizeof(port), NI_NUMERICHOST | NI_NUMERICSERV);
 
 	if(err) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error while translating addresses: %s", err == EAI_SYSTEM ? strerror(errno) : gai_strerror(err));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Error while translating addresses: %s"), err == EAI_SYSTEM ? strerror(errno) : gai_strerror(err));
 		abort();
 	}
 
@@ -133,10 +133,10 @@ char *sockaddr2hostname(const sockaddr_t *sa) {
 	int err;
 
 	if(sa->sa.sa_family == AF_UNSPEC) {
-		xasprintf(&str, "unspec port unspec");
+		xasprintf(&str, _("unspec port unspec"));
 		return str;
 	} else if(sa->sa.sa_family == AF_UNKNOWN) {
-		xasprintf(&str, "%s port %s", sa->unknown.address, sa->unknown.port);
+		xasprintf(&str, "%s %s %s", sa->unknown.address, _("port"), sa->unknown.port);
 		return str;
 	}
 
@@ -144,10 +144,10 @@ char *sockaddr2hostname(const sockaddr_t *sa) {
 	                  hostnames ? 0 : (NI_NUMERICHOST | NI_NUMERICSERV));
 
 	if(err) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error while looking up hostname: %s", err == EAI_SYSTEM ? strerror(errno) : gai_strerror(err));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Error while looking up hostname: %s"), err == EAI_SYSTEM ? strerror(errno) : gai_strerror(err));
 	}
 
-	xasprintf(&str, "%s port %s", address, port);
+	xasprintf(&str, "%s %s %s", address, _("port"), port);
 
 	return str;
 }
@@ -175,7 +175,7 @@ int sockaddrcmp_noport(const sockaddr_t *a, const sockaddr_t *b) {
 		return memcmp(&a->in6.sin6_addr, &b->in6.sin6_addr, sizeof(a->in6.sin6_addr));
 
 	default:
-		logger(DEBUG_ALWAYS, LOG_ERR, "sockaddrcmp() was called with unknown address family %d, exitting!",
+		logger(DEBUG_ALWAYS, LOG_ERR, _("sockaddrcmp() was called with unknown address family %d, exitting!"),
 		       a->sa.sa_family);
 		abort();
 	}
@@ -222,7 +222,7 @@ int sockaddrcmp(const sockaddr_t *a, const sockaddr_t *b) {
 		return memcmp(&a->in6.sin6_port, &b->in6.sin6_port, sizeof(a->in6.sin6_port));
 
 	default:
-		logger(DEBUG_ALWAYS, LOG_ERR, "sockaddrcmp() was called with unknown address family %d, exitting!",
+		logger(DEBUG_ALWAYS, LOG_ERR, _("sockaddrcmp() was called with unknown address family %d, exitting!"),
 		       a->sa.sa_family);
 		abort();
 	}

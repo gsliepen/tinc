@@ -98,7 +98,7 @@ bool tcppacket_h(connection_t *c, const char *request) {
 	short int len;
 
 	if(sscanf(request, "%*d %hd", &len) != 1) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "PACKET", c->name,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s)"), "PACKET", c->name,
 		       c->hostname);
 		return false;
 	}
@@ -130,7 +130,7 @@ bool sptps_tcppacket_h(connection_t *c, const char *request) {
 	short int len;
 
 	if(sscanf(request, "%*d %hd", &len) != 1) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "SPTPS_PACKET", c->name,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s)"), "SPTPS_PACKET", c->name,
 		       c->hostname);
 		return false;
 	}
@@ -150,7 +150,7 @@ bool send_udp_info(node_t *from, node_t *to) {
 	to = (to->via == myself) ? to->nexthop : to->via;
 
 	if(to == NULL) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Something went wrong when selecting relay - possible fake UDP_INFO");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Something went wrong when selecting relay - possible fake UDP_INFO"));
 		return false;
 	}
 
@@ -213,25 +213,25 @@ bool udp_info_h(connection_t *c, const char *request) {
 	char from_port[MAX_STRING_SIZE];
 
 	if(sscanf(request, "%*d "MAX_STRING" "MAX_STRING" "MAX_STRING" "MAX_STRING, from_name, to_name, from_address, from_port) != 4) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "UDP_INFO", c->name, c->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s)"), "UDP_INFO", c->name, c->hostname);
 		return false;
 	}
 
 	if(!check_id(from_name) || !check_id(to_name)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s): %s", "UDP_INFO", c->name, c->hostname, "invalid name");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s): %s"), "UDP_INFO", c->name, c->hostname, _("invalid name"));
 		return false;
 	}
 
 	node_t *from = lookup_node(from_name);
 
 	if(!from) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got %s from %s (%s) origin %s which does not exist in our connection list", "UDP_INFO", c->name, c->hostname, from_name);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got %s from %s (%s) origin %s which does not exist in our connection list"), "UDP_INFO", c->name, c->hostname, from_name);
 		return true;
 	}
 
 	if(from != from->via) {
 		/* Not supposed to happen, as it means the message wandered past a static relay */
-		logger(DEBUG_PROTOCOL, LOG_WARNING, "Got UDP info message from %s (%s) which we can't reach directly", from->name, from->hostname);
+		logger(DEBUG_PROTOCOL, LOG_WARNING, _("Got UDP info message from %s (%s) which we can't reach directly"), from->name, from->hostname);
 		return true;
 	}
 
@@ -248,7 +248,7 @@ bool udp_info_h(connection_t *c, const char *request) {
 	node_t *to = lookup_node(to_name);
 
 	if(!to) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got %s from %s (%s) destination %s which does not exist in our connection list", "UDP_INFO", c->name, c->hostname, to_name);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got %s from %s (%s) destination %s which does not exist in our connection list"), "UDP_INFO", c->name, c->hostname, to_name);
 		return true;
 	}
 
@@ -324,26 +324,26 @@ bool mtu_info_h(connection_t *c, const char *request) {
 	int mtu;
 
 	if(sscanf(request, "%*d "MAX_STRING" "MAX_STRING" %d", from_name, to_name, &mtu) != 3) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "MTU_INFO", c->name, c->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s)"), "MTU_INFO", c->name, c->hostname);
 		return false;
 	}
 
 	if(mtu < 512) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s): %s", "MTU_INFO", c->name, c->hostname, "invalid MTU");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s): %s"), "MTU_INFO", c->name, c->hostname, _("invalid MTU"));
 		return false;
 	}
 
 	mtu = MIN(mtu, MTU);
 
 	if(!check_id(from_name) || !check_id(to_name)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s): %s", "MTU_INFO", c->name, c->hostname, "invalid name");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s): %s"), "MTU_INFO", c->name, c->hostname, _("invalid name"));
 		return false;
 	}
 
 	node_t *from = lookup_node(from_name);
 
 	if(!from) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got %s from %s (%s) origin %s which does not exist in our connection list", "MTU_INFO", c->name, c->hostname, from_name);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got %s from %s (%s) origin %s which does not exist in our connection list"), "MTU_INFO", c->name, c->hostname, from_name);
 		return true;
 	}
 
@@ -351,14 +351,14 @@ bool mtu_info_h(connection_t *c, const char *request) {
 	   Even if we're about to make our own measurements, the value we got from downstream nodes should be pretty close
 	   so it's a good idea to use it in the mean time. */
 	if(from->mtu != mtu && from->minmtu != from->maxmtu) {
-		logger(DEBUG_TRAFFIC, LOG_INFO, "Using provisional MTU %d for node %s (%s)", mtu, from->name, from->hostname);
+		logger(DEBUG_TRAFFIC, LOG_INFO, _("Using provisional MTU %d for node %s (%s)"), mtu, from->name, from->hostname);
 		from->mtu = mtu;
 	}
 
 	node_t *to = lookup_node(to_name);
 
 	if(!to) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got %s from %s (%s) destination %s which does not exist in our connection list", "MTU_INFO", c->name, c->hostname, to_name);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got %s from %s (%s) destination %s which does not exist in our connection list"), "MTU_INFO", c->name, c->hostname, to_name);
 		return true;
 	}
 

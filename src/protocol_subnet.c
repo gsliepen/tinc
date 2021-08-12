@@ -47,7 +47,7 @@ bool add_subnet_h(connection_t *c, const char *request) {
 	subnet_t s = {0}, *new, *old;
 
 	if(sscanf(request, "%*d %*x " MAX_STRING " " MAX_STRING, name, subnetstr) != 2) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "ADD_SUBNET", c->name,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s)"), "ADD_SUBNET", c->name,
 		       c->hostname);
 		return false;
 	}
@@ -55,16 +55,16 @@ bool add_subnet_h(connection_t *c, const char *request) {
 	/* Check if owner name is valid */
 
 	if(!check_id(name)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s): %s", "ADD_SUBNET", c->name,
-		       c->hostname, "invalid name");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s): %s"), "ADD_SUBNET", c->name,
+		       c->hostname, _("invalid name"));
 		return false;
 	}
 
 	/* Check if subnet string is valid */
 
 	if(!str2net(&s, subnetstr)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s): %s", "ADD_SUBNET", c->name,
-		       c->hostname, "invalid subnet string");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s): %s"), "ADD_SUBNET", c->name,
+		       c->hostname, _("invalid subnet string"));
 		return false;
 	}
 
@@ -78,7 +78,7 @@ bool add_subnet_h(connection_t *c, const char *request) {
 
 	if(tunnelserver && owner != myself && owner != c->node) {
 		/* in case of tunnelserver, ignore indirect subnet registrations */
-		logger(DEBUG_PROTOCOL, LOG_WARNING, "Ignoring indirect %s from %s (%s) for %s",
+		logger(DEBUG_PROTOCOL, LOG_WARNING, _("Ignoring indirect %s from %s (%s) for %s"),
 		       "ADD_SUBNET", c->name, c->hostname, subnetstr);
 		return true;
 	}
@@ -98,7 +98,7 @@ bool add_subnet_h(connection_t *c, const char *request) {
 	/* If we don't know this subnet, but we are the owner, retaliate with a DEL_SUBNET */
 
 	if(owner == myself) {
-		logger(DEBUG_PROTOCOL, LOG_WARNING, "Got %s from %s (%s) for ourself",
+		logger(DEBUG_PROTOCOL, LOG_WARNING, _("Got %s from %s (%s) for ourself"),
 		       "ADD_SUBNET", c->name, c->hostname);
 		s.owner = myself;
 		send_del_subnet(c, &s);
@@ -108,7 +108,7 @@ bool add_subnet_h(connection_t *c, const char *request) {
 	/* In tunnel server mode, we should already know all allowed subnets */
 
 	if(tunnelserver) {
-		logger(DEBUG_ALWAYS, LOG_WARNING, "Ignoring unauthorized %s from %s (%s): %s",
+		logger(DEBUG_ALWAYS, LOG_WARNING, _("Ignoring unauthorized %s from %s (%s): %s"),
 		       "ADD_SUBNET", c->name, c->hostname, subnetstr);
 		return true;
 	}
@@ -116,7 +116,7 @@ bool add_subnet_h(connection_t *c, const char *request) {
 	/* Ignore if strictsubnets is true, but forward it to others */
 
 	if(strictsubnets) {
-		logger(DEBUG_ALWAYS, LOG_WARNING, "Ignoring unauthorized %s from %s (%s): %s",
+		logger(DEBUG_ALWAYS, LOG_WARNING, _("Ignoring unauthorized %s from %s (%s): %s"),
 		       "ADD_SUBNET", c->name, c->hostname, subnetstr);
 		forward_request(c, request);
 		return true;
@@ -163,7 +163,7 @@ bool del_subnet_h(connection_t *c, const char *request) {
 	subnet_t s = {0}, *find;
 
 	if(sscanf(request, "%*d %*x " MAX_STRING " " MAX_STRING, name, subnetstr) != 2) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "DEL_SUBNET", c->name,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s)"), "DEL_SUBNET", c->name,
 		       c->hostname);
 		return false;
 	}
@@ -171,16 +171,16 @@ bool del_subnet_h(connection_t *c, const char *request) {
 	/* Check if owner name is valid */
 
 	if(!check_id(name)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s): %s", "DEL_SUBNET", c->name,
-		       c->hostname, "invalid name");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s): %s"), "DEL_SUBNET", c->name,
+		       c->hostname, _("invalid name"));
 		return false;
 	}
 
 	/* Check if subnet string is valid */
 
 	if(!str2net(&s, subnetstr)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s): %s", "DEL_SUBNET", c->name,
-		       c->hostname, "invalid subnet string");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s): %s"), "DEL_SUBNET", c->name,
+		       c->hostname, _("invalid subnet string"));
 		return false;
 	}
 
@@ -194,13 +194,13 @@ bool del_subnet_h(connection_t *c, const char *request) {
 
 	if(tunnelserver && owner != myself && owner != c->node) {
 		/* in case of tunnelserver, ignore indirect subnet deletion */
-		logger(DEBUG_PROTOCOL, LOG_WARNING, "Ignoring indirect %s from %s (%s) for %s",
+		logger(DEBUG_PROTOCOL, LOG_WARNING, _("Ignoring indirect %s from %s (%s) for %s"),
 		       "DEL_SUBNET", c->name, c->hostname, subnetstr);
 		return true;
 	}
 
 	if(!owner) {
-		logger(DEBUG_PROTOCOL, LOG_WARNING, "Got %s from %s (%s) for %s which is not in our node tree",
+		logger(DEBUG_PROTOCOL, LOG_WARNING, _("Got %s from %s (%s) for %s which is not in our node tree"),
 		       "DEL_SUBNET", c->name, c->hostname, name);
 		return true;
 	}
@@ -212,7 +212,7 @@ bool del_subnet_h(connection_t *c, const char *request) {
 	find = lookup_subnet(owner, &s);
 
 	if(!find) {
-		logger(DEBUG_PROTOCOL, LOG_WARNING, "Got %s from %s (%s) for %s which does not appear in his subnet tree",
+		logger(DEBUG_PROTOCOL, LOG_WARNING, _("Got %s from %s (%s) for %s which does not appear in his subnet tree"),
 		       "DEL_SUBNET", c->name, c->hostname, name);
 
 		if(strictsubnets) {
@@ -225,7 +225,7 @@ bool del_subnet_h(connection_t *c, const char *request) {
 	/* If we are the owner of this subnet, retaliate with an ADD_SUBNET */
 
 	if(owner == myself) {
-		logger(DEBUG_PROTOCOL, LOG_WARNING, "Got %s from %s (%s) for ourself",
+		logger(DEBUG_PROTOCOL, LOG_WARNING, _("Got %s from %s (%s) for ourself"),
 		       "DEL_SUBNET", c->name, c->hostname);
 		send_add_subnet(c, find);
 		return true;

@@ -161,7 +161,7 @@ node_t *lookup_node_udp(const sockaddr_t *sa) {
 
 void update_node_udp(node_t *n, const sockaddr_t *sa) {
 	if(n == myself) {
-		logger(DEBUG_ALWAYS, LOG_WARNING, "Trying to update UDP address of myself!");
+		logger(DEBUG_ALWAYS, LOG_WARNING, _("Trying to update UDP address of myself!"));
 		return;
 	}
 
@@ -181,7 +181,7 @@ void update_node_udp(node_t *n, const sockaddr_t *sa) {
 		splay_insert(&node_udp_tree, n);
 		free(n->hostname);
 		n->hostname = sockaddr2hostname(&n->address);
-		logger(DEBUG_PROTOCOL, LOG_DEBUG, "UDP address of %s set to %s", n->name, n->hostname);
+		logger(DEBUG_PROTOCOL, LOG_DEBUG, _("UDP address of %s set to %s"), n->name, n->hostname);
 	}
 
 	/* invalidate UDP information - note that this is a security feature as well to make sure

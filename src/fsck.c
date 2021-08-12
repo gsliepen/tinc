@@ -45,7 +45,7 @@ static bool ask_fix(void) {
 	}
 
 again:
-	fprintf(stderr, "Fix y/n? ");
+	fprintf(stderr, _("Fix y/n? "));
 	char buf[1024];
 
 	if(!fgets(buf, sizeof(buf), stdin)) {
@@ -91,17 +91,17 @@ static void print_new_keys_cmd(key_type_t key_type, const char *message) {
 
 	switch(key_type) {
 	case KEY_RSA:
-		fprintf(stderr, "You can generate a new RSA keypair with:\n\n");
+		fprintf(stderr, "%s\n\n", _("You can generate a new RSA keypair with:"));
 		print_tinc_cmd("generate-rsa-keys");
 		break;
 
 	case KEY_ED25519:
-		fprintf(stderr, "You can generate a new Ed25519 keypair with:\n\n");
+		fprintf(stderr, "%s\n\n", _("You can generate a new Ed25519 keypair with:"));
 		print_tinc_cmd("generate-ed25519-keys");
 		break;
 
 	case KEY_BOTH:
-		fprintf(stderr, "You can generate new keys with:\n\n");
+		fprintf(stderr, "%s\n\n", _("You can generate new keys with:"));
 		print_tinc_cmd("generate-keys");
 		break;
 	}
@@ -159,24 +159,24 @@ static void check_conffile(const char *nodename, bool server) {
 		}
 
 		if(var_type & VAR_OBSOLETE) {
-			fprintf(stderr, "WARNING: obsolete variable %s in %s line %d\n",
+			fprintf(stderr, _("WARNING: obsolete variable %s in %s line %d\n"),
 			        conf->variable, conf->file, conf->line);
 		}
 
 		if(server && !(var_type & VAR_SERVER)) {
-			fprintf(stderr, "WARNING: host variable %s found in server config %s line %d \n",
+			fprintf(stderr, _("WARNING: host variable %s found in server config %s line %d \n"),
 			        conf->variable, conf->file, conf->line);
 		}
 
 		if(!server && !(var_type & VAR_HOST)) {
-			fprintf(stderr, "WARNING: server variable %s found in host config %s line %d \n",
+			fprintf(stderr, _("WARNING: server variable %s found in host config %s line %d \n"),
 			        conf->variable, conf->file, conf->line);
 		}
 	}
 
 	for(size_t i = 0; i < total_vars; ++i) {
 		if(count[i] > 1 && !(variables[i].type & VAR_MULTIPLE)) {
-			fprintf(stderr, "WARNING: multiple instances of variable %s in %s\n",
+			fprintf(stderr, _("WARNING: multiple instances of variable %s in %s\n"),
 			        variables[i].name, nodename ? nodename : "tinc.conf");
 		}
 	}
@@ -200,20 +200,20 @@ static void check_key_file_mode(const char *fname) {
 	struct stat st;
 
 	if(stat(fname, &st)) {
-		fprintf(stderr, "ERROR: could not stat private key file %s\n", fname);
+		fprintf(stderr, _("ERROR: could not stat private key file %s\n"), fname);
 		return;
 	}
 
 	if(st.st_mode & 077) {
-		fprintf(stderr, "WARNING: unsafe file permissions on %s.\n", fname);
+		fprintf(stderr, _("WARNING: unsafe file permissions on %s.\n"), fname);
 
 		if(st.st_uid != uid) {
-			fprintf(stderr, "You are not running %s as the same uid as %s.\n", exe_name, fname);
+			fprintf(stderr, _("You are not running %s as the same uid as %s.\n"), exe_name, fname);
 		} else if(ask_fix()) {
 			if(chmod(fname, st.st_mode & ~077u)) {
-				fprintf(stderr, "ERROR: could not change permissions of %s: %s\n", fname, strerror(errno));
+				fprintf(stderr, _("ERROR: could not change permissions of %s: %s\n"), fname, strerror(errno));
 			} else {
-				fprintf(stderr, "Fixed permissions of %s.\n", fname);
+				fprintf(stderr, _("Fixed permissions of %s.\n"), fname);
 			}
 		}
 	}
@@ -225,10 +225,10 @@ static char *read_node_name() {
 		return get_my_name(true);
 	}
 
-	fprintf(stderr, "ERROR: cannot read %s: %s\n", tinc_conf, strerror(errno));
+	fprintf(stderr, _("ERROR: cannot read %s: %s\n"), tinc_conf, strerror(errno));
 
 	if(errno == ENOENT) {
-		fprintf(stderr, "No tinc configuration found. Create a new one with:\n\n");
+		fprintf(stderr, _("No tinc configuration found. Create a new one with:\n\n"));
 		print_tinc_cmd("init");
 		return NULL;
 	}
@@ -237,9 +237,9 @@ static char *read_node_name() {
 		uid_t uid = getuid();
 
 		if(uid != 0) {
-			fprintf(stderr, "You are currently not running tinc as root. Use sudo?\n");
+			fprintf(stderr, _("You are currently not running tinc as root. Use sudo?\n"));
 		} else {
-			fprintf(stderr, "Check the permissions of each component of the path %s.\n", tinc_conf);
+			fprintf(stderr, _("Check the permissions of each component of the path %s.\n"), tinc_conf);
 		}
 	}
 
@@ -250,7 +250,7 @@ static bool build_host_conf_path(char *fname, const size_t len) {
 	char *name = get_my_name(true);
 
 	if(!name) {
-		fprintf(stderr, "ERROR: tinc cannot run without a valid Name.\n");
+		fprintf(stderr, _("ERROR: tinc cannot run without a valid Name.\n"));
 		return false;
 	}
 
@@ -271,7 +271,7 @@ static bool ask_fix_ec_public_key(const char *fname, ecdsa_t *ec_priv) {
 	FILE *f = fopen(fname, "a");
 
 	if(!f) {
-		fprintf(stderr, "ERROR: could not append to %s: %s\n", fname, strerror(errno));
+		fprintf(stderr, _("ERROR: could not append to %s: %s\n"), fname, strerror(errno));
 		return false;
 	}
 
@@ -279,9 +279,9 @@ static bool ask_fix_ec_public_key(const char *fname, ecdsa_t *ec_priv) {
 	fclose(f);
 
 	if(success) {
-		fprintf(stderr, "Wrote Ed25519 public key to %s.\n", fname);
+		fprintf(stderr, _("Wrote Ed25519 public key to %s.\n"), fname);
 	} else {
-		fprintf(stderr, "ERROR: could not write Ed25519 public key to %s.\n", fname);
+		fprintf(stderr, _("ERROR: could not write Ed25519 public key to %s.\n"), fname);
 	}
 
 	return success;
@@ -300,7 +300,7 @@ static bool ask_fix_rsa_public_key(const char *fname, rsa_t *rsa_priv) {
 	FILE *f = fopen(fname, "a");
 
 	if(!f) {
-		fprintf(stderr, "ERROR: could not append to %s: %s\n", fname, strerror(errno));
+		fprintf(stderr, _("ERROR: could not append to %s: %s\n"), fname, strerror(errno));
 		return false;
 	}
 
@@ -308,9 +308,9 @@ static bool ask_fix_rsa_public_key(const char *fname, rsa_t *rsa_priv) {
 	fclose(f);
 
 	if(success) {
-		fprintf(stderr, "Wrote RSA public key to %s.\n", fname);
+		fprintf(stderr, _("Wrote RSA public key to %s.\n"), fname);
 	} else {
-		fprintf(stderr, "ERROR: could not write RSA public key to %s.\n", fname);
+		fprintf(stderr, _("ERROR: could not write RSA public key to %s.\n"), fname);
 	}
 
 	return success;
@@ -320,7 +320,7 @@ static bool test_rsa_keypair(rsa_t *rsa_priv, rsa_t *rsa_pub, const char *host_f
 	size_t len = rsa_size(rsa_priv);
 
 	if(len != rsa_size(rsa_pub)) {
-		fprintf(stderr, "ERROR: public and private RSA key lengths do not match.\n");
+		fprintf(stderr, _("ERROR: public and private RSA key lengths do not match.\n"));
 		return false;
 	}
 
@@ -337,14 +337,14 @@ static bool test_rsa_keypair(rsa_t *rsa_priv, rsa_t *rsa_pub, const char *host_f
 			if(memcmp(plaintext, decrypted, len) == 0) {
 				success = true;
 			} else {
-				fprintf(stderr, "ERROR: public and private RSA keys do not match.\n");
+				fprintf(stderr, _("ERROR: public and private RSA keys do not match.\n"));
 				success = ask_fix_rsa_public_key(host_file, rsa_priv);
 			}
 		} else {
-			print_new_keys_cmd(KEY_RSA, "ERROR: private RSA key does not work.");
+			print_new_keys_cmd(KEY_RSA, _("ERROR: private RSA key does not work."));
 		}
 	} else {
-		fprintf(stderr, "ERROR: public RSA key does not work.\n");
+		fprintf(stderr, _("ERROR: public RSA key does not work.\n"));
 		success = ask_fix_rsa_public_key(host_file, rsa_priv);
 	}
 
@@ -357,12 +357,12 @@ static bool test_rsa_keypair(rsa_t *rsa_priv, rsa_t *rsa_pub, const char *host_f
 
 static bool check_rsa_pubkey(rsa_t *rsa_priv, rsa_t *rsa_pub, const char *host_file) {
 	if(!rsa_pub) {
-		fprintf(stderr, "WARNING: No (usable) public RSA key found.\n");
+		fprintf(stderr, _("WARNING: No (usable) public RSA key found.\n"));
 		return ask_fix_rsa_public_key(host_file, rsa_priv);
 	}
 
 	if(!rsa_priv) {
-		fprintf(stderr, "WARNING: A public RSA key was found but no private key is known.\n");
+		fprintf(stderr, _("WARNING: A public RSA key was found but no private key is known.\n"));
 		return true;
 	}
 
@@ -375,7 +375,7 @@ static bool test_ec_keypair(ecdsa_t *ec_priv, ecdsa_t *ec_pub, const char *host_
 	char *b64_priv_pub = ecdsa_get_base64_public_key(ec_priv);
 
 	if(!b64_priv_pub) {
-		print_new_keys_cmd(KEY_ED25519, "ERROR: private Ed25519 key does not work.");
+		print_new_keys_cmd(KEY_ED25519, _("ERROR: private Ed25519 key does not work."));
 		return false;
 	}
 
@@ -383,7 +383,7 @@ static bool test_ec_keypair(ecdsa_t *ec_priv, ecdsa_t *ec_pub, const char *host_
 	char *b64_pub_pub = ecdsa_get_base64_public_key(ec_pub);
 
 	if(!b64_pub_pub) {
-		fprintf(stderr, "ERROR: public Ed25519 key does not work.\n");
+		fprintf(stderr, _("ERROR: public Ed25519 key does not work.\n"));
 		free(b64_priv_pub);
 		return ask_fix_ec_public_key(host_file, ec_priv);
 	}
@@ -396,14 +396,14 @@ static bool test_ec_keypair(ecdsa_t *ec_priv, ecdsa_t *ec_pub, const char *host_
 		return true;
 	}
 
-	fprintf(stderr, "ERROR: public and private Ed25519 keys do not match.\n");
+	fprintf(stderr, _("ERROR: public and private Ed25519 keys do not match.\n"));
 	return ask_fix_ec_public_key(host_file, ec_priv);
 }
 
 static bool check_ec_pubkey(ecdsa_t *ec_priv, ecdsa_t *ec_pub, const char *host_file) {
 	if(!ec_priv) {
 		if(ec_pub) {
-			print_new_keys_cmd(KEY_ED25519, "WARNING: A public Ed25519 key was found but no private key is known.");
+			print_new_keys_cmd(KEY_ED25519, _("WARNING: A public Ed25519 key was found but no private key is known."));
 		}
 
 		return true;
@@ -413,7 +413,7 @@ static bool check_ec_pubkey(ecdsa_t *ec_priv, ecdsa_t *ec_pub, const char *host_
 		return test_ec_keypair(ec_priv, ec_pub, host_file);
 	}
 
-	fprintf(stderr, "WARNING: No (usable) public Ed25519 key found.\n");
+	fprintf(stderr, _("WARNING: No (usable) public Ed25519 key found.\n"));
 	return ask_fix_ec_public_key(host_file, ec_priv);
 }
 
@@ -423,15 +423,15 @@ static bool check_config_mode(const char *fname) {
 	}
 
 	if(errno != EACCES) {
-		fprintf(stderr, "ERROR: cannot access %s: %s\n", fname, strerror(errno));
+		fprintf(stderr, _("ERROR: cannot access %s: %s\n"), fname, strerror(errno));
 		return false;
 	}
 
-	fprintf(stderr, "WARNING: cannot read and execute %s: %s\n", fname, strerror(errno));
+	fprintf(stderr, _("WARNING: cannot read and execute %s: %s\n"), fname, strerror(errno));
 
 	if(ask_fix()) {
 		if(chmod(fname, 0755)) {
-			fprintf(stderr, "ERROR: cannot change permissions on %s: %s\n", fname, strerror(errno));
+			fprintf(stderr, _("ERROR: cannot change permissions on %s: %s\n"), fname, strerror(errno));
 		}
 	}
 
@@ -443,7 +443,7 @@ static bool check_script_confdir() {
 	DIR *dir = opendir(confbase);
 
 	if(!dir) {
-		fprintf(stderr, "ERROR: cannot read directory %s: %s\n", confbase, strerror(errno));
+		fprintf(stderr, _("ERROR: cannot read directory %s: %s\n"), confbase, strerror(errno));
 		return false;
 	}
 
@@ -465,11 +465,11 @@ static bool check_script_confdir() {
 
 		if(strcmp(fname, "tinc") && strcmp(fname, "host") && strcmp(fname, "subnet")) {
 			static bool explained = false;
-			fprintf(stderr, "WARNING: Unknown script %s" SLASH "%s found.\n", confbase, ent->d_name);
+			fprintf(stderr, _("WARNING: Unknown script %s%s%s found.\n"), confbase, SLASH, ent->d_name);
 
 			if(!explained) {
-				fprintf(stderr, "The only scripts in %s executed by tinc are:\n", confbase);
-				fprintf(stderr, "tinc-up, tinc-down, host-up, host-down, subnet-up and subnet-down.\n");
+				fprintf(stderr, _("The only scripts in %s executed by tinc are:\n"), confbase);
+				fprintf(stderr, _("tinc-up, tinc-down, host-up, host-down, subnet-up and subnet-down.\n"));
 				explained = true;
 			}
 
@@ -490,7 +490,7 @@ static bool check_script_hostdir(const char *host_dir) {
 	DIR *dir = opendir(host_dir);
 
 	if(!dir) {
-		fprintf(stderr, "ERROR: cannot read directory %s: %s\n", host_dir, strerror(errno));
+		fprintf(stderr, _("ERROR: cannot read directory %s: %s\n"), host_dir, strerror(errno));
 		return false;
 	}
 
@@ -532,7 +532,7 @@ static bool check_public_keys(splay_tree_t *config, const char *name, rsa_t *rsa
 	}
 
 	if(access(host_file, R_OK)) {
-		fprintf(stderr, "WARNING: cannot read %s\n", host_file);
+		fprintf(stderr, _("WARNING: cannot read %s\n"), host_file);
 	}
 
 	ecdsa_t *ec_pub = NULL;
@@ -642,7 +642,7 @@ int fsck(const char *argv0) {
 	char *name = read_node_name();
 
 	if(!name) {
-		fprintf(stderr, "ERROR: tinc cannot run without a valid Name.\n");
+		fprintf(stderr, _("ERROR: tinc cannot run without a valid Name.\n"));
 		exe_name = NULL;
 		return EXIT_FAILURE;
 	}

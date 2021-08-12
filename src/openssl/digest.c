@@ -46,7 +46,7 @@ digest_t *digest_open_by_name(const char *name, size_t maclength) {
 	const EVP_MD *evp_md = EVP_get_digestbyname(name);
 
 	if(!evp_md) {
-		logger(DEBUG_ALWAYS, LOG_DEBUG, "Unknown digest name '%s'!", name);
+		logger(DEBUG_ALWAYS, LOG_DEBUG, _("Unknown digest name '%s'!"), name);
 		return false;
 	}
 
@@ -57,7 +57,7 @@ digest_t *digest_open_by_nid(int nid, size_t maclength) {
 	const EVP_MD *evp_md = EVP_get_digestbynid(nid);
 
 	if(!evp_md) {
-		logger(DEBUG_ALWAYS, LOG_DEBUG, "Unknown digest nid %d!", nid);
+		logger(DEBUG_ALWAYS, LOG_DEBUG, _("Unknown digest nid %d!"), nid);
 		return false;
 	}
 
@@ -99,7 +99,7 @@ bool digest_create(digest_t *digest, const void *indata, size_t inlen, void *out
 		if(!HMAC_Init_ex(digest->hmac_ctx, NULL, 0, NULL, NULL)
 		                || !HMAC_Update(digest->hmac_ctx, indata, inlen)
 		                || !HMAC_Final(digest->hmac_ctx, tmpdata, NULL)) {
-			logger(DEBUG_ALWAYS, LOG_DEBUG, "Error creating digest: %s", ERR_error_string(ERR_get_error(), NULL));
+			logger(DEBUG_ALWAYS, LOG_DEBUG, _("Error creating digest: %s"), ERR_error_string(ERR_get_error(), NULL));
 			return false;
 		}
 	} else {
@@ -114,7 +114,7 @@ bool digest_create(digest_t *digest, const void *indata, size_t inlen, void *out
 		if(!EVP_DigestInit(digest->md_ctx, digest->digest)
 		                || !EVP_DigestUpdate(digest->md_ctx, indata, inlen)
 		                || !EVP_DigestFinal(digest->md_ctx, tmpdata, NULL)) {
-			logger(DEBUG_ALWAYS, LOG_DEBUG, "Error creating digest: %s", ERR_error_string(ERR_get_error(), NULL));
+			logger(DEBUG_ALWAYS, LOG_DEBUG, _("Error creating digest: %s"), ERR_error_string(ERR_get_error(), NULL));
 			return false;
 		}
 	}

@@ -72,7 +72,7 @@ static bool setup_device(void) {
 		else if(!strcasecmp(type, "tap")) {
 			device_type = DEVICE_TYPE_TAP;
 		} else {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Unknown device type %s!", type);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Unknown device type %s!"), type);
 			return false;
 		}
 	} else {
@@ -82,20 +82,20 @@ static bool setup_device(void) {
 	}
 
 	if(device_type == DEVICE_TYPE_TUN) {
-		device_info = "Solaris tun device";
+		device_info = _("Solaris tun device");
 	} else {
-		device_info = "Solaris tap device";
+		device_info = _("Solaris tap device");
 	}
 
 	/* The following is black magic copied from OpenVPN. */
 
 	if((ip_fd = open(IP_DEVICE, O_RDWR, 0)) < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open %s: %s\n", IP_DEVICE, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not open %s: %s\n"), IP_DEVICE, strerror(errno));
 		return false;
 	}
 
 	if((device_fd = open(device, O_RDWR, 0)) < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open %s: %s\n", device, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not open %s: %s\n"), device, strerror(errno));
 		return false;
 	}
 
@@ -134,12 +134,12 @@ static bool setup_device(void) {
 		}
 
 		if(!found) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Could not find free PPA for %s %s!", device_info, device);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Could not find free PPA for %s %s!"), device_info, device);
 			return false;
 		}
 	} else { /* try this particular one */
 		if((ppa = ioctl(device_fd, I_STR, &strioc_ppa)) < 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Could not assign PPA %d for %s %s!", ppa, device_info, device);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Could not assign PPA %d for %s %s!"), ppa, device_info, device);
 			return false;
 		}
 	}
@@ -147,12 +147,12 @@ static bool setup_device(void) {
 	int if_fd;
 
 	if((if_fd = open(device, O_RDWR, 0)) < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open %s: %s\n", device, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not open %s: %s\n"), device, strerror(errno));
 		return false;
 	}
 
 	if(ioctl(if_fd, I_PUSH, "ip") < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not push IP module onto %s %s!", device_info, device);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not push IP module onto %s %s!"), device_info, device);
 		return false;
 	}
 
@@ -174,7 +174,7 @@ static bool setup_device(void) {
 	if(device_type == DEVICE_TYPE_TUN) {
 		/* Assign ppa according to the unit number returned by tun device */
 		if(ioctl(if_fd, IF_UNITSEL, (char *)&ppa) < 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Could not set PPA %d on %s %s!", ppa, device_info, device);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Could not set PPA %d on %s %s!"), ppa, device_info, device);
 			return false;
 		}
 	}
@@ -185,7 +185,7 @@ static bool setup_device(void) {
 		struct lifreq ifr = {};
 
 		if(ioctl(if_fd, SIOCGLIFFLAGS, &ifr) < 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Could not set flags on %s %s!", device_info, device);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Could not set flags on %s %s!"), device_info, device);
 			return false;
 		}
 
@@ -194,18 +194,18 @@ static bool setup_device(void) {
 
 		/* Assign ppa according to the unit number returned by tun device */
 		if(ioctl(if_fd, SIOCSLIFNAME, &ifr) < 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Could not set PPA %d on %s %s!", ppa, device_info, device);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Could not set PPA %d on %s %s!"), ppa, device_info, device);
 			return false;
 		}
 
 		if(ioctl(if_fd, SIOCGLIFFLAGS, &ifr) < 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Could not set flags on %s %s!", device_info, device);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Could not set flags on %s %s!"), device_info, device);
 			return false;
 		}
 
 		/* Push arp module to if_fd */
 		if(ioctl(if_fd, I_PUSH, "arp") < 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Could not push ARP module onto %s %s!", device_info, device);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Could not push ARP module onto %s %s!"), device_info, device);
 			return false;
 		}
 
@@ -218,19 +218,19 @@ static bool setup_device(void) {
 
 		/* Push arp module to ip_fd */
 		if(ioctl(ip_fd, I_PUSH, "arp") < 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Could not push ARP module onto %s!", IP_DEVICE);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Could not push ARP module onto %s!"), IP_DEVICE);
 			return false;
 		}
 
 		/* Open arp_fd */
 		if((arp_fd = open(device, O_RDWR, 0)) < 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Could not open %s: %s\n", device, strerror(errno));
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Could not open %s: %s\n"), device, strerror(errno));
 			return false;
 		}
 
 		/* Push arp module to arp_fd */
 		if(ioctl(arp_fd, I_PUSH, "arp") < 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Could not push ARP module onto %s %s!", device_info, device);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Could not push ARP module onto %s %s!"), device_info, device);
 			return false;
 		}
 
@@ -242,7 +242,7 @@ static bool setup_device(void) {
 		};
 
 		if(ioctl(arp_fd, I_STR, &strioc_if) < 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Could not set ifname to %s %s", device_info, device);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Could not set ifname to %s %s"), device_info, device);
 			return false;
 		}
 	}
@@ -250,13 +250,13 @@ static bool setup_device(void) {
 	int ip_muxid, arp_muxid;
 
 	if((ip_muxid = ioctl(ip_fd, I_PLINK, if_fd)) < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not link %s %s to IP", device_info, device);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not link %s %s to IP"), device_info, device);
 		return false;
 	}
 
 	if(device_type == DEVICE_TYPE_TAP) {
 		if((arp_muxid = ioctl(ip_fd, I_PLINK, arp_fd)) < 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Could not link %s %s to ARP", device_info, device);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Could not link %s %s to ARP"), device_info, device);
 			return false;
 		}
 
@@ -279,7 +279,7 @@ static bool setup_device(void) {
 		}
 
 		ioctl(ip_fd, I_PUNLINK, ip_muxid);
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not set multiplexor id for %s %s", device_info, device);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not set multiplexor id for %s %s"), device_info, device);
 		return false;
 	}
 
@@ -290,7 +290,7 @@ static bool setup_device(void) {
 	fcntl(ip_fd, F_SETFD, FD_CLOEXEC);
 #endif
 
-	logger(DEBUG_ALWAYS, LOG_INFO, "%s is a %s", device, device_info);
+	logger(DEBUG_ALWAYS, LOG_INFO, _("%s is a %s"), device, device_info);
 
 	return true;
 }
@@ -330,7 +330,7 @@ static bool read_packet(vpn_packet_t *packet) {
 		sbuf.buf = (char *)DATA(packet) + 14;
 
 		if((result = getmsg(device_fd, NULL, &sbuf, &f)) < 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info, device, strerror(errno));
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Error while reading from %s %s: %s"), device_info, device, strerror(errno));
 			return false;
 		}
 
@@ -346,7 +346,7 @@ static bool read_packet(vpn_packet_t *packet) {
 			break;
 
 		default:
-			logger(DEBUG_TRAFFIC, LOG_ERR, "Unknown IP version %d while reading packet from %s %s", DATA(packet)[14] >> 4, device_info, device);
+			logger(DEBUG_TRAFFIC, LOG_ERR, _("Unknown IP version %d while reading packet from %s %s"), DATA(packet)[14] >> 4, device_info, device);
 			return false;
 		}
 
@@ -359,7 +359,7 @@ static bool read_packet(vpn_packet_t *packet) {
 		sbuf.buf = (char *)DATA(packet);
 
 		if((result = getmsg(device_fd, NULL, &sbuf, &f)) < 0) {
-			logger(LOG_ERR, "Error while reading from %s %s: %s", device_info, device, strerror(errno));
+			logger(DEBUG_TRAFIC, LOG_ERR, _("Error while reading from %s %s: %s"), device_info, device, strerror(errno));
 			return false;
 		}
 
@@ -370,13 +370,13 @@ static bool read_packet(vpn_packet_t *packet) {
 		abort();
 	}
 
-	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Read packet of %d bytes from %s", packet->len, device_info);
+	logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Read packet of %d bytes from %s"), packet->len, device_info);
 
 	return true;
 }
 
 static bool write_packet(vpn_packet_t *packet) {
-	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Writing packet of %d bytes to %s", packet->len, device_info);
+	logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Writing packet of %d bytes to %s"), packet->len, device_info);
 
 	struct strbuf sbuf;
 
@@ -386,7 +386,7 @@ static bool write_packet(vpn_packet_t *packet) {
 		sbuf.buf = (char *)DATA(packet) + 14;
 
 		if(putmsg(device_fd, NULL, &sbuf, 0) < 0) {
-			logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device, strerror(errno));
+			logger(DEBUG_TRAFFIC, LOG_ERR, _("Can't write to %s %s: %s"), device_info, device, strerror(errno));
 			return false;
 		}
 
@@ -397,7 +397,7 @@ static bool write_packet(vpn_packet_t *packet) {
 		sbuf.buf = (char *)DATA(packet);
 
 		if(putmsg(device_fd, NULL, &sbuf, 0) < 0) {
-			logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device, strerror(errno));
+			logger(DEBUG_TRAFFIC, LOG_ERR, _("Can't write to %s %s: %s"), device_info, device, strerror(errno));
 			return false;
 		}
 

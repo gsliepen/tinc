@@ -45,7 +45,7 @@ typedef struct nodestats_t {
 	bool known;
 } nodestats_t;
 
-static const char *const sortname[] = {
+static const char *sortname[] = {
 	"name",
 	"in pkts",
 	"in bytes",
@@ -62,9 +62,9 @@ static list_t node_list;
 static struct timeval cur, prev, diff;
 static int delay = 1000;
 static bool changed = true;
-static const char *bunit = "bytes";
+static const char *bunit = NULL;
 static float bscale = 1;
-static const char *punit = "pkts";
+static const char *punit = NULL;
 static float pscale = 1;
 
 static bool update(int fd) {
@@ -239,9 +239,15 @@ static int sortfunc(const void *a, const void *b) {
 static void redraw(void) {
 	erase();
 
-	mvprintw(0, 0, "Tinc %-16s  Nodes: %4d  Sort: %-10s  %s", netname ? netname : "", node_list.count, sortname[sortmode], cumulative ? "Cumulative" : "Current");
+	mvprintw(0, 0, _("Tinc %-16s  Nodes: %4d  Sort: %-10s  %s"),
+	         netname ? netname : "", node_list.count, sortname[sortmode],
+	         cumulative ? _("Cumulative") : _("Current"));
+
 	attrset(A_REVERSE);
-	mvprintw(2, 0, "Node                IN %s   IN %s   OUT %s  OUT %s", punit, bunit, punit, bunit);
+
+	mvprintw(2, 0, _("Node                IN %s   IN %s   OUT %s  OUT %s"),
+	         punit, bunit, punit, bunit);
+
 	chgat(-1, A_REVERSE, 0, NULL);
 
 	static nodestats_t **sorted = 0;
@@ -294,6 +300,13 @@ static void redraw(void) {
 }
 
 void top(int fd) {
+	bunit = _("bytes");
+	punit = _("pkts");
+
+	for(size_t i = 0; i < sizeof(sortname) / sizeof(*sortname); ++i) {
+		sortname[i] = gettext(sortname[i]);
+	}
+
 	initscr();
 	timeout(delay);
 	bool running = true;
@@ -309,7 +322,7 @@ void top(int fd) {
 		case 's': {
 			timeout(-1);
 			float input = (float)delay * 1e-3f;
-			mvprintw(1, 0, "Change delay from %.1fs to: ", input);
+			mvprintw(1, 0, _("Change delay from %.1fs to: "), input);
 			scanw("%f", &input);
 
 			if(input < 0.1) {
@@ -354,30 +367,30 @@ void top(int fd) {
 			break;
 
 		case 'b':
-			bunit = "bytes";
+			bunit = _("bytes");
 			bscale = 1;
-			punit = "pkts";
+			punit = _("pkts");
 			pscale = 1;
 			break;
 
 		case 'k':
-			bunit = "kbyte";
+			bunit = _("kbyte");
 			bscale = 1e-3f;
-			punit = "pkts";
+			punit = _("pkts");
 			pscale = 1;
 			break;
 
 		case 'M':
-			bunit = "Mbyte";
+			bunit = _("Mbyte");
 			bscale = 1e-6f;
-			punit = "kpkt";
+			punit = _("kpkt");
 			pscale = 1e-3f;
 			break;
 
 		case 'G':
-			bunit = "Gbyte";
+			bunit = _("Gbyte");
 			bscale = 1e-9f;
-			punit = "Mpkt";
+			punit = _("Mpkt");
 			pscale = 1e-6f;
 			break;
 

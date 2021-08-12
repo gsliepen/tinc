@@ -87,7 +87,7 @@ rsa_t *rsa_generate(size_t bits, unsigned long exponent) {
 	BN_free(bn_e);
 
 	if(!result) {
-		fprintf(stderr, "Error during key generation!\n");
+		fprintf(stderr, _("Error during key generation!\n"));
 		RSA_free(rsa);
 		return NULL;
 	}

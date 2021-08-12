@@ -45,12 +45,12 @@ bool control_h(connection_t *c, const char *request) {
 	int type;
 
 	if(!c->status.control || c->allow_request != CONTROL) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Unauthorized control request from %s (%s)", c->name, c->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Unauthorized control request from %s (%s)"), c->name, c->hostname);
 		return false;
 	}
 
 	if(sscanf(request, "%*d %d", &type) != 1) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "CONTROL", c->name, c->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s)"), "CONTROL", c->name, c->hostname);
 		return false;
 	}
 
@@ -96,7 +96,7 @@ bool control_h(connection_t *c, const char *request) {
 		return control_ok(c, REQ_RETRY);
 
 	case REQ_RELOAD:
-		logger(DEBUG_ALWAYS, LOG_NOTICE, "Got '%s' command", "reload");
+		logger(DEBUG_ALWAYS, LOG_NOTICE, _("Got '%s' command"), "reload");
 		int result = reload_configuration();
 		return control_return(c, REQ_RELOAD, result);
 
@@ -150,7 +150,7 @@ bool init_control(void) {
 	umask(mask);
 
 	if(!f) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Cannot write control socket cookie file %s: %s", pidfilename, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Cannot write control socket cookie file %s: %s"), pidfilename, strerror(errno));
 		return false;
 	}
 
@@ -189,7 +189,7 @@ bool init_control(void) {
 	int unix_fd = socket(AF_UNIX, SOCK_STREAM, 0);
 
 	if(unix_fd < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not create UNIX socket: %s", sockstrerror(sockerrno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not create UNIX socket: %s"), sockstrerror(sockerrno));
 		return false;
 	}
 
@@ -198,14 +198,14 @@ bool init_control(void) {
 	};
 
 	if(strlen(unixsocketname) >= sizeof(sa_un.sun_path)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "UNIX socket filename %s is too long!", unixsocketname);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("UNIX socket filename %s is too long!"), unixsocketname);
 		return false;
 	}
 
 	strncpy(sa_un.sun_path, unixsocketname, sizeof(sa_un.sun_path));
 
 	if(connect(unix_fd, (struct sockaddr *)&sa_un, sizeof(sa_un)) >= 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "UNIX socket %s is still in use!", unixsocketname);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("UNIX socket %s is still in use!"), unixsocketname);
 		return false;
 	}
 
@@ -216,12 +216,12 @@ bool init_control(void) {
 	umask(mask);
 
 	if(result < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not bind UNIX socket to %s: %s", unixsocketname, sockstrerror(sockerrno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not bind UNIX socket to %s: %s"), unixsocketname, sockstrerror(sockerrno));
 		return false;
 	}
 
 	if(listen(unix_fd, 3) < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not listen on UNIX socket %s: %s", unixsocketname, sockstrerror(sockerrno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not listen on UNIX socket %s: %s"), unixsocketname, sockstrerror(sockerrno));
 		return false;
 	}
 

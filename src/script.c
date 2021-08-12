@@ -185,7 +185,7 @@ bool execute_script(const char *name, environment_t *env) {
 			return true;
 		}
 
-	logger(DEBUG_STATUS, LOG_INFO, "Executing script %s", name);
+	logger(DEBUG_STATUS, LOG_INFO, _("Executing script %s"), name);
 
 	/* Set environment */
 
@@ -214,22 +214,22 @@ bool execute_script(const char *name, environment_t *env) {
 
 		if(WIFEXITED(status)) {          /* Child exited by itself */
 			if(WEXITSTATUS(status)) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "Script %s exited with non-zero status %d",
+				logger(DEBUG_ALWAYS, LOG_ERR, _("Script %s exited with non-zero status %d"),
 				       name, WEXITSTATUS(status));
 				return false;
 			}
 		} else if(WIFSIGNALED(status)) { /* Child was killed by a signal */
-			logger(DEBUG_ALWAYS, LOG_ERR, "Script %s was killed by signal %d (%s)",
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Script %s was killed by signal %d (%s)"),
 			       name, WTERMSIG(status), strsignal(WTERMSIG(status)));
 			return false;
 		} else {                         /* Something strange happened */
-			logger(DEBUG_ALWAYS, LOG_ERR, "Script %s terminated abnormally", name);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Script %s terminated abnormally"), name);
 			return false;
 		}
 
 #endif
 	} else {
-		logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "system", strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("System call `%s' failed: %s"), "system", strerror(errno));
 		return false;
 	}
 

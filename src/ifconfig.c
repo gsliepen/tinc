@@ -50,7 +50,9 @@ void ifconfig_slaac(FILE *out) {
 
 bool ifconfig_footer(FILE *out) {
 	if(ftell(out) == start) {
-		fprintf(out, "echo 'Unconfigured tinc-up script, please edit '$0'!'\n\n#ifconfig $INTERFACE <your vpn IP address> netmask <netmask of whole VPN>\n");
+		fprintf(out, "echo '%s'\n\n#ifconfig $INTERFACE %s\n",
+		        _("Unconfigured tinc-up script, please edit '$0'!"),
+		        _("<your vpn IP address> netmask <netmask of whole VPN>"));
 		return false;
 	} else {
 #ifdef HAVE_LINUX
@@ -72,7 +74,7 @@ void ifconfig_dhcp(FILE *out) {
 
 void ifconfig_dhcp6(FILE *out) {
 	(void)out;
-	fprintf(stderr, "DHCPv6 requested, but not supported by tinc on this platform\n");
+	fprintf(stderr, _("DHCPv6 requested, but not supported by tinc on this platform\n"));
 }
 
 void ifconfig_slaac(FILE *out) {
@@ -92,7 +94,7 @@ void ifconfig_address(FILE *out, const char *value) {
 	char address_str[MAXNETSTR];
 
 	if(!str2net(&address, value) || !net2str(address_str, sizeof(address_str), &address)) {
-		fprintf(stderr, "Could not parse address in Ifconfig statement\n");
+		fprintf(stderr, _("Could not parse address in Ifconfig statement\n"));
 		return;
 	}
 
@@ -179,13 +181,13 @@ void ifconfig_route(FILE *out, const char *value) {
 	}
 
 	if(!str2net(&subnet, value) || !net2str(subnet_str, sizeof(subnet_str), &subnet) || subnet.type == SUBNET_MAC) {
-		fprintf(stderr, "Could not parse subnet in Route statement\n");
+		fprintf(stderr, _("Could not parse subnet in Route statement\n"));
 		return;
 	}
 
 	if(sep) {
 		if(!str2net(&gateway, sep) || !net2str(gateway_str, sizeof(gateway_str), &gateway) || gateway.type != subnet.type) {
-			fprintf(stderr, "Could not parse gateway in Route statement\n");
+			fprintf(stderr, _("Could not parse gateway in Route statement\n"));
 			return;
 		}
 
@@ -262,7 +264,7 @@ void ifconfig_route(FILE *out, const char *value) {
 		switch(subnet.type) {
 		case SUBNET_IPV4:
 			if(!ipv4.type) {
-				fprintf(stderr, "Route requested but no Ifconfig\n");
+				fprintf(stderr, _("Route requested but no Ifconfig\n"));
 				return;
 			}
 
@@ -271,7 +273,7 @@ void ifconfig_route(FILE *out, const char *value) {
 
 		case SUBNET_IPV6:
 			if(!ipv6.type) {
-				fprintf(stderr, "Route requested but no Ifconfig\n");
+				fprintf(stderr, _("Route requested but no Ifconfig\n"));
 				return;
 			}
 

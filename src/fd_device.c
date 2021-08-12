@@ -53,7 +53,7 @@ static int read_fd(int socket) {
 	msg.msg_controllen = sizeof(cmsgbuf);
 
 	if((ret = recvmsg(socket, &msg, 0)) < 1) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not read from unix socket (error %zd)!", ret);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not read from unix socket (error %zd)!"), ret);
 		return -1;
 	}
 
@@ -64,26 +64,26 @@ static int read_fd(int socket) {
 
 	if(msg.msg_flags & (MSG_CTRUNC | MSG_OOB)) {
 #endif
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error while receiving message (flags %d)!", msg.msg_flags);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Error while receiving message (flags %d)!"), msg.msg_flags);
 		return -1;
 	}
 
 	cmsgptr = CMSG_FIRSTHDR(&msg);
 
 	if(cmsgptr->cmsg_level != SOL_SOCKET) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Wrong CMSG level: %d, expected %d!",
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Wrong CMSG level: %d, expected %d!"),
 		       cmsgptr->cmsg_level, SOL_SOCKET);
 		return -1;
 	}
 
 	if(cmsgptr->cmsg_type != SCM_RIGHTS) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Wrong CMSG type: %d, expected %d!",
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Wrong CMSG type: %d, expected %d!"),
 		       cmsgptr->cmsg_type, SCM_RIGHTS);
 		return -1;
 	}
 
 	if(cmsgptr->cmsg_len != CMSG_LEN(sizeof(device_fd))) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Wrong CMSG data length: %zu, expected %zu!",
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Wrong CMSG data length: %zu, expected %zu!"),
 		       cmsgptr->cmsg_len, CMSG_LEN(sizeof(device_fd)));
 		return -1;
 	}
@@ -97,12 +97,12 @@ static int receive_fd(struct unix_socket_addr socket_addr) {
 	int result;
 
 	if((socketfd = socket(PF_UNIX, SOCK_STREAM, 0)) < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open stream socket (error %d)!", socketfd);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not open stream socket (error %d)!"), socketfd);
 		return -1;
 	}
 
 	if((ret = connect(socketfd, (struct sockaddr *) &socket_addr.addr, socket_addr.size)) < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not connect to Unix socket (error %d)!", ret);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not connect to Unix socket (error %d)!"), ret);
 		result = -1;
 		goto end;
 	}
@@ -121,7 +121,7 @@ static struct unix_socket_addr parse_socket_addr(const char *path) {
 	size_t path_length;
 
 	if(strlen(path) >= sizeof(socket_addr.sun_path)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Unix socket path too long!");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Unix socket path too long!"));
 		return (struct unix_socket_addr) {
 			0
 		};
@@ -146,27 +146,27 @@ static struct unix_socket_addr parse_socket_addr(const char *path) {
 
 static bool setup_device(void) {
 	if(routing_mode == RMODE_SWITCH) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Switch mode not supported (requires unsupported TAP device)!");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Switch mode not supported (requires unsupported TAP device)!"));
 		return false;
 	}
 
 	if(!get_config_string(lookup_config(&config_tree, "Device"), &device)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not read device from configuration!");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not read device from configuration!"));
 		return false;
 	}
 
 	/* device is either directly a file descriptor or an unix socket to read it from */
 	if(sscanf(device, "%d", &device_fd) != 1) {
-		logger(DEBUG_ALWAYS, LOG_INFO, "Receiving fd from Unix socket at %s.", device);
+		logger(DEBUG_ALWAYS, LOG_INFO, _("Receiving fd from Unix socket at %s."), device);
 		device_fd = receive_fd(parse_socket_addr(device));
 	}
 
 	if(device_fd < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open %s: %s!", device, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not open %s: %s!"), device, strerror(errno));
 		return false;
 	}
 
-	logger(DEBUG_ALWAYS, LOG_INFO, "fd/%d adapter set up.", device_fd);
+	logger(DEBUG_ALWAYS, LOG_INFO, _("fd/%d adapter set up."), device_fd);
 
 	return true;
 }
@@ -204,30 +204,30 @@ static bool read_packet(vpn_packet_t *packet) {
 	ssize_t lenin = read(device_fd, DATA(packet) + ETH_HLEN, MTU - ETH_HLEN);
 
 	if(lenin <= 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from fd/%d: %s!", device_fd, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Error while reading from fd/%d: %s!"), device_fd, strerror(errno));
 		return false;
 	}
 
 	uint16_t ethertype = get_ip_ethertype(packet);
 
 	if(ethertype == ETH_P_MAX) {
-		logger(DEBUG_TRAFFIC, LOG_ERR, "Unknown IP version while reading packet from fd/%d!", device_fd);
+		logger(DEBUG_TRAFFIC, LOG_ERR, _("Unknown IP version while reading packet from fd/%d!"), device_fd);
 		return false;
 	}
 
 	set_etherheader(packet, ethertype);
 	packet->len = lenin + ETH_HLEN;
 
-	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Read packet of %d bytes from fd/%d.", packet->len, device_fd);
+	logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Read packet of %d bytes from fd/%d."), packet->len, device_fd);
 
 	return true;
 }
 
 static bool write_packet(vpn_packet_t *packet) {
-	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Writing packet of %d bytes to fd/%d.", packet->len, device_fd);
+	logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Writing packet of %d bytes to fd/%d."), packet->len, device_fd);
 
 	if(write(device_fd, DATA(packet) + ETH_HLEN, packet->len - ETH_HLEN) < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error while writing to fd/%d: %s!", device_fd, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Error while writing to fd/%d: %s!"), device_fd, strerror(errno));
 		return false;
 	}
 

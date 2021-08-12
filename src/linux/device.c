@@ -56,7 +56,7 @@ static bool setup_device(void) {
 	device_fd = open(device, O_RDWR | O_NONBLOCK);
 
 	if(device_fd < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open %s: %s", device, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not open %s: %s"), device, strerror(errno));
 		return false;
 	}
 
@@ -69,14 +69,14 @@ static bool setup_device(void) {
 	get_config_string(lookup_config(&config_tree, "DeviceType"), &type);
 
 	if(type && strcasecmp(type, "tun") && strcasecmp(type, "tap")) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Unknown device type %s!", type);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Unknown device type %s!"), type);
 		return false;
 	}
 
 	if((type && !strcasecmp(type, "tun")) || (!type && routing_mode == RMODE_ROUTER)) {
 		ifr.ifr_flags = IFF_TUN;
 		device_type = DEVICE_TYPE_TUN;
-		device_info = "Linux tun/tap device (tun mode)";
+		device_info = _("Linux tun/tap device (tun mode)");
 	} else {
 		if(routing_mode == RMODE_ROUTER) {
 			overwrite_mac = true;
@@ -84,7 +84,7 @@ static bool setup_device(void) {
 
 		ifr.ifr_flags = IFF_TAP | IFF_NO_PI;
 		device_type = DEVICE_TYPE_TAP;
-		device_info = "Linux tun/tap device (tap mode)";
+		device_info = _("Linux tun/tap device (tap mode)");
 	}
 
 #ifdef IFF_ONE_QUEUE
@@ -109,11 +109,11 @@ static bool setup_device(void) {
 		free(iface);
 		iface = xstrdup(ifrname);
 	} else {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not create a tun/tap interface from %s: %s", device, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not create a tun/tap interface from %s: %s"), device, strerror(errno));
 		return false;
 	}
 
-	logger(DEBUG_ALWAYS, LOG_INFO, "%s is a %s", device, device_info);
+	logger(DEBUG_ALWAYS, LOG_INFO, _("%s is a %s"), device, device_info);
 
 	if(ifr.ifr_flags & IFF_TAP) {
 		struct ifreq ifr_mac = {0};
@@ -121,7 +121,7 @@ static bool setup_device(void) {
 		if(!ioctl(device_fd, SIOCGIFHWADDR, &ifr_mac)) {
 			memcpy(mymac.x, ifr_mac.ifr_hwaddr.sa_data, ETH_ALEN);
 		} else {
-			logger(DEBUG_ALWAYS, LOG_WARNING, "Could not get MAC address of %s: %s", device, strerror(errno));
+			logger(DEBUG_ALWAYS, LOG_WARNING, _("Could not get MAC address of %s: %s"), device, strerror(errno));
 		}
 	}
 
@@ -149,7 +149,7 @@ static bool read_packet(vpn_packet_t *packet) {
 		inlen = read(device_fd, DATA(packet) + 10, MTU - 10);
 
 		if(inlen <= 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s",
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Error while reading from %s %s: %s"),
 			       device_info, device, strerror(errno));
 
 			if(errno == EBADFD) {  /* File descriptor in bad state */
@@ -167,7 +167,7 @@ static bool read_packet(vpn_packet_t *packet) {
 		inlen = read(device_fd, DATA(packet), MTU);
 
 		if(inlen <= 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s",
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Error while reading from %s %s: %s"),
 			       device_info, device, strerror(errno));
 			return false;
 		}
@@ -179,14 +179,14 @@ static bool read_packet(vpn_packet_t *packet) {
 		abort();
 	}
 
-	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Read packet of %d bytes from %s", packet->len,
+	logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Read packet of %d bytes from %s"), packet->len,
 	       device_info);
 
 	return true;
 }
 
 static bool write_packet(vpn_packet_t *packet) {
-	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Writing packet of %d bytes to %s",
+	logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Writing packet of %d bytes to %s"),
 	       packet->len, device_info);
 
 	switch(device_type) {
@@ -194,7 +194,7 @@ static bool write_packet(vpn_packet_t *packet) {
 		DATA(packet)[10] = DATA(packet)[11] = 0;
 
 		if(write(device_fd, DATA(packet) + 10, packet->len - 10) < 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Can't write to %s %s: %s", device_info, device,
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Can't write to %s %s: %s"), device_info, device,
 			       strerror(errno));
 			return false;
 		}
@@ -203,7 +203,7 @@ static bool write_packet(vpn_packet_t *packet) {
 
 	case DEVICE_TYPE_TAP:
 		if(write(device_fd, DATA(packet), packet->len) < 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Can't write to %s %s: %s", device_info, device,
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Can't write to %s %s: %s"), device_info, device,
 			       strerror(errno));
 			return false;
 		}

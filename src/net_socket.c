@@ -71,14 +71,14 @@ static void configure_tcp(connection_t *c) {
 	int flags = fcntl(c->socket, F_GETFL);
 
 	if(fcntl(c->socket, F_SETFL, flags | O_NONBLOCK) < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "fcntl for %s fd %d: %s", c->hostname, c->socket, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("fcntl for %s fd %d: %s"), c->hostname, c->socket, strerror(errno));
 	}
 
 #elif defined(WIN32)
 	unsigned long arg = 1;
 
 	if(ioctlsocket(c->socket, FIONBIO, &arg) != 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "ioctlsocket for %s fd %d: %s", c->hostname, c->socket, sockstrerror(sockerrno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("ioctlsocket for %s fd %d: %s"), c->hostname, c->socket, sockstrerror(sockerrno));
 	}
 
 #endif
@@ -127,14 +127,14 @@ static bool bind_to_interface(int sd) {
 	status = setsockopt(sd, SOL_SOCKET, SO_BINDTODEVICE, (void *)&ifr, sizeof(ifr));
 
 	if(status) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Can't bind to interface %s: %s", iface,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Can't bind to interface %s: %s"), iface,
 		       sockstrerror(sockerrno));
 		return false;
 	}
 
 #else /* if !defined(SOL_SOCKET) || !defined(SO_BINDTODEVICE) */
 	(void)sd;
-	logger(DEBUG_ALWAYS, LOG_WARNING, "%s not supported on this platform", "BindToInterface");
+	logger(DEBUG_ALWAYS, LOG_WARNING, _("%s not supported on this platform"), "BindToInterface");
 #endif
 
 	return true;
@@ -168,7 +168,7 @@ static bool bind_to_address(connection_t *c) {
 	}
 
 	if(bind(c->socket, &sa.sa, SALEN(sa.sa))) {
-		logger(DEBUG_CONNECTIONS, LOG_WARNING, "Can't bind outgoing socket: %s", sockstrerror(sockerrno));
+		logger(DEBUG_CONNECTIONS, LOG_WARNING, _("Can't bind outgoing socket: %s"), sockstrerror(sockerrno));
 		return false;
 	}
 
@@ -184,7 +184,7 @@ int setup_listen_socket(const sockaddr_t *sa) {
 	nfd = socket(sa->sa.sa_family, SOCK_STREAM, IPPROTO_TCP);
 
 	if(nfd < 0) {
-		logger(DEBUG_STATUS, LOG_ERR, "Creating metasocket failed: %s", sockstrerror(sockerrno));
+		logger(DEBUG_STATUS, LOG_ERR, _("Creating metasocket failed: %s"), sockstrerror(sockerrno));
 		return -1;
 	}
 
@@ -226,27 +226,27 @@ int setup_listen_socket(const sockaddr_t *sa) {
 
 		if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, (void *)&ifr, sizeof(ifr))) {
 			closesocket(nfd);
-			logger(DEBUG_ALWAYS, LOG_ERR, "Can't bind to interface %s: %s", iface,
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Can't bind to interface %s: %s"), iface,
 			       sockstrerror(sockerrno));
 			return -1;
 		}
 
 #else
-		logger(DEBUG_ALWAYS, LOG_WARNING, "%s not supported on this platform", "BindToInterface");
+		logger(DEBUG_ALWAYS, LOG_WARNING, _("%s not supported on this platform"), "BindToInterface");
 #endif
 	}
 
 	if(bind(nfd, &sa->sa, SALEN(sa->sa))) {
 		closesocket(nfd);
 		addrstr = sockaddr2hostname(sa);
-		logger(DEBUG_ALWAYS, LOG_ERR, "Can't bind to %s/tcp: %s", addrstr, sockstrerror(sockerrno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Can't bind to %s/tcp: %s"), addrstr, sockstrerror(sockerrno));
 		free(addrstr);
 		return -1;
 	}
 
 	if(listen(nfd, 3)) {
 		closesocket(nfd);
-		logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "listen", sockstrerror(sockerrno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("System call `%s' failed: %s"), "listen", sockstrerror(sockerrno));
 		return -1;
 	}
 
@@ -259,7 +259,7 @@ static void set_udp_buffer(int nfd, int type, const char *name, int size, bool w
 	}
 
 	if(setsockopt(nfd, SOL_SOCKET, type, (void *)&size, sizeof(size))) {
-		logger(DEBUG_ALWAYS, LOG_WARNING, "Can't set UDP %s to %i: %s", name, size, sockstrerror(sockerrno));
+		logger(DEBUG_ALWAYS, LOG_WARNING, _("Can't set UDP %s to %i: %s"), name, size, sockstrerror(sockerrno));
 		return;
 	}
 
@@ -273,11 +273,11 @@ static void set_udp_buffer(int nfd, int type, const char *name, int size, bool w
 	socklen_t optlen = sizeof(actual);
 
 	if(getsockopt(nfd, SOL_SOCKET, type, (void *)&actual, &optlen)) {
-		logger(DEBUG_ALWAYS, LOG_WARNING, "Can't read back UDP %s: %s", name, sockstrerror(sockerrno));
+		logger(DEBUG_ALWAYS, LOG_WARNING, _("Can't read back UDP %s: %s"), name, sockstrerror(sockerrno));
 	} else if(optlen != sizeof(actual)) {
-		logger(DEBUG_ALWAYS, LOG_WARNING, "Can't read back UDP %s: unexpected returned optlen %d", name, (int)optlen);
+		logger(DEBUG_ALWAYS, LOG_WARNING, _("Can't read back UDP %s: unexpected returned optlen %d"), name, (int)optlen);
 	} else if(actual < size) {
-		logger(DEBUG_ALWAYS, LOG_WARNING, "Can't set UDP %s to %i, the system set it to %i instead", name, size, actual);
+		logger(DEBUG_ALWAYS, LOG_WARNING, _("Can't set UDP %s to %i, the system set it to %i instead"), name, size, actual);
 	}
 }
 
@@ -290,7 +290,7 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 	nfd = socket(sa->sa.sa_family, SOCK_DGRAM, IPPROTO_UDP);
 
 	if(nfd < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Creating UDP socket failed: %s", sockstrerror(sockerrno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Creating UDP socket failed: %s"), sockstrerror(sockerrno));
 		return -1;
 	}
 
@@ -304,7 +304,7 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 
 		if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0) {
 			closesocket(nfd);
-			logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "fcntl",
+			logger(DEBUG_ALWAYS, LOG_ERR, _("System call `%s' failed: %s"), "fcntl",
 			       strerror(errno));
 			return -1;
 		}
@@ -315,7 +315,7 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 
 		if(ioctlsocket(nfd, FIONBIO, &arg) != 0) {
 			closesocket(nfd);
-			logger(DEBUG_ALWAYS, LOG_ERR, "Call to `%s' failed: %s", "ioctlsocket", sockstrerror(sockerrno));
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Call to `%s' failed: %s"), "ioctlsocket", sockstrerror(sockerrno));
 			return -1;
 		}
 	}
@@ -388,7 +388,7 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 	if(bind(nfd, &sa->sa, SALEN(sa->sa))) {
 		closesocket(nfd);
 		addrstr = sockaddr2hostname(sa);
-		logger(DEBUG_ALWAYS, LOG_ERR, "Can't bind to %s/udp: %s", addrstr, sockstrerror(sockerrno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Can't bind to %s/udp: %s"), addrstr, sockstrerror(sockerrno));
 		free(addrstr);
 		return -1;
 	}
@@ -411,11 +411,11 @@ void retry_outgoing(outgoing_t *outgoing) {
 		outgoing->timeout, rand() % 100000
 	});
 
-	logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Trying to re-establish outgoing connection in %d seconds", outgoing->timeout);
+	logger(DEBUG_CONNECTIONS, LOG_NOTICE, _("Trying to re-establish outgoing connection in %d seconds"), outgoing->timeout);
 }
 
 void finish_connecting(connection_t *c) {
-	logger(DEBUG_CONNECTIONS, LOG_INFO, "Connected to %s (%s)", c->name, c->hostname);
+	logger(DEBUG_CONNECTIONS, LOG_INFO, _("Connected to %s (%s)"), c->name, c->hostname);
 
 	c->last_ping_time = now.tv_sec;
 	c->status.connecting = false;
@@ -428,14 +428,14 @@ static void do_outgoing_pipe(connection_t *c, const char *command) {
 	int fd[2];
 
 	if(socketpair(AF_UNIX, SOCK_STREAM, 0, fd)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not create socketpair: %s", sockstrerror(sockerrno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not create socketpair: %s"), sockstrerror(sockerrno));
 		return;
 	}
 
 	if(fork()) {
 		c->socket = fd[0];
 		close(fd[1]);
-		logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Using proxy %s", command);
+		logger(DEBUG_CONNECTIONS, LOG_DEBUG, _("Using proxy %s"), command);
 		return;
 	}
 
@@ -464,16 +464,16 @@ static void do_outgoing_pipe(connection_t *c, const char *command) {
 	int result = system(command);
 
 	if(result < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not execute %s: %s", command, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not execute %s: %s"), command, strerror(errno));
 	} else if(result) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "%s exited with non-zero status %d", command, result);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("%s exited with non-zero status %d"), command, result);
 	}
 
 	exit(result);
 #else
 	(void)c;
 	(void)command;
-	logger(DEBUG_ALWAYS, LOG_ERR, "Proxy type exec not supported on this platform!");
+	logger(DEBUG_ALWAYS, LOG_ERR, _("Proxy type exec not supported on this platform!"));
 	return;
 #endif
 }
@@ -487,12 +487,12 @@ static void handle_meta_write(connection_t *c) {
 
 	if(outlen <= 0) {
 		if(!sockerrno || sockerrno == EPIPE) {
-			logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Connection closed by %s (%s)", c->name, c->hostname);
+			logger(DEBUG_CONNECTIONS, LOG_NOTICE, _("Connection closed by %s (%s)"), c->name, c->hostname);
 		} else if(sockwouldblock(sockerrno)) {
-			logger(DEBUG_META, LOG_DEBUG, "Sending %d bytes to %s (%s) would block", c->outbuf.len - c->outbuf.offset, c->name, c->hostname);
+			logger(DEBUG_META, LOG_DEBUG, _("Sending %d bytes to %s (%s) would block"), c->outbuf.len - c->outbuf.offset, c->name, c->hostname);
 			return;
 		} else {
-			logger(DEBUG_CONNECTIONS, LOG_ERR, "Could not send %d bytes of data to %s (%s): %s", c->outbuf.len - c->outbuf.offset, c->name, c->hostname, sockstrerror(sockerrno));
+			logger(DEBUG_CONNECTIONS, LOG_ERR, _("Could not send %d bytes of data to %s (%s): %s"), c->outbuf.len - c->outbuf.offset, c->name, c->hostname, sockstrerror(sockerrno));
 		}
 
 		terminate_connection(c, c->edge);
@@ -538,7 +538,7 @@ static void handle_meta_io(void *data, int flags) {
 			}
 
 			if(socket_error) {
-				logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Error while connecting to %s (%s): %s", c->name, c->hostname, sockstrerror(socket_error));
+				logger(DEBUG_CONNECTIONS, LOG_DEBUG, _("Error while connecting to %s (%s): %s"), c->name, c->hostname, sockstrerror(socket_error));
 				terminate_connection(c, false);
 			}
 
@@ -565,7 +565,7 @@ begin:
 	sa = get_recent_address(outgoing->node->address_cache);
 
 	if(!sa) {
-		logger(DEBUG_CONNECTIONS, LOG_ERR, "Could not set up a meta connection to %s", outgoing->node->name);
+		logger(DEBUG_CONNECTIONS, LOG_ERR, _("Could not set up a meta connection to %s"), outgoing->node->name);
 		retry_outgoing(outgoing);
 		return false;
 	}
@@ -575,7 +575,7 @@ begin:
 	memcpy(&c->address, sa, SALEN(sa->sa));
 	c->hostname = sockaddr2hostname(&c->address);
 
-	logger(DEBUG_CONNECTIONS, LOG_INFO, "Trying to connect to %s (%s)", outgoing->node->name, c->hostname);
+	logger(DEBUG_CONNECTIONS, LOG_INFO, _("Trying to connect to %s (%s)"), outgoing->node->name, c->hostname);
 
 	if(!proxytype) {
 		c->socket = socket(c->address.sa.sa_family, SOCK_STREAM, IPPROTO_TCP);
@@ -590,13 +590,13 @@ begin:
 			goto begin;
 		}
 
-		logger(DEBUG_CONNECTIONS, LOG_INFO, "Using proxy at %s port %s", proxyhost, proxyport);
+		logger(DEBUG_CONNECTIONS, LOG_INFO, _("Using proxy at %s port %s"), proxyhost, proxyport);
 		c->socket = socket(proxyai->ai_family, SOCK_STREAM, IPPROTO_TCP);
 		configure_tcp(c);
 	}
 
 	if(c->socket == -1) {
-		logger(DEBUG_CONNECTIONS, LOG_ERR, "Creating socket for %s failed: %s", c->hostname, sockstrerror(sockerrno));
+		logger(DEBUG_CONNECTIONS, LOG_ERR, _("Creating socket for %s failed: %s"), c->hostname, sockstrerror(sockerrno));
 		free_connection(c);
 		goto begin;
 	}
@@ -635,7 +635,7 @@ begin:
 	}
 
 	if(result == -1 && !sockinprogress(sockerrno)) {
-		logger(DEBUG_CONNECTIONS, LOG_ERR, "Could not connect to %s (%s): %s", outgoing->node->name, c->hostname, sockstrerror(sockerrno));
+		logger(DEBUG_CONNECTIONS, LOG_ERR, _("Could not connect to %s (%s): %s"), outgoing->node->name, c->hostname, sockstrerror(sockerrno));
 		free_connection(c);
 
 		goto begin;
@@ -672,7 +672,7 @@ void setup_outgoing_connection(outgoing_t *outgoing, bool verbose) {
 	}
 
 	if(n->connection) {
-		logger(DEBUG_CONNECTIONS, LOG_INFO, "Already connected to %s", n->name);
+		logger(DEBUG_CONNECTIONS, LOG_INFO, _("Already connected to %s"), n->name);
 
 		if(!n->connection->outgoing) {
 			n->connection->outgoing = outgoing;
@@ -704,7 +704,7 @@ void handle_new_meta_connection(void *data, int flags) {
 	fd = accept(l->tcp.fd, &sa.sa, &len);
 
 	if(fd < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Accepting a new connection failed: %s", sockstrerror(sockerrno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Accepting a new connection failed: %s"), sockstrerror(sockerrno));
 		return;
 	}
 
@@ -758,7 +758,7 @@ void handle_new_meta_connection(void *data, int flags) {
 	// Accept the new connection
 
 	c = new_connection();
-	c->name = xstrdup("<unknown>");
+	c->name = xstrdup(_("<unknown>"));
 #ifndef DISABLE_LEGACY
 	c->outcipher = myself->connection->outcipher;
 	c->outdigest = myself->connection->outdigest;
@@ -771,7 +771,7 @@ void handle_new_meta_connection(void *data, int flags) {
 	c->socket = fd;
 	c->last_ping_time = now.tv_sec;
 
-	logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Connection from %s", c->hostname);
+	logger(DEBUG_CONNECTIONS, LOG_NOTICE, _("Connection from %s"), c->hostname);
 
 	io_add(&c->io, handle_meta_io, c, c->socket, IO_READ);
 
@@ -797,7 +797,7 @@ void handle_new_unix_connection(void *data, int flags) {
 	fd = accept(io->fd, &sa.sa, &len);
 
 	if(fd < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Accepting a new connection failed: %s", sockstrerror(sockerrno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Accepting a new connection failed: %s"), sockstrerror(sockerrno));
 		return;
 	}
 
@@ -810,7 +810,7 @@ void handle_new_unix_connection(void *data, int flags) {
 	c->socket = fd;
 	c->last_ping_time = now.tv_sec;
 
-	logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Connection from %s", c->hostname);
+	logger(DEBUG_CONNECTIONS, LOG_NOTICE, _("Connection from %s"), c->hostname);
 
 	io_add(&c->io, handle_meta_io, c, c->socket, IO_READ);
 
@@ -835,7 +835,7 @@ void try_outgoing_connections(void) {
 
 		if(!check_id(name)) {
 			logger(DEBUG_ALWAYS, LOG_ERR,
-			       "Invalid name for outgoing connection in %s line %d",
+			       _("Invalid name for outgoing connection in %s line %d"),
 			       cfg->file, cfg->line);
 			free(name);
 			continue;
@@ -879,7 +879,7 @@ void try_outgoing_connections(void) {
 	for list_each(connection_t, c, &connection_list) {
 		if(c->outgoing && c->outgoing->timeout == -1) {
 			c->outgoing = NULL;
-			logger(DEBUG_CONNECTIONS, LOG_INFO, "No more outgoing connection to %s", c->name);
+			logger(DEBUG_CONNECTIONS, LOG_INFO, _("No more outgoing connection to %s"), c->name);
 			terminate_connection(c, c->edge);
 		}
 	}

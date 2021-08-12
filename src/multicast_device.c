@@ -42,7 +42,7 @@ static bool setup_device(void) {
 	get_config_string(lookup_config(&config_tree, "Interface"), &iface);
 
 	if(!get_config_string(lookup_config(&config_tree, "Device"), &device)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Device variable required for %s", device_info);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Device variable required for %s"), device_info);
 		goto error;
 	}
 
@@ -50,7 +50,7 @@ static bool setup_device(void) {
 	space = strchr(host, ' ');
 
 	if(!space) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Port number required for %s", device_info);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Port number required for %s"), device_info);
 		goto error;
 	}
 
@@ -72,7 +72,7 @@ static bool setup_device(void) {
 	device_fd = socket(ai->ai_family, SOCK_DGRAM, IPPROTO_UDP);
 
 	if(device_fd < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Creating socket failed: %s", sockstrerror(sockerrno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Creating socket failed: %s"), sockstrerror(sockerrno));
 		goto error;
 	}
 
@@ -84,7 +84,7 @@ static bool setup_device(void) {
 	setsockopt(device_fd, SOL_SOCKET, SO_REUSEADDR, (void *)&one, sizeof(one));
 
 	if(bind(device_fd, ai->ai_addr, ai->ai_addrlen)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Can't bind to %s %s: %s", host, port, sockstrerror(sockerrno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Can't bind to %s %s: %s"), host, port, sockstrerror(sockerrno));
 		goto error;
 	}
 
@@ -99,7 +99,7 @@ static bool setup_device(void) {
 		mreq.imr_interface.s_addr = htonl(INADDR_ANY);
 
 		if(setsockopt(device_fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (void *)&mreq, sizeof(mreq))) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Cannot join multicast group %s %s: %s", host, port, sockstrerror(sockerrno));
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Cannot join multicast group %s %s: %s"), host, port, sockstrerror(sockerrno));
 			goto error;
 		}
 
@@ -123,7 +123,7 @@ static bool setup_device(void) {
 		mreq.ipv6mr_interface = in6.sin6_scope_id;
 
 		if(setsockopt(device_fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, (void *)&mreq, sizeof(mreq))) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Cannot join multicast group %s %s: %s", host, port, sockstrerror(sockerrno));
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Cannot join multicast group %s %s: %s"), host, port, sockstrerror(sockerrno));
 			goto error;
 		}
 
@@ -138,11 +138,11 @@ static bool setup_device(void) {
 #endif
 
 	default:
-		logger(DEBUG_ALWAYS, LOG_ERR, "Multicast for address family %x unsupported", ai->ai_family);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Multicast for address family %x unsupported"), ai->ai_family);
 		goto error;
 	}
 
-	logger(DEBUG_ALWAYS, LOG_INFO, "%s is a %s", device, device_info);
+	logger(DEBUG_ALWAYS, LOG_INFO, _("%s is a %s"), device, device_info);
 
 	return true;
 
@@ -182,30 +182,30 @@ static bool read_packet(vpn_packet_t *packet) {
 	ssize_t lenin;
 
 	if((lenin = recv(device_fd, (void *)DATA(packet), MTU, 0)) <= 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Error while reading from %s %s: %s"), device_info,
 		       device, sockstrerror(sockerrno));
 		return false;
 	}
 
 	if(!memcmp(&ignore_src, DATA(packet) + 6, sizeof(ignore_src))) {
-		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Ignoring loopback packet of %zd bytes from %s", lenin, device_info);
+		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, _("Ignoring loopback packet of %zd bytes from %s"), lenin, device_info);
 		return false;
 	}
 
 	packet->len = lenin;
 
-	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Read packet of %d bytes from %s", packet->len,
+	logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Read packet of %d bytes from %s"), packet->len,
 	       device_info);
 
 	return true;
 }
 
 static bool write_packet(vpn_packet_t *packet) {
-	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Writing packet of %d bytes to %s",
+	logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Writing packet of %d bytes to %s"),
 	       packet->len, device_info);
 
 	if(sendto(device_fd, (void *)DATA(packet), packet->len, 0, ai->ai_addr, ai->ai_addrlen) < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Can't write to %s %s: %s", device_info, device,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Can't write to %s %s: %s"), device_info, device,
 		       sockstrerror(sockerrno));
 		return false;
 	}

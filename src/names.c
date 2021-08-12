@@ -47,7 +47,7 @@ void make_names(bool daemon) {
 	confbase_given = confbase;
 
 	if(netname && confbase) {
-		logger(DEBUG_ALWAYS, LOG_INFO, "Both netname and configuration directory given, using the latter...");
+		logger(DEBUG_ALWAYS, LOG_INFO, _("Both netname and configuration directory given, using the latter..."));
 	}
 
 	free(identname);
@@ -140,7 +140,9 @@ void make_names(bool daemon) {
 
 		if(!pidfilename) {
 			if(daemon) {
-				logger(DEBUG_ALWAYS, LOG_WARNING, "Could not access " LOCALSTATEDIR SLASH " (%s), storing pid and socket files in %s" SLASH, strerror(errno), confbase);
+				logger(DEBUG_ALWAYS, LOG_WARNING,
+				       _("Could not access %s%s (%s), storing pid and socket files in %s%s"),
+				       LOCALSTATEDIR, SLASH, SLASH, strerror(errno), confbase);
 			}
 
 			xasprintf(&pidfilename, "%s" SLASH "pid", confbase);

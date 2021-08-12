@@ -40,7 +40,7 @@ bool send_meta_sptps(void *handle, uint8_t type, const void *buffer, size_t leng
 	connection_t *c = handle;
 
 	if(!c) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "send_meta_sptps() called with NULL pointer!");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("send_meta_sptps() called with NULL pointer!"));
 		abort();
 	}
 
@@ -52,11 +52,11 @@ bool send_meta_sptps(void *handle, uint8_t type, const void *buffer, size_t leng
 
 bool send_meta(connection_t *c, const void *buffer, size_t length) {
 	if(!c) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "send_meta() called with NULL pointer!");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("send_meta() called with NULL pointer!"));
 		abort();
 	}
 
-	logger(DEBUG_META, LOG_DEBUG, "Sending %zu bytes of metadata to %s (%s)",
+	logger(DEBUG_META, LOG_DEBUG, _("Sending %zu bytes of metadata to %s (%s)"),
 	       length, c->name, c->hostname);
 
 	if(c->protocol_minor >= 2) {
@@ -70,7 +70,7 @@ bool send_meta(connection_t *c, const void *buffer, size_t length) {
 #else
 
 		if(length > c->outbudget) {
-			logger(DEBUG_META, LOG_ERR, "Byte limit exceeded for encryption to %s (%s)", c->name, c->hostname);
+			logger(DEBUG_META, LOG_ERR, _("Byte limit exceeded for encryption to %s (%s)"), c->name, c->hostname);
 			return false;
 		} else {
 			c->outbudget -= length;
@@ -79,7 +79,7 @@ bool send_meta(connection_t *c, const void *buffer, size_t length) {
 		size_t outlen = length;
 
 		if(!cipher_encrypt(c->outcipher, buffer, length, buffer_prepare(&c->outbuf, length), &outlen, false) || outlen != length) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Error while encrypting metadata to %s (%s)",
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Error while encrypting metadata to %s (%s)"),
 			       c->name, c->hostname);
 			return false;
 		}
@@ -96,11 +96,11 @@ bool send_meta(connection_t *c, const void *buffer, size_t length) {
 
 void send_meta_raw(connection_t *c, const void *buffer, size_t length) {
 	if(!c) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "send_meta() called with NULL pointer!");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("send_meta() called with NULL pointer!"));
 		abort();
 	}
 
-	logger(DEBUG_META, LOG_DEBUG, "Sending %zu bytes of raw metadata to %s (%s)",
+	logger(DEBUG_META, LOG_DEBUG, _("Sending %zu bytes of raw metadata to %s (%s)"),
 	       length, c->name, c->hostname);
 
 	buffer_add(&c->outbuf, buffer, length);
@@ -120,7 +120,7 @@ bool receive_meta_sptps(void *handle, uint8_t type, const void *vdata, uint16_t 
 	connection_t *c = handle;
 
 	if(!c) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "receive_meta_sptps() called with NULL pointer!");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("receive_meta_sptps() called with NULL pointer!"));
 		abort();
 	}
 
@@ -176,7 +176,7 @@ bool receive_meta(connection_t *c) {
 	buffer_compact(&c->inbuf, MAXBUFSIZE);
 
 	if(sizeof(inbuf) <= c->inbuf.len) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Input buffer full for %s (%s)", c->name, c->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Input buffer full for %s (%s)"), c->name, c->hostname);
 		return false;
 	}
 
@@ -184,12 +184,12 @@ bool receive_meta(connection_t *c) {
 
 	if(inlen <= 0) {
 		if(!inlen || !sockerrno) {
-			logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Connection closed by %s (%s)",
+			logger(DEBUG_CONNECTIONS, LOG_NOTICE, _("Connection closed by %s (%s)"),
 			       c->name, c->hostname);
 		} else if(sockwouldblock(sockerrno)) {
 			return true;
 		} else
-			logger(DEBUG_ALWAYS, LOG_ERR, "Metadata socket read error for %s (%s): %s",
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Metadata socket read error for %s (%s): %s"),
 			       c->name, c->hostname, sockstrerror(sockerrno));
 
 		return false;
@@ -250,7 +250,7 @@ bool receive_meta(connection_t *c) {
 #else
 
 			if((size_t)inlen > c->inbudget) {
-				logger(DEBUG_META, LOG_ERR, "Byte limit exceeded for decryption from %s (%s)", c->name, c->hostname);
+				logger(DEBUG_META, LOG_ERR, _("Byte limit exceeded for decryption from %s (%s)"), c->name, c->hostname);
 				return false;
 			} else {
 				c->inbudget -= inlen;
@@ -259,7 +259,7 @@ bool receive_meta(connection_t *c) {
 			size_t outlen = inlen;
 
 			if(!cipher_decrypt(c->incipher, bufp, inlen, buffer_prepare(&c->inbuf, inlen), &outlen, false) || (size_t)inlen != outlen) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "Error while decrypting metadata from %s (%s)",
+				logger(DEBUG_ALWAYS, LOG_ERR, _("Error while decrypting metadata from %s (%s)"),
 				       c->name, c->hostname);
 				return false;
 			}
@@ -281,42 +281,42 @@ bool receive_meta(connection_t *c) {
 				if(!c->node) {
 					if(c->outgoing && proxytype == PROXY_SOCKS4 && c->allow_request == ID) {
 						if(tcpbuffer[0] == 0 && tcpbuffer[1] == 0x5a) {
-							logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Proxy request granted");
+							logger(DEBUG_CONNECTIONS, LOG_DEBUG, _("Proxy request granted"));
 						} else {
-							logger(DEBUG_CONNECTIONS, LOG_ERR, "Proxy request rejected");
+							logger(DEBUG_CONNECTIONS, LOG_ERR, _("Proxy request rejected"));
 							return false;
 						}
 					} else if(c->outgoing && proxytype == PROXY_SOCKS5 && c->allow_request == ID) {
 						if(tcpbuffer[0] != 5) {
-							logger(DEBUG_CONNECTIONS, LOG_ERR, "Invalid response from proxy server");
+							logger(DEBUG_CONNECTIONS, LOG_ERR, _("Invalid response from proxy server"));
 							return false;
 						}
 
 						if(tcpbuffer[1] == (char)0xff) {
-							logger(DEBUG_CONNECTIONS, LOG_ERR, "Proxy request rejected: unsuitable authentication method");
+							logger(DEBUG_CONNECTIONS, LOG_ERR, _("Proxy request rejected: unsuitable authentication method"));
 							return false;
 						}
 
 						if(tcpbuffer[2] != 5) {
-							logger(DEBUG_CONNECTIONS, LOG_ERR, "Invalid response from proxy server");
+							logger(DEBUG_CONNECTIONS, LOG_ERR, _("Invalid response from proxy server"));
 							return false;
 						}
 
 						if(tcpbuffer[3] == 0) {
-							logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Proxy request granted");
+							logger(DEBUG_CONNECTIONS, LOG_DEBUG, _("Proxy request granted"));
 						} else {
-							logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Proxy request rejected");
+							logger(DEBUG_CONNECTIONS, LOG_DEBUG, _("Proxy request rejected"));
 							return false;
 						}
 					} else {
-						logger(DEBUG_CONNECTIONS, LOG_ERR, "c->tcplen set but c->node is NULL!");
+						logger(DEBUG_CONNECTIONS, LOG_ERR, _("c->tcplen set but c->node is NULL!"));
 						abort();
 					}
 				} else {
 					if(c->allow_request == ALL) {
 						receive_tcppacket(c, tcpbuffer, c->tcplen);
 					} else {
-						logger(DEBUG_CONNECTIONS, LOG_ERR, "Got unauthorized TCP packet from %s (%s)", c->name, c->hostname);
+						logger(DEBUG_CONNECTIONS, LOG_ERR, _("Got unauthorized TCP packet from %s (%s)"), c->name, c->hostname);
 						return false;
 					}
 				}

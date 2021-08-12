@@ -107,7 +107,7 @@ static int ppp_load_kext() {
 	int pid = fork();
 
 	if(pid < 0) {
-		tun_error("fork for ppp kext: %s", strerror(errno));
+		tun_error(_("fork for ppp kext: %s"), strerror(errno));
 		return -1;
 	}
 
@@ -124,12 +124,12 @@ static int ppp_load_kext() {
 			continue;
 		}
 
-		tun_error("waitpid for ppp kext: %s", strerror(errno));
+		tun_error(_("waitpid for ppp kext: %s"), strerror(errno));
 		return -1;
 	}
 
 	if(WEXITSTATUS(status) != 0) {
-		tun_error("could not load ppp kext \"%s\"", PPP_KEXT_PATH);
+		tun_error(_("could not load ppp kext '%s'"), PPP_KEXT_PATH);
 		return -1;
 	}
 
@@ -149,7 +149,7 @@ static int ppp_new_instance() {
 		ppp_sockfd = socket(PF_PPP, SOCK_RAW, PPPPROTO_CTL);
 
 		if(ppp_sockfd < 0) {
-			tun_error("creating ppp socket: %s", strerror(errno));
+			tun_error(_("creating ppp socket: %s"), strerror(errno));
 			return -1;
 		}
 	}
@@ -162,7 +162,7 @@ static int ppp_new_instance() {
 	pppaddr.ppp_cookie = 0;
 
 	if(connect(ppp_sockfd, (struct sockaddr *)&pppaddr, sizeof(struct sockaddr_ppp)) < 0) {
-		tun_error("connecting ppp socket: %s", strerror(errno));
+		tun_error(_("connecting ppp socket: %s"), strerror(errno));
 		close(ppp_sockfd);
 		return -1;
 	}
@@ -180,7 +180,7 @@ static int ppp_new_unit(int *unit_number) {
 
 	// create ppp unit
 	if(ioctl(fd, PPPIOCNEWUNIT, unit_number) < 0) {
-		tun_error("creating ppp unit: %s", strerror(errno));
+		tun_error(_("creating ppp unit: %s"), strerror(errno));
 		close(fd);
 		return -1;
 	}
@@ -194,7 +194,7 @@ static int ppp_setup_unit(int unit_fd) {
 	int flags = SC_LOOP_TRAFFIC;
 
 	if(ioctl(unit_fd, PPPIOCSFLAGS, &flags) < 0) {
-		tun_error("setting ppp loopback mode: %s", strerror(errno));
+		tun_error(_("setting ppp loopback mode: %s"), strerror(errno));
 		return -1;
 	}
 
@@ -204,7 +204,7 @@ static int ppp_setup_unit(int unit_fd) {
 	npi.mode = NPMODE_PASS;
 
 	if(ioctl(unit_fd, PPPIOCSNPMODE, &npi) < 0) {
-		tun_error("starting ppp unit: %s", strerror(errno));
+		tun_error(_("starting ppp unit: %s"), strerror(errno));
 		return -1;
 	}
 
@@ -223,7 +223,7 @@ static int open_pcap() {
 	pcap_use_count = 1;
 
 	if(pcap == NULL) {
-		tun_error("opening pcap: %s", errbuf);
+		tun_error(_("opening pcap: %s"), errbuf);
 		return -1;
 	}
 
@@ -282,7 +282,7 @@ int tunemu_open(tunemu_device device) {
 
 	if(device[0] != 0) {
 		if(check_device_name(device) < 0) {
-			tun_error("invalid device name \"%s\"", device);
+			tun_error(_("invalid device name '%s'"), device);
 			return -1;
 		}
 
@@ -326,7 +326,7 @@ ssize_t tunemu_read(int ppp_sockfd, uint8_t *buffer, size_t buflen) {
 	ssize_t length = read(ppp_sockfd, data_buffer, buflen + 2);
 
 	if(length < 0) {
-		tun_error("reading packet: %s", strerror(errno));
+		tun_error(_("reading packet: %s"), strerror(errno));
 		return length;
 	}
 
@@ -354,14 +354,14 @@ ssize_t tunemu_write(uint8_t *buffer, size_t buflen) {
 	memcpy(data_buffer + 4, buffer, buflen);
 
 	if(pcap == NULL) {
-		tun_error("pcap not open");
+		tun_error(_("pcap not open"));
 		return -1;
 	}
 
 	ssize_t length = pcap_inject(pcap, data_buffer, buflen + 4);
 
 	if(length < 0) {
-		tun_error("injecting packet: %s", pcap_geterr(pcap));
+		tun_error(_("injecting packet: %s"), pcap_geterr(pcap));
 		return length;
 	}
 

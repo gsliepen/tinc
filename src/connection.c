@@ -42,7 +42,7 @@ connection_t *everyone;
 
 void init_connections(void) {
 	everyone = new_connection();
-	everyone->name = xstrdup("everyone");
+	everyone->name = xstrdup(_("everyone"));
 	everyone->hostname = xstrdup("BROADCAST");
 }
 

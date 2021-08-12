@@ -208,7 +208,7 @@ bool rsa_set_hex_public_key(rsa_t *rsa, char *n, char *e) {
 	      ? : gcry_mpi_scan(&rsa->e, GCRYMPI_FMT_HEX, e, 0, NULL);
 
 	if(err) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading RSA public key: %s", gcry_strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Error while reading RSA public key: %s"), gcry_strerror(errno));
 		return false;
 	}
 
@@ -223,7 +223,7 @@ bool rsa_set_hex_private_key(rsa_t *rsa, char *n, char *e, char *d) {
 	      ? : gcry_mpi_scan(&rsa->d, GCRYMPI_FMT_HEX, d, 0, NULL);
 
 	if(err) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading RSA public key: %s", gcry_strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Error while reading RSA public key: %s"), gcry_strerror(errno));
 		return false;
 	}
 
@@ -237,7 +237,7 @@ bool rsa_read_pem_public_key(rsa_t *rsa, FILE *fp) {
 	size_t derlen;
 
 	if(!pem_decode(fp, "RSA PUBLIC KEY", derbuf, sizeof(derbuf), &derlen)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to read RSA public key: %s", strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Unable to read RSA public key: %s"), strerror(errno));
 		return NULL;
 	}
 
@@ -245,7 +245,7 @@ bool rsa_read_pem_public_key(rsa_t *rsa, FILE *fp) {
 	                || !ber_read_mpi(&derp, &derlen, &rsa->n)
 	                || !ber_read_mpi(&derp, &derlen, &rsa->e)
 	                || derlen) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error while decoding RSA public key");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Error while decoding RSA public key"));
 		return NULL;
 	}
 
@@ -257,7 +257,7 @@ bool rsa_read_pem_private_key(rsa_t *rsa, FILE *fp) {
 	size_t derlen;
 
 	if(!pem_decode(fp, "RSA PRIVATE KEY", derbuf, sizeof(derbuf), &derlen)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to read RSA private key: %s", strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Unable to read RSA private key: %s"), strerror(errno));
 		return NULL;
 	}
 
@@ -272,7 +272,7 @@ bool rsa_read_pem_private_key(rsa_t *rsa, FILE *fp) {
 	                || !ber_read_mpi(&derp, &derlen, NULL)
 	                || !ber_read_mpi(&derp, &derlen, NULL) // u
 	                || derlen) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error while decoding RSA private key");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Error while decoding RSA private key"));
 		return NULL;
 	}
 
@@ -288,7 +288,7 @@ size_t rsa_size(rsa_t *rsa) {
  */
 
 // TODO: get rid of this macro, properly clean up gcry_ structures after use
-#define check(foo) { gcry_error_t err = (foo); if(err) {logger(DEBUG_ALWAYS, LOG_ERR, "gcrypt error %s/%s at %s:%d", gcry_strsource(err), gcry_strerror(err), __FILE__, __LINE__); return false; }}
+#define check(foo) { gcry_error_t err = (foo); if(err) {logger(DEBUG_ALWAYS, LOG_ERR, _("gcrypt error %s/%s at %s:%d"), gcry_strsource(err), gcry_strerror(err), __FILE__, __LINE__); return false; }}
 
 bool rsa_public_encrypt(rsa_t *rsa, void *in, size_t len, void *out) {
 	gcry_mpi_t inmpi;

@@ -48,7 +48,7 @@ cipher_t *cipher_open_by_name(const char *name) {
 	const EVP_CIPHER *evp_cipher = EVP_get_cipherbyname(name);
 
 	if(!evp_cipher) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Unknown cipher name '%s'!", name);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Unknown cipher name '%s'!"), name);
 		return NULL;
 	}
 
@@ -59,7 +59,7 @@ cipher_t *cipher_open_by_nid(int nid) {
 	const EVP_CIPHER *evp_cipher = EVP_get_cipherbynid(nid);
 
 	if(!evp_cipher) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Unknown cipher nid %d!", nid);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Unknown cipher nid %d!"), nid);
 		return NULL;
 	}
 
@@ -123,7 +123,7 @@ bool cipher_set_key(cipher_t *cipher, void *key, bool encrypt) {
 		return true;
 	}
 
-	logger(DEBUG_ALWAYS, LOG_ERR, "Error while setting key: %s", ERR_error_string(ERR_get_error(), NULL));
+	logger(DEBUG_ALWAYS, LOG_ERR, _("Error while setting key: %s"), ERR_error_string(ERR_get_error(), NULL));
 	return false;
 }
 
@@ -140,7 +140,7 @@ bool cipher_set_key_from_rsa(cipher_t *cipher, void *key, size_t len, bool encry
 		return true;
 	}
 
-	logger(DEBUG_ALWAYS, LOG_ERR, "Error while setting key: %s", ERR_error_string(ERR_get_error(), NULL));
+	logger(DEBUG_ALWAYS, LOG_ERR, _("Error while setting key: %s"), ERR_error_string(ERR_get_error(), NULL));
 	return false;
 }
 
@@ -169,7 +169,7 @@ bool cipher_encrypt(cipher_t *cipher, const void *indata, size_t inlen, void *ou
 		}
 	}
 
-	logger(DEBUG_ALWAYS, LOG_ERR, "Error while encrypting: %s", ERR_error_string(ERR_get_error(), NULL));
+	logger(DEBUG_ALWAYS, LOG_ERR, _("Error while encrypting: %s"), ERR_error_string(ERR_get_error(), NULL));
 	return false;
 }
 
@@ -198,7 +198,7 @@ bool cipher_decrypt(cipher_t *cipher, const void *indata, size_t inlen, void *ou
 		}
 	}
 
-	logger(DEBUG_ALWAYS, LOG_ERR, "Error while decrypting: %s", ERR_error_string(ERR_get_error(), NULL));
+	logger(DEBUG_ALWAYS, LOG_ERR, _("Error while decrypting: %s"), ERR_error_string(ERR_get_error(), NULL));
 	return false;
 }
 

@@ -77,7 +77,7 @@ static bool send_data(void *handle, uint8_t type, const void *data, size_t len) 
 	bin2hex(data, hex, len);
 
 	if(verbose) {
-		fprintf(stderr, "Sending %zu bytes of data:\n%s\n", len, hex);
+		fprintf(stderr, _("Sending %zu bytes of data:\n%s\n"), len, hex);
 	}
 
 	const int *sock = handle;
@@ -93,7 +93,7 @@ static bool receive_record(void *handle, uint8_t type, const void *data, uint16_
 	(void)handle;
 
 	if(verbose) {
-		fprintf(stderr, "Received type %d record of %u bytes:\n", type, len);
+		fprintf(stderr, _("Received type %d record of %u bytes:\n"), type, len);
 	}
 
 	if(!writeonly) {
@@ -119,23 +119,29 @@ static struct option const long_options[] = {
 const char *program_name;
 
 static void usage() {
-	fprintf(stderr, "Usage: %s [options] my_ed25519_key_file his_ed25519_key_file [host] port\n\n", program_name);
-	fprintf(stderr, "Valid options are:\n"
-	        "  -d, --datagram          Enable datagram mode.\n"
-	        "  -q, --quit              Quit when EOF occurs on stdin.\n"
-	        "  -r, --readonly          Only send data from the socket to stdout.\n"
+	fprintf(stderr, _("Usage: %s [options] my_ed25519_key_file his_ed25519_key_file [host] port\n\n"),
+	        program_name);
+
+	fprintf(stderr, "%s\n%s%s\n%s%s\n%s%s\n\n%s%s\n%s%s\n%s%s\n%s%s\n%s%s\n%s%s\n%s%s\n%s%s\n",
+	        _("Valid options are:"),
+	        "  -d, --datagram          ", _("Enable datagram mode."),
+	        "  -q, --quit              ", _("Quit when EOF occurs on stdin."),
+	        "  -r, --readonly          ", _("Only send data from the socket to stdout."),
+	        "  -w, --writeonly         ", _("Only send data from stdin to the socket."),
+	        "  -L, --packet-loss RATE  ", _("Fake packet loss of RATE percent."),
+	        "  -R, --replay-window N   ", _("Set replay window to N bytes."),
+	        "  -s, --special           ", _("Enable special handling of lines starting with #, ^ and $."),
+	        "  -v, --verbose           ", _("Display debug messages."),
+	        "  -4                      ", _("Use IPv4."),
+	        "  -6                      ", _("Use IPv6."),
 #ifdef HAVE_LINUX
-	        "  -t, --tun               Use a tun device instead of stdio.\n"
+	        "  -t, --tun               ", _("Use a tun device instead of stdio.")
+#else
+	        "", ""
 #endif
-	        "  -w, --writeonly         Only send data from stdin to the socket.\n"
-	        "  -L, --packet-loss RATE  Fake packet loss of RATE percent.\n"
-	        "  -R, --replay-window N   Set replay window to N bytes.\n"
-	        "  -s, --special           Enable special handling of lines starting with #, ^ and $.\n"
-	        "  -v, --verbose           Display debug messages.\n"
-	        "  -4                      Use IPv4.\n"
-	        "  -6                      Use IPv6.\n"
-	        "\n");
-	fprintf(stderr, "Report bugs to tinc@tinc-vpn.org.\n");
+	       );
+
+	fprintf(stderr, _("Report bugs to %s.\n"), MAINTAINER_EMAIL);
 }
 
 #ifdef HAVE_MINGW
@@ -155,12 +161,12 @@ void *stdin_reader_thread(void *arg) {
 		int peer_fd = accept(stdin_sock_fd, (struct sockaddr *) &sa, &sa_size);
 
 		if(peer_fd < 0) {
-			fprintf(stderr, "accept() failed: %s\n", strerror(errno));
+			fprintf(stderr, _("%s failed: %s\n"), "accept()", strerror(errno));
 			continue;
 		}
 
 		if(verbose) {
-			fprintf(stderr, "New connection received from :%d\n", ntohs(sa.sin_port));
+			fprintf(stderr, _("New connection received from :%d\n"), ntohs(sa.sin_port));
 		}
 
 		uint8_t buf[1024];
@@ -168,7 +174,7 @@ void *stdin_reader_thread(void *arg) {
 
 		while((nread = read(STDIN_FILENO, buf, sizeof(buf))) > 0) {
 			if(verbose) {
-				fprintf(stderr, "Read %lld bytes from input\n", nread);
+				fprintf(stderr, _("Read %lld bytes from input\n"), nread);
 			}
 
 			uint8_t *start = buf;
@@ -190,12 +196,12 @@ void *stdin_reader_thread(void *arg) {
 			}
 
 			if(nleft) {
-				fprintf(stderr, "Could not send data: %s\n", strerror(errno));
+				fprintf(stderr, _("Could not send data: %s\n"), strerror(errno));
 				break;
 			}
 
 			if(verbose) {
-				fprintf(stderr, "Sent %lld bytes to peer\n", nread);
+				fprintf(stderr, _("Sent %lld bytes to peer\n"), nread);
 			}
 		}
 
@@ -208,14 +214,14 @@ void *stdin_reader_thread(void *arg) {
 
 int start_input_reader() {
 	if(stdin_sock_fd != -1) {
-		fprintf(stderr, "stdin thread can only be started once.\n");
+		fprintf(stderr, _("stdin thread can only be started once.\n"));
 		return -1;
 	}
 
 	stdin_sock_fd = socket(AF_INET, SOCK_STREAM, 0);
 
 	if(stdin_sock_fd < 0) {
-		fprintf(stderr, "Could not create server socket: %s\n", strerror(errno));
+		fprintf(stderr, _("Could not create server socket: %s\n"), strerror(errno));
 		return -1;
 	}
 
@@ -230,12 +236,12 @@ int start_input_reader() {
 	int res = bind(stdin_sock_fd, (struct sockaddr *)&serv_sa, sizeof(serv_sa));
 
 	if(res < 0) {
-		fprintf(stderr, "Could not bind socket: %s\n", strerror(errno));
+		fprintf(stderr, _("Could not bind socket: %s\n"), strerror(errno));
 		goto server_err;
 	}
 
 	if(listen(stdin_sock_fd, 1) < 0) {
-		fprintf(stderr, "Could not listen: %s\n", strerror(errno));
+		fprintf(stderr, _("Could not listen: %s\n"), strerror(errno));
 		goto server_err;
 	}
 
@@ -244,31 +250,31 @@ int start_input_reader() {
 	socklen_t addr_len = sizeof(connect_sa);
 
 	if(getsockname(stdin_sock_fd, (struct sockaddr *)&connect_sa, &addr_len) < 0) {
-		fprintf(stderr, "Could not determine the address of the stdin thread socket\n");
+		fprintf(stderr, _("Could not determine the address of the stdin thread socket\n"));
 		goto server_err;
 	}
 
 	if(verbose) {
-		fprintf(stderr, "stdin thread is listening on :%d\n", ntohs(connect_sa.sin_port));
+		fprintf(stderr, _("stdin thread is listening on :%d\n"), ntohs(connect_sa.sin_port));
 	}
 
 	pthread_t th;
 	int err = pthread_create(&th, NULL, stdin_reader_thread, NULL);
 
 	if(err) {
-		fprintf(stderr, "Could not start reader thread: %s\n", strerror(err));
+		fprintf(stderr, _("Could not start reader thread: %s\n"), strerror(err));
 		goto server_err;
 	}
 
 	int client_fd = socket(AF_INET, SOCK_STREAM, 0);
 
 	if(client_fd < 0) {
-		fprintf(stderr, "Could not create client socket: %s\n", strerror(errno));
+		fprintf(stderr, _("Could not create client socket: %s\n"), strerror(errno));
 		return -1;
 	}
 
 	if(connect(client_fd, (struct sockaddr *)&connect_sa, sizeof(connect_sa)) < 0) {
-		fprintf(stderr, "Could not connect: %s\n", strerror(errno));
+		fprintf(stderr, _("Could not connect: %s\n"), strerror(errno));
 		closesocket(client_fd);
 		return -1;
 	}
@@ -322,7 +328,7 @@ int main(int argc, char *argv[]) {
 #ifdef HAVE_LINUX
 			tun = true;
 #else
-			fprintf(stderr, "--tun is only supported on Linux.\n");
+			fprintf(stderr, _("--tun is only supported on Linux.\n"));
 			usage();
 			return 1;
 #endif
@@ -373,7 +379,7 @@ int main(int argc, char *argv[]) {
 	argv += optind - 1;
 
 	if(argc < 4 || argc > 5) {
-		fprintf(stderr, "Wrong number of arguments.\n");
+		fprintf(stderr, _("Wrong number of arguments.\n"));
 		usage();
 		return 1;
 	}
@@ -390,7 +396,7 @@ int main(int argc, char *argv[]) {
 		in = out = open("/dev/net/tun", O_RDWR | O_NONBLOCK);
 
 		if(in < 0) {
-			fprintf(stderr, "Could not open tun device: %s\n", strerror(errno));
+			fprintf(stderr, _("Could not open tun device: %s\n"), strerror(errno));
 			return 1;
 		}
 
@@ -399,12 +405,12 @@ int main(int argc, char *argv[]) {
 		};
 
 		if(ioctl(in, TUNSETIFF, &ifr)) {
-			fprintf(stderr, "Could not configure tun interface: %s\n", strerror(errno));
+			fprintf(stderr, _("Could not configure tun interface: %s\n"), strerror(errno));
 			return 1;
 		}
 
 		ifr.ifr_name[IFNAMSIZ - 1] = 0;
-		fprintf(stderr, "Using tun interface %s\n", ifr.ifr_name);
+		fprintf(stderr, _("Using tun interface %s\n"), ifr.ifr_name);
 	}
 
 #endif
@@ -427,14 +433,14 @@ int main(int argc, char *argv[]) {
 	hint.ai_flags = initiator ? 0 : AI_PASSIVE;
 
 	if(getaddrinfo(initiator ? argv[3] : NULL, initiator ? argv[4] : argv[3], &hint, &ai) || !ai) {
-		fprintf(stderr, "getaddrinfo() failed: %s\n", sockstrerror(sockerrno));
+		fprintf(stderr, _("%s failed: %s\n"), "getaddrinfo()", sockstrerror(sockerrno));
 		return 1;
 	}
 
 	int sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 
 	if(sock < 0) {
-		fprintf(stderr, "Could not create socket: %s\n", sockstrerror(sockerrno));
+		fprintf(stderr, _("Could not create socket: %s\n"), sockstrerror(sockerrno));
 		freeaddrinfo(ai);
 		return 1;
 	}
@@ -449,11 +455,11 @@ int main(int argc, char *argv[]) {
 		ai = NULL;
 
 		if(res) {
-			fprintf(stderr, "Could not connect to peer: %s\n", sockstrerror(sockerrno));
+			fprintf(stderr, _("Could not connect to peer: %s\n"), sockstrerror(sockerrno));
 			return 1;
 		}
 
-		fprintf(stderr, "Connected\n");
+		fprintf(stderr, _("Connected\n"));
 	} else {
 		int res = bind(sock, ai->ai_addr, ai->ai_addrlen);
 
@@ -461,43 +467,43 @@ int main(int argc, char *argv[]) {
 		ai = NULL;
 
 		if(res) {
-			fprintf(stderr, "Could not bind socket: %s\n", sockstrerror(sockerrno));
+			fprintf(stderr, _("Could not bind socket: %s\n"), sockstrerror(sockerrno));
 			return 1;
 		}
 
 		if(!datagram) {
 			if(listen(sock, 1)) {
-				fprintf(stderr, "Could not listen on socket: %s\n", sockstrerror(sockerrno));
+				fprintf(stderr, _("Could not listen on socket: %s\n"), sockstrerror(sockerrno));
 				return 1;
 			}
 
-			fprintf(stderr, "Listening...\n");
+			fprintf(stderr, _("Listening...\n"));
 
 			sock = accept(sock, NULL, NULL);
 
 			if(sock < 0) {
-				fprintf(stderr, "Could not accept connection: %s\n", sockstrerror(sockerrno));
+				fprintf(stderr, _("Could not accept connection: %s\n"), sockstrerror(sockerrno));
 				return 1;
 			}
 		} else {
-			fprintf(stderr, "Listening...\n");
+			fprintf(stderr, _("Listening...\n"));
 
 			uint8_t buf[65536];
 			struct sockaddr addr;
 			socklen_t addrlen = sizeof(addr);
 
 			if(recvfrom(sock, buf, sizeof(buf), MSG_PEEK, &addr, &addrlen) <= 0) {
-				fprintf(stderr, "Could not read from socket: %s\n", sockstrerror(sockerrno));
+				fprintf(stderr, _("Could not read from socket: %s\n"), sockstrerror(sockerrno));
 				return 1;
 			}
 
 			if(connect(sock, &addr, addrlen)) {
-				fprintf(stderr, "Could not accept connection: %s\n", sockstrerror(sockerrno));
+				fprintf(stderr, _("Could not accept connection: %s\n"), sockstrerror(sockerrno));
 				return 1;
 			}
 		}
 
-		fprintf(stderr, "Connected\n");
+		fprintf(stderr, _("Connected\n"));
 	}
 
 	crypto_init();
@@ -505,7 +511,7 @@ int main(int argc, char *argv[]) {
 	FILE *fp = fopen(argv[1], "r");
 
 	if(!fp) {
-		fprintf(stderr, "Could not open %s: %s\n", argv[1], strerror(errno));
+		fprintf(stderr, _("Could not open %s: %s\n"), argv[1], strerror(errno));
 		return 1;
 	}
 
@@ -520,7 +526,7 @@ int main(int argc, char *argv[]) {
 	fp = fopen(argv[2], "r");
 
 	if(!fp) {
-		fprintf(stderr, "Could not open %s: %s\n", argv[2], strerror(errno));
+		fprintf(stderr, _("Could not open %s: %s\n"), argv[2], strerror(errno));
 		free(mykey);
 		return 1;
 	}
@@ -535,7 +541,7 @@ int main(int argc, char *argv[]) {
 	fclose(fp);
 
 	if(verbose) {
-		fprintf(stderr, "Keys loaded\n");
+		fprintf(stderr, _("Keys loaded\n"));
 	}
 
 	sptps_t s;
@@ -552,7 +558,7 @@ int main(int argc, char *argv[]) {
 		in = start_input_reader();
 
 		if(in < 0) {
-			fprintf(stderr, "Could not init stdin reader thread\n");
+			fprintf(stderr, _("Could not init stdin reader thread\n"));
 			free(mykey);
 			free(hiskey);
 			return 1;
@@ -594,7 +600,7 @@ int main(int argc, char *argv[]) {
 #endif
 
 			if(len < 0) {
-				fprintf(stderr, "Could not read from stdin: %s\n", strerror(errno));
+				fprintf(stderr, _("Could not read from stdin: %s\n"), strerror(errno));
 				free(mykey);
 				free(hiskey);
 				return 1;
@@ -637,26 +643,26 @@ int main(int argc, char *argv[]) {
 			ssize_t len = recv(sock, buf, sizeof(buf), 0);
 
 			if(len < 0) {
-				fprintf(stderr, "Could not read from socket: %s\n", sockstrerror(sockerrno));
+				fprintf(stderr, _("Could not read from socket: %s\n"), sockstrerror(sockerrno));
 				free(mykey);
 				free(hiskey);
 				return 1;
 			}
 
 			if(len == 0) {
-				fprintf(stderr, "Connection terminated by peer.\n");
+				fprintf(stderr, _("Connection terminated by peer.\n"));
 				break;
 			}
 
 			if(verbose) {
 				char hex[len * 2 + 1];
 				bin2hex(buf, hex, len);
-				fprintf(stderr, "Received %zd bytes of data:\n%s\n", len, hex);
+				fprintf(stderr, _("Received %zd bytes of data:\n%s\n"), len, hex);
 			}
 
 			if(packetloss && (rand() % 100) < packetloss) {
 				if(verbose) {
-					fprintf(stderr, "Dropped.\n");
+					fprintf(stderr, _("Dropped.\n"));
 				}
 
 				continue;
