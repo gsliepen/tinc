@@ -39,7 +39,7 @@ splay_tree_t subnet_tree = {
 };
 
 /* Subnet lookup cache */
-
+__attribute__((no_sanitize("integer")))
 static uint32_t hash_function_ipv4_t(const ipv4_t *p) {
 	/*
 	This basic hash works because
@@ -51,7 +51,7 @@ static uint32_t hash_function_ipv4_t(const ipv4_t *p) {
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 	// 10.0.x.x/16 part
-	hash += halfwidth[1] * 0x9e370001UL;
+	hash += (uint32_t)(halfwidth[1] * 0x9e370001UL);
 
 	// x.x.0.[0-255] part
 #if SUBNET_HASH_SIZE >= 0x10000
@@ -69,7 +69,7 @@ static uint32_t hash_function_ipv4_t(const ipv4_t *p) {
 #endif // __BYTE_ORDER == __LITTLE_ENDIAN
 }
 
-
+__attribute__((no_sanitize("integer")))
 static uint32_t hash_function_ipv6_t(const ipv6_t *p) {
 	uint32_t *fullwidth = (uint32_t *)p;
 	uint32_t hash = hash_seed;
@@ -80,8 +80,9 @@ static uint32_t hash_function_ipv6_t(const ipv6_t *p) {
 	}
 
 	return hash;
-}
 
+}
+__attribute__((no_sanitize("integer")))
 static uint32_t hash_function_mac_t(const mac_t *p) {
 	uint16_t *halfwidth = (uint16_t *)p;
 	uint32_t hash = hash_seed;
