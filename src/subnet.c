@@ -40,6 +40,14 @@ splay_tree_t subnet_tree = {
 
 /* Subnet lookup cache */
 
+static uint32_t wrapping_add32(uint32_t a, uint32_t b) {
+	return (uint32_t)((uint64_t)a + b);
+}
+
+static uint32_t wrapping_mul32(uint32_t a, uint32_t b) {
+	return (uint32_t)((uint64_t)a * b);
+}
+
 static uint32_t hash_function_ipv4_t(const ipv4_t *p) {
 	/*
 	This basic hash works because
@@ -51,7 +59,7 @@ static uint32_t hash_function_ipv4_t(const ipv4_t *p) {
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 	// 10.0.x.x/16 part
-	hash += halfwidth[1] * 0x9e370001UL;
+	hash = wrapping_add32(hash, wrapping_mul32(halfwidth[1], 0x9e370001U));
 
 	// x.x.0.[0-255] part
 #if SUBNET_HASH_SIZE >= 0x10000
@@ -62,7 +70,7 @@ static uint32_t hash_function_ipv4_t(const ipv4_t *p) {
 #endif // _____LP64_____
 #else
 	// 10.0.x.x/16 part
-	hash += halfwidth[0] * 0x9e370001UL;
+	hash = wrapping_add32(hash, wrapping_mul32(halfwidth[0], 0x9e370001U));
 
 	// x.x.0.[0-255] part (ntohs is nop on big endian)
 	return hash ^ halfwidth[1];
@@ -76,7 +84,7 @@ static uint32_t hash_function_ipv6_t(const ipv6_t *p) {
 
 	for(int i = 0; i < 4; i++) {
 		hash += fullwidth[i];
-		hash *= 0x9e370001UL;
+		hash = wrapping_mul32(hash, 0x9e370001U);
 	}
 
 	return hash;
@@ -88,7 +96,7 @@ static uint32_t hash_function_mac_t(const mac_t *p) {
 
 	for(int i = 0; i < 3; i++) {
 		hash += halfwidth[i];
-		hash *= 0x9e370001UL;
+		hash = wrapping_mul32(hash, 0x9e370001U);
 	}
 
 	return hash;
