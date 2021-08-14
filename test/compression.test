@@ -106,13 +106,13 @@ for level in $levels; do
   wait_script foo hosts/bar-up
   wait_script bar hosts/foo-up
 
-  ip netns exec foo \
-    socat -u TCP4-LISTEN:$recv_port_foo,reuseaddr OPEN:"$tmp_file",creat &
+  try_limit_time 60 sh <<EOF
+    set -eu
+    ip netns exec foo socat -u TCP4-LISTEN:$recv_port_foo,reuseaddr OPEN:"$tmp_file",creat &
+    ip netns exec bar socat -u OPEN:"$ref_file" TCP4:$ip_foo:$recv_port_foo,retry=30 &
+    wait
+EOF
 
-  ip netns exec bar \
-    socat -u OPEN:"$ref_file" TCP4:$ip_foo:$recv_port_foo,retry=30 &
-
-  wait
   diff -w "$ref_file" "$tmp_file"
 
   tinc foo stop

@@ -1,6 +1,7 @@
 image: freebsd/13.x
 
 packages:
+  - coreutils
   - autotools
   - openssl
   - lzo2
