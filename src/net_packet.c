@@ -54,6 +54,7 @@
 #include "protocol.h"
 #include "route.h"
 #include "utils.h"
+#include "xalloc.h"
 
 
 #ifdef HAVE_SENDMMSG

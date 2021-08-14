@@ -27,7 +27,11 @@
 #include "dropin.h"
 #include "event.h"
 #include "utils.h"
+
+struct timeval now;
+
 #include "xalloc.h"
+#include "net.h"
 #include "logger.h"
 
 #ifndef HAVE_MINGW
@@ -167,6 +171,7 @@ void io_set(io_t *io, int flags) {
 #ifdef HAVE_SYS_EPOLL_H
 	struct epoll_event ev;
 	ev.data.fd = io->fd;
+	ev.data.ptr = io;
 
 	epoll_ctl(epollset, EPOLL_CTL_DEL, io->fd, NULL);
 
@@ -408,8 +413,8 @@ bool event_loop(void) {
 			maxfds = last->fd + 1;
 
 			// An upper limit to prevent excessive stack usage should these conditions ever not be true
-			if(maxfds > EPOL_MAX_EVENTS_PER_LOOP) {
-				maxfds = EPOL_MAX_EVENTS_PER_LOOP;
+			if(maxfds > EPOLL_MAX_EVENTS_PER_LOOP) {
+				maxfds = EPOLL_MAX_EVENTS_PER_LOOP;
 			}
 		}
 
@@ -436,26 +441,16 @@ bool event_loop(void) {
 
 		unsigned int curgen = io_tree.generation;
 
-		// MH: iterating over events inside the splay tree is very bad
-		//     we should be able to use the epoll_event epoll_data_t (data member)
-		//     instead
-		for splay_each(io_t, io, &io_tree) {
+
 #ifdef HAVE_SYS_EPOLL_H
-
-			for(int i = 0; i < n; i++) {
-				if(events[i].data.fd == io->fd) {
-					if(events[i].events & EPOLLOUT) {
-						io->cb(io->data, IO_WRITE);
-					} else if(events[i].events & EPOLLIN) {
-						io->cb(io->data, IO_READ);
-					}
-
-					break;
-				}
-			}
-
+		io_t *io = events[i].data.ptr;
+		if(events[i].events & EPOLLOUT) {
+			io->cb(io->data, IO_WRITE);
+		} else if(events[i].events & EPOLLIN) {
+			io->cb(io->data, IO_READ);
+		}
 #else
-
+		for splay_each(io_t, io, &io_tree) {
 			if(FD_ISSET(io->fd, &writable)) {
 				io->cb(io->data, IO_WRITE);
 			} else if(FD_ISSET(io->fd, &readable)) {
@@ -463,18 +458,17 @@ bool event_loop(void) {
 			} else {
 				continue;
 			}
-
+		}
 #endif
 
-			/*
-			There are scenarios in which the callback will remove another io_t from the tree
-			(e.g. closing a double connection). Since splay_each does not support that, we
-			need to exit the loop if that happens. That's okay, since any remaining events will
-			get picked up by the next select() call.
-			*/
-			if(curgen != io_tree.generation) {
-				break;
-			}
+		/*
+		There are scenarios in which the callback will remove another io_t from the tree
+		(e.g. closing a double connection). Since splay_each does not support that, we
+		need to exit the loop if that happens. That's okay, since any remaining events will
+		get picked up by the next select() call.
+		*/
+		if(curgen != io_tree.generation) {
+			break;
 		}
 	}
 
