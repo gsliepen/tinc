@@ -447,7 +447,8 @@ bool event_loop(void) {
 
 		if(events[i].events & EPOLLOUT) {
 			io->cb(io->data, IO_WRITE);
-		} else if(events[i].events & EPOLLIN) {
+		}
+		if(events[i].events & EPOLLIN) {
 			io->cb(io->data, IO_READ);
 		}
 
@@ -461,19 +462,19 @@ bool event_loop(void) {
 			} else {
 				continue;
 			}
+
+			/*
+			There are scenarios in which the callback will remove another io_t from the tree
+			(e.g. closing a double connection). Since splay_each does not support that, we
+			need to exit the loop if that happens. That's okay, since any remaining events will
+			get picked up by the next select() call.
+			*/
+			if(curgen != io_tree.generation) {
+				break;
+			}
 		}
 
 #endif
-
-		/*
-		There are scenarios in which the callback will remove another io_t from the tree
-		(e.g. closing a double connection). Since splay_each does not support that, we
-		need to exit the loop if that happens. That's okay, since any remaining events will
-		get picked up by the next select() call.
-		*/
-		if(curgen != io_tree.generation) {
-			break;
-		}
 	}
 
 #else
