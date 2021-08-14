@@ -129,6 +129,9 @@ void subnet_cache_flush_table(subnet_type_t stype) {
 
 void init_subnets(void) {
 	hash_seed = (uint32_t)rand();
+
+	// tables need to be cleared on startup
+	subnet_cache_flush_tables();
 }
 
 void exit_subnets(void) {
