@@ -27,9 +27,7 @@ for path in $paths; do
 done
 
 if ! [ -f compile_commands.json ]; then
-  # Running compiledb directly on this doesn't work on FreeBSD for some reason.
-  make -j2 all extra
-  compiledb -n make check
+  compiledb make all extra
 fi
 
 echo >&2 "Running clang-tidy without $paths"
