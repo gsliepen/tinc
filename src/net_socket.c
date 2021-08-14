@@ -25,10 +25,8 @@
 #include "address_cache.h"
 #include "conf.h"
 #include "connection.h"
-#include "control_common.h"
 #include "list.h"
 #include "logger.h"
-#include "meta.h"
 #include "names.h"
 #include "net.h"
 #include "netutl.h"
@@ -41,6 +39,8 @@ int maxtimeout = 900;
 int seconds_till_retry = 5;
 int udp_rcvbuf = 1024 * 1024;
 int udp_sndbuf = 1024 * 1024;
+bool udp_rcvbuf_warnings;
+bool udp_sndbuf_warnings;
 int max_connection_burst = 10;
 int fwmark;
 
@@ -49,7 +49,18 @@ int listen_sockets;
 #ifndef HAVE_MINGW
 io_t unix_socket;
 #endif
-list_t *outgoing_list = NULL;
+
+static void free_outgoing(outgoing_t *outgoing) {
+	timeout_del(&outgoing->ev);
+	free(outgoing);
+}
+
+list_t outgoing_list = {
+	.head = NULL,
+	.tail = NULL,
+	.count = 0,
+	.delete = (list_action_t)free_outgoing,
+};
 
 /* Setup sockets */
 
@@ -104,7 +115,7 @@ static bool bind_to_interface(int sd) {
 	int status;
 #endif /* defined(SOL_SOCKET) && defined(SO_BINDTODEVICE) */
 
-	if(!get_config_string(lookup_config(config_tree, "BindToInterface"), &iface)) {
+	if(!get_config_string(lookup_config(&config_tree, "BindToInterface"), &iface)) {
 		return true;
 	}
 
@@ -205,7 +216,7 @@ int setup_listen_socket(const sockaddr_t *sa) {
 #endif
 
 	if(get_config_string
-	                (lookup_config(config_tree, "BindToInterface"), &iface)) {
+	                (lookup_config(&config_tree, "BindToInterface"), &iface)) {
 #if defined(SOL_SOCKET) && defined(SO_BINDTODEVICE)
 		struct ifreq ifr;
 
@@ -241,6 +252,35 @@ int setup_listen_socket(const sockaddr_t *sa) {
 
 	return nfd;
 }
+
+static void set_udp_buffer(int nfd, int type, const char *name, int size, bool warnings) {
+	if(!size) {
+		return;
+	}
+
+	if(setsockopt(nfd, SOL_SOCKET, type, (void *)&size, sizeof(size))) {
+		logger(DEBUG_ALWAYS, LOG_WARNING, "Can't set UDP %s to %i: %s", name, size, sockstrerror(sockerrno));
+		return;
+	}
+
+	if(!warnings) {
+		return;
+	}
+
+	// The system may cap the requested buffer size.
+	// Read back the value and check if it is now as requested.
+	int actual = -1;
+	socklen_t optlen = sizeof(actual);
+
+	if(getsockopt(nfd, SOL_SOCKET, type, (void *)&actual, &optlen)) {
+		logger(DEBUG_ALWAYS, LOG_WARNING, "Can't read back UDP %s: %s", name, sockstrerror(sockerrno));
+	} else if(optlen != sizeof(actual)) {
+		logger(DEBUG_ALWAYS, LOG_WARNING, "Can't read back UDP %s: unexpected returned optlen %d", name, (int)optlen);
+	} else if(actual < size) {
+		logger(DEBUG_ALWAYS, LOG_WARNING, "Can't set UDP %s to %i, the system set it to %i instead", name, size, actual);
+	}
+}
+
 
 int setup_vpn_in_socket(const sockaddr_t *sa) {
 	int nfd;
@@ -285,47 +325,8 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 	setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, (void *)&option, sizeof(option));
 	setsockopt(nfd, SOL_SOCKET, SO_BROADCAST, (void *)&option, sizeof(option));
 
-	if(udp_rcvbuf && setsockopt(nfd, SOL_SOCKET, SO_RCVBUF, (void *)&udp_rcvbuf, sizeof(udp_rcvbuf))) {
-		logger(DEBUG_ALWAYS, LOG_WARNING, "Can't set UDP SO_RCVBUF to %i: %s", udp_rcvbuf, sockstrerror(sockerrno));
-	}
-
-	{
-		// The system may cap the requested buffer size.
-		// Read back the value and check if it is now as requested.
-		int udp_rcvbuf_actual = -1;
-		socklen_t optlen = sizeof(udp_rcvbuf_actual);
-
-		if(getsockopt(nfd, SOL_SOCKET, SO_RCVBUF, (void *)&udp_rcvbuf_actual, &optlen)) {
-			logger(DEBUG_ALWAYS, LOG_WARNING, "Can't read back UDP SO_RCVBUF: %s", sockstrerror(sockerrno));
-		} else if(optlen != sizeof(udp_rcvbuf_actual)) {
-			logger(DEBUG_ALWAYS, LOG_WARNING, "Can't read back UDP SO_RCVBUF: Unexpected returned optlen %jd", (intmax_t) optlen);
-		} else {
-			if(udp_rcvbuf_actual != udp_rcvbuf) {
-				logger(DEBUG_ALWAYS, LOG_WARNING, "Can't set UDP SO_RCVBUF to %i, the system set it to %i instead", udp_rcvbuf, udp_rcvbuf_actual);
-			}
-		}
-	}
-
-	if(udp_sndbuf && setsockopt(nfd, SOL_SOCKET, SO_SNDBUF, (void *)&udp_sndbuf, sizeof(udp_sndbuf))) {
-		logger(DEBUG_ALWAYS, LOG_WARNING, "Can't set UDP SO_SNDBUF to %i: %s", udp_sndbuf, sockstrerror(sockerrno));
-	}
-
-	{
-		// The system may cap the requested buffer size.
-		// Read back the value and check if it is now as requested.
-		int udp_sndbuf_actual = -1;
-		socklen_t optlen = sizeof(udp_sndbuf_actual);
-
-		if(getsockopt(nfd, SOL_SOCKET, SO_SNDBUF, (void *)&udp_sndbuf_actual, &optlen)) {
-			logger(DEBUG_ALWAYS, LOG_WARNING, "Can't read back UDP SO_SNDBUF: %s", sockstrerror(sockerrno));
-		} else if(optlen != sizeof(udp_sndbuf_actual)) {
-			logger(DEBUG_ALWAYS, LOG_WARNING, "Can't read back UDP SO_SNDBUF: Unexpected returned optlen %jd", (intmax_t) optlen);
-		} else {
-			if(udp_sndbuf_actual != udp_sndbuf) {
-				logger(DEBUG_ALWAYS, LOG_WARNING, "Can't set UDP SO_SNDBUF to %i, the system set it to %i instead", udp_sndbuf, udp_sndbuf_actual);
-			}
-		}
-	}
+	set_udp_buffer(nfd, SO_RCVBUF, "SO_RCVBUF", udp_rcvbuf, udp_rcvbuf_warnings);
+	set_udp_buffer(nfd, SO_SNDBUF, "SO_SNDBUF", udp_sndbuf, udp_sndbuf_warnings);
 
 #if defined(IPV6_V6ONLY)
 
@@ -685,7 +686,7 @@ void setup_outgoing_connection(outgoing_t *outgoing, bool verbose) {
 	return;
 
 remove:
-	list_delete(outgoing_list, outgoing);
+	list_delete(&outgoing_list, outgoing);
 }
 
 /*
@@ -714,8 +715,8 @@ void handle_new_meta_connection(void *data, int flags) {
 	static sockaddr_t prev_sa;
 
 	if(!sockaddrcmp_noport(&sa, &prev_sa)) {
-		static int samehost_burst;
-		static int samehost_burst_time;
+		static time_t samehost_burst;
+		static time_t samehost_burst_time;
 
 		if(now.tv_sec - samehost_burst_time > samehost_burst) {
 			samehost_burst = 0;
@@ -736,8 +737,8 @@ void handle_new_meta_connection(void *data, int flags) {
 
 	// Check if we get many connections from different hosts
 
-	static int connection_burst;
-	static int connection_burst_time;
+	static time_t connection_burst;
+	static time_t connection_burst_time;
 
 	if(now.tv_sec - connection_burst_time > connection_burst) {
 		connection_burst = 0;
@@ -819,25 +820,16 @@ void handle_new_unix_connection(void *data, int flags) {
 }
 #endif
 
-static void free_outgoing(outgoing_t *outgoing) {
-	timeout_del(&outgoing->ev);
-	free(outgoing);
-}
-
 void try_outgoing_connections(void) {
 	/* If there is no outgoing list yet, create one. Otherwise, mark all outgoings as deleted. */
 
-	if(!outgoing_list) {
-		outgoing_list = list_alloc((list_action_t)free_outgoing);
-	} else {
-		for list_each(outgoing_t, outgoing, outgoing_list) {
-			outgoing->timeout = -1;
-		}
+	for list_each(outgoing_t, outgoing, &outgoing_list) {
+		outgoing->timeout = -1;
 	}
 
 	/* Make sure there is one outgoing_t in the list for each ConnectTo. */
 
-	for(config_t *cfg = lookup_config(config_tree, "ConnectTo"); cfg; cfg = lookup_config_next(config_tree, cfg)) {
+	for(config_t *cfg = lookup_config(&config_tree, "ConnectTo"); cfg; cfg = lookup_config_next(&config_tree, cfg)) {
 		char *name;
 		get_config_string(cfg, &name);
 
@@ -856,7 +848,7 @@ void try_outgoing_connections(void) {
 
 		bool found = false;
 
-		for list_each(outgoing_t, outgoing, outgoing_list) {
+		for list_each(outgoing_t, outgoing, &outgoing_list) {
 			if(!strcmp(outgoing->node->name, name)) {
 				found = true;
 				outgoing->timeout = 0;
@@ -874,15 +866,17 @@ void try_outgoing_connections(void) {
 				node_add(n);
 			}
 
+			free(name);
+
 			outgoing->node = n;
-			list_insert_tail(outgoing_list, outgoing);
+			list_insert_tail(&outgoing_list, outgoing);
 			setup_outgoing_connection(outgoing, true);
 		}
 	}
 
 	/* Terminate any connections whose outgoing_t is to be deleted. */
 
-	for list_each(connection_t, c, connection_list) {
+	for list_each(connection_t, c, &connection_list) {
 		if(c->outgoing && c->outgoing->timeout == -1) {
 			c->outgoing = NULL;
 			logger(DEBUG_CONNECTIONS, LOG_INFO, "No more outgoing connection to %s", c->name);
@@ -892,8 +886,8 @@ void try_outgoing_connections(void) {
 
 	/* Delete outgoing_ts for which there is no ConnectTo. */
 
-	for list_each(outgoing_t, outgoing, outgoing_list)
+	for list_each(outgoing_t, outgoing, &outgoing_list)
 		if(outgoing->timeout == -1) {
-			list_delete_node(outgoing_list, node);
+			list_delete_node(&outgoing_list, node);
 		}
 }

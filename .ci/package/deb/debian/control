@@ -1,0 +1,22 @@
+Source: tinc
+Section: net
+Priority: optional
+Maintainer: none <none@notsupported>
+Standards-Version: 4.2.1
+Build-Depends: libssl-dev (>>1.1.0), debhelper (>= 11), texinfo, zlib1g-dev, liblzo2-dev, libncurses5-dev, libreadline-dev, libminiupnpc-dev
+Homepage: https://www.tinc-vpn.org/
+Vcs-Browser: https://github.com/gsliepen/tinc
+Vcs-Git: https://github.com/gsliepen/tinc.git
+Rules-Requires-Root: no
+
+Package: tinc
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Virtual Private Network daemon
+ tinc is a daemon with which you can create a virtual private network
+ (VPN). One daemon can handle multiple connections, so you can
+ create an entire (moderately sized) VPN with only one daemon per
+ participating computer.
+ This is an automated build and is not supported by upstream. It has
+ gone through automated testing before being published, but may or may
+ not work on your system. Use at your own risk.

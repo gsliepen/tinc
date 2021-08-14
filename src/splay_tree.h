@@ -41,7 +41,6 @@ typedef struct splay_node_t {
 
 typedef int (*splay_compare_t)(const void *data1, const void *data2);
 typedef void (*splay_action_t)(const void *data);
-typedef void (*splay_action_node_t)(const splay_node_t *node);
 
 typedef struct splay_tree_t {
 
@@ -86,6 +85,7 @@ extern void splay_delete_node(splay_tree_t *tree, splay_node_t *node);
 
 /* Fast tree cleanup */
 
+extern void splay_empty_tree(splay_tree_t *tree);
 extern void splay_delete_tree(splay_tree_t *tree);
 
 /* Searching */

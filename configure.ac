@@ -90,8 +90,12 @@ AC_ARG_ENABLE(uml,
 AC_ARG_ENABLE(vde,
   AS_HELP_STRING([--enable-vde], [enable support for Virtual Distributed Ethernet]),
   [ AS_IF([test "x$enable_vde" = "xyes"],
-      [ AC_CHECK_HEADERS(libvdeplug_dyn.h, [], [AC_MSG_ERROR([VDE plug header files not found.]); break])
-        AC_CHECK_LIB(dl, dlopen, [LIBS="$LIBS -ldl"], [AC_MSG_ERROR([VDE plug depends on libdl.]); break])
+      [ AC_CHECK_HEADERS(libvdeplug.h,
+        [AC_CHECK_LIB(vdeplug, vde_close,
+                      [LIBS="$LIBS -lvdeplug"],
+                      [AC_MSG_ERROR("VDE plug library files not found.")]
+        )],
+        [AC_MSG_ERROR([VDE plug header files not found.]); break])
         AC_DEFINE(ENABLE_VDE, 1, [Support for VDE])
         vde=true
       ],
@@ -131,6 +135,7 @@ AM_CONDITIONAL(UML, test "$uml" = true)
 AM_CONDITIONAL(VDE, test "$vde" = true)
 AM_CONDITIONAL(TUNEMU, test "$tunemu" = true)
 AM_CONDITIONAL(WITH_SYSTEMD, test "$systemd" = true)
+AM_CONDITIONAL(WITH_LEGACY_PROTOCOL, test "x$enable_legacy_protocol" != "xno")
 
 AC_CACHE_SAVE
 
@@ -235,6 +240,7 @@ tinc_CURSES
 tinc_READLINE
 tinc_ZLIB
 tinc_LZO
+tinc_LZ4
 
 AS_IF([test "x$enable_legacy_protocol" != "xno"],
       [AS_IF([test -n "$with_libgcrypt"],

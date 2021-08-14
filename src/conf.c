@@ -32,14 +32,18 @@
 #include "names.h"
 #include "netutl.h"             /* for str2address */
 #include "protocol.h"
-#include "utils.h"              /* for cp */
 #include "xalloc.h"
-
-splay_tree_t *config_tree;
 
 int pinginterval = 0;           /* seconds between pings */
 int pingtimeout = 0;            /* seconds to wait for response */
-list_t *cmdline_conf = NULL;    /* global/host configuration values given at the command line */
+
+/* global/host configuration values given at the command line */
+list_t cmdline_conf = {
+	.head = NULL,
+	.tail = NULL,
+	.count = 0,
+	.delete = (list_action_t)free_config,
+};
 
 static int config_compare(const config_t *a, const config_t *b) {
 	int result;
@@ -66,8 +70,21 @@ static int config_compare(const config_t *a, const config_t *b) {
 	}
 }
 
-void init_configuration(splay_tree_t **config_tree) {
-	*config_tree = splay_alloc_tree((splay_compare_t) config_compare, (splay_action_t) free_config);
+splay_tree_t config_tree = {
+	.compare = (splay_compare_t) config_compare,
+	.delete = (splay_action_t) free_config,
+};
+
+splay_tree_t *create_configuration() {
+	splay_tree_t *tree = splay_alloc_tree(NULL, NULL);
+	init_configuration(tree);
+	return tree;
+}
+
+void init_configuration(splay_tree_t *tree) {
+	memset(tree, 0, sizeof(*tree));
+	tree->compare = (splay_compare_t) config_compare;
+	tree->delete = (splay_action_t) free_config;
 }
 
 void exit_configuration(splay_tree_t **config_tree) {
@@ -193,29 +210,6 @@ bool get_config_address(const config_t *cfg, struct addrinfo **result) {
 	return false;
 }
 
-bool get_config_subnet(const config_t *cfg, subnet_t **result) {
-	subnet_t subnet = {0};
-
-	if(!cfg) {
-		return false;
-	}
-
-	if(!str2net(&subnet, cfg->value)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Subnet expected for configuration variable %s in %s line %d",
-		       cfg->variable, cfg->file, cfg->line);
-		return false;
-	}
-
-	if(subnetcheck(subnet)) {
-		*(*result = new_subnet()) = subnet;
-		return true;
-	}
-
-	logger(DEBUG_ALWAYS, LOG_ERR, "Network address and prefix length do not match for configuration variable %s in %s line %d",
-	       cfg->variable, cfg->file, cfg->line);
-	return false;
-}
-
 /*
   Read exactly one line and strip the trailing newline if any.
 */
@@ -227,7 +221,7 @@ static char *readline(FILE *fp, char *buf, size_t buflen) {
 		return NULL;
 	}
 
-	p = fgets(buf, buflen, fp);
+	p = fgets(buf, (int) buflen, fp);
 
 	if(!p) {
 		return NULL;
@@ -251,7 +245,6 @@ static char *readline(FILE *fp, char *buf, size_t buflen) {
 
 config_t *parse_config_line(char *line, const char *fname, int lineno) {
 	config_t *cfg;
-	int len;
 	char *variable, *value, *eol;
 	variable = value = line;
 
@@ -261,7 +254,7 @@ config_t *parse_config_line(char *line, const char *fname, int lineno) {
 		*eol = '\0';
 	}
 
-	len = strcspn(value, "\t =");
+	size_t len = strcspn(value, "\t =");
 	value += len;
 	value += strspn(value, "\t ");
 
@@ -361,7 +354,7 @@ bool read_config_file(splay_tree_t *config_tree, const char *fname, bool verbose
 void read_config_options(splay_tree_t *config_tree, const char *prefix) {
 	size_t prefix_len = prefix ? strlen(prefix) : 0;
 
-	for(const list_node_t *node = cmdline_conf->tail; node; node = node->prev) {
+	for(const list_node_t *node = cmdline_conf.tail; node; node = node->prev) {
 		const config_t *cfg = node->data;
 		config_t *new;
 
@@ -392,7 +385,7 @@ void read_config_options(splay_tree_t *config_tree, const char *prefix) {
 	}
 }
 
-bool read_server_config(void) {
+bool read_server_config(splay_tree_t *config_tree) {
 	char fname[PATH_MAX];
 	bool x;
 

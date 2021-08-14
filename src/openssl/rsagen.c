@@ -17,8 +17,6 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include "../system.h"
-
 #include <openssl/pem.h>
 #include <openssl/err.h>
 
@@ -27,7 +25,6 @@ typedef RSA rsa_t;
 
 #include "../logger.h"
 #include "../rsagen.h"
-#include "../xalloc.h"
 
 /* This function prettyprints the key generation process */
 
@@ -72,16 +69,6 @@ static int indicator(int a, int b, BN_GENCB *cb) {
 
 // Generate RSA key
 
-#ifndef HAVE_BN_GENCB_NEW
-BN_GENCB *BN_GENCB_new(void) {
-	return xzalloc(sizeof(BN_GENCB));
-}
-
-void BN_GENCB_free(BN_GENCB *cb) {
-	free(cb);
-}
-#endif
-
 rsa_t *rsa_generate(size_t bits, unsigned long exponent) {
 	BIGNUM *bn_e = BN_new();
 	rsa_t *rsa = RSA_new();
@@ -94,7 +81,7 @@ rsa_t *rsa_generate(size_t bits, unsigned long exponent) {
 	BN_set_word(bn_e, exponent);
 	BN_GENCB_set(cb, indicator, NULL);
 
-	int result = RSA_generate_key_ex(rsa, bits, bn_e, cb);
+	int result = RSA_generate_key_ex(rsa, (int) bits, bn_e, cb);
 
 	BN_GENCB_free(cb);
 	BN_free(bn_e);

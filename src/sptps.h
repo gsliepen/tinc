@@ -33,24 +33,26 @@
 #define SPTPS_ALERT 129       // Warning or error messages
 #define SPTPS_CLOSE 130       // Application closed the connection
 
-// Key exchange states
-#define SPTPS_KEX 1           // Waiting for the first Key EXchange record
-#define SPTPS_SECONDARY_KEX 2 // Ready to receive a secondary Key EXchange record
-#define SPTPS_SIG 3           // Waiting for a SIGnature record
-#define SPTPS_ACK 4           // Waiting for an ACKnowledgement record
-
 // Overhead for datagrams
 #define SPTPS_DATAGRAM_OVERHEAD 21
 
 typedef bool (*send_data_t)(void *handle, uint8_t type, const void *data, size_t len);
 typedef bool (*receive_record_t)(void *handle, uint8_t type, const void *data, uint16_t len);
 
+// Key exchange states
+typedef enum sptps_state_t {
+	SPTPS_KEX = 1,           // Waiting for the first Key EXchange record
+	SPTPS_SECONDARY_KEX = 2, // Ready to receive a secondary Key EXchange record
+	SPTPS_SIG = 3,           // Waiting for a SIGnature record
+	SPTPS_ACK = 4,           // Waiting for an ACKnowledgement record
+} sptps_state_t;
+
 typedef struct sptps {
 	bool initiator;
 	bool datagram;
-	int state;
+	sptps_state_t state;
 
-	char *inbuf;
+	uint8_t *inbuf;
 	size_t buflen;
 	uint16_t reclen;
 
@@ -60,7 +62,7 @@ typedef struct sptps {
 	uint32_t received;
 	unsigned int replaywin;
 	unsigned int farfuture;
-	char *late;
+	uint8_t *late;
 
 	bool outstate;
 	chacha_poly1305_ctx_t *outcipher;
@@ -70,10 +72,10 @@ typedef struct sptps {
 	ecdsa_t *hiskey;
 	ecdh_t *ecdh;
 
-	char *mykex;
-	char *hiskex;
-	char *key;
-	char *label;
+	uint8_t *mykex;
+	uint8_t *hiskex;
+	uint8_t *key;
+	uint8_t *label;
 	size_t labellen;
 
 	void *handle;

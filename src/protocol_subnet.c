@@ -24,8 +24,6 @@
 #include "conf.h"
 #include "connection.h"
 #include "logger.h"
-#include "net.h"
-#include "netutl.h"
 #include "node.h"
 #include "protocol.h"
 #include "subnet.h"

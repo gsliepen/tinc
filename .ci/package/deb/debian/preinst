@@ -1,0 +1,28 @@
+#!/bin/sh
+
+NETSFILE="/etc/tinc/nets.boot"
+SYSTEM="/lib/systemd/system"
+WANTS="/etc/systemd/system/multi-user.target.wants"
+
+set -e
+
+case "$1" in
+	upgrade)
+		if dpkg --compare-versions "$2" '<<' "1.1~pre11-1"; then
+			if [ -f "$NETSFILE" ]; then
+				echo -n "Creating systemd service instances from nets.boot:"
+				mkdir -p "$WANTS"
+				egrep '^[ ]*[a-zA-Z0-9_-]+' $NETSFILE | while read net args; do
+					echo -n " $net"
+					ln -s "$SYSTEM/tinc@.service" "$WANTS/tinc@$net.service" 2>/dev/null || true
+				done
+				echo "."
+			fi
+		fi
+	;;
+
+	*)
+	;;
+esac
+
+#DEBHELPER#

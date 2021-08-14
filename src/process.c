@@ -20,25 +20,17 @@
 
 #include "system.h"
 
-#include "conf.h"
-#include "connection.h"
-#include "control.h"
-#include "device.h"
-#include "edge.h"
-#include "event.h"
 #include "logger.h"
 #include "names.h"
-#include "net.h"
-#include "node.h"
 #include "process.h"
-#include "subnet.h"
-#include "utils.h"
-#include "xalloc.h"
 #include "version.h"
+
+#ifdef HAVE_MINGW
+#include "utils.h"
+#endif
 
 /* If zero, don't detach from the terminal. */
 bool do_detach = true;
-bool sigalrm = false;
 
 extern char **g_argv;
 extern bool use_logfile;

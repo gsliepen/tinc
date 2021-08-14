@@ -1,0 +1,2 @@
+src:ed25519/*
+src:chacha-poly1305/*

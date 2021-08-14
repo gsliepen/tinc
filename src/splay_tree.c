@@ -604,12 +604,21 @@ void splay_delete(splay_tree_t *tree, void *data) {
 
 /* Fast tree cleanup */
 
-void splay_delete_tree(splay_tree_t *tree) {
+void splay_empty_tree(splay_tree_t *tree) {
 	for(splay_node_t *node = tree->head, *next; node; node = next) {
 		next = node->next;
 		splay_free_node(tree, node);
 	}
 
+	tree->head = NULL;
+	tree->tail = NULL;
+	tree->root = NULL;
+	tree->count = 0;
+	tree->generation++;
+}
+
+void splay_delete_tree(splay_tree_t *tree) {
+	splay_empty_tree(tree);
 	splay_free_tree(tree);
 }
 

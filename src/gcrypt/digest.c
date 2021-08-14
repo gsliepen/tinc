@@ -24,7 +24,7 @@
 
 static struct {
 	const char *name;
-	int algo;
+	enum gcry_md_algos algo;
 	int nid;
 } digesttable[] = {
 	{"none", GCRY_MD_NONE, 0},
@@ -34,7 +34,7 @@ static struct {
 	{"sha512", GCRY_MD_SHA512, 674},
 };
 
-static bool nametodigest(const char *name, int *algo) {
+static bool nametodigest(const char *name, enum gcry_md_algos *algo) {
 	int i;
 
 	for(i = 0; i < sizeof(digesttable) / sizeof(*digesttable); i++) {
@@ -47,10 +47,8 @@ static bool nametodigest(const char *name, int *algo) {
 	return false;
 }
 
-static bool nidtodigest(int nid, int *algo) {
-	int i;
-
-	for(i = 0; i < sizeof(digesttable) / sizeof(*digesttable); i++) {
+static bool nidtodigest(int nid, enum gcry_md_algos *algo) {
+	for(int i = 0; i < sizeof(digesttable) / sizeof(*digesttable); i++) {
 		if(nid == digesttable[i].nid) {
 			*algo = digesttable[i].algo;
 			return true;
@@ -60,10 +58,8 @@ static bool nidtodigest(int nid, int *algo) {
 	return false;
 }
 
-static bool digesttonid(int algo, int *nid) {
-	int i;
-
-	for(i = 0; i < sizeof(digesttable) / sizeof(*digesttable); i++) {
+static bool digesttonid(enum gcry_md_algos algo, int *nid) {
+	for(int i = 0; i < sizeof(digesttable) / sizeof(*digesttable); i++) {
 		if(algo == digesttable[i].algo) {
 			*nid = digesttable[i].nid;
 			return true;
@@ -73,7 +69,7 @@ static bool digesttonid(int algo, int *nid) {
 	return false;
 }
 
-static bool digest_open(digest_t *digest, int algo, int maclength) {
+static bool digest_open(digest_t *digest, enum gcry_md_algos algo, size_t maclength) {
 	if(!digesttonid(algo, &digest->nid)) {
 		logger(DEBUG_ALWAYS, LOG_DEBUG, "Digest %d has no corresponding nid!", algo);
 		return false;
@@ -93,8 +89,8 @@ static bool digest_open(digest_t *digest, int algo, int maclength) {
 	return true;
 }
 
-bool digest_open_by_name(digest_t *digest, const char *name, int maclength) {
-	int algo;
+bool digest_open_by_name(digest_t *digest, const char *name, size_t maclength) {
+	enum gcry_md_algos algo;
 
 	if(!nametodigest(name, &algo)) {
 		logger(DEBUG_ALWAYS, LOG_DEBUG, "Unknown digest name '%s'!", name);
@@ -104,8 +100,8 @@ bool digest_open_by_name(digest_t *digest, const char *name, int maclength) {
 	return digest_open(digest, algo, maclength);
 }
 
-bool digest_open_by_nid(digest_t *digest, int nid, int maclength) {
-	int algo;
+bool digest_open_by_nid(digest_t *digest, int nid, size_t maclength) {
+	enum gcry_md_algos algo;
 
 	if(!nidtodigest(nid, &algo)) {
 		logger(DEBUG_ALWAYS, LOG_DEBUG, "Unknown digest ID %d!", nid);
@@ -115,7 +111,7 @@ bool digest_open_by_nid(digest_t *digest, int nid, int maclength) {
 	return digest_open(digest, algo, maclength);
 }
 
-bool digest_open_sha1(digest_t *digest, int maclength) {
+bool digest_open_sha1(digest_t *digest, size_t maclength) {
 	return digest_open(digest, GCRY_MD_SHA1, maclength);
 }
 
@@ -143,7 +139,7 @@ bool digest_create(digest_t *digest, const void *indata, size_t inlen, void *out
 	unsigned int len = gcry_md_get_algo_dlen(digest->algo);
 
 	if(digest->hmac) {
-		char *tmpdata;
+		uint8_t *tmpdata;
 		gcry_md_reset(digest->hmac);
 		gcry_md_write(digest->hmac, indata, inlen);
 		tmpdata = gcry_md_read(digest->hmac, digest->algo);
@@ -163,8 +159,8 @@ bool digest_create(digest_t *digest, const void *indata, size_t inlen, void *out
 }
 
 bool digest_verify(digest_t *digest, const void *indata, size_t inlen, const void *cmpdata) {
-	unsigned int len = digest->maclength;
-	char outdata[len];
+	size_t len = digest->maclength;
+	uint8_t outdata[len];
 
 	return digest_create(digest, indata, inlen, outdata) && !memcmp(cmpdata, outdata, len);
 }

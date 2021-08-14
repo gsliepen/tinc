@@ -45,19 +45,21 @@ static const char base64_decode[256] = {
 	        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         };
 
-static int charhex2bin(char c) {
-	if(isdigit(c)) {
-		return c - '0';
+static uint8_t charhex2bin(char c) {
+	uint8_t cu = (uint8_t) c;
+
+	if(isdigit(cu)) {
+		return cu - '0';
 	} else {
-		return toupper(c) - 'A' + 10;
+		return toupper(cu) - 'A' + 10;
 	}
 }
 
 size_t hex2bin(const char *src, void *vdst, size_t length) {
-	char *dst = vdst;
+	uint8_t *dst = vdst;
 	size_t i;
 
-	for(i = 0; i < length && isxdigit(src[i * 2]) && isxdigit(src[i * 2 + 1]); i++) {
+	for(i = 0; i < length && isxdigit((uint8_t) src[i * 2]) && isxdigit((uint8_t) src[i * 2 + 1]); i++) {
 		dst[i] = charhex2bin(src[i * 2]) * 16 + charhex2bin(src[i * 2 + 1]);
 	}
 
@@ -67,7 +69,8 @@ size_t hex2bin(const char *src, void *vdst, size_t length) {
 size_t bin2hex(const void *vsrc, char *dst, size_t length) {
 	const char *src = vsrc;
 
-	for(size_t i = length; i-- > 0;) {
+	for(size_t i = length; i > 0;) {
+		--i;
 		dst[i * 2 + 1] = hexadecimals[(unsigned char) src[i] & 15];
 		dst[i * 2] = hexadecimals[(unsigned char) src[i] >> 4];
 	}
@@ -209,7 +212,7 @@ bool check_id(const char *id) {
 	}
 
 	for(; *id; id++)
-		if(!isalnum(*id) && *id != '_') {
+		if(!isalnum((uint8_t) *id) && *id != '_') {
 			return false;
 		}
 
@@ -222,7 +225,7 @@ bool check_netname(const char *netname, bool strict) {
 	}
 
 	for(const char *c = netname; *c; c++) {
-		if(iscntrl(*c)) {
+		if(iscntrl((uint8_t) *c)) {
 			return false;
 		}
 
@@ -268,7 +271,7 @@ char *replace_name(const char *name) {
 		ret_name = xstrdup(envname);
 
 		for(char *c = ret_name; *c; c++)
-			if(!isalnum(*c)) {
+			if(!isalnum((uint8_t) *c)) {
 				*c = '_';
 			}
 	} else {
@@ -283,3 +286,30 @@ char *replace_name(const char *name) {
 
 	return ret_name;
 }
+
+/* Open a file with the desired permissions, minus the umask.
+   Also, if we want to create an executable file, we call fchmod()
+   to set the executable bits. */
+
+FILE *fopenmask(const char *filename, const char *mode, mode_t perms) {
+	mode_t mask = umask(0);
+	perms &= ~mask;
+	umask(~perms & 0777);
+	FILE *f = fopen(filename, mode);
+
+	if(!f) {
+		fprintf(stderr, "Could not open %s: %s\n", filename, strerror(errno));
+		return NULL;
+	}
+
+#ifdef HAVE_FCHMOD
+
+	if(perms & 0444) {
+		fchmod(fileno(f), perms);
+	}
+
+#endif
+	umask(mask);
+	return f;
+}
+

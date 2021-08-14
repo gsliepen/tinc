@@ -32,7 +32,7 @@ static struct addrinfo *get_known_addresses(node_t *n) {
 	struct addrinfo *ai = NULL;
 	struct addrinfo *oai = NULL;
 
-	for splay_each(edge_t, e, n->edge_tree) {
+	for splay_each(edge_t, e, &n->edge_tree) {
 		if(!e->reverse) {
 			continue;
 		}
@@ -67,6 +67,7 @@ static struct addrinfo *get_known_addresses(node_t *n) {
 static void free_known_addresses(struct addrinfo *ai) {
 	for(struct addrinfo *aip = ai, *next; aip; aip = next) {
 		next = aip->ai_next;
+		free(aip->ai_addr);
 		free(aip);
 	}
 }
@@ -146,7 +147,7 @@ const sockaddr_t *get_recent_address(address_cache_t *cache) {
 
 	// Otherwise, check if there are any known Address statements
 	if(!cache->config_tree) {
-		init_configuration(&cache->config_tree);
+		cache->config_tree = create_configuration();
 		read_host_config(cache->config_tree, cache->node->name, false);
 		cache->cfg = lookup_config(cache->config_tree, "Address");
 	}

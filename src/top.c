@@ -76,7 +76,7 @@ static bool update(int fd) {
 
 	timersub(&cur, &prev, &diff);
 	prev = cur;
-	float interval = diff.tv_sec + diff.tv_usec * 1e-6;
+	float interval = (float) diff.tv_sec + (float) diff.tv_usec * 1e-6f;
 
 	char line[4096];
 	char name[4096];
@@ -131,10 +131,10 @@ static bool update(int fd) {
 		}
 
 		found->known = true;
-		found->in_packets_rate = (in_packets - found->in_packets) / interval;
-		found->in_bytes_rate = (in_bytes - found->in_bytes) / interval;
-		found->out_packets_rate = (out_packets - found->out_packets) / interval;
-		found->out_bytes_rate = (out_bytes - found->out_bytes) / interval;
+		found->in_packets_rate = (float)(in_packets - found->in_packets) / interval;
+		found->in_bytes_rate = (float)(in_bytes - found->in_bytes) / interval;
+		found->out_packets_rate = (float)(out_packets - found->out_packets) / interval;
+		found->out_bytes_rate = (float)(out_bytes - found->out_bytes) / interval;
 		found->in_packets = in_packets;
 		found->in_bytes = in_bytes;
 		found->out_packets = out_packets;
@@ -280,7 +280,8 @@ static void redraw(void) {
 
 		if(cumulative)
 			mvprintw(row, 0, "%-16s %10.0f %10.0f %10.0f %10.0f",
-			         node->name, node->in_packets * pscale, node->in_bytes * bscale, node->out_packets * pscale, node->out_bytes * bscale);
+			         node->name, (float) node->in_packets * pscale, (float) node->in_bytes * bscale,
+			         (float) node->out_packets * pscale, (float) node->out_bytes * bscale);
 		else
 			mvprintw(row, 0, "%-16s %10.0f %10.0f %10.0f %10.0f",
 			         node->name, node->in_packets_rate * pscale, node->in_bytes_rate * bscale, node->out_packets_rate * pscale, node->out_bytes_rate * bscale);
@@ -307,15 +308,15 @@ void top(int fd) {
 		switch(getch()) {
 		case 's': {
 			timeout(-1);
-			float input = delay * 1e-3;
+			float input = (float)delay * 1e-3f;
 			mvprintw(1, 0, "Change delay from %.1fs to: ", input);
 			scanw("%f", &input);
 
 			if(input < 0.1) {
-				input = 0.1;
+				input = 0.1f;
 			}
 
-			delay = input * 1e3;
+			delay = (int)(input * 1e3f);
 			timeout(delay);
 			break;
 		}
@@ -361,23 +362,23 @@ void top(int fd) {
 
 		case 'k':
 			bunit = "kbyte";
-			bscale = 1e-3;
+			bscale = 1e-3f;
 			punit = "pkts";
 			pscale = 1;
 			break;
 
 		case 'M':
 			bunit = "Mbyte";
-			bscale = 1e-6;
+			bscale = 1e-6f;
 			punit = "kpkt";
-			pscale = 1e-3;
+			pscale = 1e-3f;
 			break;
 
 		case 'G':
 			bunit = "Gbyte";
-			bscale = 1e-9;
+			bscale = 1e-9f;
 			punit = "Mpkt";
-			pscale = 1e-6;
+			pscale = 1e-6f;
 			break;
 
 		case 'q':

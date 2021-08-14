@@ -40,20 +40,10 @@ AC_DEFUN([tinc_OPENSSL],
     [AC_MSG_ERROR([LibreSSL/OpenSSL header files not found.]); break]
   )
 
-  AC_CHECK_LIB(crypto, EVP_EncryptInit_ex,
+  AC_CHECK_LIB(crypto, OPENSSL_init_crypto,
     [LIBS="-lcrypto $LIBS"],
     [AC_MSG_ERROR([LibreSSL/OpenSSL libraries not found.])]
   )
 
-  AC_CHECK_FUNCS([RAND_bytes EVP_EncryptInit_ex EVP_CIPHER_CTX_new], ,
-    [AC_MSG_ERROR([Missing LibreSSL/OpenSSL functionality, make sure you have installed the latest version.]); break],
-  )
-
-  AC_CHECK_DECLS([OpenSSL_add_all_algorithms, EVP_aes_256_cfb], ,
-    [AC_MSG_ERROR([Missing LibreSSL/OpenSSL functionality, make sure you have installed the latest version.]); break],
-    [#include <openssl/evp.h>]
-  )
-
-  AC_CHECK_FUNCS([BN_GENCB_new ERR_remove_state RSA_set0_key], , , [#include <openssl/rsa.h>])
-  AC_CHECK_FUNCS([HMAC_CTX_new], , , [#include <openssl/hmac.h>])
+  AC_DEFINE(HAVE_OPENSSL, 1, [enable OpenSSL support])
 ])

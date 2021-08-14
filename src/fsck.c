@@ -18,7 +18,6 @@
 */
 
 #include "system.h"
-
 #include "crypto.h"
 #include "ecdsa.h"
 #include "ecdsagen.h"
@@ -30,6 +29,11 @@
 #endif
 #include "tincctl.h"
 #include "utils.h"
+#include "xalloc.h"
+#include "keys.h"
+#include "conf.h"
+
+static const char *exe_name = NULL;
 
 static bool ask_fix(void) {
 	if(force) {
@@ -60,13 +64,13 @@ again:
 	goto again;
 }
 
-static void print_tinc_cmd(const char *argv0, const char *format, ...) {
+static void print_tinc_cmd(const char *format, ...) {
 	if(confbasegiven) {
-		fprintf(stderr, "%s -c %s ", argv0, confbase);
+		fprintf(stderr, "%s -c %s ", exe_name, confbase);
 	} else if(netname) {
-		fprintf(stderr, "%s -n %s ", argv0, netname);
+		fprintf(stderr, "%s -n %s ", exe_name, netname);
 	} else {
-		fprintf(stderr, "%s ", argv0);
+		fprintf(stderr, "%s ", exe_name);
 	}
 
 	va_list va;
@@ -74,6 +78,33 @@ static void print_tinc_cmd(const char *argv0, const char *format, ...) {
 	vfprintf(stderr, format, va);
 	va_end(va);
 	fputc('\n', stderr);
+}
+
+typedef enum {
+	KEY_RSA,
+	KEY_ED25519,
+	KEY_BOTH,
+} key_type_t;
+
+static void print_new_keys_cmd(key_type_t key_type, const char *message) {
+	fprintf(stderr, "%s\n\n", message);
+
+	switch(key_type) {
+	case KEY_RSA:
+		fprintf(stderr, "You can generate a new RSA keypair with:\n\n");
+		print_tinc_cmd("generate-rsa-keys");
+		break;
+
+	case KEY_ED25519:
+		fprintf(stderr, "You can generate a new Ed25519 keypair with:\n\n");
+		print_tinc_cmd("generate-ed25519-keys");
+		break;
+
+	case KEY_BOTH:
+		fprintf(stderr, "You can generate new keys with:\n\n");
+		print_tinc_cmd("generate-keys");
+		break;
+	}
 }
 
 static int strtailcmp(const char *str, const char *tail) {
@@ -87,420 +118,336 @@ static int strtailcmp(const char *str, const char *tail) {
 	return memcmp(str + slen - tlen, tail, tlen);
 }
 
-static void check_conffile(const char *fname, bool server) {
-	(void)server;
+static void check_conffile(const char *nodename, bool server) {
+	splay_tree_t config;
+	init_configuration(&config);
 
-	FILE *f = fopen(fname, "r");
+	bool read;
 
-	if(!f) {
-		fprintf(stderr, "ERROR: cannot read %s: %s\n", fname, strerror(errno));
+	if(server) {
+		read = read_server_config(&config);
+	} else {
+		read = read_host_config(&config, nodename, true);
+	}
+
+	if(!read) {
+		splay_empty_tree(&config);
 		return;
 	}
 
-	char line[2048];
-	int lineno = 0;
-	bool skip = false;
-	const int maxvariables = 50;
-	int count[maxvariables];
+	size_t total_vars = 0;
+
+	while(variables[total_vars].name) {
+		++total_vars;
+	}
+
+	int count[total_vars];
 	memset(count, 0, sizeof(count));
 
-	while(fgets(line, sizeof(line), f)) {
-		if(skip) {
-			if(!strncmp(line, "-----END", 8)) {
-				skip = false;
-			}
+	for splay_each(config_t, conf, &config) {
+		int var_type = 0;
 
-			continue;
-		} else {
-			if(!strncmp(line, "-----BEGIN", 10)) {
-				skip = true;
-				continue;
-			}
-		}
-
-		int len;
-		char *variable, *value, *eol;
-		variable = value = line;
-
-		lineno++;
-
-		eol = line + strlen(line);
-
-		while(strchr("\t \r\n", *--eol)) {
-			*eol = '\0';
-		}
-
-		if(!line[0] || line[0] == '#') {
-			continue;
-		}
-
-		len = strcspn(value, "\t =");
-		value += len;
-		value += strspn(value, "\t ");
-
-		if(*value == '=') {
-			value++;
-			value += strspn(value, "\t ");
-		}
-
-		variable[len] = '\0';
-
-		bool found = false;
-
-		for(int i = 0; variables[i].name; i++) {
-			if(strcasecmp(variables[i].name, variable)) {
-				continue;
-			}
-
-			found = true;
-
-			if(variables[i].type & VAR_OBSOLETE) {
-				fprintf(stderr, "WARNING: obsolete variable %s in %s line %d\n", variable, fname, lineno);
-			}
-
-			if(i < maxvariables) {
+		for(size_t i = 0; variables[i].name; ++i) {
+			if(strcasecmp(variables[i].name, conf->variable) == 0) {
 				count[i]++;
+				var_type = variables[i].type;
 			}
 		}
 
-		if(!found) {
-			fprintf(stderr, "WARNING: unknown variable %s in %s line %d\n", variable, fname, lineno);
+		if(var_type == 0) {
+			continue;
 		}
 
-		if(!*value) {
-			fprintf(stderr, "ERROR: no value for variable %s in %s line %d\n", variable, fname, lineno);
+		if(var_type & VAR_OBSOLETE) {
+			fprintf(stderr, "WARNING: obsolete variable %s in %s line %d\n",
+			        conf->variable, conf->file, conf->line);
+		}
+
+		if(server && !(var_type & VAR_SERVER)) {
+			fprintf(stderr, "WARNING: host variable %s found in server config %s line %d \n",
+			        conf->variable, conf->file, conf->line);
+		}
+
+		if(!server && !(var_type & VAR_HOST)) {
+			fprintf(stderr, "WARNING: server variable %s found in host config %s line %d \n",
+			        conf->variable, conf->file, conf->line);
 		}
 	}
 
-	for(int i = 0; variables[i].name && i < maxvariables; i++) {
+	for(size_t i = 0; i < total_vars; ++i) {
 		if(count[i] > 1 && !(variables[i].type & VAR_MULTIPLE)) {
-			fprintf(stderr, "WARNING: multiple instances of variable %s in %s\n", variables[i].name, fname);
+			fprintf(stderr, "WARNING: multiple instances of variable %s in %s\n",
+			        variables[i].name, nodename ? nodename : "tinc.conf");
 		}
 	}
 
-	if(ferror(f)) {
-		fprintf(stderr, "ERROR: while reading %s: %s\n", fname, strerror(errno));
-	}
-
-	fclose(f);
+	splay_empty_tree(&config);
 }
 
-int fsck(const char *argv0) {
 #ifdef HAVE_MINGW
-	int uid = 0;
+typedef int uid_t;
+
+static uid_t getuid() {
+	return 0;
+}
+
+static void check_key_file_mode(const char *fname) {
+	(void)fname;
+}
 #else
-	uid_t uid = getuid();
-#endif
+static void check_key_file_mode(const char *fname) {
+	const uid_t uid = getuid();
+	struct stat st;
 
-	// Check that tinc.conf is readable.
-
-	if(access(tinc_conf, R_OK)) {
-		fprintf(stderr, "ERROR: cannot read %s: %s\n", tinc_conf, strerror(errno));
-
-		if(errno == ENOENT) {
-			fprintf(stderr, "No tinc configuration found. Create a new one with:\n\n");
-			print_tinc_cmd(argv0, "init");
-		} else if(errno == EACCES) {
-			if(uid != 0) {
-				fprintf(stderr, "You are currently not running tinc as root. Use sudo?\n");
-			} else {
-				fprintf(stderr, "Check the permissions of each component of the path %s.\n", tinc_conf);
-			}
-		}
-
-		return 1;
+	if(stat(fname, &st)) {
+		fprintf(stderr, "ERROR: could not stat private key file %s\n", fname);
+		return;
 	}
 
+	if(st.st_mode & 077) {
+		fprintf(stderr, "WARNING: unsafe file permissions on %s.\n", fname);
+
+		if(st.st_uid != uid) {
+			fprintf(stderr, "You are not running %s as the same uid as %s.\n", exe_name, fname);
+		} else if(ask_fix()) {
+			if(chmod(fname, st.st_mode & ~077u)) {
+				fprintf(stderr, "ERROR: could not change permissions of %s: %s\n", fname, strerror(errno));
+			} else {
+				fprintf(stderr, "Fixed permissions of %s.\n", fname);
+			}
+		}
+	}
+}
+#endif // HAVE_MINGW
+
+static char *read_node_name() {
+	if(access(tinc_conf, R_OK) == 0) {
+		return get_my_name(true);
+	}
+
+	fprintf(stderr, "ERROR: cannot read %s: %s\n", tinc_conf, strerror(errno));
+
+	if(errno == ENOENT) {
+		fprintf(stderr, "No tinc configuration found. Create a new one with:\n\n");
+		print_tinc_cmd("init");
+		return NULL;
+	}
+
+	if(errno == EACCES) {
+		uid_t uid = getuid();
+
+		if(uid != 0) {
+			fprintf(stderr, "You are currently not running tinc as root. Use sudo?\n");
+		} else {
+			fprintf(stderr, "Check the permissions of each component of the path %s.\n", tinc_conf);
+		}
+	}
+
+	return NULL;
+}
+
+static bool build_host_conf_path(char *fname, const size_t len) {
 	char *name = get_my_name(true);
 
 	if(!name) {
 		fprintf(stderr, "ERROR: tinc cannot run without a valid Name.\n");
-		return 1;
+		return false;
 	}
 
-	// Check for private keys.
-	// TODO: use RSAPrivateKeyFile and Ed25519PrivateKeyFile variables if present.
+	snprintf(fname, len, "%s/hosts/%s", confbase, name);
+	free(name);
+	return true;
+}
 
-	struct stat st;
-	char fname[PATH_MAX];
-	char dname[PATH_MAX];
+static bool ask_fix_ec_public_key(const char *fname, ecdsa_t *ec_priv) {
+	if(!ask_fix()) {
+		return true;
+	}
+
+	if(!disable_old_keys(fname, "public Ed25519 key")) {
+		return false;
+	}
+
+	FILE *f = fopen(fname, "a");
+
+	if(!f) {
+		fprintf(stderr, "ERROR: could not append to %s: %s\n", fname, strerror(errno));
+		return false;
+	}
+
+	bool success = ecdsa_write_pem_public_key(ec_priv, f);
+	fclose(f);
+
+	if(success) {
+		fprintf(stderr, "Wrote Ed25519 public key to %s.\n", fname);
+	} else {
+		fprintf(stderr, "ERROR: could not write Ed25519 public key to %s.\n", fname);
+	}
+
+	return success;
+}
 
 #ifndef DISABLE_LEGACY
-	rsa_t *rsa_priv = NULL;
-	snprintf(fname, sizeof(fname), "%s/rsa_key.priv", confbase);
+static bool ask_fix_rsa_public_key(const char *fname, rsa_t *rsa_priv) {
+	if(!ask_fix()) {
+		return true;
+	}
 
-	if(stat(fname, &st)) {
-		if(errno != ENOENT) {
-			// Something is seriously wrong here. If we can access the directory with tinc.conf in it, we should certainly be able to stat() an existing file.
-			fprintf(stderr, "ERROR: cannot read %s: %s\n", fname, strerror(errno));
-			fprintf(stderr, "Please correct this error.\n");
-			return 1;
-		}
+	if(!disable_old_keys(fname, "public RSA key")) {
+		return false;
+	}
+
+	FILE *f = fopen(fname, "a");
+
+	if(!f) {
+		fprintf(stderr, "ERROR: could not append to %s: %s\n", fname, strerror(errno));
+		return false;
+	}
+
+	bool success = rsa_write_pem_public_key(rsa_priv, f);
+	fclose(f);
+
+	if(success) {
+		fprintf(stderr, "Wrote RSA public key to %s.\n", fname);
 	} else {
-		FILE *f = fopen(fname, "r");
-
-		if(!f) {
-			fprintf(stderr, "ERROR: could not open %s: %s\n", fname, strerror(errno));
-			return 1;
-		}
-
-		rsa_priv = rsa_read_pem_private_key(f);
-		fclose(f);
-
-		if(!rsa_priv) {
-			fprintf(stderr, "ERROR: No key or unusable key found in %s.\n", fname);
-			fprintf(stderr, "You can generate a new RSA key with:\n\n");
-			print_tinc_cmd(argv0, "generate-rsa-keys");
-			return 1;
-		}
-
-#ifndef HAVE_MINGW
-
-		if(st.st_mode & 077) {
-			fprintf(stderr, "WARNING: unsafe file permissions on %s.\n", fname);
-
-			if(st.st_uid != uid) {
-				fprintf(stderr, "You are not running %s as the same uid as %s.\n", argv0, fname);
-			} else if(ask_fix()) {
-				if(chmod(fname, st.st_mode & ~077)) {
-					fprintf(stderr, "ERROR: could not change permissions of %s: %s\n", fname, strerror(errno));
-				} else {
-					fprintf(stderr, "Fixed permissions of %s.\n", fname);
-				}
-			}
-		}
-
-#endif
+		fprintf(stderr, "ERROR: could not write RSA public key to %s.\n", fname);
 	}
 
-#endif
+	return success;
+}
 
-	ecdsa_t *ecdsa_priv = NULL;
-	snprintf(fname, sizeof(fname), "%s/ed25519_key.priv", confbase);
+static bool test_rsa_keypair(rsa_t *rsa_priv, rsa_t *rsa_pub, const char *host_file) {
+	size_t len = rsa_size(rsa_priv);
 
-	if(stat(fname, &st)) {
-		if(errno != ENOENT) {
-			// Something is seriously wrong here. If we can access the directory with tinc.conf in it, we should certainly be able to stat() an existing file.
-			fprintf(stderr, "ERROR: cannot read %s: %s\n", fname, strerror(errno));
-			fprintf(stderr, "Please correct this error.\n");
-			return 1;
-		}
-	} else {
-		FILE *f = fopen(fname, "r");
-
-		if(!f) {
-			fprintf(stderr, "ERROR: could not open %s: %s\n", fname, strerror(errno));
-			return 1;
-		}
-
-		ecdsa_priv = ecdsa_read_pem_private_key(f);
-		fclose(f);
-
-		if(!ecdsa_priv) {
-			fprintf(stderr, "ERROR: No key or unusable key found in %s.\n", fname);
-			fprintf(stderr, "You can generate a new Ed25519 key with:\n\n");
-			print_tinc_cmd(argv0, "generate-ed25519-keys");
-			return 1;
-		}
-
-#ifndef HAVE_MINGW
-
-		if(st.st_mode & 077) {
-			fprintf(stderr, "WARNING: unsafe file permissions on %s.\n", fname);
-
-			if(st.st_uid != uid) {
-				fprintf(stderr, "You are not running %s as the same uid as %s.\n", argv0, fname);
-			} else if(ask_fix()) {
-				if(chmod(fname, st.st_mode & ~077)) {
-					fprintf(stderr, "ERROR: could not change permissions of %s: %s\n", fname, strerror(errno));
-				} else {
-					fprintf(stderr, "Fixed permissions of %s.\n", fname);
-				}
-			}
-		}
-
-#endif
+	if(len != rsa_size(rsa_pub)) {
+		fprintf(stderr, "ERROR: public and private RSA key lengths do not match.\n");
+		return false;
 	}
 
-#ifdef DISABLE_LEGACY
+	bool success = false;
+	uint8_t *plaintext = xmalloc(len);
+	uint8_t *encrypted = xzalloc(len);
+	uint8_t *decrypted = xzalloc(len);
 
-	if(!ecdsa_priv) {
-		fprintf(stderr, "ERROR: No Ed25519 private key found.\n");
-#else
+	randomize(plaintext, len);
+	plaintext[0] &= 0x7f;
 
-	if(!rsa_priv && !ecdsa_priv) {
-		fprintf(stderr, "ERROR: Neither RSA or Ed25519 private key found.\n");
-#endif
-		fprintf(stderr, "You can generate new keys with:\n\n");
-		print_tinc_cmd(argv0, "generate-keys");
-		return 1;
-	}
-
-	// Check for public keys.
-	// TODO: use RSAPublicKeyFile variable if present.
-
-	snprintf(fname, sizeof(fname), "%s/hosts/%s", confbase, name);
-
-	if(access(fname, R_OK)) {
-		fprintf(stderr, "WARNING: cannot read %s\n", fname);
-	}
-
-	FILE *f;
-
-#ifndef DISABLE_LEGACY
-	rsa_t *rsa_pub = NULL;
-
-	f = fopen(fname, "r");
-
-	if(f) {
-		rsa_pub = rsa_read_pem_public_key(f);
-		fclose(f);
-	}
-
-	if(rsa_priv) {
-		if(!rsa_pub) {
-			fprintf(stderr, "WARNING: No (usable) public RSA key found.\n");
-
-			if(ask_fix()) {
-				FILE *f = fopen(fname, "a");
-
-				if(f) {
-					if(rsa_write_pem_public_key(rsa_priv, f)) {
-						fprintf(stderr, "Wrote RSA public key to %s.\n", fname);
-					} else {
-						fprintf(stderr, "ERROR: could not write RSA public key to %s.\n", fname);
-					}
-
-					fclose(f);
-				} else {
-					fprintf(stderr, "ERROR: could not append to %s: %s\n", fname, strerror(errno));
-				}
-			}
-		} else {
-			// TODO: suggest remedies
-			size_t len = rsa_size(rsa_priv);
-
-			if(len != rsa_size(rsa_pub)) {
-				fprintf(stderr, "ERROR: public and private RSA keys do not match.\n");
-				return 1;
-			}
-
-			char *buf1 = malloc(len);
-			char *buf2 = malloc(len);
-			char *buf3 = malloc(len);
-
-			randomize(buf1, len);
-			buf1[0] &= 0x7f;
-			memset(buf2, 0, len);
-			memset(buf3, 0, len);
-			bool result = false;
-
-			if(rsa_public_encrypt(rsa_pub, buf1, len, buf2)) {
-				if(rsa_private_decrypt(rsa_priv, buf2, len, buf3)) {
-					if(memcmp(buf1, buf3, len)) {
-						result = true;
-					} else {
-						fprintf(stderr, "ERROR: public and private RSA keys do not match.\n");
-					}
-				} else {
-					fprintf(stderr, "ERROR: private RSA key does not work.\n");
-				}
+	if(rsa_public_encrypt(rsa_pub, plaintext, len, encrypted)) {
+		if(rsa_private_decrypt(rsa_priv, encrypted, len, decrypted)) {
+			if(memcmp(plaintext, decrypted, len) == 0) {
+				success = true;
 			} else {
-				fprintf(stderr, "ERROR: public RSA key does not work.\n");
-			}
-
-			free(buf3);
-			free(buf2);
-			free(buf1);
-
-			if(!result) {
-				return 1;
-			}
-
-		}
-	} else {
-		if(rsa_pub) {
-			fprintf(stderr, "WARNING: A public RSA key was found but no private key is known.\n");
-		}
-	}
-
-#endif
-
-	ecdsa_t *ecdsa_pub = NULL;
-
-	f = fopen(fname, "r");
-
-	if(f) {
-		ecdsa_pub = get_pubkey(f);
-
-		if(!ecdsa_pub) {
-			rewind(f);
-			ecdsa_pub = ecdsa_read_pem_public_key(f);
-		}
-
-		fclose(f);
-	}
-
-	if(ecdsa_priv) {
-		if(!ecdsa_pub) {
-			fprintf(stderr, "WARNING: No (usable) public Ed25519 key found.\n");
-
-			if(ask_fix()) {
-				FILE *f = fopen(fname, "a");
-
-				if(f) {
-					if(ecdsa_write_pem_public_key(ecdsa_priv, f)) {
-						fprintf(stderr, "Wrote Ed25519 public key to %s.\n", fname);
-					} else {
-						fprintf(stderr, "ERROR: could not write Ed25519 public key to %s.\n", fname);
-					}
-
-					fclose(f);
-				} else {
-					fprintf(stderr, "ERROR: could not append to %s: %s\n", fname, strerror(errno));
-				}
+				fprintf(stderr, "ERROR: public and private RSA keys do not match.\n");
+				success = ask_fix_rsa_public_key(host_file, rsa_priv);
 			}
 		} else {
-			// TODO: suggest remedies
-			char *key1 = ecdsa_get_base64_public_key(ecdsa_pub);
-
-			if(!key1) {
-				fprintf(stderr, "ERROR: public Ed25519 key does not work.\n");
-				return 1;
-			}
-
-			char *key2 = ecdsa_get_base64_public_key(ecdsa_priv);
-
-			if(!key2) {
-				free(key1);
-				fprintf(stderr, "ERROR: private Ed25519 key does not work.\n");
-				return 1;
-			}
-
-			int result = strcmp(key1, key2);
-			free(key1);
-			free(key2);
-
-			if(result) {
-				fprintf(stderr, "ERROR: public and private Ed25519 keys do not match.\n");
-				return 1;
-			}
+			print_new_keys_cmd(KEY_RSA, "ERROR: private RSA key does not work.");
 		}
 	} else {
-		if(ecdsa_pub) {
-			fprintf(stderr, "WARNING: A public Ed25519 key was found but no private key is known.\n");
+		fprintf(stderr, "ERROR: public RSA key does not work.\n");
+		success = ask_fix_rsa_public_key(host_file, rsa_priv);
+	}
+
+	free(decrypted);
+	free(encrypted);
+	free(plaintext);
+
+	return success;
+}
+
+static bool check_rsa_pubkey(rsa_t *rsa_priv, rsa_t *rsa_pub, const char *host_file) {
+	if(!rsa_pub) {
+		fprintf(stderr, "WARNING: No (usable) public RSA key found.\n");
+		return ask_fix_rsa_public_key(host_file, rsa_priv);
+	}
+
+	if(!rsa_priv) {
+		fprintf(stderr, "WARNING: A public RSA key was found but no private key is known.\n");
+		return true;
+	}
+
+	return test_rsa_keypair(rsa_priv, rsa_pub, host_file);
+}
+#endif // DISABLE_LEGACY
+
+static bool test_ec_keypair(ecdsa_t *ec_priv, ecdsa_t *ec_pub, const char *host_file) {
+	// base64-encoded public key obtained from the PRIVATE key.
+	char *b64_priv_pub = ecdsa_get_base64_public_key(ec_priv);
+
+	if(!b64_priv_pub) {
+		print_new_keys_cmd(KEY_ED25519, "ERROR: private Ed25519 key does not work.");
+		return false;
+	}
+
+	// base64-encoded public key obtained from the PUBLIC key.
+	char *b64_pub_pub = ecdsa_get_base64_public_key(ec_pub);
+
+	if(!b64_pub_pub) {
+		fprintf(stderr, "ERROR: public Ed25519 key does not work.\n");
+		free(b64_priv_pub);
+		return ask_fix_ec_public_key(host_file, ec_priv);
+	}
+
+	bool match = strcmp(b64_pub_pub, b64_priv_pub) == 0;
+	free(b64_pub_pub);
+	free(b64_priv_pub);
+
+	if(match) {
+		return true;
+	}
+
+	fprintf(stderr, "ERROR: public and private Ed25519 keys do not match.\n");
+	return ask_fix_ec_public_key(host_file, ec_priv);
+}
+
+static bool check_ec_pubkey(ecdsa_t *ec_priv, ecdsa_t *ec_pub, const char *host_file) {
+	if(!ec_priv) {
+		if(ec_pub) {
+			print_new_keys_cmd(KEY_ED25519, "WARNING: A public Ed25519 key was found but no private key is known.");
+		}
+
+		return true;
+	}
+
+	if(ec_pub) {
+		return test_ec_keypair(ec_priv, ec_pub, host_file);
+	}
+
+	fprintf(stderr, "WARNING: No (usable) public Ed25519 key found.\n");
+	return ask_fix_ec_public_key(host_file, ec_priv);
+}
+
+static bool check_config_mode(const char *fname) {
+	if(access(fname, R_OK | X_OK) == 0) {
+		return true;
+	}
+
+	if(errno != EACCES) {
+		fprintf(stderr, "ERROR: cannot access %s: %s\n", fname, strerror(errno));
+		return false;
+	}
+
+	fprintf(stderr, "WARNING: cannot read and execute %s: %s\n", fname, strerror(errno));
+
+	if(ask_fix()) {
+		if(chmod(fname, 0755)) {
+			fprintf(stderr, "ERROR: cannot change permissions on %s: %s\n", fname, strerror(errno));
 		}
 	}
 
-	// Check whether scripts are executable
+	return true;
+}
 
-	struct dirent *ent;
+static bool check_script_confdir() {
+	char fname[PATH_MAX];
 	DIR *dir = opendir(confbase);
 
 	if(!dir) {
 		fprintf(stderr, "ERROR: cannot read directory %s: %s\n", confbase, strerror(errno));
-		return 1;
+		return false;
 	}
+
+	struct dirent *ent;
 
 	while((ent = readdir(dir))) {
 		if(strtailcmp(ent->d_name, "-up") && strtailcmp(ent->d_name, "-down")) {
@@ -530,32 +477,24 @@ int fsck(const char *argv0) {
 		}
 
 		snprintf(fname, sizeof(fname), "%s" SLASH "%s", confbase, ent->d_name);
-
-		if(access(fname, R_OK | X_OK)) {
-			if(errno != EACCES) {
-				fprintf(stderr, "ERROR: cannot access %s: %s\n", fname, strerror(errno));
-				continue;
-			}
-
-			fprintf(stderr, "WARNING: cannot read and execute %s: %s\n", fname, strerror(errno));
-
-			if(ask_fix()) {
-				if(chmod(fname, 0755)) {
-					fprintf(stderr, "ERROR: cannot change permissions on %s: %s\n", fname, strerror(errno));
-				}
-			}
-		}
+		check_config_mode(fname);
 	}
 
 	closedir(dir);
 
-	snprintf(dname, sizeof(dname), "%s" SLASH "hosts", confbase);
-	dir = opendir(dname);
+	return true;
+}
+
+static bool check_script_hostdir(const char *host_dir) {
+	char fname[PATH_MAX];
+	DIR *dir = opendir(host_dir);
 
 	if(!dir) {
-		fprintf(stderr, "ERROR: cannot read directory %s: %s\n", dname, strerror(errno));
-		return 1;
+		fprintf(stderr, "ERROR: cannot read directory %s: %s\n", host_dir, strerror(errno));
+		return false;
 	}
+
+	struct dirent *ent;
 
 	while((ent = readdir(dir))) {
 		if(strtailcmp(ent->d_name, "-up") && strtailcmp(ent->d_name, "-down")) {
@@ -572,44 +511,165 @@ int fsck(const char *argv0) {
 		*dash = 0;
 
 		snprintf(fname, sizeof(fname), "%s" SLASH "hosts" SLASH "%s", confbase, ent->d_name);
-
-		if(access(fname, R_OK | X_OK)) {
-			if(errno != EACCES) {
-				fprintf(stderr, "ERROR: cannot access %s: %s\n", fname, strerror(errno));
-				continue;
-			}
-
-			fprintf(stderr, "WARNING: cannot read and execute %s: %s\n", fname, strerror(errno));
-
-			if(ask_fix()) {
-				if(chmod(fname, 0755)) {
-					fprintf(stderr, "ERROR: cannot change permissions on %s: %s\n", fname, strerror(errno));
-				}
-			}
-		}
+		check_config_mode(fname);
 	}
 
 	closedir(dir);
 
-	// Check for obsolete / unsafe / unknown configuration variables.
+	return true;
+}
 
-	check_conffile(tinc_conf, true);
+#ifdef DISABLE_LEGACY
+static bool check_public_keys(splay_tree_t *config, const char *name, ecdsa_t *ec_priv) {
+#else
+static bool check_public_keys(splay_tree_t *config, const char *name, rsa_t *rsa_priv, ecdsa_t *ec_priv) {
+#endif
+	// Check public keys.
+	char host_file[PATH_MAX];
 
-	dir = opendir(dname);
+	if(!build_host_conf_path(host_file, sizeof(host_file))) {
+		return false;
+	}
+
+	if(access(host_file, R_OK)) {
+		fprintf(stderr, "WARNING: cannot read %s\n", host_file);
+	}
+
+	ecdsa_t *ec_pub = NULL;
+	read_ecdsa_public_key(&ec_pub, &config, name);
+
+	bool success = true;
+#ifndef DISABLE_LEGACY
+	rsa_t *rsa_pub = NULL;
+	read_rsa_public_key(&rsa_pub, config, name);
+
+	success = check_rsa_pubkey(rsa_priv, rsa_pub, host_file);
+	rsa_free(rsa_pub);
+#endif
+
+	if(!check_ec_pubkey(ec_priv, ec_pub, host_file)) {
+		success = false;
+	}
+
+	ecdsa_free(ec_pub);
+
+	return success;
+}
+
+static bool check_keypairs(splay_tree_t *config, const char *name) {
+	// Check private keys.
+	char *priv_keyfile = NULL;
+	ecdsa_t *ec_priv = read_ecdsa_private_key(config, &priv_keyfile);
+
+	if(priv_keyfile) {
+		check_key_file_mode(priv_keyfile);
+		free(priv_keyfile);
+		priv_keyfile = NULL;
+	}
+
+#ifdef DISABLE_LEGACY
+
+	if(!ec_priv) {
+		print_new_keys_cmd(KEY_ED25519, "ERROR: No Ed25519 private key found.");
+		return false;
+	}
+
+#else
+	rsa_t *rsa_priv = read_rsa_private_key(config, &priv_keyfile);
+
+	if(priv_keyfile) {
+		check_key_file_mode(priv_keyfile);
+		free(priv_keyfile);
+	}
+
+	if(!rsa_priv && !ec_priv) {
+		print_new_keys_cmd(KEY_BOTH, "ERROR: Neither RSA or Ed25519 private key found.");
+		return false;
+	}
+
+#endif
+
+#ifdef DISABLE_LEGACY
+	bool success = check_public_keys(config, name, ec_priv);
+#else
+	bool success = check_public_keys(config, name, rsa_priv, ec_priv);
+	rsa_free(rsa_priv);
+#endif
+	ecdsa_free(ec_priv);
+
+	return success;
+}
+
+static void check_config_variables(const char *host_dir) {
+	check_conffile(NULL, true);
+
+	DIR *dir = opendir(host_dir);
 
 	if(dir) {
-		while((ent = readdir(dir))) {
-			if(!check_id(ent->d_name)) {
-				continue;
+		for(struct dirent * ent; (ent = readdir(dir));) {
+			if(check_id(ent->d_name)) {
+				check_conffile(ent->d_name, false);
 			}
-
-			snprintf(fname, sizeof(fname), "%s" SLASH "hosts" SLASH "%s", confbase, ent->d_name);
-			check_conffile(fname, false);
 		}
 
 		closedir(dir);
 	}
-
-	return 0;
 }
 
+static bool check_scripts_and_configs() {
+	// Check whether scripts are executable.
+	if(!check_script_confdir()) {
+		return false;
+	}
+
+	char host_dir[PATH_MAX];
+	snprintf(host_dir, sizeof(host_dir), "%s" SLASH "hosts", confbase);
+
+	if(!check_script_hostdir(host_dir)) {
+		return false;
+	}
+
+	// Check for obsolete / unsafe / unknown configuration variables (and print warnings).
+	check_config_variables(host_dir);
+
+	return true;
+}
+
+int fsck(const char *argv0) {
+	exe_name = argv0;
+
+	// Check that tinc.conf is readable and read our name if it is.
+	char *name = read_node_name();
+
+	if(!name) {
+		fprintf(stderr, "ERROR: tinc cannot run without a valid Name.\n");
+		exe_name = NULL;
+		return EXIT_FAILURE;
+	}
+
+	// Avoid touching global configuration here. Read the config files into
+	// a temporary configuration tree, then throw it away after fsck is done.
+	splay_tree_t config;
+	init_configuration(&config);
+
+	// Read the server configuration file and append host configuration for our node.
+	bool success = read_server_config(&config) &&
+	               read_host_config(&config, name, true);
+
+	// Check both RSA and EC key pairs.
+	// We need working configuration to run this check.
+	if(success) {
+		success = check_keypairs(&config, name);
+	}
+
+	// Check that scripts are executable and check the config for invalid variables.
+	// This check does not require working configuration, so run it always.
+	// This way, we can diagnose more issues on the first run.
+	success = success & check_scripts_and_configs();
+
+	splay_empty_tree(&config);
+	free(name);
+	exe_name = NULL;
+
+	return success ? EXIT_SUCCESS : EXIT_FAILURE;
+}

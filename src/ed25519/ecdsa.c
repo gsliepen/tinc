@@ -35,10 +35,10 @@ typedef struct {
 // Get and set ECDSA keys
 //
 ecdsa_t *ecdsa_set_base64_public_key(const char *p) {
-	int len = strlen(p);
+	size_t len = strlen(p);
 
 	if(len != 43) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Invalid size %d for public key!", len);
+		logger(DEBUG_ALWAYS, LOG_ERR, "Invalid size %zu for public key!", len);
 		return 0;
 	}
 
@@ -46,7 +46,7 @@ ecdsa_t *ecdsa_set_base64_public_key(const char *p) {
 	len = b64decode(p, ecdsa->public, len);
 
 	if(len != 32) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Invalid format of public key! len = %d", len);
+		logger(DEBUG_ALWAYS, LOG_ERR, "Invalid format of public key! len = %zu", len);
 		free(ecdsa);
 		return 0;
 	}

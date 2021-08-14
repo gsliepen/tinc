@@ -31,7 +31,6 @@
 #include "logger.h"
 #include "net.h"
 #include "route.h"
-#include "utils.h"
 
 struct unix_socket_addr {
 	size_t size;
@@ -43,7 +42,7 @@ static int read_fd(int socket) {
 	struct iovec iov = {0};
 	char cmsgbuf[CMSG_SPACE(sizeof(device_fd))];
 	struct msghdr msg = {0};
-	int ret;
+	ssize_t ret;
 	struct cmsghdr *cmsgptr;
 
 	iov.iov_base = &iobuf;
@@ -54,7 +53,7 @@ static int read_fd(int socket) {
 	msg.msg_controllen = sizeof(cmsgbuf);
 
 	if((ret = recvmsg(socket, &msg, 0)) < 1) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not read from unix socket (error %d)!", ret);
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not read from unix socket (error %zd)!", ret);
 		return -1;
 	}
 
@@ -84,8 +83,8 @@ static int read_fd(int socket) {
 	}
 
 	if(cmsgptr->cmsg_len != CMSG_LEN(sizeof(device_fd))) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Wrong CMSG data length: %lu, expected %lu!",
-		       (unsigned long)cmsgptr->cmsg_len, (unsigned long)CMSG_LEN(sizeof(device_fd)));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Wrong CMSG data length: %zu, expected %zu!",
+		       cmsgptr->cmsg_len, CMSG_LEN(sizeof(device_fd)));
 		return -1;
 	}
 
@@ -116,7 +115,9 @@ end:
 }
 
 static struct unix_socket_addr parse_socket_addr(const char *path) {
-	struct sockaddr_un socket_addr;
+	struct sockaddr_un socket_addr = {
+		.sun_family = AF_UNIX,
+	};
 	size_t path_length;
 
 	if(strlen(path) >= sizeof(socket_addr.sun_path)) {
@@ -126,7 +127,6 @@ static struct unix_socket_addr parse_socket_addr(const char *path) {
 		};
 	}
 
-	socket_addr.sun_family = AF_UNIX;
 	strncpy(socket_addr.sun_path, path, sizeof(socket_addr.sun_path));
 
 	if(path[0] == '@') {
@@ -150,7 +150,7 @@ static bool setup_device(void) {
 		return false;
 	}
 
-	if(!get_config_string(lookup_config(config_tree, "Device"), &device)) {
+	if(!get_config_string(lookup_config(&config_tree, "Device"), &device)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not read device from configuration!");
 		return false;
 	}
@@ -174,6 +174,10 @@ static bool setup_device(void) {
 static void close_device(void) {
 	close(device_fd);
 	device_fd = -1;
+	free(iface);
+	iface = NULL;
+	free(device);
+	device = NULL;
 }
 
 static inline uint16_t get_ip_ethertype(vpn_packet_t *packet) {
@@ -197,7 +201,7 @@ static inline void set_etherheader(vpn_packet_t *packet, uint16_t ethertype) {
 }
 
 static bool read_packet(vpn_packet_t *packet) {
-	int lenin = read(device_fd, DATA(packet) + ETH_HLEN, MTU - ETH_HLEN);
+	ssize_t lenin = read(device_fd, DATA(packet) + ETH_HLEN, MTU - ETH_HLEN);
 
 	if(lenin <= 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from fd/%d: %s!", device_fd, strerror(errno));

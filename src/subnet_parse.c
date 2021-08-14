@@ -22,23 +22,20 @@
 
 #include "logger.h"
 #include "net.h"
-#include "netutl.h"
 #include "subnet.h"
-#include "utils.h"
-#include "xalloc.h"
 
 /* Changing this default will affect ADD_SUBNET messages - beware of inconsistencies between versions */
 static const int DEFAULT_WEIGHT = 10;
 
 /* Subnet mask handling */
 
-int maskcmp(const void *va, const void *vb, int masklen) {
-	int i, m, result;
-	const char *a = va;
-	const char *b = vb;
+int maskcmp(const void *va, const void *vb, size_t masklen) {
+	size_t i, m;
+	const uint8_t *a = va;
+	const uint8_t *b = vb;
 
 	for(m = masklen, i = 0; m >= 8; m -= 8, i++) {
-		result = a[i] - b[i];
+		int result = a[i] - b[i];
 
 		if(result) {
 			return result;
@@ -52,9 +49,9 @@ int maskcmp(const void *va, const void *vb, int masklen) {
 	return 0;
 }
 
-void mask(void *va, int masklen, int len) {
-	int i;
-	char *a = va;
+void mask(void *va, size_t masklen, size_t len) {
+	size_t i;
+	uint8_t *a = va;
 
 	i = masklen / 8;
 	masklen %= 8;
@@ -68,10 +65,10 @@ void mask(void *va, int masklen, int len) {
 	}
 }
 
-void maskcpy(void *va, const void *vb, int masklen, int len) {
-	int i, m;
-	char *a = va;
-	const char *b = vb;
+void maskcpy(void *va, const void *vb, size_t masklen, size_t len) {
+	size_t i, m;
+	uint8_t *a = va;
+	const uint8_t *b = vb;
 
 	for(m = masklen, i = 0; m >= 8; m -= 8, i++) {
 		a[i] = b[i];
@@ -98,9 +95,9 @@ bool subnetcheck(const subnet_t subnet) {
 	return true;
 }
 
-bool maskcheck(const void *va, int masklen, int len) {
-	int i;
-	const char *a = va;
+bool maskcheck(const void *va, size_t masklen, size_t len) {
+	size_t i;
+	const uint8_t *a = va;
 
 	i = masklen / 8;
 	masklen %= 8;
@@ -186,9 +183,7 @@ static int subnet_compare_ipv6(const subnet_t *a, const subnet_t *b) {
 }
 
 int subnet_compare(const subnet_t *a, const subnet_t *b) {
-	int result;
-
-	result = a->type - b->type;
+	int result = (int)a->type - (int)b->type;
 
 	if(result) {
 		return result;
@@ -215,7 +210,7 @@ int subnet_compare(const subnet_t *a, const subnet_t *b) {
 /* Ascii representation of subnets */
 
 bool str2net(subnet_t *subnet, const char *subnetstr) {
-	char str[1024];
+	char str[64];
 	strncpy(str, subnetstr, sizeof(str));
 	str[sizeof(str) - 1] = 0;
 	int consumed;
@@ -280,7 +275,7 @@ bool str2net(subnet_t *subnet, const char *subnetstr) {
 		return true;
 	}
 
-	if(sscanf(str, "%hu.%hu.%hu.%hu%n", &x[0], &x[1], &x[2], &x[3], &consumed) >= 4 && !str[consumed]) {
+	if(inet_pton(AF_INET, str, &subnet->net.ipv4.address)) {
 		if(prefixlength == -1) {
 			prefixlength = 32;
 		}
@@ -293,71 +288,10 @@ bool str2net(subnet_t *subnet, const char *subnetstr) {
 		subnet->net.ipv4.prefixlength = prefixlength;
 		subnet->weight = weight;
 
-		for(int i = 0; i < 4; i++) {
-			if(x[i] > 255) {
-				return false;
-			}
-
-			subnet->net.ipv4.address.x[i] = x[i];
-		}
-
 		return true;
 	}
 
-	/* IPv6 */
-
-	char *last_colon = strrchr(str, ':');
-
-	if(last_colon && sscanf(last_colon, ":%hu.%hu.%hu.%hu%n", &x[0], &x[1], &x[2], &x[3], &consumed) >= 4 && !last_colon[consumed]) {
-		/* Dotted quad suffix notation, convert to standard IPv6 notation */
-		for(int i = 0; i < 4; i++)
-			if(x[i] > 255) {
-				return false;
-			}
-
-		snprintf(last_colon, sizeof(str) - (last_colon - str), ":%02x%02x:%02x%02x", x[0], x[1], x[2], x[3]);
-	}
-
-	char *double_colon = strstr(str, "::");
-
-	if(double_colon) {
-		/* Figure out how many zero groups we need to expand */
-		int zero_group_count = 8;
-
-		for(const char *cur = str; *cur; cur++)
-			if(*cur != ':') {
-				zero_group_count--;
-
-				while(cur[1] && cur[1] != ':') {
-					cur++;
-				}
-			}
-
-		if(zero_group_count < 1) {
-			return false;
-		}
-
-		/* Split the double colon in the middle to make room for zero groups */
-		double_colon++;
-		memmove(double_colon + (zero_group_count * 2 - 1), double_colon, strlen(double_colon) + 1);
-
-		/* Write zero groups in the resulting gap, overwriting the second colon */
-		for(int i = 0; i < zero_group_count; i++) {
-			memcpy(&double_colon[i * 2], "0:", 2);
-		}
-
-		/* Remove any leading or trailing colons */
-		if(str[0] == ':') {
-			memmove(&str[0], &str[1], strlen(&str[1]) + 1);
-		}
-
-		if(str[strlen(str) - 1] == ':') {
-			str[strlen(str) - 1] = 0;
-		}
-	}
-
-	if(sscanf(str, "%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx%n",
-	                &x[0], &x[1], &x[2], &x[3], &x[4], &x[5], &x[6], &x[7], &consumed) >= 8 && !str[consumed]) {
+	if(inet_pton(AF_INET6, str, &subnet->net.ipv6.address)) {
 		if(prefixlength == -1) {
 			prefixlength = 128;
 		}
@@ -370,17 +304,13 @@ bool str2net(subnet_t *subnet, const char *subnetstr) {
 		subnet->net.ipv6.prefixlength = prefixlength;
 		subnet->weight = weight;
 
-		for(int i = 0; i < 8; i++) {
-			subnet->net.ipv6.address.x[i] = htons(x[i]);
-		}
-
 		return true;
 	}
 
 	return false;
 }
 
-bool net2str(char *netstr, int len, const subnet_t *subnet) {
+bool net2str(char *netstr, size_t len, const subnet_t *subnet) {
 	if(!netstr || !subnet) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "net2str() was called with netstr=%p, subnet=%p!", (void *)netstr, (void *)subnet);
 		return false;
@@ -391,25 +321,17 @@ bool net2str(char *netstr, int len, const subnet_t *subnet) {
 
 	switch(subnet->type) {
 	case SUBNET_MAC:
-		result = snprintf(netstr, len, "%02x:%02x:%02x:%02x:%02x:%02x",
-		                  subnet->net.mac.address.x[0],
-		                  subnet->net.mac.address.x[1],
-		                  subnet->net.mac.address.x[2],
-		                  subnet->net.mac.address.x[3],
-		                  subnet->net.mac.address.x[4],
-		                  subnet->net.mac.address.x[5]);
-		netstr += result;
-		len -= result;
+		snprintf(netstr, len, "%02x:%02x:%02x:%02x:%02x:%02x",
+		         subnet->net.mac.address.x[0],
+		         subnet->net.mac.address.x[1],
+		         subnet->net.mac.address.x[2],
+		         subnet->net.mac.address.x[3],
+		         subnet->net.mac.address.x[4],
+		         subnet->net.mac.address.x[5]);
 		break;
 
 	case SUBNET_IPV4:
-		result = snprintf(netstr, len, "%u.%u.%u.%u",
-		                  subnet->net.ipv4.address.x[0],
-		                  subnet->net.ipv4.address.x[1],
-		                  subnet->net.ipv4.address.x[2],
-		                  subnet->net.ipv4.address.x[3]);
-		netstr += result;
-		len -= result;
+		inet_ntop(AF_INET, &subnet->net.ipv4.address, netstr, len);
 		prefixlength = subnet->net.ipv4.prefixlength;
 
 		if(prefixlength == 32) {
@@ -419,60 +341,7 @@ bool net2str(char *netstr, int len, const subnet_t *subnet) {
 		break;
 
 	case SUBNET_IPV6: {
-		/* Find the longest sequence of consecutive zeroes */
-		int max_zero_length = 0;
-		int max_zero_length_index = 0;
-		int current_zero_length = 0;
-		int current_zero_length_index = 0;
-
-		for(int i = 0; i < 8; i++) {
-			if(subnet->net.ipv6.address.x[i] != 0) {
-				current_zero_length = 0;
-			} else {
-				if(current_zero_length == 0) {
-					current_zero_length_index = i;
-				}
-
-				current_zero_length++;
-
-				if(current_zero_length > max_zero_length) {
-					max_zero_length = current_zero_length;
-					max_zero_length_index = current_zero_length_index;
-				}
-			}
-		}
-
-		/* Print the address */
-		for(int i = 0; i < 8;) {
-			if(max_zero_length > 1 && max_zero_length_index == i) {
-				/* Shorten the representation as per RFC 5952 */
-				const char *const FORMATS[] = { "%.1s", "%.2s", "%.3s" };
-				const char *const *format = &FORMATS[0];
-
-				if(i == 0) {
-					format++;
-				}
-
-				if(i + max_zero_length == 8) {
-					format++;
-				}
-
-				result = snprintf(netstr, len, *format, ":::");
-				i += max_zero_length;
-			} else {
-				result = snprintf(netstr, len, "%x:", ntohs(subnet->net.ipv6.address.x[i]));
-				i++;
-			}
-
-			netstr += result;
-			len -= result;
-		}
-
-		/* Remove the trailing colon */
-		netstr--;
-		len++;
-		*netstr = 0;
-
+		inet_ntop(AF_INET6, &subnet->net.ipv6.address, netstr, len);
 		prefixlength = subnet->net.ipv6.prefixlength;
 
 		if(prefixlength == 128) {
@@ -486,6 +355,10 @@ bool net2str(char *netstr, int len, const subnet_t *subnet) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "net2str() was called with unknown subnet type %d, exiting!", subnet->type);
 		exit(1);
 	}
+
+	size_t used = strlen(netstr);
+	netstr += used;
+	len -= used;
 
 	if(prefixlength >= 0) {
 		result = snprintf(netstr, len, "/%d", prefixlength);

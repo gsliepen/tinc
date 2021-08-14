@@ -28,8 +28,9 @@
 #include "control_common.h"
 #include "process.h"
 #include "sptps.h"
+#include "compression.h"
 
-int debug_level = DEBUG_NOTHING;
+debug_t debug_level = DEBUG_NOTHING;
 static logmode_t logmode = LOGMODE_STDERR;
 static pid_t logpid;
 static FILE *logfile = NULL;
@@ -37,19 +38,18 @@ static FILE *logfile = NULL;
 static HANDLE loghandle = NULL;
 #endif
 static const char *logident = NULL;
-bool logcontrol = false;
+bool logcontrol = false; // controlled by REQ_LOG <level>
 int umbilical = 0;
 
-static void real_logger(int level, int priority, const char *message) {
+static bool should_log(debug_t level) {
+	return (level <= debug_level && logmode != LOGMODE_NULL) || logcontrol;
+}
+
+static void real_logger(debug_t level, int priority, const char *message) {
 	char timestr[32] = "";
 	static bool suppress = false;
 
-	// Bail out early if there is nothing to do.
 	if(suppress) {
-		return;
-	}
-
-	if(!logcontrol && (level > debug_level || logmode == LOGMODE_NULL)) {
 		return;
 	}
 
@@ -86,6 +86,7 @@ static void real_logger(int level, int priority, const char *message) {
 			break;
 
 		case LOGMODE_NULL:
+		default:
 			break;
 		}
 
@@ -99,20 +100,20 @@ static void real_logger(int level, int priority, const char *message) {
 		suppress = true;
 		logcontrol = false;
 
-		for list_each(connection_t, c, connection_list) {
+		for list_each(connection_t, c, &connection_list) {
 			if(!c->status.log) {
 				continue;
 			}
 
 			logcontrol = true;
 
-			if(level > (c->outcompression >= 0 ? c->outcompression : debug_level)) {
+			if(level > (c->outcompression >= COMPRESS_NONE ? c->outcompression : debug_level)) {
 				continue;
 			}
 
-			int len = strlen(message);
+			size_t len = strlen(message);
 
-			if(send_request(c, "%d %d %d", CONTROL, REQ_LOG, len)) {
+			if(send_request(c, "%d %d %zu", CONTROL, REQ_LOG, len)) {
 				send_meta(c, message, len);
 			}
 		}
@@ -121,9 +122,13 @@ static void real_logger(int level, int priority, const char *message) {
 	}
 }
 
-void logger(int level, int priority, const char *format, ...) {
+void logger(debug_t level, int priority, const char *format, ...) {
 	va_list ap;
 	char message[1024] = "";
+
+	if(!should_log(level)) {
+		return;
+	}
 
 	va_start(ap, format);
 	int len = vsnprintf(message, sizeof(message), format, ap);
@@ -141,6 +146,10 @@ static void sptps_logger(sptps_t *s, int s_errno, const char *format, va_list ap
 	(void)s_errno;
 	char message[1024];
 	size_t msglen = sizeof(message);
+
+	if(!should_log(DEBUG_ALWAYS)) {
+		return;
+	}
 
 	int len = vsnprintf(message, msglen, format, ap);
 	message[sizeof(message) - 1] = 0;
@@ -200,6 +209,7 @@ void openlogger(const char *ident, logmode_t mode) {
 #endif
 
 	case LOGMODE_NULL:
+	default:
 		break;
 	}
 
@@ -247,6 +257,7 @@ void closelogger(void) {
 
 	case LOGMODE_NULL:
 	case LOGMODE_STDERR:
+	default:
 		break;
 	}
 }

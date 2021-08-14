@@ -84,7 +84,6 @@ extern bool send_request(struct connection_t *c, const char *format, ...) __attr
 extern void forward_request(struct connection_t *c, const char *request);
 extern bool receive_request(struct connection_t *c, const char *request);
 
-extern void init_requests(void);
 extern void exit_requests(void);
 extern bool seen_request(const char *request);
 
@@ -107,7 +106,7 @@ extern void send_key_changed(void);
 extern bool send_req_key(struct node_t *to);
 extern bool send_ans_key(struct node_t *to);
 extern bool send_tcppacket(struct connection_t *c, const struct vpn_packet_t *packet);
-extern bool send_sptps_tcppacket(struct connection_t *c, const char *packet, int len);
+extern bool send_sptps_tcppacket(struct connection_t *c, const void *packet, size_t len);
 extern bool send_udp_info(struct node_t *from, struct node_t *to);
 extern bool send_mtu_info(struct node_t *from, struct node_t *to, int mtu);
 

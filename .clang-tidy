@@ -1,0 +1,2 @@
+Checks: '-*,bugprone-narrowing-conversions'
+WarningsAsErrors: '*'

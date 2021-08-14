@@ -25,27 +25,32 @@
 #include "cipher.h"
 #include "conf.h"
 #include "control_common.h"
-#include "list.h"
 #include "logger.h"
 #include "net.h"
 #include "rsa.h"
-#include "subnet.h"
 #include "utils.h"
 #include "xalloc.h"
 
-list_t *connection_list;
+list_t connection_list = {
+	.head = NULL,
+	.tail = NULL,
+	.count = 0,
+	.delete = (list_action_t) free_connection,
+};
+
 connection_t *everyone;
 
 void init_connections(void) {
-	connection_list = list_alloc((list_action_t) free_connection);
 	everyone = new_connection();
 	everyone->name = xstrdup("everyone");
 	everyone->hostname = xstrdup("BROADCAST");
 }
 
 void exit_connections(void) {
-	list_delete_list(connection_list);
+	list_empty_list(&connection_list);
+
 	free_connection(everyone);
+	everyone = NULL;
 }
 
 connection_t *new_connection(void) {
@@ -95,15 +100,15 @@ void free_connection(connection_t *c) {
 }
 
 void connection_add(connection_t *c) {
-	list_insert_tail(connection_list, c);
+	list_insert_tail(&connection_list, c);
 }
 
 void connection_del(connection_t *c) {
-	list_delete(connection_list, c);
+	list_delete(&connection_list, c);
 }
 
 bool dump_connections(connection_t *cdump) {
-	for list_each(connection_t, c, connection_list) {
+	for list_each(connection_t, c, &connection_list) {
 		send_request(cdump, "%d %d %s %s %x %d %x",
 		             CONTROL, REQ_DUMP_CONNECTIONS,
 		             c->name, c->hostname, c->options, c->socket,

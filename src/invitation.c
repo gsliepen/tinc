@@ -111,6 +111,9 @@ char *get_my_hostname() {
 		scan_for_hostname(tinc_conf, &hostname, &port);
 	}
 
+	free(name);
+	name = NULL;
+
 	if(hostname) {
 		goto done;
 	}
@@ -133,7 +136,7 @@ char *get_my_hostname() {
 
 		if(s >= 0) {
 			send(s, request, sizeof(request) - 1, 0);
-			int len = recv(s, line, sizeof(line) - 1, MSG_WAITALL);
+			ssize_t len = recv(s, line, sizeof(line) - 1, MSG_WAITALL);
 
 			if(len > 0) {
 				line[len] = 0;
@@ -167,7 +170,7 @@ char *get_my_hostname() {
 	// Check that the hostname is reasonable
 	if(hostname) {
 		for(char *p = hostname; *p; p++) {
-			if(isalnum(*p) || *p == '-' || *p == '.' || *p == ':') {
+			if(isalnum((uint8_t) *p) || *p == '-' || *p == '.' || *p == ':') {
 				continue;
 			}
 
@@ -213,7 +216,7 @@ again:
 	}
 
 	for(char *p = line; *p; p++) {
-		if(isalnum(*p) || *p == '-' || *p == '.') {
+		if(isalnum((uint8_t) *p) || *p == '-' || *p == '.') {
 			continue;
 		}
 
@@ -289,6 +292,7 @@ int cmd_invite(int argc, char *argv[]) {
 		return 1;
 	}
 
+	free(myname);
 	myname = get_my_name(true);
 
 	if(!myname) {
@@ -407,6 +411,7 @@ int cmd_invite(int argc, char *argv[]) {
 
 		if(!f) {
 			fprintf(stderr, "Could not write %s: %s\n", filename, strerror(errno));
+			free(key);
 			return 1;
 		}
 
@@ -415,6 +420,7 @@ int cmd_invite(int argc, char *argv[]) {
 		if(!ecdsa_write_pem_private_key(key, f)) {
 			fprintf(stderr, "Could not write ECDSA private key\n");
 			fclose(f);
+			free(key);
 			return 1;
 		}
 
@@ -444,17 +450,21 @@ int cmd_invite(int argc, char *argv[]) {
 	sha512(fingerprint, strlen(fingerprint), hash);
 	b64encode_urlsafe(hash, hash, 18);
 
+	free(key);
+
 	// Create a random cookie for this invitation.
 	char cookie[25];
 	randomize(cookie, 18);
 
 	// Create a filename that doesn't reveal the cookie itself
-	char buf[18 + strlen(fingerprint)];
+	uint8_t buf[18 + strlen(fingerprint)];
 	char cookiehash[64];
 	memcpy(buf, cookie, 18);
 	memcpy(buf + 18, fingerprint, sizeof(buf) - 18);
 	sha512(buf, sizeof(buf), cookiehash);
 	b64encode_urlsafe(cookiehash, cookiehash, 18);
+
+	free(fingerprint);
 
 	b64encode_urlsafe(cookie, cookie, 18);
 
@@ -562,7 +572,7 @@ static char *get_line(const char **data) {
 		return NULL;
 	}
 
-	if(len && !isprint(**data)) {
+	if(len && !isprint((uint8_t) **data)) {
 		abort();
 	}
 
@@ -605,7 +615,7 @@ static char *grep(const char *data, const char *var) {
 	static char value[1024];
 
 	const char *p = data;
-	int varlen = strlen(var);
+	size_t varlen = strlen(var);
 
 	// Skip all lines not starting with var
 	while(strncasecmp(p, var, varlen) || !strchr(" \t=", p[varlen])) {
@@ -771,7 +781,7 @@ make_names:
 		}
 
 		// Split line into variable and value
-		int len = strcspn(l, "\t =");
+		size_t len = strcspn(l, "\t =");
 		value = l + len;
 		value += strspn(value, "\t ");
 
@@ -876,7 +886,7 @@ make_names:
 				continue;
 			}
 
-			int len = strcspn(l, "\t =");
+			size_t len = strcspn(l, "\t =");
 
 			if(len == 4 && !strncasecmp(l, "Name", 4)) {
 				value = l + len;
@@ -1054,7 +1064,13 @@ ask_netname:
 				}
 			}
 		} else {
-			fprintf(stderr, "A tinc-up script was generated, but has been left disabled.\n");
+			if(force) {
+				rename(filename, filename2);
+				chmod(filename2, 0755);
+				fprintf(stderr, "tinc-up enabled.\n");
+			} else {
+				fprintf(stderr, "A tinc-up script was generated, but has been left disabled.\n");
+			}
 		}
 	} else {
 		// A placeholder was generated.
@@ -1071,12 +1087,12 @@ ask_netname:
 static bool invitation_send(void *handle, uint8_t type, const void *vdata, size_t len) {
 	(void)handle;
 	(void)type;
-	const char *data = vdata;
+	const uint8_t *data = vdata;
 
 	while(len) {
-		int result = send(sock, data, len, 0);
+		ssize_t result = send(sock, data, len, 0);
 
-		if(result == -1 && errno == EINTR) {
+		if(result == -1 && sockwouldblock(sockerrno)) {
 			continue;
 		} else if(result <= 0) {
 			return false;
@@ -1231,6 +1247,7 @@ int cmd_join(int argc, char *argv[]) {
 	struct addrinfo *ai = str2addrinfo(address, port, SOCK_STREAM);
 
 	if(!ai) {
+		free(b64key);
 		return 1;
 	}
 
@@ -1244,6 +1261,7 @@ next:
 
 		if(!aip) {
 			freeaddrinfo(ai);
+			free(b64key);
 			return 1;
 		}
 	}
@@ -1268,7 +1286,7 @@ next:
 	fprintf(stderr, "Connected to %s port %s...\n", address, port);
 
 	// Tell him we have an invitation, and give him our throw-away key.
-	int len = snprintf(line, sizeof(line), "0 ?%s %d.%d\n", b64key, PROT_MAJOR, PROT_MINOR);
+	ssize_t len = snprintf(line, sizeof(line), "0 ?%s %d.%d\n", b64key, PROT_MAJOR, PROT_MINOR);
 
 	if(len <= 0 || (size_t)len >= sizeof(line)) {
 		abort();
@@ -1290,6 +1308,11 @@ next:
 	}
 
 	freeaddrinfo(ai);
+	ai = NULL;
+	aip = NULL;
+
+	free(b64key);
+	b64key = NULL;
 
 	// Check if the hash of the key he gave us matches the hash in the URL.
 	char *fingerprint = line + 2;
@@ -1324,24 +1347,34 @@ next:
 
 	while((len = recv(sock, line, sizeof(line), 0))) {
 		if(len < 0) {
-			if(errno == EINTR) {
+			if(sockwouldblock(sockerrno)) {
 				continue;
 			}
 
-			fprintf(stderr, "Error reading data from %s port %s: %s\n", address, port, strerror(errno));
+#if HAVE_MINGW
+
+			// If socket has been shut down, recv() on Windows returns -1 and sets sockerrno
+			// to WSAESHUTDOWN, while on UNIX-like operating systems recv() returns 0, so we
+			// have to do an explicit check here.
+			if(sockshutdown(sockerrno)) {
+				break;
+			}
+
+#endif
+			fprintf(stderr, "Error reading data from %s port %s: %s\n", address, port, sockstrerror(sockerrno));
 			return 1;
 		}
 
 		char *p = line;
 
 		while(len) {
-			int done = sptps_receive_data(&sptps, p, len);
+			size_t done = sptps_receive_data(&sptps, p, len);
 
 			if(!done) {
 				return 1;
 			}
 
-			len -= done;
+			len -= (ssize_t) done;
 			p += done;
 		}
 	}

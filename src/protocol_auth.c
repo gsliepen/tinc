@@ -26,7 +26,6 @@
 #include "control_common.h"
 #include "cipher.h"
 #include "crypto.h"
-#include "device.h"
 #include "digest.h"
 #include "ecdsa.h"
 #include "edge.h"
@@ -37,7 +36,6 @@
 #include "net.h"
 #include "netutl.h"
 #include "node.h"
-#include "prf.h"
 #include "protocol.h"
 #include "rsa.h"
 #include "script.h"
@@ -46,6 +44,7 @@
 #include "xalloc.h"
 
 #include "ed25519/sha512.h"
+#include "keys.h"
 
 int invitation_lifetime;
 ecdsa_t *invitation_key = NULL;
@@ -69,7 +68,7 @@ static bool send_proxyrequest(connection_t *c) {
 			return false;
 		}
 
-		char s4req[9 + (proxyuser ? strlen(proxyuser) : 0)];
+		uint8_t s4req[9 + (proxyuser ? strlen(proxyuser) : 0)];
 		s4req[0] = 4;
 		s4req[1] = 1;
 		memcpy(s4req + 2, &c->address.in.sin_port, 2);
@@ -85,15 +84,15 @@ static bool send_proxyrequest(connection_t *c) {
 	}
 
 	case PROXY_SOCKS5: {
-		int len = 3 + 6 + (c->address.sa.sa_family == AF_INET ? 4 : 16);
+		size_t len = 3 + 6 + (c->address.sa.sa_family == AF_INET ? 4 : 16);
 		c->tcplen = 2;
 
 		if(proxypass) {
 			len += 3 + strlen(proxyuser) + strlen(proxypass);
 		}
 
-		char s5req[len];
-		int i = 0;
+		uint8_t s5req[len];
+		size_t i = 0;
 		s5req[i++] = 5;
 		s5req[i++] = 1;
 
@@ -160,7 +159,7 @@ bool send_id(connection_t *c) {
 	int minor = 0;
 
 	if(experimental) {
-		if(c->outgoing && !read_ecdsa_public_key(c)) {
+		if(c->outgoing && !read_ecdsa_public_key(&c->ecdsa, &c->config_tree, c->name)) {
 			minor = 1;
 		} else {
 			minor = myself->connection->protocol_minor;
@@ -213,6 +212,9 @@ static bool finalize_invitation(connection_t *c, const char *data, uint16_t len)
 	sockaddr2str(&c->address, &address, &port);
 	environment_add(&env, "REMOTEADDRESS=%s", address);
 	environment_add(&env, "NAME=%s", myself->name);
+
+	free(address);
+	free(port);
 
 	execute_script("invitation-accepted", &env);
 
@@ -425,7 +427,7 @@ bool id_h(connection_t *c, const char *request) {
 
 	if(bypass_security) {
 		if(!c->config_tree) {
-			init_configuration(&c->config_tree);
+			c->config_tree = create_configuration();
 		}
 
 		c->allow_request = ACK;
@@ -442,7 +444,7 @@ bool id_h(connection_t *c, const char *request) {
 	}
 
 	if(!c->config_tree) {
-		init_configuration(&c->config_tree);
+		c->config_tree = create_configuration();
 
 		if(!read_host_config(c->config_tree, c->name, false)) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Peer %s had unknown identity (%s)", c->hostname, c->name);
@@ -450,7 +452,7 @@ bool id_h(connection_t *c, const char *request) {
 		}
 
 		if(experimental) {
-			read_ecdsa_public_key(c);
+			read_ecdsa_public_key(&c->ecdsa, &c->config_tree, c->name);
 		}
 
 		/* Ignore failures if no key known yet */
@@ -497,7 +499,7 @@ bool send_metakey(connection_t *c) {
 		return false;
 	}
 
-	if(!read_rsa_public_key(c)) {
+	if(!read_rsa_public_key(&c->rsa, c->config_tree, c->name)) {
 		return false;
 	}
 
@@ -506,7 +508,7 @@ bool send_metakey(connection_t *c) {
 	   by Cipher.
 	*/
 
-	int keylen = cipher_keylength(myself->incipher);
+	size_t keylen = cipher_keylength(myself->incipher);
 
 	if(keylen <= 16) {
 		c->outcipher = cipher_open_by_name("aes-128-cfb");
@@ -516,13 +518,9 @@ bool send_metakey(connection_t *c) {
 		c->outcipher = cipher_open_by_name("aes-256-cfb");
 	}
 
-	if(!c) {
-		return false;
-	}
-
 	c->outbudget = cipher_budget(c->outcipher);
 
-	if(!(c->outdigest = digest_open_by_name("sha256", -1))) {
+	if(!(c->outdigest = digest_open_by_name("sha256", DIGEST_ALGO_SIZE))) {
 		return false;
 	}
 
@@ -637,7 +635,7 @@ bool metakey_h(connection_t *c, const char *request) {
 	c->inbudget = cipher_budget(c->incipher);
 
 	if(digest) {
-		if(!(c->indigest = digest_open_by_nid(digest, -1))) {
+		if(!(c->indigest = digest_open_by_nid(digest, DIGEST_ALGO_SIZE))) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Error during initialisation of digest from %s (%s)", c->name, c->hostname);
 			return false;
 		}
@@ -843,7 +841,7 @@ bool send_ack(connection_t *c) {
 	/* Estimate weight */
 
 	gettimeofday(&now, NULL);
-	c->estimated_weight = (now.tv_sec - c->start.tv_sec) * 1000 + (now.tv_usec - c->start.tv_usec) / 1000;
+	c->estimated_weight = (int)((now.tv_sec - c->start.tv_sec) * 1000 + (now.tv_usec - c->start.tv_usec) / 1000);
 
 	/* Check some options */
 
@@ -867,7 +865,7 @@ bool send_ack(connection_t *c) {
 	}
 
 	if(!get_config_int(lookup_config(c->config_tree, "Weight"), &c->estimated_weight)) {
-		get_config_int(lookup_config(config_tree, "Weight"), &c->estimated_weight);
+		get_config_int(lookup_config(&config_tree, "Weight"), &c->estimated_weight);
 	}
 
 	return send_request(c, "%d %s %d %x", ACK, myport, c->estimated_weight, (c->options & 0xffffff) | (experimental ? (PROT_MINOR << 24) : 0));
@@ -888,19 +886,19 @@ static void send_everything(connection_t *c) {
 	}
 
 	if(tunnelserver) {
-		for splay_each(subnet_t, s, myself->subnet_tree) {
+		for splay_each(subnet_t, s, &myself->subnet_tree) {
 			send_add_subnet(c, s);
 		}
 
 		return;
 	}
 
-	for splay_each(node_t, n, node_tree) {
-		for splay_each(subnet_t, s, n->subnet_tree) {
+	for splay_each(node_t, n, &node_tree) {
+		for splay_each(subnet_t, s, &n->subnet_tree) {
 			send_add_subnet(c, s);
 		}
 
-		for splay_each(edge_t, e, n->edge_tree) {
+		for splay_each(edge_t, e, &n->edge_tree) {
 			send_add_edge(c, e);
 		}
 	}
@@ -914,7 +912,7 @@ static bool upgrade_h(connection_t *c, const char *request) {
 		return false;
 	}
 
-	if(ecdsa_active(c->ecdsa) || read_ecdsa_public_key(c)) {
+	if(ecdsa_active(c->ecdsa) || read_ecdsa_public_key(&c->ecdsa, &c->config_tree, c->name)) {
 		char *knownkey = ecdsa_get_base64_public_key(c->ecdsa);
 		bool different = strcmp(knownkey, pubkey);
 		free(knownkey);
@@ -1007,7 +1005,7 @@ bool ack_h(connection_t *c, const char *request) {
 		n->mtu = mtu;
 	}
 
-	if(get_config_int(lookup_config(config_tree, "PMTU"), &mtu) && mtu < n->mtu) {
+	if(get_config_int(lookup_config(&config_tree, "PMTU"), &mtu) && mtu < n->mtu) {
 		n->mtu = mtu;
 	}
 

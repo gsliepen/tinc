@@ -21,6 +21,8 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#include "system.h"
+
 extern size_t hex2bin(const char *src, void *dst, size_t length);
 extern size_t bin2hex(const void *src, char *dst, size_t length);
 
@@ -38,6 +40,7 @@ extern const char *winerror(int);
 #define sockinprogress(x) ((x) == WSAEINPROGRESS || (x) == WSAEWOULDBLOCK)
 #define sockinuse(x) ((x) == WSAEADDRINUSE)
 #define socknotconn(x) ((x) == WSAENOTCONN)
+#define sockshutdown(x) ((x) == WSAESHUTDOWN)
 #else
 #define sockerrno errno
 #define sockstrerror(x) strerror(x)
@@ -53,5 +56,7 @@ extern unsigned int bitfield_to_int(const void *bitfield, size_t size);
 extern bool check_id(const char *id);
 extern bool check_netname(const char *netname, bool strict);
 char *replace_name(const char *name);
+
+extern FILE *fopenmask(const char *filename, const char *mode, mode_t perms);
 
 #endif

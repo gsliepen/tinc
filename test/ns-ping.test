@@ -1,72 +1,79 @@
 #!/bin/sh
 
-. "${0%/*}/testlib.sh"
+. ./testlib.sh
 
-# Skip this test if we aren't root or if "ip netns" does not exist
+require_root "$0" "$@"
+test -e /dev/net/tun || exit $EXIT_SKIP_TEST
+ip netns list || exit $EXIT_SKIP_TEST
 
-test "`id -u`" = "0" || exit 77
-ip netns list || exit 77
+ip_foo=192.168.1.1
+ip_bar=192.168.1.2
+mask=24
 
-# Initialize two nodes
+echo [STEP] Create network namespaces
 
-$tinc $c1 <<EOF
+ip netns add ping.test1
+ip netns add ping.test2
+
+cleanup_hook() {
+  ip netns del ping.test1
+  ip netns del ping.test2
+}
+
+echo [STEP] Initialize two nodes
+
+tinc foo <<EOF
 init foo
-set Subnet 192.168.1.1
+set Subnet $ip_foo
 set Interface ping.test1
-set Port 32577
+set Port 30090
 set Address localhost
 set AutoConnect no
 EOF
 
-cat >$d1/tinc-up <<EOF
-#!/bin/sh
-ip netns add ping.test1
-ip link set dev \$INTERFACE netns ping.test1
-ip netns exec ping.test1 ip addr add 192.168.1.1/24 dev \$INTERFACE
-ip netns exec ping.test1 ip link set \$INTERFACE up
-EOF
+# shellcheck disable=SC2016
+create_script foo tinc-up "
+  ip link set dev \$INTERFACE netns ping.test1
+  ip netns exec ping.test1 ip addr add $ip_foo/$mask dev \$INTERFACE
+  ip netns exec ping.test1 ip link set \$INTERFACE up
+"
 
-$tinc $c2 <<EOF
+tinc bar <<EOF
 init bar
-set Subnet 192.168.1.2
+set Subnet $ip_bar
 set Interface ping.test2
-set Port 32574
+set Port 30091
 set AutoConnect no
 EOF
 
-cat >$d2/tinc-up <<EOF
-#!/bin/sh
-ip netns add ping.test2
-ip link set dev \$INTERFACE netns ping.test2
-ip netns exec ping.test2 ip addr add 192.168.1.2/24 dev \$INTERFACE
-ip netns exec ping.test2 ip link set \$INTERFACE up
-EOF
+# shellcheck disable=SC2016
+create_script bar tinc-up "
+  ip link set dev \$INTERFACE netns ping.test2
+  ip netns exec ping.test2 ip addr add $ip_bar/$mask dev \$INTERFACE
+  ip netns exec ping.test2 ip link set \$INTERFACE up
+"
 
-# Exchange configuration files
+echo [STEP] Exchange configuration files
 
-$tinc $c1 export | $tinc $c2 exchange | $tinc $c1 import
+tinc foo export | tinc bar exchange | tinc foo import
 
-# Start tinc
+echo [STEP] Start tinc
 
-$tinc $c1 start $r1
-$tinc $c2 start $r2
+start_tinc foo
+start_tinc bar
 
-sleep 1
+wait_script foo tinc-up
+wait_script bar tinc-up
 
-# The nodes should not be able to ping each other if there is no connection
+echo [STEP] The nodes should not be able to ping each other if there is no connection
 
-ip netns exec ping.test1 ping -W1 -c3 192.168.1.2 && exit 1
+must_fail ip netns exec ping.test1 ping -W1 -c3 $ip_bar
 
-# After connecting they should be
+echo [STEP] After connecting they should be
 
-$tinc $c2 add ConnectTo foo
-sleep 1
+create_script bar hosts/foo-up
 
-ip netns exec ping.test1 ping -W1 -c3 192.168.1.2
+tinc bar add ConnectTo foo
+wait_script bar hosts/foo-up
 
-# Clean up
-
-$tinc $c2 stop
-$tinc $c1 stop
-ip netns del ping.test2
-ip netns del ping.test1
+ip netns exec ping.test1 ping -W1 -c3 $ip_bar

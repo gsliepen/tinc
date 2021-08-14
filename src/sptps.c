@@ -92,7 +92,7 @@ static void warning(sptps_t *s, const char *format, ...) {
 
 // Send a record (datagram version, accepts all record types, handles encryption and authentication).
 static bool send_record_priv_datagram(sptps_t *s, uint8_t type, const void *data, uint16_t len) {
-	char buffer[len + 21UL];
+	uint8_t buffer[len + 21UL];
 
 	// Create header with sequence number, length and record type
 	uint32_t seqno = s->outseqno++;
@@ -117,7 +117,7 @@ static bool send_record_priv(sptps_t *s, uint8_t type, const void *data, uint16_
 		return send_record_priv_datagram(s, type, data, len);
 	}
 
-	char buffer[len + 19UL];
+	uint8_t buffer[len + 19UL];
 
 	// Create header with sequence number, length and record type
 	uint32_t seqno = s->outseqno++;
@@ -187,8 +187,8 @@ static bool send_sig(sptps_t *s) {
 	size_t siglen = ecdsa_size(s->mykey);
 
 	// Concatenate both KEX messages, plus tag indicating if it is from the connection originator, plus label
-	char msg[(1 + 32 + keylen) * 2 + 1 + s->labellen];
-	char sig[siglen];
+	uint8_t msg[(1 + 32 + keylen) * 2 + 1 + s->labellen];
+	uint8_t sig[siglen];
 
 	msg[0] = s->initiator;
 	memcpy(msg + 1, s->mykex, 1 + 32 + keylen);
@@ -205,7 +205,7 @@ static bool send_sig(sptps_t *s) {
 }
 
 // Generate key material from the shared secret created from the ECDHE key exchange.
-static bool generate_key_material(sptps_t *s, const char *shared, size_t len) {
+static bool generate_key_material(sptps_t *s, const uint8_t *shared, size_t len) {
 	// Initialise cipher and digest structures if necessary
 	if(!s->outstate) {
 		s->incipher = chacha_poly1305_init();
@@ -226,7 +226,7 @@ static bool generate_key_material(sptps_t *s, const char *shared, size_t len) {
 	}
 
 	// Create the HMAC seed, which is "key expansion" + session label + server nonce + client nonce
-	char seed[s->labellen + 64 + 13];
+	uint8_t seed[s->labellen + 64 + 13];
 	memcpy(seed, "key expansion", 13);
 
 	if(s->initiator) {
@@ -253,7 +253,7 @@ static bool send_ack(sptps_t *s) {
 }
 
 // Receive an ACKnowledgement record.
-static bool receive_ack(sptps_t *s, const char *data, uint16_t len) {
+static bool receive_ack(sptps_t *s, const uint8_t *data, uint16_t len) {
 	(void)data;
 
 	if(len) {
@@ -278,7 +278,7 @@ static bool receive_ack(sptps_t *s, const char *data, uint16_t len) {
 }
 
 // Receive a Key EXchange record, respond by sending a SIG record.
-static bool receive_kex(sptps_t *s, const char *data, uint16_t len) {
+static bool receive_kex(sptps_t *s, const uint8_t *data, uint16_t len) {
 	// Verify length of the HELLO record
 	if(len != 1 + 32 + ECDH_SIZE) {
 		return error(s, EIO, "Invalid KEX record length");
@@ -307,7 +307,7 @@ static bool receive_kex(sptps_t *s, const char *data, uint16_t len) {
 }
 
 // Receive a SIGnature record, verify it, if it passed, compute the shared secret and calculate the session keys.
-static bool receive_sig(sptps_t *s, const char *data, uint16_t len) {
+static bool receive_sig(sptps_t *s, const uint8_t *data, uint16_t len) {
 	size_t keylen = ECDH_SIZE;
 	size_t siglen = ecdsa_size(s->hiskey);
 
@@ -317,7 +317,7 @@ static bool receive_sig(sptps_t *s, const char *data, uint16_t len) {
 	}
 
 	// Concatenate both KEX messages, plus tag indicating if it is from the connection originator
-	char msg[(1 + 32 + keylen) * 2 + 1 + s->labellen];
+	uint8_t msg[(1 + 32 + keylen) * 2 + 1 + s->labellen];
 
 	msg[0] = !s->initiator;
 	memcpy(msg + 1, s->hiskex, 1 + 32 + keylen);
@@ -330,7 +330,7 @@ static bool receive_sig(sptps_t *s, const char *data, uint16_t len) {
 	}
 
 	// Compute shared secret.
-	char shared[ECDH_SHARED_SIZE];
+	uint8_t shared[ECDH_SHARED_SIZE];
 
 	if(!ecdh_compute_shared(s->ecdh, s->hiskex + 1 + 32, shared)) {
 		return error(s, EINVAL, "Failed to compute ECDH shared secret");
@@ -383,7 +383,7 @@ bool sptps_force_kex(sptps_t *s) {
 }
 
 // Receive a handshake record.
-static bool receive_handshake(sptps_t *s, const char *data, uint16_t len) {
+static bool receive_handshake(sptps_t *s, const uint8_t *data, uint16_t len) {
 	// Only a few states to deal with handshaking.
 	switch(s->state) {
 	case SPTPS_SECONDARY_KEX:
@@ -513,7 +513,7 @@ bool sptps_verify_datagram(sptps_t *s, const void *vdata, size_t len) {
 		return error(s, EIO, "Received short packet");
 	}
 
-	const char *data = vdata;
+	const uint8_t *data = vdata;
 	uint32_t seqno;
 	memcpy(&seqno, data, 4);
 	seqno = ntohl(seqno);
@@ -522,13 +522,13 @@ bool sptps_verify_datagram(sptps_t *s, const void *vdata, size_t len) {
 		return false;
 	}
 
-	char buffer[len];
+	uint8_t buffer[len];
 	size_t outlen;
 	return chacha_poly1305_decrypt(s->incipher, seqno, data + 4, len - 4, buffer, &outlen);
 }
 
 // Receive incoming data, datagram version.
-static bool sptps_receive_data_datagram(sptps_t *s, const char *data, size_t len) {
+static bool sptps_receive_data_datagram(sptps_t *s, const uint8_t *data, size_t len) {
 	if(len < (s->instate ? 21 : 5)) {
 		return error(s, EIO, "Received short packet");
 	}
@@ -558,7 +558,7 @@ static bool sptps_receive_data_datagram(sptps_t *s, const char *data, size_t len
 
 	// Decrypt
 
-	char buffer[len];
+	uint8_t buffer[len];
 	size_t outlen;
 
 	if(!chacha_poly1305_decrypt(s->incipher, seqno, data, len, buffer, &outlen)) {
@@ -599,7 +599,7 @@ static bool sptps_receive_data_datagram(sptps_t *s, const char *data, size_t len
 
 // Receive incoming data. Check if it contains a complete record, if so, handle it.
 size_t sptps_receive_data(sptps_t *s, const void *vdata, size_t len) {
-	const char *data = vdata;
+	const uint8_t *data = vdata;
 	size_t total_read = 0;
 
 	if(!s->state) {

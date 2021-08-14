@@ -2,9 +2,12 @@
 
 sbin_PROGRAMS = tincd tinc
 check_PROGRAMS = sptps_test sptps_keypair
-EXTRA_PROGRAMS = sptps_test sptps_keypair
+EXTRA_PROGRAMS = $(check_PROGRAMS)
 
 CLEANFILES = version_git.h
+
+.PHONY: extra
+extra: $(EXTRA_PROGRAMS)
 
 .PHONY: version-stamp
 version-stamp:
@@ -41,12 +44,20 @@ chacha_poly1305_SOURCES = \
 	chacha-poly1305/chacha-poly1305.c chacha-poly1305/chacha-poly1305.h \
 	chacha-poly1305/poly1305.c chacha-poly1305/poly1305.h
 
+if CONFIGURE_LZ4_BUILTIN
+lz4_SOURCES = lib/lz4/lz4.c lib/lz4/lz4.h
+else
+lz4_SOURCES =
+endif
+
 tincd_SOURCES = \
 	address_cache.c address_cache.h \
 	autoconnect.c autoconnect.h \
 	buffer.c buffer.h \
 	cipher.h \
+	compression.h \
 	conf.c conf.h \
+	conf_net.c conf_net.h \
 	connection.c connection.h \
 	control.c control.h \
 	control_common.h \
@@ -63,7 +74,8 @@ tincd_SOURCES = \
 	event.c event.h \
 	fd_device.c \
 	graph.c graph.h \
-	hash.c hash.h \
+	hash.h \
+	keys.c keys.h \
 	have.h \
 	ipv4.h \
 	ipv6.h \
@@ -103,7 +115,8 @@ tincd_SOURCES = \
 	ed25519/ecdh.c \
 	ed25519/ecdsa.c \
 	$(ed25519_SOURCES) \
-	$(chacha_poly1305_SOURCES)
+	$(chacha_poly1305_SOURCES) \
+	$(lz4_SOURCES)
 
 tinc_SOURCES = \
 	dropin.c dropin.h \
@@ -111,6 +124,9 @@ tinc_SOURCES = \
 	ifconfig.c ifconfig.h \
 	info.c info.h \
 	invitation.c invitation.h \
+	conf.c conf.h \
+	keys.c keys.h \
+	splay_tree.c splay_tree.h \
 	list.c list.h \
 	names.c names.h \
 	netutl.c netutl.h \
@@ -270,6 +286,10 @@ if MINIUPNPC
 tincd_SOURCES += upnp.h upnp.c
 tincd_LDADD = $(MINIUPNPC_LIBS)
 tincd_LDFLAGS = -pthread
+endif
+
+if MINGW
+sptps_test_LDFLAGS = -pthread
 endif
 
 tinc_LDADD = $(READLINE_LIBS) $(CURSES_LIBS)

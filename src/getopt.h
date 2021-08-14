@@ -133,3 +133,5 @@ extern int _getopt_internal();
 #endif
 
 #endif
+
+#endif /* TINC_GETOPT_H */

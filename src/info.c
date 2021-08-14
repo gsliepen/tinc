@@ -20,12 +20,10 @@
 #include "system.h"
 
 #include "control_common.h"
-#include "list.h"
 #include "subnet.h"
 #include "tincctl.h"
 #include "info.h"
 #include "utils.h"
-#include "xalloc.h"
 
 void logger(int level, int priority, const char *format, ...) {
 	(void)level;
@@ -40,7 +38,7 @@ void logger(int level, int priority, const char *format, ...) {
 }
 
 char *strip_weight(char *netstr) {
-	int len = strlen(netstr);
+	size_t len = strlen(netstr);
 
 	if(len >= 3 && !strcmp(netstr + len - 3, "#10")) {
 		netstr[len - 3] = 0;

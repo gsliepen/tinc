@@ -1,0 +1,43 @@
+image: freebsd/13.x
+
+packages:
+  - autotools
+  - openssl
+  - lzo2
+  - liblz4
+  - ncurses
+  - miniupnpc
+  - readline
+  - texinfo
+  - vde2
+  - libgcrypt
+  - llvm12
+  - py38-pip
+
+environment:
+  CFLAGS: -I/usr/local/include -L/usr/local/lib
+
+sources:
+  - https://github.com/gsliepen/tinc
+
+tasks:
+  - configure: |
+      cd tinc
+      autoreconf -fsi
+      ./configure --enable-miniupnpc --enable-vde
+
+  - build: |
+      cd tinc
+      make -j$(sysctl -n hw.ncpu)
+
+  - test: |
+      cd tinc
+      make check-recursive VERBOSE=1
+
+  - lint: |
+      mkdir -p ~/.local/bin
+      ln -f -s "$(which clang-tidy12)" ~/.local/bin/clang-tidy
+      pip install --user compiledb
+      cd tinc
+      export PATH=$PATH:$HOME/.local/bin
+      sh .ci/tidy/run.sh

@@ -51,7 +51,7 @@ static bool receive_record(void *handle, uint8_t type, const void *data, uint16_
 }
 
 static void receive_data(sptps_t *sptps) {
-	char buf[4096], *bufp = buf;
+	uint8_t buf[4096], *bufp = buf;
 	int fd = *(int *)sptps->handle;
 	size_t len = recv(fd, buf, sizeof(buf), 0);
 
@@ -80,7 +80,8 @@ static void clock_start() {
 
 static bool clock_countto(double seconds) {
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
-	elapsed = end.tv_sec + end.tv_nsec * 1e-9 - start.tv_sec - start.tv_nsec * 1e-9;
+	elapsed = (double) end.tv_sec + (double) end.tv_nsec * 1e-9
+	          - (double) start.tv_sec - (double) start.tv_nsec * 1e-9;
 
 	if(elapsed < seconds) {
 		return ++count;
@@ -94,7 +95,7 @@ int main(int argc, char *argv[]) {
 	ecdsa_t *key1, *key2;
 	ecdh_t *ecdh1, *ecdh2;
 	sptps_t sptps1, sptps2;
-	char buf1[4096], buf2[4096], buf3[4096];
+	uint8_t buf1[4096], buf2[4096], buf3[4096];
 	double duration = argc > 1 ? atof(argv[1]) : 10;
 
 	crypto_init();

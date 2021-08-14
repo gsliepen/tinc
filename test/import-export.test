@@ -1,64 +1,66 @@
 #!/bin/sh
 
-. "${0%/*}/testlib.sh"
+. ./testlib.sh
 
-# Initialize three nodes
+echo [STEP] Initialize three nodes
 
-$tinc $c1 <<EOF
+tinc foo <<EOF
 init foo
 set DeviceType dummy
-set Port 32752
+set Port 30000
 set Address localhost
 EOF
 
-$tinc $c2 <<EOF
+tinc bar <<EOF
 init bar
 set DeviceType dummy
 set Port 0
 EOF
 
-$tinc $c3 <<EOF
+tinc baz <<EOF
 init baz
 set DeviceType dummy
 set Port 0
 EOF
 
-# Test import, export and exchange commands
+echo [STEP] Test import, export and exchange commands
 
-$tinc $c1 export | $tinc $c2 exchange | $tinc $c1 import
+tinc foo export | tinc bar exchange | tinc foo import
 
-# Test export-all and exchange-all
+echo [STEP] Test export-all and exchange-all
 
-$tinc $c1 export-all | $tinc $c3 exchange | $tinc $c1 import
-$tinc $c1 exchange-all </dev/null | $tinc $c2 import
+tinc foo export-all | tinc baz exchange | tinc foo import
+tinc foo exchange-all </dev/null | tinc bar import
 
-# Test equivalence of host config files
+echo [STEP] Test equivalence of host config files
 
-cmp $d1/hosts/foo $d2/hosts/foo
-cmp $d1/hosts/foo $d3/hosts/foo
-cmp $d1/hosts/bar $d2/hosts/bar
-cmp $d1/hosts/bar $d3/hosts/bar
-cmp $d1/hosts/baz $d2/hosts/baz
-cmp $d1/hosts/baz $d3/hosts/baz
+diff -w "$DIR_FOO/hosts/foo" "$DIR_BAR/hosts/foo"
+diff -w "$DIR_FOO/hosts/foo" "$DIR_BAZ/hosts/foo"
+diff -w "$DIR_FOO/hosts/bar" "$DIR_BAR/hosts/bar"
+diff -w "$DIR_FOO/hosts/bar" "$DIR_BAZ/hosts/bar"
+diff -w "$DIR_FOO/hosts/baz" "$DIR_BAR/hosts/baz"
+diff -w "$DIR_FOO/hosts/baz" "$DIR_BAZ/hosts/baz"
 
-# Check whether the nodes can connect to each other
+echo [STEP] Check whether the nodes can connect to each other
 
-$tinc $c1 start $r1
+create_script foo tinc-up '
+  tinc bar add ConnectTo foo
+  tinc baz add ConnectTo foo
+'
 
-$tinc $c2 add ConnectTo foo
-$tinc $c3 add ConnectTo foo
+create_script foo hosts/bar-up
+create_script foo hosts/baz-up
 
-sleep 1
+start_tinc foo
 
-$tinc $c2 start $r2
-$tinc $c3 start $r3
+wait_script foo tinc-up
 
-sleep 1
+start_tinc bar
+start_tinc baz
 
-test `$tinc $c1 dump reachable nodes | wc -l` = 3
-test `$tinc $c2 dump reachable nodes | wc -l` = 3
-test `$tinc $c3 dump reachable nodes | wc -l` = 3
+wait_script foo hosts/bar-up
+wait_script foo hosts/baz-up
 
-$tinc $c3 stop
-$tinc $c2 stop
-$tinc $c1 stop
+require_nodes foo 3
+require_nodes bar 3
+require_nodes baz 3

@@ -28,7 +28,6 @@
 #include "net.h"
 #include "protocol.h"
 #include "utils.h"
-#include "xalloc.h"
 
 #ifndef MIN
 static ssize_t MIN(ssize_t x, ssize_t y) {
@@ -51,14 +50,14 @@ bool send_meta_sptps(void *handle, uint8_t type, const void *buffer, size_t leng
 	return true;
 }
 
-bool send_meta(connection_t *c, const char *buffer, size_t length) {
+bool send_meta(connection_t *c, const void *buffer, size_t length) {
 	if(!c) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "send_meta() called with NULL pointer!");
 		abort();
 	}
 
-	logger(DEBUG_META, LOG_DEBUG, "Sending %lu bytes of metadata to %s (%s)", (unsigned long)length,
-	       c->name, c->hostname);
+	logger(DEBUG_META, LOG_DEBUG, "Sending %zu bytes of metadata to %s (%s)",
+	       length, c->name, c->hostname);
 
 	if(c->protocol_minor >= 2) {
 		return sptps_send_record(&c->sptps, 0, buffer, length);
@@ -95,14 +94,14 @@ bool send_meta(connection_t *c, const char *buffer, size_t length) {
 	return true;
 }
 
-void send_meta_raw(connection_t *c, const char *buffer, size_t length) {
+void send_meta_raw(connection_t *c, const void *buffer, size_t length) {
 	if(!c) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "send_meta() called with NULL pointer!");
 		abort();
 	}
 
-	logger(DEBUG_META, LOG_DEBUG, "Sending %lu bytes of raw metadata to %s (%s)", (unsigned long)length,
-	       c->name, c->hostname);
+	logger(DEBUG_META, LOG_DEBUG, "Sending %zu bytes of raw metadata to %s (%s)",
+	       length, c->name, c->hostname);
 
 	buffer_add(&c->outbuf, buffer, length);
 
@@ -110,7 +109,7 @@ void send_meta_raw(connection_t *c, const char *buffer, size_t length) {
 }
 
 void broadcast_meta(connection_t *from, const char *buffer, size_t length) {
-	for list_each(connection_t, c, connection_list)
+	for list_each(connection_t, c, &connection_list)
 		if(c != from && c->edge) {
 			send_meta(c, buffer, length);
 		}
@@ -228,7 +227,7 @@ bool receive_meta(connection_t *c) {
 			}
 
 			bufp += len;
-			inlen -= len;
+			inlen -= (ssize_t)len;
 			continue;
 		}
 

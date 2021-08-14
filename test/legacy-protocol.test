@@ -1,84 +1,89 @@
 #!/bin/sh
 
-# Skip this test if the legacy protocol is disabled
-if grep -q "define DISABLE_LEGACY 1" "${0%/*}/../config.h"; then
-	exit 77
-fi
+. ./testlib.sh
 
-. "${0%/*}/testlib.sh"
+echo [STEP] Initialize two nodes
 
-# Initialize two nodes
-
-$tinc $c1 <<EOF
+tinc foo <<EOF
 init foo
 set DeviceType dummy
-set Port 32753
+set Port 30060
 set Address localhost
-set PingTimeout 1
+add Subnet 10.98.98.1
+set PingTimeout 2
 EOF
 
-$tinc $c2 <<EOF
+tinc bar <<EOF
 init bar
 set DeviceType dummy
 set Port 0
-set PingTimeout 1
-set MaxTimeout 1
+add Subnet 10.98.98.2
+set PingTimeout 2
+set MaxTimeout 2
 EOF
 
-# Exchange host config files
+echo [STEP] Exchange host config files
 
-$tinc $c1 export | $tinc $c2 exchange | $tinc $c1 import
-$tinc $c2 add ConnectTo foo
+tinc foo export | tinc bar exchange | tinc foo import
+tinc bar add ConnectTo foo
 
-# Foo 1.1, bar 1.0
+echo [STEP] Foo 1.1, bar 1.0
 
-$tinc $c2 set ExperimentalProtocol no
-$tinc $c1 del bar.Ed25519PublicKey
-$tinc $c2 del foo.Ed25519PublicKey
+tinc bar set ExperimentalProtocol no
+tinc foo del bar.Ed25519PublicKey
+tinc bar del foo.Ed25519PublicKey
 
-$tinc $c1 start $r1
-$tinc $c2 start $r2
+create_script foo hosts/bar-up
+create_script bar hosts/foo-up
 
-sleep 1
+start_tinc foo
+start_tinc bar
 
-test `$tinc $c1 dump reachable nodes | wc -l` = 2
-test `$tinc $c2 dump reachable nodes | wc -l` = 2
+wait_script foo hosts/bar-up
+wait_script bar hosts/foo-up
 
-$tinc $c2 stop
-$tinc $c1 stop
+require_nodes foo 2
+require_nodes bar 2
 
-test -z "`$tinc $c1 get bar.Ed25519PublicKey`"
-test -z "`$tinc $c2 get foo.Ed25519PublicKey`"
+tinc bar stop
+tinc foo stop
 
-# Foo 1.1, bar upgrades to 1.1
+test -z "$(tinc foo get bar.Ed25519PublicKey)"
+test -z "$(tinc bar get foo.Ed25519PublicKey)"
 
-$tinc $c2 del ExperimentalProtocol
+echo [STEP] Foo 1.1, bar upgrades to 1.1
 
-$tinc $c1 start $r1
-$tinc $c2 start $r2
+tinc bar del ExperimentalProtocol
 
-sleep 5
+start_tinc foo
+start_tinc bar
 
-test `$tinc $c1 dump reachable nodes | wc -l` = 2
-test `$tinc $c2 dump reachable nodes | wc -l` = 2
+wait_script foo hosts/bar-up
+wait_script bar hosts/foo-up
 
-$tinc $c2 stop
-$tinc $c1 stop
+require_nodes foo 2
+require_nodes bar 2
 
-test -n "`$tinc $c1 get bar.Ed25519PublicKey`"
-test -n "`$tinc $c2 get foo.Ed25519PublicKey`"
+tinc bar stop
+tinc foo stop
 
-# Bar downgrades, must no longer be allowed to connect
+test -n "$(tinc foo get bar.Ed25519PublicKey)"
+test -n "$(tinc bar get foo.Ed25519PublicKey)"
 
-$tinc $c2 set ExperimentalProtocol no
+echo [STEP] Bar downgrades, must no longer be allowed to connect
 
-$tinc $c1 start $r1
-$tinc $c2 start $r2
+tinc bar set ExperimentalProtocol no
 
-sleep 5
+create_script foo subnet-up
+start_tinc foo
+wait_script foo subnet-up
 
-test `$tinc $c1 dump reachable nodes | wc -l` = 1
-test `$tinc $c2 dump reachable nodes | wc -l` = 1
+create_script bar subnet-up
+start_tinc bar
+wait_script bar subnet-up
 
-$tinc $c2 stop
-$tinc $c1 stop
+# There is no reliable way to wait for 'not connecting'.
+sleep 10
+
+require_nodes foo 1
+require_nodes bar 1

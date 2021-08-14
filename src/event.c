@@ -26,12 +26,9 @@
 
 #include "dropin.h"
 #include "event.h"
-#include "net.h"
 #include "utils.h"
 #include "xalloc.h"
 #include "logger.h"
-
-struct timeval now;
 
 #ifndef HAVE_MINGW
 

@@ -23,7 +23,6 @@
 #include "net.h"
 #include "netutl.h"
 #include "logger.h"
-#include "utils.h"
 #include "xalloc.h"
 
 bool hostnames = false;

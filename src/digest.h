@@ -20,14 +20,17 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#include "system.h"
+
 #define DIGEST_MAX_SIZE 64
+#define DIGEST_ALGO_SIZE ((size_t) -1)
 
 #ifndef DISABLE_LEGACY
 
 typedef struct digest digest_t;
 
-extern digest_t *digest_open_by_name(const char *name, int maclength) __attribute__((__malloc__));
-extern digest_t *digest_open_by_nid(int nid, int maclength) __attribute__((__malloc__));
+extern digest_t *digest_open_by_name(const char *name, size_t maclength) __attribute__((__malloc__));
+extern digest_t *digest_open_by_nid(int nid, size_t maclength) __attribute__((__malloc__));
 extern void digest_close(digest_t *digest);
 extern bool digest_create(digest_t *digest, const void *indata, size_t inlen, void *outdata) __attribute__((__warn_unused_result__));
 extern bool digest_verify(digest_t *digest, const void *indata, size_t inlen, const void *digestdata) __attribute__((__warn_unused_result__));
@@ -37,6 +40,6 @@ extern size_t digest_keylength(const digest_t *digest);
 extern size_t digest_length(const digest_t *digest);
 extern bool digest_active(const digest_t *digest);
 
-#endif
+#endif // DISABLE_LEGACY
 
-#endif
+#endif // TINC_DIGEST_H

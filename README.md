@@ -1,3 +1,5 @@
+# tinc
+
 This is the README file for tinc version 1.1pre18. Installation
 instructions may be found in the INSTALL file.
 
@@ -10,9 +12,16 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or (at
 your option) any later version. See the file COPYING for more details.
 
+## Nightly builds
 
-This is a pre-release
----------------------
+You can download pre-built binary packages for multiple Linux distributions and Windows here:
+
+- [development version](https://github.com/gsliepen/tinc/releases/tag/latest)
+- [latest release](https://github.com/gsliepen/tinc/releases/latest)
+
+Note that these packages have not been heavily tested and are not officialy supported by the project. Use them at your own risk. You are advised to use tinc shipped by your distribution, or build from source.
+
+## This is a pre-release
 
 Please note that this is NOT a stable release. Until version 1.1.0 is released,
 please use one of the 1.0.x versions if you need a stable version of tinc.
@@ -21,9 +30,7 @@ Although tinc 1.1 will be protocol compatible with tinc 1.0.x, the
 functionality of the tinc program may still change, and the control socket
 protocol is not fixed yet.
 
-
-Security statement
-------------------
+## Security statement
 
 This version uses an experimental and unfinished cryptographic protocol. Use it
 at your own risk.
@@ -39,12 +46,10 @@ in plaintext. The first issue was trivial to exploit on tinc versions prior to
 weakness much harder to exploit. These issues have been fixed in tinc 1.0.35
 and tinc 1.1pre17. The new protocol in the tinc 1.1 branch is not susceptible
 to these issues. However, be aware that SPTPS is only used between nodes
-running tinc 1.1pre* or later, and in a VPN with nodes running different
+running tinc 1.1pre\* or later, and in a VPN with nodes running different
 versions, the security might only be as good as that of the oldest version.
 
-
-Compatibility
--------------
+## Compatibility
 
 Version 1.1pre18 is compatible with 1.0pre8, 1.0 and later, but not with older
 versions of tinc.
@@ -53,14 +58,12 @@ When the ExperimentalProtocol option is used, tinc is still compatible with
 1.0.X, 1.1pre11 and later, but not with any version between 1.1pre1 and
 1.1pre10.
 
-
-Requirements
-------------
+## Requirements
 
 In order to compile tinc, you will need a GNU C compiler environment. Please
 ensure you have the latest stable versions of all the required libraries:
 
-- LibreSSL (http://www.libressl.org/) or OpenSSL (https://openssl.org/) version 1.0.0 or later.
+- LibreSSL (http://www.libressl.org/) or OpenSSL (https://openssl.org/) version 1.1.0 or later.
 
 The following libraries are used by default, but can be disabled if necessary:
 
@@ -69,9 +72,7 @@ The following libraries are used by default, but can be disabled if necessary:
 - ncurses (https://invisible-island.net/ncurses/)
 - readline (https://cnswww.cns.cwru.edu/php/chet/readline/rltop.html)
 
-
-Features
---------
+## Features
 
 Tinc is a peer-to-peer VPN daemon that supports VPNs with an arbitrary number
 of nodes. Instead of configuring tunnels, you give tinc the location and

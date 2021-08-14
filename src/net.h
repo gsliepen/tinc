@@ -21,6 +21,8 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#include "system.h"
+
 #include "ipv6.h"
 #include "cipher.h"
 #include "digest.h"
@@ -103,12 +105,6 @@ typedef struct vpn_packet_t {
 #define PKT_MAC 2
 #define PKT_PROBE 4
 
-typedef enum packet_type_t {
-	PACKET_NORMAL,
-	PACKET_COMPRESSED,
-	PACKET_PROBE
-} packet_type_t;
-
 typedef struct listen_socket_t {
 	io_t tcp;
 	io_t udp;
@@ -131,7 +127,7 @@ typedef struct outgoing_t {
 	timeout_t ev;
 } outgoing_t;
 
-extern list_t *outgoing_list;
+extern list_t outgoing_list;
 
 extern int maxoutbufsize;
 extern int seconds_till_retry;
@@ -153,6 +149,8 @@ extern io_t unix_socket;
 extern int keylifetime;
 extern int udp_rcvbuf;
 extern int udp_sndbuf;
+extern bool udp_rcvbuf_warnings;
+extern bool udp_sndbuf_warnings;
 extern int max_connection_burst;
 extern int fwmark;
 extern bool do_prune;
@@ -193,7 +191,7 @@ extern void handle_new_meta_connection(void *data, int flags);
 extern void handle_new_unix_connection(void *data, int flags);
 extern int setup_listen_socket(const sockaddr_t *sa);
 extern int setup_vpn_in_socket(const sockaddr_t *sa);
-extern bool send_sptps_data(node_t *to, node_t *from, int type, const void *data, size_t len);
+extern bool send_sptps_data(struct node_t *to, struct node_t *from, int type, const void *data, size_t len);
 extern bool receive_sptps_record(void *handle, uint8_t type, const void *data, uint16_t len);
 extern void send_packet(struct node_t *n, vpn_packet_t *packet, bool immediate);
 extern void receive_tcppacket(struct connection_t *c, const char *buffer, size_t length);
@@ -210,8 +208,6 @@ extern void close_network_connections(void);
 extern int main_loop(void);
 extern void terminate_connection(struct connection_t *c, bool report);
 extern bool node_read_ecdsa_public_key(struct node_t *n);
-extern bool read_ecdsa_public_key(struct connection_t *c);
-extern bool read_rsa_public_key(struct connection_t *c);
 extern void handle_device_data(void *data, int flags);
 extern void handle_meta_connection_data(struct connection_t *c);
 extern void regenerate_key(void);

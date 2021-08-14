@@ -45,20 +45,16 @@
 #include "system.h"
 
 #include "connection.h"
-#include "device.h"
 #include "edge.h"
 #include "graph.h"
 #include "list.h"
 #include "logger.h"
-#include "names.h"
 #include "netutl.h"
 #include "node.h"
 #include "protocol.h"
 #include "script.h"
 #include "subnet.h"
-#include "utils.h"
 #include "xalloc.h"
-#include "graph.h"
 
 /* Implementation of Kruskal's algorithm.
    Running time: O(EN)
@@ -68,7 +64,7 @@
 static void mst_kruskal(void) {
 	/* Clear MST status on connections */
 
-	for list_each(connection_t, c, connection_list) {
+	for list_each(connection_t, c, &connection_list) {
 		c->status.mst = false;
 	}
 
@@ -76,13 +72,13 @@ static void mst_kruskal(void) {
 
 	/* Clear visited status on nodes */
 
-	for splay_each(node_t, n, node_tree) {
+	for splay_each(node_t, n, &node_tree) {
 		n->status.visited = false;
 	}
 
 	/* Starting point */
 
-	for splay_each(edge_t, e, edge_weight_tree) {
+	for splay_each(edge_t, e, &edge_weight_tree) {
 		if(e->from->status.reachable) {
 			e->from->status.visited = true;
 			break;
@@ -93,7 +89,7 @@ static void mst_kruskal(void) {
 
 	bool skipped = false;
 
-	for splay_each(edge_t, e, edge_weight_tree) {
+	for splay_each(edge_t, e, &edge_weight_tree) {
 		if(!e->reverse || (e->from->status.visited == e->to->status.visited)) {
 			skipped = true;
 			continue;
@@ -114,7 +110,7 @@ static void mst_kruskal(void) {
 
 		if(skipped) {
 			skipped = false;
-			next = edge_weight_tree->head;
+			next = edge_weight_tree.head;
 		}
 	}
 }
@@ -128,7 +124,7 @@ static void sssp_bfs(void) {
 
 	/* Clear visited status on nodes */
 
-	for splay_each(node_t, n, node_tree) {
+	for splay_each(node_t, n, &node_tree) {
 		n->status.visited = false;
 		n->status.indirect = true;
 		n->distance = -1;
@@ -153,7 +149,7 @@ static void sssp_bfs(void) {
 			abort();
 		}
 
-		for splay_each(edge_t, e, n->edge_tree) {       /* "e" is the edge connected to "from" */
+		for splay_each(edge_t, e, &n->edge_tree) {       /* "e" is the edge connected to "from" */
 			if(!e->reverse || e->to == myself) {
 				continue;
 			}
@@ -217,7 +213,7 @@ static void check_reachability(void) {
 	int became_reachable_count = 0;
 	int became_unreachable_count = 0;
 
-	for splay_each(node_t, n, node_tree) {
+	for splay_each(node_t, n, &node_tree) {
 		if(n->status.visited != n->status.reachable) {
 			n->status.reachable = !n->status.reachable;
 			n->last_state_change = now.tv_sec;
@@ -311,7 +307,7 @@ static void check_reachability(void) {
 }
 
 void graph(void) {
-	subnet_cache_flush();
+	subnet_cache_flush_tables();
 	sssp_bfs();
 	check_reachability();
 	mst_kruskal();

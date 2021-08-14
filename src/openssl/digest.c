@@ -18,7 +18,6 @@
 */
 
 #include "../system.h"
-#include "../utils.h"
 #include "../xalloc.h"
 
 #include <openssl/err.h>
@@ -28,13 +27,13 @@
 #include "../digest.h"
 #include "../logger.h"
 
-static digest_t *digest_open(const EVP_MD *evp_md, int maclength) {
+static digest_t *digest_open(const EVP_MD *evp_md, size_t maclength) {
 	digest_t *digest = xzalloc(sizeof(*digest));
 	digest->digest = evp_md;
 
-	int digestlen = EVP_MD_size(digest->digest);
+	size_t digestlen = EVP_MD_size(digest->digest);
 
-	if(maclength > digestlen || maclength < 0) {
+	if(maclength == DIGEST_ALGO_SIZE || maclength > digestlen) {
 		digest->maclength = digestlen;
 	} else {
 		digest->maclength = maclength;
@@ -43,7 +42,7 @@ static digest_t *digest_open(const EVP_MD *evp_md, int maclength) {
 	return digest;
 }
 
-digest_t *digest_open_by_name(const char *name, int maclength) {
+digest_t *digest_open_by_name(const char *name, size_t maclength) {
 	const EVP_MD *evp_md = EVP_get_digestbyname(name);
 
 	if(!evp_md) {
@@ -54,7 +53,7 @@ digest_t *digest_open_by_name(const char *name, int maclength) {
 	return digest_open(evp_md, maclength);
 }
 
-digest_t *digest_open_by_nid(int nid, int maclength) {
+digest_t *digest_open_by_nid(int nid, size_t maclength) {
 	const EVP_MD *evp_md = EVP_get_digestbynid(nid);
 
 	if(!evp_md) {
@@ -66,13 +65,8 @@ digest_t *digest_open_by_nid(int nid, int maclength) {
 }
 
 bool digest_set_key(digest_t *digest, const void *key, size_t len) {
-#ifdef HAVE_HMAC_CTX_NEW
 	digest->hmac_ctx = HMAC_CTX_new();
-	HMAC_Init_ex(digest->hmac_ctx, key, len, digest->digest, NULL);
-#else
-	digest->hmac_ctx = xzalloc(sizeof(*digest->hmac_ctx));
-	HMAC_Init(digest->hmac_ctx, key, len, digest->digest);
-#endif
+	HMAC_Init_ex(digest->hmac_ctx, key, (int)len, digest->digest, NULL);
 
 	if(!digest->hmac_ctx) {
 		abort();
@@ -90,15 +84,9 @@ void digest_close(digest_t *digest) {
 		EVP_MD_CTX_destroy(digest->md_ctx);
 	}
 
-#ifdef HAVE_HMAC_CTX_NEW
-
 	if(digest->hmac_ctx) {
 		HMAC_CTX_free(digest->hmac_ctx);
 	}
-
-#else
-	free(digest->hmac_ctx);
-#endif
 
 	free(digest);
 }

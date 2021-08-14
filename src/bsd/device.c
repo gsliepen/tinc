@@ -24,10 +24,7 @@
 #include "../conf.h"
 #include "../device.h"
 #include "../logger.h"
-#include "../names.h"
-#include "../net.h"
 #include "../route.h"
-#include "../utils.h"
 #include "../xalloc.h"
 
 #ifdef ENABLE_TUNEMU
@@ -88,7 +85,7 @@ static bool setup_utun(void) {
 		return false;
 	}
 
-	int unit = -1;
+	long unit = -1;
 	char *p = strstr(device, "utun"), *e = NULL;
 
 	if(p) {
@@ -128,13 +125,13 @@ static bool setup_utun(void) {
 #endif
 
 static bool setup_device(void) {
-	get_config_string(lookup_config(config_tree, "Device"), &device);
+	get_config_string(lookup_config(&config_tree, "Device"), &device);
 
 	// Find out if it's supposed to be a tun or a tap device
 
 	char *type;
 
-	if(get_config_string(lookup_config(config_tree, "DeviceType"), &type)) {
+	if(get_config_string(lookup_config(&config_tree, "DeviceType"), &type)) {
 		if(!strcasecmp(type, "tun"))
 			/* use default */;
 
@@ -236,7 +233,7 @@ static bool setup_device(void) {
 		realname = device;
 	}
 
-	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface)) {
+	if(!get_config_string(lookup_config(&config_tree, "Interface"), &iface)) {
 		iface = xstrdup(strrchr(realname, '/') ? strrchr(realname, '/') + 1 : realname);
 	} else if(strcmp(iface, strrchr(realname, '/') ? strrchr(realname, '/') + 1 : realname)) {
 		logger(DEBUG_ALWAYS, LOG_WARNING, "Warning: Interface does not match Device. $INTERFACE might be set incorrectly.");
@@ -354,7 +351,7 @@ static void close_device(void) {
 }
 
 static bool read_packet(vpn_packet_t *packet) {
-	int inlen;
+	ssize_t inlen;
 
 	switch(device_type) {
 	case DEVICE_TYPE_TUN:
@@ -503,7 +500,7 @@ static bool write_packet(vpn_packet_t *packet) {
 #ifdef ENABLE_TUNEMU
 
 	case DEVICE_TYPE_TUNEMU:
-		if(tunemu_write(device_fd, DATA(packet) + 14, packet->len - 14) < 0) {
+		if(tunemu_write(DATA(packet) + 14, packet->len - 14) < 0) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Error while writing to %s %s: %s", device_info,
 			       device, strerror(errno));
 			return false;

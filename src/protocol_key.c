@@ -27,16 +27,11 @@
 #include "net.h"
 #include "netutl.h"
 #include "node.h"
-#include "prf.h"
 #include "protocol.h"
 #include "route.h"
 #include "sptps.h"
 #include "utils.h"
-#include "xalloc.h"
-
-#ifndef DISABLE_LEGACY
-static bool mykeyused = false;
-#endif
+#include "compression.h"
 
 void send_key_changed(void) {
 #ifndef DISABLE_LEGACY
@@ -44,20 +39,22 @@ void send_key_changed(void) {
 
 	/* Immediately send new keys to directly connected nodes to keep UDP mappings alive */
 
-	for list_each(connection_t, c, connection_list)
+	for list_each(connection_t, c, &connection_list) {
 		if(c->edge && c->node && c->node->status.reachable && !c->node->status.sptps) {
 			send_ans_key(c->node);
 		}
+	}
 
 #endif
 
 	/* Force key exchange for connections using SPTPS */
 
 	if(experimental) {
-		for splay_each(node_t, n, node_tree)
+		for splay_each(node_t, n, &node_tree) {
 			if(n->status.reachable && n->status.validkey && n->status.sptps) {
 				sptps_force_kex(&n->sptps);
 			}
+		}
 	}
 }
 
@@ -149,7 +146,7 @@ static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, no
 		/* This is a SPTPS data packet. */
 
 		char buf[MAX_STRING_SIZE];
-		int len;
+		size_t len;
 
 		if(sscanf(request, "%*d %*s %*s %*d " MAX_STRING, buf) != 1 || !(len = b64decode(buf, buf, strlen(buf)))) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s) to %s (%s): %s", "SPTPS_PACKET", from->name, from->hostname, to->name, to->hostname, "invalid SPTPS data");
@@ -295,6 +292,12 @@ bool req_key_h(connection_t *c, const char *request) {
 	/* Check if this key request is for us */
 
 	if(to == myself) {                      /* Yes */
+		if(!from->status.reachable) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Got %s from %s (%s) origin %s which is not reachable",
+			       "REQ_KEY", c->name, c->hostname, from_name);
+			return true;
+		}
+
 		/* Is this an extended REQ_KEY message? */
 		if(experimental && reqno) {
 			return req_key_ext_h(c, request, from, to, reqno);
@@ -353,7 +356,8 @@ bool send_ans_key(node_t *to) {
 	}
 
 	if(myself->indigest) {
-		to->indigest = digest_open_by_nid(digest_get_nid(myself->indigest), digest_length(myself->indigest));
+		to->indigest = digest_open_by_nid(digest_get_nid(myself->indigest),
+		                                  digest_length(myself->indigest));
 
 		if(!to->indigest) {
 			abort();
@@ -369,7 +373,6 @@ bool send_ans_key(node_t *to) {
 	bin2hex(key, key, keylen);
 
 	// Reset sequence number and late packet window
-	mykeyused = true;
 	to->received_seqno = 0;
 	to->received = 0;
 
@@ -379,11 +382,11 @@ bool send_ans_key(node_t *to) {
 
 	to->status.validkey_in = true;
 
-	return send_request(to->nexthop->connection, "%d %s %s %s %d %d %d %d", ANS_KEY,
+	return send_request(to->nexthop->connection, "%d %s %s %s %d %d %zu %d", ANS_KEY,
 	                    myself->name, to->name, key,
 	                    cipher_get_nid(to->incipher),
 	                    digest_get_nid(to->indigest),
-	                    (int)digest_length(to->indigest),
+	                    digest_length(to->indigest),
 	                    to->incompression);
 #endif
 }
@@ -394,10 +397,12 @@ bool ans_key_h(connection_t *c, const char *request) {
 	char key[MAX_STRING_SIZE];
 	char address[MAX_STRING_SIZE] = "";
 	char port[MAX_STRING_SIZE] = "";
-	int cipher, digest, maclength, compression;
+	int cipher, digest;
+	size_t maclength;
+	int compression;
 	node_t *from, *to;
 
-	if(sscanf(request, "%*d "MAX_STRING" "MAX_STRING" "MAX_STRING" %d %d %d %d "MAX_STRING" "MAX_STRING,
+	if(sscanf(request, "%*d "MAX_STRING" "MAX_STRING" "MAX_STRING" %d %d %zu %d "MAX_STRING" "MAX_STRING,
 	                from_name, to_name, key, &cipher, &digest, &maclength,
 	                &compression, address, port) < 7) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "ANS_KEY", c->name,
@@ -462,8 +467,49 @@ bool ans_key_h(connection_t *c, const char *request) {
 		from->status.validkey = false;
 	}
 
-	if(compression < 0 || compression > 11) {
+	switch(compression) {
+	case COMPRESS_LZ4:
+#ifdef HAVE_LZ4
+		break;
+#else
 		logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses bogus compression level!", from->name, from->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, "LZ4 compression is unavailable on this node.");
+		return true;
+#endif
+
+	case COMPRESS_LZO_HI:
+	case COMPRESS_LZO_LO:
+#ifdef HAVE_LZO
+		break;
+#else
+		logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses bogus compression level!", from->name, from->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, "LZO compression is unavailable on this node.");
+		return true;
+#endif
+
+	case COMPRESS_ZLIB_9:
+	case COMPRESS_ZLIB_8:
+	case COMPRESS_ZLIB_7:
+	case COMPRESS_ZLIB_6:
+	case COMPRESS_ZLIB_5:
+	case COMPRESS_ZLIB_4:
+	case COMPRESS_ZLIB_3:
+	case COMPRESS_ZLIB_2:
+	case COMPRESS_ZLIB_1:
+#ifdef HAVE_ZLIB
+		break;
+#else
+		logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses bogus compression level!", from->name, from->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, "ZLIB compression is unavailable on this node.");
+		return true;
+#endif
+
+	case COMPRESS_NONE:
+		break;
+
+	default:
+		logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses bogus compression level!", from->name, from->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, "Compression level %i is unrecognized by this node.", compression);
 		return true;
 	}
 
@@ -472,7 +518,7 @@ bool ans_key_h(connection_t *c, const char *request) {
 	/* SPTPS or old-style key exchange? */
 
 	if(from->status.sptps) {
-		char buf[strlen(key)];
+		uint8_t buf[strlen(key)];
 		size_t len = b64decode(key, buf, strlen(key));
 
 		if(!len || !sptps_receive_data(&from->sptps, buf, len)) {
@@ -526,7 +572,7 @@ bool ans_key_h(connection_t *c, const char *request) {
 		from->outdigest = NULL;
 	}
 
-	if((size_t)maclength != digest_length(from->outdigest)) {
+	if(maclength != digest_length(from->outdigest)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses bogus MAC length!", from->name, from->hostname);
 		return false;
 	}

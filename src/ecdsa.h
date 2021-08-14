@@ -20,6 +20,8 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#include "system.h"
+
 #ifndef TINC_ECDSA_INTERNAL
 typedef struct ecdsa ecdsa_t;
 #endif

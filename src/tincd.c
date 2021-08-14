@@ -37,6 +37,10 @@
 #include LZO1X_H
 #endif
 
+#ifdef LZ4_H
+#include LZ4_H
+#endif
+
 #ifndef HAVE_MINGW
 #include <pwd.h>
 #include <grp.h>
@@ -44,14 +48,11 @@
 #endif
 
 #include "conf.h"
-#include "control.h"
 #include "crypto.h"
-#include "device.h"
 #include "event.h"
 #include "logger.h"
 #include "names.h"
 #include "net.h"
-#include "netutl.h"
 #include "process.h"
 #include "protocol.h"
 #include "utils.h"
@@ -147,14 +148,13 @@ static bool parse_options(int argc, char **argv) {
 	int option_index = 0;
 	int lineno = 0;
 
-	cmdline_conf = list_alloc((list_action_t)free_config);
-
 	while((r = getopt_long(argc, argv, "c:DLd::n:so:RU:", long_options, &option_index)) != EOF) {
 		switch(r) {
 		case 0:   /* long option */
 			break;
 
 		case 'c': /* config file */
+			free(confbase);
 			confbase = xstrdup(optarg);
 			break;
 
@@ -165,7 +165,7 @@ static bool parse_options(int argc, char **argv) {
 		case 'L': /* no detach */
 #ifndef HAVE_MLOCKALL
 			logger(DEBUG_ALWAYS, LOG_ERR, "The %s option is not supported on this platform.", argv[optind - 1]);
-			return false;
+			goto exit_fail;
 #else
 			do_mlock = true;
 			break;
@@ -185,6 +185,7 @@ static bool parse_options(int argc, char **argv) {
 			break;
 
 		case 'n': /* net name given */
+			free(netname);
 			netname = xstrdup(optarg);
 			break;
 
@@ -197,10 +198,10 @@ static bool parse_options(int argc, char **argv) {
 			cfg = parse_config_line(optarg, NULL, ++lineno);
 
 			if(!cfg) {
-				return false;
+				goto exit_fail;
 			}
 
-			list_insert_tail(cmdline_conf, cfg);
+			list_insert_tail(&cmdline_conf, cfg);
 			break;
 
 #ifdef HAVE_MINGW
@@ -208,7 +209,7 @@ static bool parse_options(int argc, char **argv) {
 		case 'R':
 		case 'U':
 			logger(DEBUG_ALWAYS, LOG_ERR, "The %s option is not supported on this platform.", argv[optind - 1]);
-			return false;
+			goto exit_fail;
 #else
 
 		case 'R': /* chroot to NETNAME dir */
@@ -241,18 +242,20 @@ static bool parse_options(int argc, char **argv) {
 			}
 
 			if(optarg) {
+				free(logfilename);
 				logfilename = xstrdup(optarg);
 			}
 
 			break;
 
 		case 5:   /* open control socket here */
+			free(pidfilename);
 			pidfilename = xstrdup(optarg);
 			break;
 
 		case '?': /* wrong options */
 			usage(true);
-			return false;
+			goto exit_fail;
 
 		default:
 			break;
@@ -262,7 +265,7 @@ static bool parse_options(int argc, char **argv) {
 	if(optind < argc) {
 		fprintf(stderr, "%s: unrecognized argument '%s'\n", argv[0], argv[optind]);
 		usage(true);
-		return false;
+		goto exit_fail;
 	}
 
 	if(!netname && (netname = getenv("NETNAME"))) {
@@ -278,7 +281,7 @@ static bool parse_options(int argc, char **argv) {
 
 	if(netname && !check_netname(netname, false)) {
 		fprintf(stderr, "Invalid character in netname!\n");
-		return false;
+		goto exit_fail;
 	}
 
 	if(netname && !check_netname(netname, true)) {
@@ -286,6 +289,11 @@ static bool parse_options(int argc, char **argv) {
 	}
 
 	return true;
+
+exit_fail:
+	free_names();
+	list_empty_list(&cmdline_conf);
+	return false;
 }
 
 static bool drop_privs(void) {
@@ -302,7 +310,9 @@ static bool drop_privs(void) {
 
 		uid = pw->pw_uid;
 
-		if(initgroups(switchuser, pw->pw_gid) != 0 ||
+		// The second parameter to initgroups on macOS requires int,
+		// but __gid_t is unsigned int. There's not much we can do here.
+		if(initgroups(switchuser, pw->pw_gid) != 0 || // NOLINT(bugprone-narrowing-conversions)
 		                setgid(pw->pw_gid) != 0) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s",
 			       "initgroups", strerror(errno));
@@ -368,6 +378,12 @@ static BOOL WINAPI console_ctrl_handler(DWORD type) {
 # define setpriority(level) (setpriority(PRIO_PROCESS, 0, (level)))
 #endif
 
+static void cleanup() {
+	splay_empty_tree(&config_tree);
+	list_empty_list(&cmdline_conf);
+	free_names();
+}
+
 int main(int argc, char **argv) {
 	program_name = argv[0];
 
@@ -378,6 +394,41 @@ int main(int argc, char **argv) {
 	if(show_version) {
 		printf("%s version %s (built %s %s, protocol %d.%d)\n", PACKAGE,
 		       BUILD_VERSION, BUILD_DATE, BUILD_TIME, PROT_MAJOR, PROT_MINOR);
+		printf("Features:"
+#ifdef HAVE_OPENSSL
+		       " openssl"
+#endif
+#ifdef HAVE_LIBGCRYPT
+		       " libgcrypt"
+#endif
+#ifdef HAVE_LZO
+		       " comp_lzo"
+#endif
+#ifdef HAVE_ZLIB
+		       " comp_zlib"
+#endif
+#ifdef HAVE_LZ4
+		       " comp_lz4"
+#endif
+#ifndef DISABLE_LEGACY
+		       " legacy_protocol"
+#endif
+#ifdef ENABLE_JUMBOGRAMS
+		       " jumbograms"
+#endif
+#ifdef ENABLE_TUNEMU
+		       " tunemu"
+#endif
+#ifdef HAVE_MINIUPNPC
+		       " miniupnpc"
+#endif
+#ifdef ENABLE_UML
+		       " uml"
+#endif
+#ifdef ENABLE_VDE
+		       " vde"
+#endif
+		       "\n\n");
 		printf("Copyright (C) 1998-2021 Ivo Timmermans, Guus Sliepen and others.\n"
 		       "See the AUTHORS file for a complete list.\n\n"
 		       "tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
@@ -393,6 +444,8 @@ int main(int argc, char **argv) {
 	}
 
 	make_names(true);
+	atexit(cleanup);
+
 	chdir(confbase);
 
 #ifdef HAVE_MINGW
@@ -436,20 +489,22 @@ int main(int argc, char **argv) {
 	unsetenv("LISTEN_PID");
 #endif
 
-	init_configuration(&config_tree);
-
 	/* Slllluuuuuuurrrrp! */
 
 	gettimeofday(&now, NULL);
 	srand(now.tv_sec + now.tv_usec);
 	crypto_init();
 
-	if(!read_server_config()) {
+	if(!read_server_config(&config_tree)) {
 		return 1;
 	}
 
-	if(!debug_level) {
-		get_config_int(lookup_config(config_tree, "LogLevel"), &debug_level);
+	if(debug_level == DEBUG_NOTHING) {
+		int level = 0;
+
+		if(get_config_int(lookup_config(&config_tree, "LogLevel"), &level)) {
+			debug_level = level;
+		}
 	}
 
 #ifdef HAVE_LZO
@@ -516,7 +571,7 @@ int main2(int argc, char **argv) {
 
 	/* Change process priority */
 
-	if(get_config_string(lookup_config(config_tree, "ProcessPriority"), &priority)) {
+	if(get_config_string(lookup_config(&config_tree, "ProcessPriority"), &priority)) {
 		if(!strcasecmp(priority, "Normal")) {
 			if(setpriority(NORMAL_PRIORITY_CLASS) != 0) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "setpriority", strerror(errno));
@@ -567,10 +622,6 @@ end:
 	free(priority);
 
 	crypto_exit();
-
-	exit_configuration(&config_tree);
-	free(cmdline_conf);
-	free_names();
 
 	return status;
 }

@@ -47,10 +47,14 @@ static struct request {
 	struct sockaddr_un sock;
 } request;
 
-static struct sockaddr_un data_sun;
+static struct sockaddr_un data_sun = {
+	.sun_family = AF_UNIX,
+};
 
 static bool setup_device(void) {
-	struct sockaddr_un listen_sun;
+	struct sockaddr_un listen_sun = {
+		.sun_family = AF_UNIX,
+	};
 	static const int one = 1;
 	struct {
 		char zero;
@@ -59,11 +63,11 @@ static bool setup_device(void) {
 	} name;
 	struct timeval tv;
 
-	if(!get_config_string(lookup_config(config_tree, "Device"), &device)) {
+	if(!get_config_string(lookup_config(&config_tree, "Device"), &device)) {
 		xasprintf(&device, RUNSTATEDIR "/%s.umlsocket", identname);
 	}
 
-	get_config_string(lookup_config(config_tree, "Interface"), &iface);
+	get_config_string(lookup_config(&config_tree, "Interface"), &iface);
 
 	if((write_fd = socket(PF_UNIX, SOCK_DGRAM, 0)) < 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open write %s: %s", device_info, strerror(errno));
@@ -104,8 +108,7 @@ static bool setup_device(void) {
 	name.zero = 0;
 	name.pid = getpid();
 	gettimeofday(&tv, NULL);
-	name.usecs = tv.tv_usec;
-	data_sun.sun_family = AF_UNIX;
+	name.usecs = (int) tv.tv_usec;
 	memcpy(&data_sun.sun_path, &name, sizeof(name));
 
 	if(bind(data_fd, (struct sockaddr *)&data_sun, sizeof(data_sun)) < 0) {
@@ -131,9 +134,12 @@ static bool setup_device(void) {
 		return false;
 	}
 
-	listen_sun.sun_family = AF_UNIX;
+	if(strlen(device) >= sizeof(listen_sun.sun_path)) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "UML socket filename %s is too long!", device);
+		return false;
+	}
+
 	strncpy(listen_sun.sun_path, device, sizeof(listen_sun.sun_path));
-	listen_sun.sun_path[sizeof(listen_sun.sun_path) - 1] = 0;
 
 	if(bind(listen_fd, (struct sockaddr *)&listen_sun, sizeof(listen_sun)) < 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not bind %s to %s: %s", device_info, device, strerror(errno));
@@ -190,7 +196,7 @@ void close_device(void) {
 }
 
 static bool read_packet(vpn_packet_t *packet) {
-	int inlen;
+	ssize_t inlen;
 
 	switch(state) {
 	case 0: {

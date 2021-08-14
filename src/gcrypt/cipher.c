@@ -261,7 +261,7 @@ bool cipher_decrypt(cipher_t *cipher, const void *indata, size_t inlen, void *ou
 
 		size_t origlen = inlen - padbyte;
 
-		for(int i = inlen - 1; i >= origlen; i--)
+		for(size_t i = inlen - 1; i >= origlen; i--)
 			if(((uint8_t *)outdata)[i] != padbyte) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Error while decrypting: invalid padding");
 				return false;

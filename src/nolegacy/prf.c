@@ -22,7 +22,7 @@
 #include "../prf.h"
 #include "../ed25519/sha512.h"
 
-static void memxor(char *buf, char c, size_t len) {
+static void memxor(uint8_t *buf, uint8_t c, size_t len) {
 	for(size_t i = 0; i < len; i++) {
 		buf[i] ^= c;
 	}
@@ -31,8 +31,8 @@ static void memxor(char *buf, char c, size_t len) {
 static const size_t mdlen = 64;
 static const size_t blklen = 128;
 
-static bool hmac_sha512(const char *key, size_t keylen, const char *msg, size_t msglen, char *out) {
-	char tmp[blklen + mdlen];
+static bool hmac_sha512(const uint8_t *key, size_t keylen, const uint8_t *msg, size_t msglen, uint8_t *out) {
+	uint8_t tmp[blklen + mdlen];
 	sha512_context md;
 
 	if(keylen <= blklen) {
@@ -81,16 +81,16 @@ static bool hmac_sha512(const char *key, size_t keylen, const char *msg, size_t 
    We use SHA512 instead of MD5 and SHA1.
  */
 
-bool prf(const char *secret, size_t secretlen, char *seed, size_t seedlen, char *out, size_t outlen) {
+bool prf(const uint8_t *secret, size_t secretlen, uint8_t *seed, size_t seedlen, uint8_t *out, size_t outlen) {
 	/* Data is what the "inner" HMAC function processes.
 	   It consists of the previous HMAC result plus the seed.
 	 */
 
-	char data[mdlen + seedlen];
+	uint8_t data[mdlen + seedlen];
 	memset(data, 0, mdlen);
 	memcpy(data + mdlen, seed, seedlen);
 
-	char hash[mdlen];
+	uint8_t hash[mdlen];
 
 	while(outlen > 0) {
 		/* Inner HMAC */

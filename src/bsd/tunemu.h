@@ -20,13 +20,15 @@
 #ifndef TUNEMU_H
 #define TUNEMU_H
 
+#include "system.h"
+
 typedef char tunemu_device[7];
 
 extern char tunemu_error[];
 
 int tunemu_open(tunemu_device dev);
 int tunemu_close(int fd);
-int tunemu_read(int fd, char *buffer, int length);
-int tunemu_write(int fd, char *buffer, int length);
+ssize_t tunemu_read(int fd, uint8_t *buffer, size_t buflen);
+ssize_t tunemu_write(uint8_t *buffer, size_t buflen);
 
 #endif

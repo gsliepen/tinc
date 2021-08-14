@@ -20,7 +20,9 @@
 
 #include "system.h"
 
+#ifndef HAVE_ASPRINTF
 #include "xalloc.h"
+#endif
 
 #ifndef HAVE_DAEMON
 /*

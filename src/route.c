@@ -31,7 +31,6 @@
 #include "protocol.h"
 #include "route.h"
 #include "subnet.h"
-#include "utils.h"
 
 rmode_t routing_mode = RMODE_ROUTER;
 fmode_t forwarding_mode = FMODE_INTERNAL;
@@ -63,7 +62,7 @@ static timeout_t age_subnets_timeout;
 
 /* RFC 1071 */
 
-static uint16_t inet_checksum(void *vdata, int len, uint16_t prevsum) {
+static uint16_t inet_checksum(void *vdata, size_t len, uint16_t prevsum) {
 	uint8_t *data = vdata;
 	uint16_t word;
 	uint32_t checksum = prevsum ^ 0xFFFF;
@@ -83,7 +82,7 @@ static uint16_t inet_checksum(void *vdata, int len, uint16_t prevsum) {
 		checksum = (checksum & 0xFFFF) + (checksum >> 16);
 	}
 
-	return ~checksum;
+	return (uint16_t) ~checksum;
 }
 
 static bool ratelimit(int frequency) {
@@ -199,7 +198,7 @@ static void route_ipv4_unreachable(node_t *source, vpn_packet_t *packet, length_
 	ip.ip_src = ip_dst;
 	ip.ip_dst = ip_src;
 
-	ip.ip_sum = inet_checksum(&ip, ip_size, ~0);
+	ip.ip_sum = inet_checksum(&ip, ip_size, 0xFFFF);
 
 	/* Fill in ICMP header */
 
@@ -207,7 +206,7 @@ static void route_ipv4_unreachable(node_t *source, vpn_packet_t *packet, length_
 	icmp.icmp_code = code;
 	icmp.icmp_cksum = 0;
 
-	icmp.icmp_cksum = inet_checksum(&icmp, icmp_size, ~0);
+	icmp.icmp_cksum = inet_checksum(&icmp, icmp_size, 0xFFFF);
 	icmp.icmp_cksum = inet_checksum(DATA(packet) + ether_size + ip_size + icmp_size, oldlen, icmp.icmp_cksum);
 
 	/* Copy structs on stack back to packet */
@@ -312,7 +311,7 @@ static void route_ipv6_unreachable(node_t *source, vpn_packet_t *packet, length_
 
 	/* Generate checksum */
 
-	checksum = inet_checksum(&pseudo, sizeof(pseudo), ~0);
+	checksum = inet_checksum(&pseudo, sizeof(pseudo), 0xFFFF);
 	checksum = inet_checksum(&icmp6, icmp6_size, checksum);
 	checksum = inet_checksum(DATA(packet) + ether_size + ip6_size + icmp6_size, ntohl(pseudo.length) - icmp6_size, checksum);
 
@@ -401,7 +400,7 @@ static void clamp_mss(const node_t *source, const node_t *via, vpn_packet_t *pac
 	}
 
 	/* Find TCP header */
-	int start = ether_size;
+	size_t start = ether_size;
 	uint16_t type = DATA(packet)[12] << 8 | DATA(packet)[13];
 
 	if(type == ETH_P_8021Q) {
@@ -495,7 +494,7 @@ static void age_subnets(void *data) {
 	(void)data;
 	bool left = false;
 
-	for splay_each(subnet_t, s, myself->subnet_tree) {
+	for splay_each(subnet_t, s, &myself->subnet_tree) {
 		if(s->expires && s->expires < now.tv_sec) {
 			if(debug_level >= DEBUG_TRAFFIC) {
 				char netstr[MAXNETSTR];
@@ -505,7 +504,7 @@ static void age_subnets(void *data) {
 				}
 			}
 
-			for list_each(connection_t, c, connection_list)
+			for list_each(connection_t, c, &connection_list)
 				if(c->edge) {
 					send_del_subnet(c, s);
 				}
@@ -544,7 +543,7 @@ static void learn_mac(mac_t *address) {
 
 		/* And tell all other tinc daemons it's our MAC */
 
-		for list_each(connection_t, c, connection_list)
+		for list_each(connection_t, c, &connection_list)
 			if(c->edge) {
 				send_add_subnet(c, subnet);
 			}
@@ -573,7 +572,7 @@ static void route_broadcast(node_t *source, vpn_packet_t *packet) {
 static void fragment_ipv4_packet(node_t *dest, vpn_packet_t *packet, length_t ether_size) {
 	struct ip ip;
 	vpn_packet_t fragment;
-	int maxlen, todo;
+	size_t maxlen, todo;
 	uint8_t *offset;
 	uint16_t ip_off, origf;
 
@@ -588,7 +587,7 @@ static void fragment_ipv4_packet(node_t *dest, vpn_packet_t *packet, length_t et
 	todo = ntohs(ip.ip_len) - ip_size;
 
 	if(ether_size + ip_size + todo != packet->len) {
-		logger(DEBUG_TRAFFIC, LOG_WARNING, "Length of packet (%d) doesn't match length in IPv4 header (%d)", packet->len, (int)(ether_size + ip_size + todo));
+		logger(DEBUG_TRAFFIC, LOG_WARNING, "Length of packet (%d) doesn't match length in IPv4 header (%zu)", packet->len, ether_size + ip_size + todo);
 		return;
 	}
 
@@ -601,7 +600,7 @@ static void fragment_ipv4_packet(node_t *dest, vpn_packet_t *packet, length_t et
 	ip_off &= IP_OFFMASK;
 
 	while(todo) {
-		int len = todo > maxlen ? maxlen : todo;
+		size_t len = todo > maxlen ? maxlen : todo;
 		memcpy(DATA(&fragment) + ether_size + ip_size, offset, len);
 		todo -= len;
 		offset += len;
@@ -609,7 +608,7 @@ static void fragment_ipv4_packet(node_t *dest, vpn_packet_t *packet, length_t et
 		ip.ip_len = htons(ip_size + len);
 		ip.ip_off = htons(ip_off | origf | (todo ? IP_MF : 0));
 		ip.ip_sum = 0;
-		ip.ip_sum = inet_checksum(&ip, ip_size, ~0);
+		ip.ip_sum = inet_checksum(&ip, ip_size, 0xFFFF);
 		memcpy(DATA(&fragment), DATA(packet), ether_size);
 		memcpy(DATA(&fragment) + ether_size, &ip, ip_size);
 		fragment.len = ether_size + ip_size + len;
@@ -857,7 +856,7 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet) {
 
 	/* Generate checksum */
 
-	checksum = inet_checksum(&pseudo, sizeof(pseudo), ~0);
+	checksum = inet_checksum(&pseudo, sizeof(pseudo), 0xFFFF);
 	checksum = inet_checksum(&ns, ns_size, checksum);
 
 	if(has_opt) {
@@ -931,7 +930,7 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet) {
 
 	/* Generate checksum */
 
-	checksum = inet_checksum(&pseudo, sizeof(pseudo), ~0);
+	checksum = inet_checksum(&pseudo, sizeof(pseudo), 0xFFFF);
 	checksum = inet_checksum(&ns, ns_size, checksum);
 
 	if(has_opt) {
@@ -1112,7 +1111,7 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 static void send_pcap(vpn_packet_t *packet) {
 	pcap = false;
 
-	for list_each(connection_t, c, connection_list) {
+	for list_each(connection_t, c, &connection_list) {
 		if(!c->status.pcap) {
 			continue;
 		}
@@ -1125,7 +1124,7 @@ static void send_pcap(vpn_packet_t *packet) {
 		}
 
 		if(send_request(c, "%d %d %d", CONTROL, REQ_PCAP, len)) {
-			send_meta(c, (char *)DATA(packet), len);
+			send_meta(c, DATA(packet), len);
 		}
 	}
 }

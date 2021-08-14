@@ -26,7 +26,6 @@
 #include "logger.h"
 #include "netutl.h"
 #include "utils.h"
-#include "route.h"
 #include "xalloc.h"
 
 static const char *device_info = "multicast socket";
@@ -40,9 +39,9 @@ static bool setup_device(void) {
 	char *space;
 	int ttl = 1;
 
-	get_config_string(lookup_config(config_tree, "Interface"), &iface);
+	get_config_string(lookup_config(&config_tree, "Interface"), &iface);
 
-	if(!get_config_string(lookup_config(config_tree, "Device"), &device)) {
+	if(!get_config_string(lookup_config(&config_tree, "Device"), &device)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Device variable required for %s", device_info);
 		goto error;
 	}
@@ -180,7 +179,7 @@ static void close_device(void) {
 }
 
 static bool read_packet(vpn_packet_t *packet) {
-	int lenin;
+	ssize_t lenin;
 
 	if((lenin = recv(device_fd, (void *)DATA(packet), MTU, 0)) <= 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
@@ -189,7 +188,7 @@ static bool read_packet(vpn_packet_t *packet) {
 	}
 
 	if(!memcmp(&ignore_src, DATA(packet) + 6, sizeof(ignore_src))) {
-		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Ignoring loopback packet of %d bytes from %s", lenin, device_info);
+		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Ignoring loopback packet of %zd bytes from %s", lenin, device_info);
 		return false;
 	}
 

@@ -339,6 +339,7 @@ message, and stop.
 * LibreSSL/OpenSSL::
 * zlib::
 * LZO::
+* LZ4::
 * libcurses::
 * libreadline::
 @end menu
@@ -458,6 +459,27 @@ from @url{https://www.oberhumer.com/opensource/lzo/}.  Instructions on how to co
 build and install this package are included within the package.  Please
 make sure you build development and runtime libraries (which is the
 default).
+
+
+@c ==================================================================
+@node       LZ4
+@subsection LZ4
+
+@cindex LZ4
+Another form of compression is offered using the LZ4 library.
+
+Tinc has support for the LZ4 compression algorithm as compression level 12.
+
+By default, tinc will try to link to an external LZ4 library. If it is not
+found on your system or its version is older than r129, then tinc falls back to
+the built-in copy of the library.
+
+You can force the use of the built-in copy by passing `--enable-lz4-builtin`,
+or disable it completely with `--disable-lz4-builtin`.
+
+LZ4 support can be completely disabled with `--disable-lz4`. Note that the
+resulting binary will not work correctly on VPNs where LZ4 compression is used
+by other peers.
 
 
 @c ==================================================================
@@ -1325,7 +1347,7 @@ Fragmentation Needed or Packet too Big messages are dropped by firewalls.
 @item Compression = <@var{level}> (0)
 This option sets the level of compression used for UDP packets.
 Possible values are 0 (off), 1 (fast zlib) and any integer up to 9 (best zlib),
-10 (fast LZO) and 11 (best LZO).
+10 (fast LZO), 11 (best LZO), and 12 (LZ4).
 
 @cindex Digest
 @item Digest = <@var{digest}> (sha1)

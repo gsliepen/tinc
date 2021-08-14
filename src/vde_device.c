@@ -19,40 +19,31 @@
 
 #include "system.h"
 
-#include <libvdeplug_dyn.h>
+#include <libvdeplug.h>
 
 #include "conf.h"
 #include "device.h"
 #include "names.h"
 #include "net.h"
 #include "logger.h"
-#include "utils.h"
 #include "route.h"
 #include "xalloc.h"
 
-static struct vdepluglib plug;
 static struct vdeconn *conn = NULL;
 static int port = 0;
 static char *group = NULL;
 static const char *device_info = "VDE socket";
 
 static bool setup_device(void) {
-	libvdeplug_dynopen(plug);
-
-	if(!plug.dl_handle) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open libvdeplug library!");
-		return false;
-	}
-
-	if(!get_config_string(lookup_config(config_tree, "Device"), &device)) {
+	if(!get_config_string(lookup_config(&config_tree, "Device"), &device)) {
 		xasprintf(&device, RUNSTATEDIR "/vde.ctl");
 	}
 
-	get_config_string(lookup_config(config_tree, "Interface"), &iface);
+	get_config_string(lookup_config(&config_tree, "Interface"), &iface);
 
-	get_config_int(lookup_config(config_tree, "VDEPort"), &port);
+	get_config_int(lookup_config(&config_tree, "VDEPort"), &port);
 
-	get_config_string(lookup_config(config_tree, "VDEGroup"), &group);
+	get_config_string(lookup_config(&config_tree, "VDEGroup"), &group);
 
 	struct vde_open_args args = {
 		.port = port,
@@ -60,14 +51,14 @@ static bool setup_device(void) {
 		.mode = 0700,
 	};
 
-	conn = plug.vde_open(device, identname, &args);
+	conn = vde_open(device, identname, &args);
 
 	if(!conn) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open VDE socket %s", device);
 		return false;
 	}
 
-	device_fd = plug.vde_datafd(conn);
+	device_fd = vde_datafd(conn);
 
 #ifdef FD_CLOEXEC
 	fcntl(device_fd, F_SETFD, FD_CLOEXEC);
@@ -84,12 +75,8 @@ static bool setup_device(void) {
 
 static void close_device(void) {
 	if(conn) {
-		plug.vde_close(conn);
+		vde_close(conn);
 		conn = NULL;
-	}
-
-	if(plug.dl_handle) {
-		libvdeplug_dynclose(plug);
 	}
 
 	free(device);
@@ -102,11 +89,23 @@ static void close_device(void) {
 }
 
 static bool read_packet(vpn_packet_t *packet) {
-	int lenin = (ssize_t)plug.vde_recv(conn, DATA(packet), MTU, 0);
+	ssize_t lenin = vde_recv(conn, DATA(packet), MTU, 0);
 
 	if(lenin <= 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info, device, strerror(errno));
 		event_exit();
+		return false;
+	}
+
+	if(lenin == 1) {
+		logger(DEBUG_TRAFFIC, LOG_DEBUG,
+		       "Dropped a packet received from %s - the sender was not allowed to send that packet.", device_info);
+		return false;
+	}
+
+	if(lenin < 14) {
+		logger(DEBUG_TRAFFIC, LOG_DEBUG,
+		       "Received an invalid packet from %s - packet shorter than an ethernet header).", device_info);
 		return false;
 	}
 
@@ -118,7 +117,7 @@ static bool read_packet(vpn_packet_t *packet) {
 }
 
 static bool write_packet(vpn_packet_t *packet) {
-	if((ssize_t)plug.vde_send(conn, DATA(packet), packet->len, 0) < 0) {
+	if(vde_send(conn, DATA(packet), packet->len, 0) < 0) {
 		if(errno != EINTR && errno != EAGAIN) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Can't write to %s %s: %s", device_info, device, strerror(errno));
 			event_exit();

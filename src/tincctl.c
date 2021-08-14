@@ -41,13 +41,13 @@
 #include "top.h"
 #include "version.h"
 #include "subnet.h"
+#include "keys.h"
 
 #ifndef MSG_NOSIGNAL
 #define MSG_NOSIGNAL 0
 #endif
 
 static char **orig_argv;
-static int orig_argc;
 
 /* If nonzero, display usage information and exit. */
 static bool show_help = false;
@@ -71,7 +71,6 @@ static int result;
 bool force = false;
 bool tty = true;
 bool confbasegiven = false;
-bool netnamegiven = false;
 char *scriptinterpreter = NULL;
 char *scriptextension = "";
 static char *prompt;
@@ -93,6 +92,17 @@ static struct option const long_options[] = {
 static void version(void) {
 	printf("%s version %s (built %s %s, protocol %d.%d)\n", PACKAGE,
 	       BUILD_VERSION, BUILD_DATE, BUILD_TIME, PROT_MAJOR, PROT_MINOR);
+	printf("Features:"
+#ifdef HAVE_READLINE
+	       " readline"
+#endif
+#ifdef HAVE_CURSES
+	       " curses"
+#endif
+#ifndef DISABLE_LEGACY
+	       " legacy_protocol"
+#endif
+	       "\n\n");
 	printf("Copyright (C) 1998-2018 Ivo Timmermans, Guus Sliepen and others.\n"
 	       "See the AUTHORS file for a complete list.\n\n"
 	       "tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
@@ -179,11 +189,13 @@ static bool parse_options(int argc, char **argv) {
 			break;
 
 		case 'c': /* config file */
+			free(confbase);
 			confbase = xstrdup(optarg);
 			confbasegiven = true;
 			break;
 
 		case 'n': /* net name given */
+			free(netname);
 			netname = xstrdup(optarg);
 			break;
 
@@ -196,6 +208,7 @@ static bool parse_options(int argc, char **argv) {
 			break;
 
 		case 3:   /* open control socket here */
+			free(pidfilename);
 			pidfilename = xstrdup(optarg);
 			break;
 
@@ -205,6 +218,7 @@ static bool parse_options(int argc, char **argv) {
 
 		case '?': /* wrong options */
 			usage(true);
+			free_names();
 			return false;
 
 		default:
@@ -225,131 +239,11 @@ static bool parse_options(int argc, char **argv) {
 
 	if(netname && (strpbrk(netname, "\\/") || *netname == '.')) {
 		fprintf(stderr, "Invalid character in netname!\n");
+		free_names();
 		return false;
 	}
 
 	return true;
-}
-
-/* Open a file with the desired permissions, minus the umask.
-   Also, if we want to create an executable file, we call fchmod()
-   to set the executable bits. */
-
-FILE *fopenmask(const char *filename, const char *mode, mode_t perms) {
-	mode_t mask = umask(0);
-	perms &= ~mask;
-	umask(~perms & 0777);
-	FILE *f = fopen(filename, mode);
-
-	if(!f) {
-		fprintf(stderr, "Could not open %s: %s\n", filename, strerror(errno));
-		return NULL;
-	}
-
-#ifdef HAVE_FCHMOD
-
-	if((perms & 0444) && f) {
-		fchmod(fileno(f), perms);
-	}
-
-#endif
-	umask(mask);
-	return f;
-}
-
-static void disable_old_keys(const char *filename, const char *what) {
-	char tmpfile[PATH_MAX] = "";
-	char buf[1024];
-	bool disabled = false;
-	bool block = false;
-	bool error = false;
-
-	FILE *r = fopen(filename, "r");
-	FILE *w = NULL;
-
-	if(!r) {
-		return;
-	}
-
-	int result = snprintf(tmpfile, sizeof(tmpfile), "%s.tmp", filename);
-
-	if(result < sizeof(tmpfile)) {
-		struct stat st = {.st_mode = 0600};
-		fstat(fileno(r), &st);
-		w = fopenmask(tmpfile, "w", st.st_mode);
-	}
-
-	while(fgets(buf, sizeof(buf), r)) {
-		if(!block && !strncmp(buf, "-----BEGIN ", 11)) {
-			if((strstr(buf, " ED25519 ") && strstr(what, "Ed25519")) || (strstr(buf, " RSA ") && strstr(what, "RSA"))) {
-				disabled = true;
-				block = true;
-			}
-		}
-
-		bool ed25519pubkey = !strncasecmp(buf, "Ed25519PublicKey", 16) && strchr(" \t=", buf[16]) && strstr(what, "Ed25519");
-
-		if(ed25519pubkey) {
-			disabled = true;
-		}
-
-		if(w) {
-			if(block || ed25519pubkey) {
-				fputc('#', w);
-			}
-
-			if(fputs(buf, w) < 0) {
-				error = true;
-				break;
-			}
-		}
-
-		if(block && !strncmp(buf, "-----END ", 9)) {
-			block = false;
-		}
-	}
-
-	if(w)
-		if(fclose(w) < 0) {
-			error = true;
-		}
-
-	if(ferror(r) || fclose(r) < 0) {
-		error = true;
-	}
-
-	if(disabled) {
-		if(!w || error) {
-			fprintf(stderr, "Warning: old key(s) found, remove them by hand!\n");
-
-			if(w) {
-				unlink(tmpfile);
-			}
-
-			return;
-		}
-
-#ifdef HAVE_MINGW
-		// We cannot atomically replace files on Windows.
-		char bakfile[PATH_MAX] = "";
-		snprintf(bakfile, sizeof(bakfile), "%s.bak", filename);
-
-		if(rename(filename, bakfile) || rename(tmpfile, filename)) {
-			rename(bakfile, filename);
-#else
-
-		if(rename(tmpfile, filename)) {
-#endif
-			fprintf(stderr, "Warning: old key(s) found, remove them by hand!\n");
-		} else  {
-#ifdef HAVE_MINGW
-			unlink(bakfile);
-#endif
-			fprintf(stderr, "Warning: old key(s) found and disabled.\n");
-		}
-	}
-
-	unlink(tmpfile);
 }
 
 static FILE *ask_and_open(const char *filename, const char *what, const char *mode, bool ask, mode_t perms) {
@@ -569,15 +463,15 @@ bool recvline(int fd, char *line, size_t len) {
 	}
 
 	while(!(newline = memchr(buffer, '\n', blen))) {
-		int result = recv(fd, buffer + blen, sizeof(buffer) - blen, 0);
+		ssize_t nrecv = recv(fd, buffer + blen, sizeof(buffer) - blen, 0);
 
-		if(result == -1 && sockerrno == EINTR) {
+		if(nrecv == -1 && sockerrno == EINTR) {
 			continue;
-		} else if(result <= 0) {
+		} else if(nrecv <= 0) {
 			return false;
 		}
 
-		blen += result;
+		blen += nrecv;
 	}
 
 	if((size_t)(newline - buffer) >= len) {
@@ -596,15 +490,15 @@ bool recvline(int fd, char *line, size_t len) {
 
 static bool recvdata(int fd, char *data, size_t len) {
 	while(blen < len) {
-		int result = recv(fd, buffer + blen, sizeof(buffer) - blen, 0);
+		ssize_t nrecv = recv(fd, buffer + blen, sizeof(buffer) - blen, 0);
 
-		if(result == -1 && sockerrno == EINTR) {
+		if(nrecv == -1 && sockerrno == EINTR) {
 			continue;
-		} else if(result <= 0) {
+		} else if(nrecv <= 0) {
 			return false;
 		}
 
-		blen += result;
+		blen += nrecv;
 	}
 
 	memcpy(data, buffer, len);
@@ -617,7 +511,7 @@ static bool recvdata(int fd, char *data, size_t len) {
 bool sendline(int fd, char *format, ...) {
 	static char buffer[4096];
 	char *p = buffer;
-	int blen;
+	ssize_t blen;
 	va_list ap;
 
 	va_start(ap, format);
@@ -633,16 +527,16 @@ bool sendline(int fd, char *format, ...) {
 	blen++;
 
 	while(blen) {
-		int result = send(fd, p, blen, MSG_NOSIGNAL);
+		ssize_t nsend = send(fd, p, blen, MSG_NOSIGNAL);
 
-		if(result == -1 && sockerrno == EINTR) {
+		if(nsend == -1 && sockerrno == EINTR) {
 			continue;
-		} else if(result <= 0) {
+		} else if(nsend <= 0) {
 			return false;
 		}
 
-		p += result;
-		blen -= result;
+		p += nsend;
+		blen -= nsend;
 	}
 
 	return true;
@@ -683,11 +577,12 @@ static void pcap(int fd, FILE *out, uint32_t snaplen) {
 	char line[32];
 
 	while(recvline(fd, line, sizeof(line))) {
-		int code, req, len;
-		int n = sscanf(line, "%d %d %d", &code, &req, &len);
+		int code, req;
+		size_t len;
+		int n = sscanf(line, "%d %d %zd", &code, &req, &len);
 		gettimeofday(&tv, NULL);
 
-		if(n != 3 || code != CONTROL || req != REQ_PCAP || len < 0 || (size_t)len > sizeof(data)) {
+		if(n != 3 || code != CONTROL || req != REQ_PCAP || len > sizeof(data)) {
 			break;
 		}
 
@@ -853,13 +748,16 @@ bool connect_tincd(bool verbose) {
 		return false;
 	}
 
-	struct sockaddr_un sa;
+	struct sockaddr_un sa = {
+		.sun_family = AF_UNIX,
+	};
 
-	sa.sun_family = AF_UNIX;
+	if(strlen(unixsocketname) >= sizeof(sa.sun_path)) {
+		fprintf(stderr, "UNIX socket filename %s is too long!", unixsocketname);
+		return false;
+	}
 
 	strncpy(sa.sun_path, unixsocketname, sizeof(sa.sun_path));
-
-	sa.sun_path[sizeof(sa.sun_path) - 1] = 0;
 
 	fd = socket(AF_UNIX, SOCK_STREAM, 0);
 
@@ -986,10 +884,12 @@ static int cmd_start(int argc, char *argv[]) {
 
 #endif
 
+	char *default_c = "tincd";
+
 	if(slash++) {
 		xasprintf(&c, "%.*stincd", (int)(slash - program_name), program_name);
 	} else {
-		c = "tincd";
+		c = default_c;
 	}
 
 	int nargc = 0;
@@ -1020,6 +920,12 @@ static int cmd_start(int argc, char *argv[]) {
 #ifdef HAVE_MINGW
 	int status = spawnvp(_P_WAIT, c, nargv);
 
+	free(nargv);
+
+	if(c != default_c) {
+		free(c);
+	}
+
 	if(status == -1) {
 		fprintf(stderr, "Error starting %s: %s\n", c, strerror(errno));
 		return 1;
@@ -1032,6 +938,11 @@ static int cmd_start(int argc, char *argv[]) {
 	if(socketpair(AF_UNIX, SOCK_STREAM, 0, pfd)) {
 		fprintf(stderr, "Could not create umbilical socket: %s\n", strerror(errno));
 		free(nargv);
+
+		if(c != default_c) {
+			free(c);
+		}
+
 		return 1;
 	}
 
@@ -1040,6 +951,11 @@ static int cmd_start(int argc, char *argv[]) {
 	if(pid == -1) {
 		fprintf(stderr, "Could not fork: %s\n", strerror(errno));
 		free(nargv);
+
+		if(c != default_c) {
+			free(c);
+		}
+
 		return 1;
 	}
 
@@ -1055,7 +971,6 @@ static int cmd_start(int argc, char *argv[]) {
 
 	free(nargv);
 
-	int status = -1, result;
 #ifdef SIGINT
 	signal(SIGINT, SIG_IGN);
 #endif
@@ -1063,7 +978,7 @@ static int cmd_start(int argc, char *argv[]) {
 	// Pass all log messages from the umbilical to stderr.
 	// A nul-byte right before closure means tincd started successfully.
 	bool failure = true;
-	char buf[1024];
+	uint8_t buf[1024];
 	ssize_t len;
 
 	while((len = read(pfd[0], buf, sizeof(buf))) > 0) {
@@ -1083,18 +998,24 @@ static int cmd_start(int argc, char *argv[]) {
 	close(pfd[0]);
 
 	// Make sure the child process is really gone.
-	result = waitpid(pid, &status, 0);
+	int status = -1;
+	pid_t result = waitpid(pid, &status, 0);
 
 #ifdef SIGINT
 	signal(SIGINT, SIG_DFL);
 #endif
 
-	if(failure || result != pid || !WIFEXITED(status) || WEXITSTATUS(status)) {
+	bool failed = failure || result != pid || !WIFEXITED(status) || WEXITSTATUS(status);
+
+	if(failed) {
 		fprintf(stderr, "Error starting %s\n", c);
-		return 1;
 	}
 
-	return 0;
+	if(c != default_c) {
+		free(c);
+	}
+
+	return failed ? EXIT_FAILURE : EXIT_SUCCESS;
 #endif
 }
 
@@ -1107,7 +1028,7 @@ static int cmd_stop(int argc, char *argv[]) {
 	}
 
 #ifdef HAVE_MINGW
-	return remove_service();
+	return remove_service() ? EXIT_SUCCESS : EXIT_FAILURE;
 #else
 
 	if(!stop_tincd()) {
@@ -1382,7 +1303,7 @@ static int cmd_dump(int argc, char *argv[]) {
 			}
 
 			if(do_graph) {
-				float w = 1 + 65536.0 / weight;
+				float w = 1.0f + 65536.0f / (float)weight;
 
 				if(do_graph == 1 && strcmp(node1, node2) > 0) {
 					printf(" \"%s\" -- \"%s\" [w = %f, weight = %f];\n", node1, node2, w, w);
@@ -1633,8 +1554,8 @@ static int cmd_pid(int argc, char *argv[]) {
 	return 0;
 }
 
-int rstrip(char *value) {
-	int len = strlen(value);
+size_t rstrip(char *value) {
+	size_t len = strlen(value);
 
 	while(len && strchr("\t\r\n ", value[len - 1])) {
 		value[--len] = 0;
@@ -1658,7 +1579,7 @@ char *get_my_name(bool verbose) {
 	char *value;
 
 	while(fgets(buf, sizeof(buf), f)) {
-		int len = strcspn(buf, "\t =");
+		size_t len = strcspn(buf, "\t =");
 		value = buf + len;
 		value += strspn(value, "\t ");
 
@@ -1697,7 +1618,7 @@ ecdsa_t *get_pubkey(FILE *f) {
 	char *value;
 
 	while(fgets(buf, sizeof(buf), f)) {
-		int len = strcspn(buf, "\t =");
+		size_t len = strcspn(buf, "\t =");
 		value = buf + len;
 		value += strspn(value, "\t ");
 
@@ -1842,7 +1763,7 @@ static int cmd_config(int argc, char *argv[]) {
 	char *node = NULL;
 	char *variable;
 	char *value;
-	int len;
+	size_t len;
 
 	len = strcspn(line, "\t =");
 	value = line + len;
@@ -1889,11 +1810,12 @@ static int cmd_config(int argc, char *argv[]) {
 		found = true;
 		variable = (char *)variables[i].name;
 
-		if(!strcasecmp(variable, "Subnet")) {
+		if(!strcasecmp(variable, "Subnet") && *value) {
 			subnet_t s = {0};
 
 			if(!str2net(&s, value)) {
 				fprintf(stderr, "Malformed subnet definition %s\n", value);
+				return 1;
 			}
 
 			if(!subnetcheck(s)) {
@@ -1949,6 +1871,11 @@ static int cmd_config(int argc, char *argv[]) {
 
 	if(node && !check_id(node)) {
 		fprintf(stderr, "Invalid name for node.\n");
+
+		if(node != line) {
+			free(node);
+		}
+
 		return 1;
 	}
 
@@ -1957,6 +1884,11 @@ static int cmd_config(int argc, char *argv[]) {
 			fprintf(stderr, "Warning: %s is not a known configuration variable!\n", variable);
 		} else {
 			fprintf(stderr, "%s: is not a known configuration variable! Use --force to use it anyway.\n", variable);
+
+			if(node && node != line) {
+				free(node);
+			}
+
 			return 1;
 		}
 	}
@@ -1966,6 +1898,11 @@ static int cmd_config(int argc, char *argv[]) {
 
 	if(node) {
 		snprintf(filename, sizeof(filename), "%s" SLASH "%s", hosts_dir, node);
+
+		if(node != line) {
+			free(node);
+			node = NULL;
+		}
 	} else {
 		snprintf(filename, sizeof(filename), "%s", tinc_conf);
 	}
@@ -2008,9 +1945,8 @@ static int cmd_config(int argc, char *argv[]) {
 
 		// Parse line in a simple way
 		char *bvalue;
-		int len;
 
-		len = strcspn(buf2, "\t =");
+		size_t len = strcspn(buf2, "\t =");
 		bvalue = buf2 + len;
 		bvalue += strspn(bvalue, "\t ");
 
@@ -2234,7 +2170,7 @@ static int cmd_init(int argc, char *argv[]) {
 				return 1;
 			}
 
-			int len = rstrip(buf);
+			size_t len = rstrip(buf);
 
 			if(!len) {
 				fprintf(stderr, "No name given!\n");
@@ -2851,7 +2787,7 @@ static int cmd_sign(int argc, char *argv[]) {
 	long t = time(NULL);
 	char *trailer;
 	xasprintf(&trailer, " %s %ld", name, t);
-	int trailer_len = strlen(trailer);
+	size_t trailer_len = strlen(trailer);
 
 	data = xrealloc(data, len + trailer_len);
 	memcpy(data + len, trailer, trailer_len);
@@ -2966,7 +2902,7 @@ static int cmd_verify(int argc, char *argv[]) {
 
 	char *trailer;
 	xasprintf(&trailer, " %s %ld", signer, t);
-	int trailer_len = strlen(trailer);
+	size_t trailer_len = strlen(trailer);
 
 	data = xrealloc(data, len + trailer_len);
 	memcpy(data + len, trailer, trailer_len);
@@ -3325,11 +3261,15 @@ static int cmd_shell(int argc, char *argv[]) {
 	return result;
 }
 
+static void cleanup() {
+	free(tinc_conf);
+	free(hosts_dir);
+	free_names();
+}
 
 int main(int argc, char *argv[]) {
 	program_name = argv[0];
 	orig_argv = argv;
-	orig_argc = argc;
 	tty = isatty(0) && isatty(1);
 
 	if(!parse_options(argc, argv)) {
@@ -3339,6 +3279,7 @@ int main(int argc, char *argv[]) {
 	make_names(false);
 	xasprintf(&tinc_conf, "%s" SLASH "tinc.conf", confbase);
 	xasprintf(&hosts_dir, "%s" SLASH "hosts", confbase);
+	atexit(cleanup);
 
 	if(show_version) {
 		version();
@@ -3360,7 +3301,8 @@ int main(int argc, char *argv[]) {
 
 #endif
 
-	srand(time(NULL));
+	gettimeofday(&now, NULL);
+	srand(now.tv_sec + now.tv_usec);
 	crypto_init();
 
 	if(optind >= argc) {

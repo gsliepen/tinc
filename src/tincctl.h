@@ -20,6 +20,9 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#include "system.h"
+#include "ecdsa.h"
+
 extern bool tty;
 extern bool force;
 extern char line[4096];
@@ -43,7 +46,7 @@ typedef struct {
 
 extern const var_t variables[];
 
-extern int rstrip(char *value);
+extern size_t rstrip(char *value);
 extern char *get_my_name(bool verbose);
 extern bool connect_tincd(bool verbose);
 extern bool sendline(int fd, char *format, ...);

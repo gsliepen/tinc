@@ -20,7 +20,6 @@
 #include "../system.h"
 
 #include <openssl/rand.h>
-#include <openssl/evp.h>
 #include <openssl/engine.h>
 
 #include "../crypto.h"
@@ -47,7 +46,7 @@ static void random_exit(void) {
 }
 
 void randomize(void *vout, size_t outlen) {
-	char *out = vout;
+	uint8_t *out = vout;
 
 	while(outlen) {
 		ssize_t len = read(random_fd, out, outlen);
@@ -95,11 +94,6 @@ void crypto_init(void) {
 	random_init();
 
 	ENGINE_load_builtin_engines();
-	ENGINE_register_all_complete();
-#if OPENSSL_API_COMPAT < 0x10100000L
-	ERR_load_crypto_strings();
-	OpenSSL_add_all_algorithms();
-#endif
 
 	if(!RAND_status()) {
 		fprintf(stderr, "Not enough entropy for the PRNG!\n");
@@ -108,10 +102,5 @@ void crypto_init(void) {
 }
 
 void crypto_exit(void) {
-#if OPENSSL_API_COMPAT < 0x10100000L
-	EVP_cleanup();
-	ERR_free_strings();
-	ENGINE_cleanup();
-#endif
 	random_exit();
 }

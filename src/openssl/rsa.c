@@ -31,18 +31,6 @@ typedef RSA rsa_t;
 
 // Set RSA keys
 
-#ifndef HAVE_RSA_SET0_KEY
-int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d) {
-	BN_free(r->n);
-	r->n = n;
-	BN_free(r->e);
-	r->e = e;
-	BN_free(r->d);
-	r->d = d;
-	return 1;
-}
-#endif
-
 rsa_t *rsa_set_hex_public_key(char *n, char *e) {
 	BIGNUM *bn_n = NULL;
 	BIGNUM *bn_e = NULL;
@@ -114,12 +102,12 @@ rsa_t *rsa_read_pem_private_key(FILE *fp) {
 	return rsa;
 }
 
-size_t rsa_size(rsa_t *rsa) {
+size_t rsa_size(const rsa_t *rsa) {
 	return RSA_size(rsa);
 }
 
 bool rsa_public_encrypt(rsa_t *rsa, void *in, size_t len, void *out) {
-	if((size_t)RSA_public_encrypt(len, in, out, rsa, RSA_NO_PADDING) == len) {
+	if((size_t)RSA_public_encrypt((int) len, in, out, rsa, RSA_NO_PADDING) == len) {
 		return true;
 	}
 
@@ -128,16 +116,12 @@ bool rsa_public_encrypt(rsa_t *rsa, void *in, size_t len, void *out) {
 }
 
 bool rsa_private_decrypt(rsa_t *rsa, void *in, size_t len, void *out) {
-	if((size_t)RSA_private_decrypt(len, in, out, rsa, RSA_NO_PADDING) == len) {
+	if((size_t)RSA_private_decrypt((int) len, in, out, rsa, RSA_NO_PADDING) == len) {
 		return true;
 	}
 
 	logger(DEBUG_ALWAYS, LOG_ERR, "Unable to perform RSA decryption: %s", ERR_error_string(ERR_get_error(), NULL));
 	return false;
-}
-
-bool rsa_active(rsa_t *rsa) {
-	return rsa;
 }
 
 void rsa_free(rsa_t *rsa) {

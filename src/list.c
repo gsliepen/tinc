@@ -184,11 +184,18 @@ void *list_get_tail(list_t *list) {
 
 /* Fast list deletion */
 
-void list_delete_list(list_t *list) {
+void list_empty_list(list_t *list) {
 	for(list_node_t *node = list->head, *next; next = node ? node->next : NULL, node; node = next) {
 		list_free_node(list, node);
 	}
 
+	list->head = NULL;
+	list->tail = NULL;
+	list->count = 0;
+}
+
+void list_delete_list(list_t *list) {
+	list_empty_list(list);
 	list_free(list);
 }
 

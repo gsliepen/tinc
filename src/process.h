@@ -21,14 +21,15 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-extern bool do_detach;
-extern bool sigalrm;
+#include "system.h"
 
-extern void setup_signals(void);
+extern bool do_detach;
+
 extern bool detach(void);
-extern bool kill_other(int);
 
 #ifdef HAVE_MINGW
+#include "event.h"
+
 extern io_t stop_io;
 extern bool init_service(void);
 #endif
