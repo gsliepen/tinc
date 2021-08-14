@@ -444,12 +444,15 @@ bool event_loop(void) {
 
 #ifdef HAVE_SYS_EPOLL_H
 		io_t *io = events[i].data.ptr;
+
 		if(events[i].events & EPOLLOUT) {
 			io->cb(io->data, IO_WRITE);
 		} else if(events[i].events & EPOLLIN) {
 			io->cb(io->data, IO_READ);
 		}
+
 #else
+
 		for splay_each(io_t, io, &io_tree) {
 			if(FD_ISSET(io->fd, &writable)) {
 				io->cb(io->data, IO_WRITE);
@@ -459,6 +462,7 @@ bool event_loop(void) {
 				continue;
 			}
 		}
+
 #endif
 
 		/*

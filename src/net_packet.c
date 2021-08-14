@@ -947,9 +947,9 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt, bool immediate) {
 	/* Send the packet */
 	const sockaddr_t *sa = NULL;
 	size_t sock;
-	#ifdef HAVE_SENDMMSG
+#ifdef HAVE_SENDMMSG
 	packet_thread_info_t packet_thread_info;
-	#endif
+#endif
 
 	if(n->status.send_locally) {
 		choose_local_address(n, &sa, &sock);
@@ -990,6 +990,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt, bool immediate) {
 			break;
 		}
 	}
+
 #ifdef HAVE_SENDMMSG
 	listen_socket[sock].packet_buffer[listen_socket[sock].packet_buffer_items] = xmalloc(sizeof(vpn_packet_t));
 	memcpy(listen_socket[sock].packet_buffer[listen_socket[sock].packet_buffer_items], inpkt, sizeof(vpn_packet_t));
@@ -1004,7 +1005,9 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt, bool immediate) {
 		listen_socket[sock].packet_buffer_items = 0;
 		packets_exchanged = packets_exchanged + 1;
 	}
+
 #else
+
 	if(sendto(listen_socket[sock].udp.fd, (void *)SEQNO(inpkt), inpkt->len, 0, &sa->sa, SALEN(sa->sa)) < 0 && !sockwouldblock(sockerrno)) {
 		if(sockmsgsize(sockerrno)) {
 			if(n->maxmtu >= origlen) {
@@ -1020,6 +1023,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt, bool immediate) {
 			logger(DEBUG_TRAFFIC, LOG_WARNING, "Error sending packet to %s (%s): %s", n->name, n->hostname, sockstrerror(sockerrno));
 		}
 	}
+
 #endif
 
 end:
