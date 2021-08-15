@@ -445,10 +445,12 @@ bool event_loop(void) {
 #ifdef HAVE_SYS_EPOLL_H
 		io_t *io = events[i].data.ptr;
 
-		if(events[i].events & EPOLLOUT) {
+		if(events[i].events & EPOLLOUT && io->flags & IO_WRITE) {
 			io->cb(io->data, IO_WRITE);
 		}
-		if(events[i].events & EPOLLIN) {
+
+
+		if(events[i].events & EPOLLIN && curgen == io_tree.generation && io->flags & IO_READ) {
 			io->cb(io->data, IO_READ);
 		}
 
