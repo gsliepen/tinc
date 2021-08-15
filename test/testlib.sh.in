@@ -185,21 +185,11 @@ expect_code() {
 # Runs its arguments with timeout(1) or gtimeout(1) if either are installed.
 # Usage: try_limit_time 10 command --with --args
 if type timeout >/dev/null; then
-  if is_busybox; then
-    # busybox does not support --foreground
-    try_limit_time() {
-      time=$1
-      shift
-      timeout "$time" "$@"
-    }
-  else
-    # BSD and GNU timeout do not require special handling
-    try_limit_time() {
-      time=$1
-      shift
-      timeout --foreground "$time" "$@"
-    }
-  fi
+  try_limit_time() {
+    time=$1
+    shift
+    timeout "$time" "$@"
+  }
 else
   try_limit_time() {
     echo >&2 "timeout was not found, running without time limits!"
