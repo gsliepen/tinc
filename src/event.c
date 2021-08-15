@@ -137,9 +137,11 @@ void io_add(io_t *io, io_cb_t cb, void *data, int fd, int flags) {
 	io_set(io, flags);
 
 #ifndef HAVE_SYS_EPOLL_H
+
 	if(!splay_insert_node(&io_tree, &io->node)) {
 		abort();
 	}
+
 #endif
 }
 
