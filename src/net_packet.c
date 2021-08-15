@@ -415,42 +415,8 @@ static bool try_mac(node_t *n, const vpn_packet_t *inpkt) {
 #endif
 }
 
-static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
-	if(n->status.sptps) {
-		if(!n->sptps.state) {
-			if(!n->status.waitingforkey) {
-				logger(DEBUG_TRAFFIC, LOG_DEBUG, "Got packet from %s (%s) but we haven't exchanged keys yet", n->name, n->hostname);
-				send_req_key(n);
-			} else {
-				logger(DEBUG_TRAFFIC, LOG_DEBUG, "Got packet from %s (%s) but he hasn't got our key yet", n->name, n->hostname);
-			}
-
-			return false;
-		}
-
-		n->status.udppacket = true;
-		bool result = sptps_receive_data(&n->sptps, DATA(inpkt), inpkt->len);
-		n->status.udppacket = false;
-
-		if(!result) {
-			/* Uh-oh. It might be that the tunnel is stuck in some corrupted state,
-			   so let's restart SPTPS in case that helps. But don't do that too often
-			   to prevent storms, and because that would make life a little too easy
-			   for external attackers trying to DoS us. */
-			if(n->last_req_key < now.tv_sec - 10) {
-				logger(DEBUG_PROTOCOL, LOG_ERR, "Failed to decode raw TCP packet from %s (%s), restarting SPTPS", n->name, n->hostname);
-				send_req_key(n);
-			}
-
-			return false;
-		}
-
-		return true;
-	}
-
-#ifdef DISABLE_LEGACY
-	return false;
-#else
+#ifndef DISABLE_LEGACY
+static bool legacy_receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	vpn_packet_t pkt1, pkt2;
 	vpn_packet_t *pkt[] = { &pkt1, &pkt2 };
 	uint8_t nextpkt = 0;
@@ -582,6 +548,46 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	}
 
 	return true;
+}
+#endif
+
+static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
+	if(n->status.sptps) {
+		if(!n->sptps.state) {
+			if(!n->status.waitingforkey) {
+				logger(DEBUG_TRAFFIC, LOG_DEBUG, "Got packet from %s (%s) but we haven't exchanged keys yet", n->name, n->hostname);
+				send_req_key(n);
+			} else {
+				logger(DEBUG_TRAFFIC, LOG_DEBUG, "Got packet from %s (%s) but he hasn't got our key yet", n->name, n->hostname);
+			}
+
+			return false;
+		}
+
+		n->status.udppacket = true;
+		bool result = sptps_receive_data(&n->sptps, DATA(inpkt), inpkt->len);
+		n->status.udppacket = false;
+
+		if(!result) {
+			/* Uh-oh. It might be that the tunnel is stuck in some corrupted state,
+			   so let's restart SPTPS in case that helps. But don't do that too often
+			   to prevent storms, and because that would make life a little too easy
+			   for external attackers trying to DoS us. */
+			if(n->last_req_key < now.tv_sec - 10) {
+				logger(DEBUG_PROTOCOL, LOG_ERR, "Failed to decode raw TCP packet from %s (%s), restarting SPTPS", n->name, n->hostname);
+				send_req_key(n);
+			}
+
+			return false;
+		}
+
+		return true;
+	}
+
+#ifdef DISABLE_LEGACY
+	return false;
+#else
+	return legacy_receive_udppacket(n, inpkt);
 #endif
 }
 
