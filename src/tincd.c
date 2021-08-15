@@ -491,8 +491,6 @@ int main(int argc, char **argv) {
 
 	/* Slllluuuuuuurrrrp! */
 
-	gettimeofday(&now, NULL);
-	srand(now.tv_sec + now.tv_usec);
 	crypto_init();
 
 	if(!read_server_config(&config_tree)) {
@@ -545,6 +543,9 @@ int main2(int argc, char **argv) {
 	(void)argv;
 #endif
 	char *priority = NULL;
+
+	gettimeofday(&now, NULL);
+	srand(now.tv_sec + now.tv_usec);
 
 	if(!detach()) {
 		return 1;
