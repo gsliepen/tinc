@@ -19,7 +19,7 @@ jobs:
           - mips
 
     container:
-      image: debian:stable
+      image: debian:bullseye
       options: --privileged
 
     steps:
@@ -159,7 +159,8 @@ jobs:
           - centos:7 # aka RHEL 7
           - almalinux:8 # aka RHEL 8
           - fedora
-          - debian:stable
+          - debian:buster
+          - debian:bullseye
           - debian:testing
           - ubuntu # current LTS
           - ubuntu:rolling # latest
