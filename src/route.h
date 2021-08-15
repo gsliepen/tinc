@@ -54,6 +54,6 @@ extern bool pcap;
 
 extern mac_t mymac;
 
-extern void route(struct node_t *source, struct vpn_packet_t *packet);
+extern void route(struct node_t *source, vpn_packet_t *packet);
 
 #endif

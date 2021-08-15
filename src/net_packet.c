@@ -452,8 +452,8 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	return false;
 #else
 	vpn_packet_t pkt1, pkt2;
-	vpn_packet_t *pkt[] = { &pkt1, &pkt2, &pkt1, &pkt2 };
-	int nextpkt = 0;
+	vpn_packet_t *pkt[] = { &pkt1, &pkt2 };
+	uint8_t nextpkt = 0;
 	size_t outlen;
 	pkt1.offset = DEFAULT_PACKET_OFFSET;
 	pkt2.offset = DEFAULT_PACKET_OFFSET;
@@ -489,7 +489,7 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	/* Decrypt the packet */
 
 	if(cipher_active(n->incipher)) {
-		vpn_packet_t *outpkt = pkt[nextpkt++];
+		vpn_packet_t *outpkt = pkt[nextpkt++ & 1];
 		outlen = MAXSIZE;
 
 		if(!cipher_decrypt(n->incipher, SEQNO(inpkt), inpkt->len, SEQNO(outpkt), &outlen, true)) {
@@ -552,7 +552,7 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	length_t origlen = inpkt->len;
 
 	if(n->incompression != COMPRESS_NONE) {
-		vpn_packet_t *outpkt = pkt[nextpkt++];
+		vpn_packet_t *outpkt = pkt[nextpkt++ & 1];
 
 		if(!(outpkt->len = uncompress_packet(DATA(outpkt), DATA(inpkt), inpkt->len, n->incompression))) {
 			logger(DEBUG_TRAFFIC, LOG_ERR, "Error while uncompressing packet from %s (%s)",
@@ -1108,6 +1108,8 @@ bool send_sptps_data(node_t *to, node_t *from, int type, const void *data, size_
 
 	logger(DEBUG_TRAFFIC, LOG_INFO, "Sending packet from %s (%s) to %s (%s) via %s (%s) (UDP)", from->name, from->hostname, to->name, to->hostname, relay->name, relay->hostname);
 
+	
+	
 	if(sendto(listen_socket[sock].udp.fd, buf, buf_ptr - buf, 0, &sa->sa, SALEN(sa->sa)) < 0 && !sockwouldblock(sockerrno)) {
 		if(sockmsgsize(sockerrno)) {
 			// Compensate for SPTPS overhead

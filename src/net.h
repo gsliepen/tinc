@@ -60,6 +60,7 @@ typedef struct node_id_t {
 	uint8_t x[6];
 } node_id_t;
 
+typedef uint8_t offset_t;
 typedef uint16_t length_t;
 typedef uint32_t seqno_t;
 
@@ -94,8 +95,9 @@ typedef union sockaddr_t {
 
 typedef struct vpn_packet_t {
 	length_t len;           /* The actual number of valid bytes in the `data' field (including seqno or dstid/srcid) */
-	length_t offset;        /* Offset in the buffer where the packet data starts (righter after seqno or dstid/srcid) */
-	int priority;           /* priority or TOS */
+	uint8_t refcnt;         /* Reference Count */ 
+	uint8_t priority;       /* priority or TOS */
+	offset_t offset;        /* Offset in the buffer where the packet data starts (righter after seqno or dstid/srcid) */
 	uint8_t data[MAXSIZE];
 } vpn_packet_t;
 
