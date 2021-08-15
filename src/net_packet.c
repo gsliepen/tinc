@@ -996,7 +996,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt, bool immediate) {
 	memcpy(listen_socket[sock].packet_buffer[listen_socket[sock].packet_buffer_items], inpkt, sizeof(vpn_packet_t));
 	listen_socket[sock].packet_buffer_items++;
 
-	if(listen_socket[sock].packet_buffer_items == listen_socket[sock].packet_buffer_size || packets_exchanged < 2000 || immediate == true) {
+	if(listen_socket[sock].packet_buffer_items == PACKETS_TO_BUFFER || packets_exchanged < 2000 || immediate == true) {
 		packet_thread_info.listen_socket = listen_socket[sock];
 		packet_thread_info.n = n;
 		packet_thread_info.origlen = origlen;

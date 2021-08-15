@@ -45,7 +45,6 @@
 #include "xalloc.h"
 #include "keys.h"
 
-#define PACKETS_TO_BUFFER 128
 #ifdef HAVE_MINIUPNPC
 #include "upnp.h"
 #endif
@@ -69,9 +68,7 @@ char *scriptextension;
 
 #ifdef HAVE_SENDMMSG
 static void setup_packet_buffer(listen_socket_t *socket) {
-	socket->packet_buffer = xmalloc(sizeof(vpn_packet_t *) * PACKETS_TO_BUFFER);
-	memset(socket->packet_buffer, 0, PACKETS_TO_BUFFER);
-	socket->packet_buffer_size = PACKETS_TO_BUFFER;
+	memset(socket->packet_buffer, 0, sizeof(socket->packet_buffer));
 	socket->packet_buffer_items = 0;
 }
 #endif

@@ -35,6 +35,8 @@
 #define SUBNET_HASH_SIZE 0x1000
 #endif
 
+#define PACKETS_TO_BUFFER 64
+
 /* Other functions */
 
 #include "dropin.h"

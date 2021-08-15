@@ -111,8 +111,7 @@ typedef struct listen_socket_t {
 	sockaddr_t sa;
 	bool bindto;
 #ifdef HAVE_SENDMMSG
-	vpn_packet_t **packet_buffer;
-	int packet_buffer_size;
+	vpn_packet_t *packet_buffer[PACKETS_TO_BUFFER];
 	int packet_buffer_items;
 #endif
 	int priority;
