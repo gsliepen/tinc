@@ -136,9 +136,11 @@ void io_add(io_t *io, io_cb_t cb, void *data, int fd, int flags) {
 
 	io_set(io, flags);
 
+#ifndef HAVE_SYS_EPOLL_H
 	if(!splay_insert_node(&io_tree, &io->node)) {
 		abort();
 	}
+#endif
 }
 
 #ifdef HAVE_MINGW
@@ -174,6 +176,7 @@ void io_set(io_t *io, int flags) {
 	ev.data.ptr = io;
 
 	epoll_ctl(epollset, EPOLL_CTL_DEL, io->fd, NULL);
+	io_tree.generation++;
 
 	if((flags & IO_READ) && (flags & IO_WRITE)) {
 		ev.events = EPOLLIN | EPOLLOUT;
@@ -243,7 +246,9 @@ void io_del(io_t *io) {
 	event_count--;
 #endif
 
+#ifndef HAVE_SYS_EPOLL_H
 	splay_unlink_node(&io_tree, &io->node);
+#endif
 	io->cb = NULL;
 }
 
@@ -401,6 +406,12 @@ bool event_loop(void) {
 		memcpy(&writable, &writefds, sizeof(writable));
 #endif
 
+
+#ifdef HAVE_SYS_EPOLL_H
+		struct epoll_event events[EPOLL_MAX_EVENTS_PER_LOOP];
+		int timeout = (tv->tv_sec * 1000) + (tv->tv_usec / 1000);
+		int n = epoll_wait(epollset, events, EPOLL_MAX_EVENTS_PER_LOOP, timeout);
+#else
 		int maxfds = 1;
 
 		if(io_tree.tail) {
@@ -418,12 +429,6 @@ bool event_loop(void) {
 			}
 		}
 
-
-#ifdef HAVE_SYS_EPOLL_H
-		struct epoll_event events[maxfds];
-		int timeout = (tv->tv_sec * 1000) + (tv->tv_usec / 1000);
-		int n = epoll_wait(epollset, events, maxfds, timeout);
-#else
 		int n = select(maxfds, &readable, &writable, NULL, tv);
 #endif
 
