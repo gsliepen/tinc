@@ -19,7 +19,7 @@ jobs:
           - mips
 
     container:
-      image: debian:bullseye
+      image: debian:buster
       options: --privileged
 
     steps:
