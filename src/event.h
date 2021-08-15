@@ -52,7 +52,6 @@ typedef struct signal_t {
 	int signum;
 	signal_cb_t cb;
 	void *data;
-	splay_node_t node;
 } signal_t;
 
 extern struct timeval now;

@@ -219,13 +219,9 @@ void timeout_del(timeout_t *timeout) {
 }
 
 #ifndef HAVE_MINGW
-static int signal_compare(const signal_t *a, const signal_t *b) {
-	return a->signum - b->signum;
-}
-
 static io_t signalio;
 static int pipefd[2] = {-1, -1};
-static splay_tree_t signal_tree = {.compare = (splay_compare_t)signal_compare};
+static signal_t *signal_handle[SIGSYS + 1] = {};
 
 static void signal_handler(int signum) {
 	unsigned char num = signum;
@@ -241,9 +237,7 @@ static void signalio_handler(void *data, int flags) {
 		return;
 	}
 
-	signal_t *sig = splay_search(&signal_tree, &((signal_t) {
-		.signum = signum
-	}));
+	signal_t *sig = signal_handle[signum];
 
 	if(sig) {
 		sig->cb(sig->data);
@@ -261,20 +255,17 @@ void signal_add(signal_t *sig, signal_cb_t cb, void *data, int signum) {
 		return;
 	}
 
+	sig->signum = signum;
 	sig->cb = cb;
 	sig->data = data;
-	sig->signum = signum;
-	sig->node.data = sig;
 
 	if(pipefd[0] == -1) {
 		pipe_init();
 	}
 
-	signal(sig->signum, signal_handler);
+	signal(signum, signal_handler);
 
-	if(!splay_insert_node(&signal_tree, &sig->node)) {
-		abort();
-	}
+	signal_handle[signum] = sig;
 }
 
 void signal_del(signal_t *sig) {
@@ -284,7 +275,7 @@ void signal_del(signal_t *sig) {
 
 	signal(sig->signum, SIG_DFL);
 
-	splay_unlink_node(&signal_tree, &sig->node);
+	signal_handle[sig->signum] = NULL;
 	sig->cb = NULL;
 }
 #endif
