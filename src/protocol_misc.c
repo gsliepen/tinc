@@ -91,7 +91,7 @@ bool send_tcppacket(connection_t *c, const vpn_packet_t *packet) {
 		return false;
 	}
 
-	return send_meta(c, DATA(packet), packet->len);
+	return send_meta(c, PKT_PAYLOAD(packet), packet->len);
 }
 
 bool tcppacket_h(connection_t *c, const char *request) {

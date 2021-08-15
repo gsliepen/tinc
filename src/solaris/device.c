@@ -327,36 +327,36 @@ static bool read_packet(vpn_packet_t *packet) {
 	switch(device_type) {
 	case DEVICE_TYPE_TUN:
 		sbuf.maxlen = MTU - 14;
-		sbuf.buf = (char *)DATA(packet) + 14;
+		sbuf.buf = (char *)PKT_PAYLOAD(packet) + 14;
 
 		if((result = getmsg(device_fd, NULL, &sbuf, &f)) < 0) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info, device, strerror(errno));
 			return false;
 		}
 
-		switch(DATA(packet)[14] >> 4) {
+		switch(PKT_PAYLOAD(packet)[14] >> 4) {
 		case 4:
-			DATA(packet)[12] = 0x08;
-			DATA(packet)[13] = 0x00;
+			PKT_PAYLOAD(packet)[12] = 0x08;
+			PKT_PAYLOAD(packet)[13] = 0x00;
 			break;
 
 		case 6:
-			DATA(packet)[12] = 0x86;
-			DATA(packet)[13] = 0xDD;
+			PKT_PAYLOAD(packet)[12] = 0x86;
+			PKT_PAYLOAD(packet)[13] = 0xDD;
 			break;
 
 		default:
-			logger(DEBUG_TRAFFIC, LOG_ERR, "Unknown IP version %d while reading packet from %s %s", DATA(packet)[14] >> 4, device_info, device);
+			logger(DEBUG_TRAFFIC, LOG_ERR, "Unknown IP version %d while reading packet from %s %s", PKT_PAYLOAD(packet)[14] >> 4, device_info, device);
 			return false;
 		}
 
-		memset(DATA(packet), 0, 12);
+		memset(PKT_PAYLOAD(packet), 0, 12);
 		packet->len = sbuf.len + 14;
 		break;
 
 	case DEVICE_TYPE_TAP:
 		sbuf.maxlen = MTU;
-		sbuf.buf = (char *)DATA(packet);
+		sbuf.buf = (char *)PKT_PAYLOAD(packet);
 
 		if((result = getmsg(device_fd, NULL, &sbuf, &f)) < 0) {
 			logger(LOG_ERR, "Error while reading from %s %s: %s", device_info, device, strerror(errno));
@@ -383,7 +383,7 @@ static bool write_packet(vpn_packet_t *packet) {
 	switch(device_type) {
 	case DEVICE_TYPE_TUN:
 		sbuf.len = packet->len - 14;
-		sbuf.buf = (char *)DATA(packet) + 14;
+		sbuf.buf = (char *)PKT_PAYLOAD(packet) + 14;
 
 		if(putmsg(device_fd, NULL, &sbuf, 0) < 0) {
 			logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device, strerror(errno));
@@ -394,7 +394,7 @@ static bool write_packet(vpn_packet_t *packet) {
 
 	case DEVICE_TYPE_TAP:
 		sbuf.len = packet->len;
-		sbuf.buf = (char *)DATA(packet);
+		sbuf.buf = (char *)PKT_PAYLOAD(packet);
 
 		if(putmsg(device_fd, NULL, &sbuf, 0) < 0) {
 			logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device, strerror(errno));

@@ -358,10 +358,10 @@ static bool read_packet(vpn_packet_t *packet) {
 #ifdef ENABLE_TUNEMU
 	case DEVICE_TYPE_TUNEMU:
 		if(device_type == DEVICE_TYPE_TUNEMU) {
-			inlen = tunemu_read(device_fd, DATA(packet) + 14, MTU - 14);
+			inlen = tunemu_read(device_fd, PKT_PAYLOAD(packet) + 14, MTU - 14);
 		} else
 #endif
-			inlen = read(device_fd, DATA(packet) + 14, MTU - 14);
+			inlen = read(device_fd, PKT_PAYLOAD(packet) + 14, MTU - 14);
 
 		if(inlen <= 0) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
@@ -369,61 +369,61 @@ static bool read_packet(vpn_packet_t *packet) {
 			return false;
 		}
 
-		switch(DATA(packet)[14] >> 4) {
+		switch(PKT_PAYLOAD(packet)[14] >> 4) {
 		case 4:
-			DATA(packet)[12] = 0x08;
-			DATA(packet)[13] = 0x00;
+			PKT_PAYLOAD(packet)[12] = 0x08;
+			PKT_PAYLOAD(packet)[13] = 0x00;
 			break;
 
 		case 6:
-			DATA(packet)[12] = 0x86;
-			DATA(packet)[13] = 0xDD;
+			PKT_PAYLOAD(packet)[12] = 0x86;
+			PKT_PAYLOAD(packet)[13] = 0xDD;
 			break;
 
 		default:
 			logger(DEBUG_TRAFFIC, LOG_ERR,
 			       "Unknown IP version %d while reading packet from %s %s",
-			       DATA(packet)[14] >> 4, device_info, device);
+			       PKT_PAYLOAD(packet)[14] >> 4, device_info, device);
 			return false;
 		}
 
-		memset(DATA(packet), 0, 12);
+		memset(PKT_PAYLOAD(packet), 0, 12);
 		packet->len = inlen + 14;
 		break;
 
 	case DEVICE_TYPE_UTUN:
 	case DEVICE_TYPE_TUNIFHEAD: {
-		if((inlen = read(device_fd, DATA(packet) + 10, MTU - 10)) <= 0) {
+		if((inlen = read(device_fd, PKT_PAYLOAD(packet) + 10, MTU - 10)) <= 0) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
 			       device, strerror(errno));
 			return false;
 		}
 
-		switch(DATA(packet)[14] >> 4) {
+		switch(PKT_PAYLOAD(packet)[14] >> 4) {
 		case 4:
-			DATA(packet)[12] = 0x08;
-			DATA(packet)[13] = 0x00;
+			PKT_PAYLOAD(packet)[12] = 0x08;
+			PKT_PAYLOAD(packet)[13] = 0x00;
 			break;
 
 		case 6:
-			DATA(packet)[12] = 0x86;
-			DATA(packet)[13] = 0xDD;
+			PKT_PAYLOAD(packet)[12] = 0x86;
+			PKT_PAYLOAD(packet)[13] = 0xDD;
 			break;
 
 		default:
 			logger(DEBUG_TRAFFIC, LOG_ERR,
 			       "Unknown IP version %d while reading packet from %s %s",
-			       DATA(packet)[14] >> 4, device_info, device);
+			       PKT_PAYLOAD(packet)[14] >> 4, device_info, device);
 			return false;
 		}
 
-		memset(DATA(packet), 0, 12);
+		memset(PKT_PAYLOAD(packet), 0, 12);
 		packet->len = inlen + 10;
 		break;
 	}
 
 	case DEVICE_TYPE_TAP:
-		if((inlen = read(device_fd, DATA(packet), MTU)) <= 0) {
+		if((inlen = read(device_fd, PKT_PAYLOAD(packet), MTU)) <= 0) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
 			       device, strerror(errno));
 			return false;
@@ -448,7 +448,7 @@ static bool write_packet(vpn_packet_t *packet) {
 
 	switch(device_type) {
 	case DEVICE_TYPE_TUN:
-		if(write(device_fd, DATA(packet) + 14, packet->len - 14) < 0) {
+		if(write(device_fd, PKT_PAYLOAD(packet) + 14, packet->len - 14) < 0) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Error while writing to %s %s: %s", device_info,
 			       device, strerror(errno));
 			return false;
@@ -458,7 +458,7 @@ static bool write_packet(vpn_packet_t *packet) {
 
 	case DEVICE_TYPE_UTUN:
 	case DEVICE_TYPE_TUNIFHEAD: {
-		int af = (DATA(packet)[12] << 8) + DATA(packet)[13];
+		int af = (PKT_PAYLOAD(packet)[12] << 8) + PKT_PAYLOAD(packet)[13];
 		uint32_t type;
 
 		switch(af) {
@@ -477,9 +477,9 @@ static bool write_packet(vpn_packet_t *packet) {
 			return false;
 		}
 
-		memcpy(DATA(packet) + 10, &type, sizeof(type));
+		memcpy(PKT_PAYLOAD(packet) + 10, &type, sizeof(type));
 
-		if(write(device_fd, DATA(packet) + 10, packet->len - 10) < 0) {
+		if(write(device_fd, PKT_PAYLOAD(packet) + 10, packet->len - 10) < 0) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Can't write to %s %s: %s", device_info, device,
 			       strerror(errno));
 			return false;
@@ -489,7 +489,7 @@ static bool write_packet(vpn_packet_t *packet) {
 	}
 
 	case DEVICE_TYPE_TAP:
-		if(write(device_fd, DATA(packet), packet->len) < 0) {
+		if(write(device_fd, PKT_PAYLOAD(packet), packet->len) < 0) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Error while writing to %s %s: %s", device_info,
 			       device, strerror(errno));
 			return false;
@@ -500,7 +500,7 @@ static bool write_packet(vpn_packet_t *packet) {
 #ifdef ENABLE_TUNEMU
 
 	case DEVICE_TYPE_TUNEMU:
-		if(tunemu_write(DATA(packet) + 14, packet->len - 14) < 0) {
+		if(tunemu_write(PKT_PAYLOAD(packet) + 14, packet->len - 14) < 0) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Error while writing to %s %s: %s", device_info,
 			       device, strerror(errno));
 			return false;

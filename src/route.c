@@ -113,9 +113,9 @@ static bool checklength(node_t *source, vpn_packet_t *packet, length_t length) {
 
 static void swap_mac_addresses(vpn_packet_t *packet) {
 	mac_t tmp;
-	memcpy(&tmp, &DATA(packet)[0], sizeof(tmp));
-	memcpy(&DATA(packet)[0], &DATA(packet)[6], sizeof(tmp));
-	memcpy(&DATA(packet)[6], &tmp, sizeof(tmp));
+	memcpy(&tmp, &PKT_PAYLOAD(packet)[0], sizeof(tmp));
+	memcpy(&PKT_PAYLOAD(packet)[0], &PKT_PAYLOAD(packet)[6], sizeof(tmp));
+	memcpy(&PKT_PAYLOAD(packet)[6], &tmp, sizeof(tmp));
 }
 
 /* RFC 792 */
@@ -138,7 +138,7 @@ static void route_ipv4_unreachable(node_t *source, vpn_packet_t *packet, length_
 
 	/* Copy headers from packet into properly aligned structs on the stack */
 
-	memcpy(&ip, DATA(packet) + ether_size, ip_size);
+	memcpy(&ip, PKT_PAYLOAD(packet) + ether_size, ip_size);
 
 	/* Remember original source and destination */
 
@@ -182,7 +182,7 @@ static void route_ipv4_unreachable(node_t *source, vpn_packet_t *packet, length_
 
 	/* Copy first part of original contents to ICMP message */
 
-	memmove(DATA(packet) + ether_size + ip_size + icmp_size, DATA(packet) + ether_size, oldlen);
+	memmove(PKT_PAYLOAD(packet) + ether_size + ip_size + icmp_size, PKT_PAYLOAD(packet) + ether_size, oldlen);
 
 	/* Fill in IPv4 header */
 
@@ -207,12 +207,12 @@ static void route_ipv4_unreachable(node_t *source, vpn_packet_t *packet, length_
 	icmp.icmp_cksum = 0;
 
 	icmp.icmp_cksum = inet_checksum(&icmp, icmp_size, 0xFFFF);
-	icmp.icmp_cksum = inet_checksum(DATA(packet) + ether_size + ip_size + icmp_size, oldlen, icmp.icmp_cksum);
+	icmp.icmp_cksum = inet_checksum(PKT_PAYLOAD(packet) + ether_size + ip_size + icmp_size, oldlen, icmp.icmp_cksum);
 
 	/* Copy structs on stack back to packet */
 
-	memcpy(DATA(packet) + ether_size, &ip, ip_size);
-	memcpy(DATA(packet) + ether_size + ip_size, &icmp, icmp_size);
+	memcpy(PKT_PAYLOAD(packet) + ether_size, &ip, ip_size);
+	memcpy(PKT_PAYLOAD(packet) + ether_size + ip_size, &icmp, icmp_size);
 
 	packet->len = ether_size + ip_size + icmp_size + oldlen;
 
@@ -243,7 +243,7 @@ static void route_ipv6_unreachable(node_t *source, vpn_packet_t *packet, length_
 
 	/* Copy headers from packet to structs on the stack */
 
-	memcpy(&ip6, DATA(packet) + ether_size, ip6_size);
+	memcpy(&ip6, PKT_PAYLOAD(packet) + ether_size, ip6_size);
 
 	/* Remember original source and destination */
 
@@ -287,7 +287,7 @@ static void route_ipv6_unreachable(node_t *source, vpn_packet_t *packet, length_
 
 	/* Copy first part of original contents to ICMP message */
 
-	memmove(DATA(packet) + ether_size + ip6_size + icmp6_size, DATA(packet) + ether_size, pseudo.length);
+	memmove(PKT_PAYLOAD(packet) + ether_size + ip6_size + icmp6_size, PKT_PAYLOAD(packet) + ether_size, pseudo.length);
 
 	/* Fill in IPv6 header */
 
@@ -313,14 +313,14 @@ static void route_ipv6_unreachable(node_t *source, vpn_packet_t *packet, length_
 
 	checksum = inet_checksum(&pseudo, sizeof(pseudo), 0xFFFF);
 	checksum = inet_checksum(&icmp6, icmp6_size, checksum);
-	checksum = inet_checksum(DATA(packet) + ether_size + ip6_size + icmp6_size, ntohl(pseudo.length) - icmp6_size, checksum);
+	checksum = inet_checksum(PKT_PAYLOAD(packet) + ether_size + ip6_size + icmp6_size, ntohl(pseudo.length) - icmp6_size, checksum);
 
 	icmp6.icmp6_cksum = checksum;
 
 	/* Copy structs on stack back to packet */
 
-	memcpy(DATA(packet) + ether_size, &ip6, ip6_size);
-	memcpy(DATA(packet) + ether_size + ip6_size, &icmp6, icmp6_size);
+	memcpy(PKT_PAYLOAD(packet) + ether_size, &ip6, ip6_size);
+	memcpy(PKT_PAYLOAD(packet) + ether_size + ip6_size, &icmp6, icmp6_size);
 
 	packet->len = ether_size + ip6_size + ntohl(pseudo.length);
 
@@ -328,11 +328,11 @@ static void route_ipv6_unreachable(node_t *source, vpn_packet_t *packet, length_
 }
 
 static bool do_decrement_ttl(node_t *source, vpn_packet_t *packet) {
-	uint16_t type = DATA(packet)[12] << 8 | DATA(packet)[13];
+	uint16_t type = PKT_PAYLOAD(packet)[12] << 8 | PKT_PAYLOAD(packet)[13];
 	length_t ethlen = ether_size;
 
 	if(type == ETH_P_8021Q) {
-		type = DATA(packet)[16] << 8 | DATA(packet)[17];
+		type = PKT_PAYLOAD(packet)[16] << 8 | PKT_PAYLOAD(packet)[17];
 		ethlen += 4;
 	}
 
@@ -342,27 +342,27 @@ static bool do_decrement_ttl(node_t *source, vpn_packet_t *packet) {
 			return false;
 		}
 
-		if(DATA(packet)[ethlen + 8] <= 1) {
-			if(DATA(packet)[ethlen + 11] != IPPROTO_ICMP || DATA(packet)[ethlen + 32] != ICMP_TIME_EXCEEDED) {
+		if(PKT_PAYLOAD(packet)[ethlen + 8] <= 1) {
+			if(PKT_PAYLOAD(packet)[ethlen + 11] != IPPROTO_ICMP || PKT_PAYLOAD(packet)[ethlen + 32] != ICMP_TIME_EXCEEDED) {
 				route_ipv4_unreachable(source, packet, ethlen, ICMP_TIME_EXCEEDED, ICMP_EXC_TTL);
 			}
 
 			return false;
 		}
 
-		uint16_t old = DATA(packet)[ethlen + 8] << 8 | DATA(packet)[ethlen + 9];
-		DATA(packet)[ethlen + 8]--;
-		uint16_t new = DATA(packet)[ethlen + 8] << 8 | DATA(packet)[ethlen + 9];
+		uint16_t old = PKT_PAYLOAD(packet)[ethlen + 8] << 8 | PKT_PAYLOAD(packet)[ethlen + 9];
+		PKT_PAYLOAD(packet)[ethlen + 8]--;
+		uint16_t new = PKT_PAYLOAD(packet)[ethlen + 8] << 8 | PKT_PAYLOAD(packet)[ethlen + 9];
 
-		uint32_t checksum = DATA(packet)[ethlen + 10] << 8 | DATA(packet)[ethlen + 11];
+		uint32_t checksum = PKT_PAYLOAD(packet)[ethlen + 10] << 8 | PKT_PAYLOAD(packet)[ethlen + 11];
 		checksum += old + (~new & 0xFFFF);
 
 		while(checksum >> 16) {
 			checksum = (checksum & 0xFFFF) + (checksum >> 16);
 		}
 
-		DATA(packet)[ethlen + 10] = checksum >> 8;
-		DATA(packet)[ethlen + 11] = checksum & 0xff;
+		PKT_PAYLOAD(packet)[ethlen + 10] = checksum >> 8;
+		PKT_PAYLOAD(packet)[ethlen + 11] = checksum & 0xff;
 
 		return true;
 
@@ -371,15 +371,15 @@ static bool do_decrement_ttl(node_t *source, vpn_packet_t *packet) {
 			return false;
 		}
 
-		if(DATA(packet)[ethlen + 7] <= 1) {
-			if(DATA(packet)[ethlen + 6] != IPPROTO_ICMPV6 || DATA(packet)[ethlen + 40] != ICMP6_TIME_EXCEEDED) {
+		if(PKT_PAYLOAD(packet)[ethlen + 7] <= 1) {
+			if(PKT_PAYLOAD(packet)[ethlen + 6] != IPPROTO_ICMPV6 || PKT_PAYLOAD(packet)[ethlen + 40] != ICMP6_TIME_EXCEEDED) {
 				route_ipv6_unreachable(source, packet, ethlen, ICMP6_TIME_EXCEEDED, ICMP6_TIME_EXCEED_TRANSIT);
 			}
 
 			return false;
 		}
 
-		DATA(packet)[ethlen + 7]--;
+		PKT_PAYLOAD(packet)[ethlen + 7]--;
 
 		return true;
 
@@ -401,15 +401,15 @@ static void clamp_mss(const node_t *source, const node_t *via, vpn_packet_t *pac
 
 	/* Find TCP header */
 	size_t start = ether_size;
-	uint16_t type = DATA(packet)[12] << 8 | DATA(packet)[13];
+	uint16_t type = PKT_PAYLOAD(packet)[12] << 8 | PKT_PAYLOAD(packet)[13];
 
 	if(type == ETH_P_8021Q) {
 		start += 4;
-		type = DATA(packet)[16] << 8 | DATA(packet)[17];
+		type = PKT_PAYLOAD(packet)[16] << 8 | PKT_PAYLOAD(packet)[17];
 	}
 
 	/* IP in IP (RFC 2003) packet */
-	if(type == ETH_P_IP && DATA(packet)[start + 9] == 4) {
+	if(type == ETH_P_IP && PKT_PAYLOAD(packet)[start + 9] == 4) {
 		start += 20;
 	}
 
@@ -417,9 +417,9 @@ static void clamp_mss(const node_t *source, const node_t *via, vpn_packet_t *pac
 		return;
 	}
 
-	if(type == ETH_P_IP && DATA(packet)[start + 9] == 6) {
-		start += (DATA(packet)[start] & 0xf) * 4;
-	} else if(type == ETH_P_IPV6 && DATA(packet)[start + 6] == 6) {
+	if(type == ETH_P_IP && PKT_PAYLOAD(packet)[start + 9] == 6) {
+		start += (PKT_PAYLOAD(packet)[start] & 0xf) * 4;
+	} else if(type == ETH_P_IPV6 && PKT_PAYLOAD(packet)[start + 6] == 6) {
 		start += 40;
 	} else {
 		return;
@@ -430,7 +430,7 @@ static void clamp_mss(const node_t *source, const node_t *via, vpn_packet_t *pac
 	}
 
 	/* Use data offset field to calculate length of options field */
-	int len = ((DATA(packet)[start + 12] >> 4) - 5) * 4;
+	int len = ((PKT_PAYLOAD(packet)[start + 12] >> 4) - 5) * 4;
 
 	if(packet->len < start + 20 + len) {
 		return;
@@ -438,36 +438,36 @@ static void clamp_mss(const node_t *source, const node_t *via, vpn_packet_t *pac
 
 	/* Search for MSS option header */
 	for(int i = 0; i < len;) {
-		if(DATA(packet)[start + 20 + i] == 0) {
+		if(PKT_PAYLOAD(packet)[start + 20 + i] == 0) {
 			break;
 		}
 
-		if(DATA(packet)[start + 20 + i] == 1) {
+		if(PKT_PAYLOAD(packet)[start + 20 + i] == 1) {
 			i++;
 			continue;
 		}
 
-		if(i > len - 2 || i > len - DATA(packet)[start + 21 + i]) {
+		if(i > len - 2 || i > len - PKT_PAYLOAD(packet)[start + 21 + i]) {
 			break;
 		}
 
-		if(DATA(packet)[start + 20 + i] != 2) {
-			if(DATA(packet)[start + 21 + i] < 2) {
+		if(PKT_PAYLOAD(packet)[start + 20 + i] != 2) {
+			if(PKT_PAYLOAD(packet)[start + 21 + i] < 2) {
 				break;
 			}
 
-			i += DATA(packet)[start + 21 + i];
+			i += PKT_PAYLOAD(packet)[start + 21 + i];
 			continue;
 		}
 
-		if(DATA(packet)[start + 21] != 4) {
+		if(PKT_PAYLOAD(packet)[start + 21] != 4) {
 			break;
 		}
 
 		/* Found it */
-		uint16_t oldmss = DATA(packet)[start + 22 + i] << 8 | DATA(packet)[start + 23 + i];
+		uint16_t oldmss = PKT_PAYLOAD(packet)[start + 22 + i] << 8 | PKT_PAYLOAD(packet)[start + 23 + i];
 		uint16_t newmss = mtu - start - 20;
-		uint32_t csum = DATA(packet)[start + 16] << 8 | DATA(packet)[start + 17];
+		uint32_t csum = PKT_PAYLOAD(packet)[start + 16] << 8 | PKT_PAYLOAD(packet)[start + 17];
 
 		if(oldmss <= newmss) {
 			break;
@@ -476,16 +476,16 @@ static void clamp_mss(const node_t *source, const node_t *via, vpn_packet_t *pac
 		logger(DEBUG_TRAFFIC, LOG_INFO, "Clamping MSS of packet from %s to %s to %d", source->name, via->name, newmss);
 
 		/* Update the MSS value and the checksum */
-		DATA(packet)[start + 22 + i] = newmss >> 8;
-		DATA(packet)[start + 23 + i] = newmss & 0xff;
+		PKT_PAYLOAD(packet)[start + 22 + i] = newmss >> 8;
+		PKT_PAYLOAD(packet)[start + 23 + i] = newmss & 0xff;
 		csum ^= 0xffff;
 		csum += oldmss ^ 0xffff;
 		csum += newmss;
 		csum = (csum & 0xffff) + (csum >> 16);
 		csum += csum >> 16;
 		csum ^= 0xffff;
-		DATA(packet)[start + 16] = csum >> 8;
-		DATA(packet)[start + 17] = csum;
+		PKT_PAYLOAD(packet)[start + 16] = csum >> 8;
+		PKT_PAYLOAD(packet)[start + 17] = csum;
 		break;
 	}
 }
@@ -576,7 +576,7 @@ static void fragment_ipv4_packet(node_t *dest, vpn_packet_t *packet, length_t et
 	uint8_t *offset;
 	uint16_t ip_off, origf;
 
-	memcpy(&ip, DATA(packet) + ether_size, ip_size);
+	memcpy(&ip, PKT_PAYLOAD(packet) + ether_size, ip_size);
 	fragment.priority = packet->priority;
 	fragment.offset = DEFAULT_PACKET_OFFSET;
 
@@ -593,7 +593,7 @@ static void fragment_ipv4_packet(node_t *dest, vpn_packet_t *packet, length_t et
 
 	logger(DEBUG_TRAFFIC, LOG_INFO, "Fragmenting packet of %d bytes to %s (%s)", packet->len, dest->name, dest->hostname);
 
-	offset = DATA(packet) + ether_size + ip_size;
+	offset = PKT_PAYLOAD(packet) + ether_size + ip_size;
 	maxlen = (MAX(dest->mtu, 590) - ether_size - ip_size) & ~0x7;
 	ip_off = ntohs(ip.ip_off);
 	origf = ip_off & ~IP_OFFMASK;
@@ -601,7 +601,7 @@ static void fragment_ipv4_packet(node_t *dest, vpn_packet_t *packet, length_t et
 
 	while(todo) {
 		size_t len = todo > maxlen ? maxlen : todo;
-		memcpy(DATA(&fragment) + ether_size + ip_size, offset, len);
+		memcpy(PKT_PAYLOAD(&fragment) + ether_size + ip_size, offset, len);
 		todo -= len;
 		offset += len;
 
@@ -609,8 +609,8 @@ static void fragment_ipv4_packet(node_t *dest, vpn_packet_t *packet, length_t et
 		ip.ip_off = htons(ip_off | origf | (todo ? IP_MF : 0));
 		ip.ip_sum = 0;
 		ip.ip_sum = inet_checksum(&ip, ip_size, 0xFFFF);
-		memcpy(DATA(&fragment), DATA(packet), ether_size);
-		memcpy(DATA(&fragment) + ether_size, &ip, ip_size);
+		memcpy(PKT_PAYLOAD(&fragment), PKT_PAYLOAD(packet), ether_size);
+		memcpy(PKT_PAYLOAD(&fragment) + ether_size, &ip, ip_size);
 		fragment.len = ether_size + ip_size + len;
 
 		send_packet(dest, &fragment, false);
@@ -628,7 +628,7 @@ static void route_ipv4(node_t *source, vpn_packet_t *packet) {
 	node_t *via;
 	ipv4_t dest;
 
-	memcpy(&dest, &DATA(packet)[30], sizeof(dest));
+	memcpy(&dest, &PKT_PAYLOAD(packet)[30], sizeof(dest));
 	subnet = lookup_subnet_ipv4(&dest);
 
 	if(!subnet) {
@@ -669,7 +669,7 @@ static void route_ipv4(node_t *source, vpn_packet_t *packet) {
 		}
 
 	if(priorityinheritance) {
-		packet->priority = DATA(packet)[15];
+		packet->priority = PKT_PAYLOAD(packet)[15];
 	}
 
 	via = (subnet->owner->via == myself) ? subnet->owner->nexthop : subnet->owner->via;
@@ -687,7 +687,7 @@ static void route_ipv4(node_t *source, vpn_packet_t *packet) {
 	if(via && packet->len > MAX(via->mtu, 590) && via != myself) {
 		logger(DEBUG_TRAFFIC, LOG_INFO, "Packet for %s (%s) length %d larger than MTU %d", subnet->owner->name, subnet->owner->hostname, packet->len, via->mtu);
 
-		if(DATA(packet)[20] & 0x40) {
+		if(PKT_PAYLOAD(packet)[20] & 0x40) {
 			packet->len = MAX(via->mtu, 590);
 			route_ipv4_unreachable(source, packet, ether_size, ICMP_DEST_UNREACH, ICMP_FRAG_NEEDED);
 		} else {
@@ -709,7 +709,7 @@ static void route_ipv6(node_t *source, vpn_packet_t *packet) {
 		return;
 	}
 
-	if(DATA(packet)[20] == IPPROTO_ICMPV6 && checklength(source, packet, ether_size + ip6_size + icmp6_size) && DATA(packet)[54] == ND_NEIGHBOR_SOLICIT) {
+	if(PKT_PAYLOAD(packet)[20] == IPPROTO_ICMPV6 && checklength(source, packet, ether_size + ip6_size + icmp6_size) && PKT_PAYLOAD(packet)[54] == ND_NEIGHBOR_SOLICIT) {
 		route_neighborsol(source, packet);
 		return;
 	}
@@ -718,7 +718,7 @@ static void route_ipv6(node_t *source, vpn_packet_t *packet) {
 	node_t *via;
 	ipv6_t dest;
 
-	memcpy(&dest, &DATA(packet)[38], sizeof(dest));
+	memcpy(&dest, &PKT_PAYLOAD(packet)[38], sizeof(dest));
 	subnet = lookup_subnet_ipv6(&dest);
 
 	if(!subnet) {
@@ -763,7 +763,7 @@ static void route_ipv6(node_t *source, vpn_packet_t *packet) {
 		}
 
 	if(priorityinheritance) {
-		packet->priority = ((DATA(packet)[14] & 0x0f) << 4) | (DATA(packet)[15] >> 4);
+		packet->priority = ((PKT_PAYLOAD(packet)[14] & 0x0f) << 4) | (PKT_PAYLOAD(packet)[15] >> 4);
 	}
 
 	via = (subnet->owner->via == myself) ? subnet->owner->nexthop : subnet->owner->via;
@@ -820,17 +820,17 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet) {
 
 	/* Copy headers from packet to structs on the stack */
 
-	memcpy(&ip6, DATA(packet) + ether_size, ip6_size);
-	memcpy(&ns, DATA(packet) + ether_size + ip6_size, ns_size);
+	memcpy(&ip6, PKT_PAYLOAD(packet) + ether_size, ip6_size);
+	memcpy(&ns, PKT_PAYLOAD(packet) + ether_size + ip6_size, ns_size);
 
 	if(has_opt) {
-		memcpy(&opt, DATA(packet) + ether_size + ip6_size + ns_size, opt_size);
+		memcpy(&opt, PKT_PAYLOAD(packet) + ether_size + ip6_size + ns_size, opt_size);
 	}
 
 	/* First, snatch the source address from the neighbor solicitation packet */
 
 	if(overwrite_mac) {
-		memcpy(mymac.x, DATA(packet) + ETH_ALEN, ETH_ALEN);
+		memcpy(mymac.x, PKT_PAYLOAD(packet) + ETH_ALEN, ETH_ALEN);
 	}
 
 	/* Check if this is a valid neighbor solicitation request */
@@ -861,7 +861,7 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet) {
 
 	if(has_opt) {
 		checksum = inet_checksum(&opt, opt_size, checksum);
-		checksum = inet_checksum(DATA(packet) + ether_size + ip6_size + ns_size + opt_size, ETH_ALEN, checksum);
+		checksum = inet_checksum(PKT_PAYLOAD(packet) + ether_size + ip6_size + ns_size + opt_size, ETH_ALEN, checksum);
 	}
 
 	if(checksum) {
@@ -900,14 +900,14 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet) {
 
 	/* Create neighbor advertation reply */
 
-	memcpy(DATA(packet), DATA(packet) + ETH_ALEN, ETH_ALEN); /* copy destination address */
-	DATA(packet)[ETH_ALEN * 2 - 1] ^= 0xFF;                  /* mangle source address so it looks like it's not from us */
+	memcpy(PKT_PAYLOAD(packet), PKT_PAYLOAD(packet) + ETH_ALEN, ETH_ALEN); /* copy destination address */
+	PKT_PAYLOAD(packet)[ETH_ALEN * 2 - 1] ^= 0xFF;                  /* mangle source address so it looks like it's not from us */
 
 	ip6.ip6_dst = ip6.ip6_src;                               /* swap destination and source protocol address */
 	ip6.ip6_src = ns.nd_ns_target;
 
 	if(has_opt) {
-		memcpy(DATA(packet) + ether_size + ip6_size + ns_size + opt_size, DATA(packet) + ETH_ALEN, ETH_ALEN);        /* add fake source hard addr */
+		memcpy(PKT_PAYLOAD(packet) + ether_size + ip6_size + ns_size + opt_size, PKT_PAYLOAD(packet) + ETH_ALEN, ETH_ALEN);        /* add fake source hard addr */
 	}
 
 	ns.nd_ns_cksum = 0;
@@ -935,18 +935,18 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet) {
 
 	if(has_opt) {
 		checksum = inet_checksum(&opt, opt_size, checksum);
-		checksum = inet_checksum(DATA(packet) + ether_size + ip6_size + ns_size + opt_size, ETH_ALEN, checksum);
+		checksum = inet_checksum(PKT_PAYLOAD(packet) + ether_size + ip6_size + ns_size + opt_size, ETH_ALEN, checksum);
 	}
 
 	ns.nd_ns_hdr.icmp6_cksum = checksum;
 
 	/* Copy structs on stack back to packet */
 
-	memcpy(DATA(packet) + ether_size, &ip6, ip6_size);
-	memcpy(DATA(packet) + ether_size + ip6_size, &ns, ns_size);
+	memcpy(PKT_PAYLOAD(packet) + ether_size, &ip6, ip6_size);
+	memcpy(PKT_PAYLOAD(packet) + ether_size + ip6_size, &ns, ns_size);
 
 	if(has_opt) {
-		memcpy(DATA(packet) + ether_size + ip6_size + ns_size, &opt, opt_size);
+		memcpy(PKT_PAYLOAD(packet) + ether_size + ip6_size + ns_size, &opt, opt_size);
 	}
 
 	send_packet(source, packet, true);
@@ -971,12 +971,12 @@ static void route_arp(node_t *source, vpn_packet_t *packet) {
 	/* First, snatch the source address from the ARP packet */
 
 	if(overwrite_mac) {
-		memcpy(mymac.x, DATA(packet) + ETH_ALEN, ETH_ALEN);
+		memcpy(mymac.x, PKT_PAYLOAD(packet) + ETH_ALEN, ETH_ALEN);
 	}
 
 	/* Copy headers from packet to structs on the stack */
 
-	memcpy(&arp, DATA(packet) + ether_size, arp_size);
+	memcpy(&arp, PKT_PAYLOAD(packet) + ether_size, arp_size);
 
 	/* Check if this is a valid ARP request */
 
@@ -1013,13 +1013,13 @@ static void route_arp(node_t *source, vpn_packet_t *packet) {
 	memcpy(arp.arp_spa, &addr, sizeof(addr));                 /* ... */
 
 	memcpy(arp.arp_tha, arp.arp_sha, ETH_ALEN);              /* set target hard/proto addr */
-	memcpy(arp.arp_sha, DATA(packet) + ETH_ALEN, ETH_ALEN);  /* set source hard/proto addr */
+	memcpy(arp.arp_sha, PKT_PAYLOAD(packet) + ETH_ALEN, ETH_ALEN);  /* set source hard/proto addr */
 	arp.arp_sha[ETH_ALEN - 1] ^= 0xFF;                       /* for consistency with route_packet() */
 	arp.arp_op = htons(ARPOP_REPLY);
 
 	/* Copy structs on stack back to packet */
 
-	memcpy(DATA(packet) + ether_size, &arp, arp_size);
+	memcpy(PKT_PAYLOAD(packet) + ether_size, &arp, arp_size);
 
 	send_packet(source, packet, true);
 }
@@ -1032,13 +1032,13 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 
 	if(source == myself) {
 		mac_t src;
-		memcpy(&src, &DATA(packet)[6], sizeof(src));
+		memcpy(&src, &PKT_PAYLOAD(packet)[6], sizeof(src));
 		learn_mac(&src);
 	}
 
 	/* Lookup destination address */
 
-	memcpy(&dest, &DATA(packet)[0], sizeof(dest));
+	memcpy(&dest, &PKT_PAYLOAD(packet)[0], sizeof(dest));
 	subnet = lookup_subnet_mac(NULL, &dest);
 
 	if(!subnet || !subnet->owner) {
@@ -1060,13 +1060,13 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 			return;
 		}
 
-	uint16_t type = DATA(packet)[12] << 8 | DATA(packet)[13];
+	uint16_t type = PKT_PAYLOAD(packet)[12] << 8 | PKT_PAYLOAD(packet)[13];
 
 	if(priorityinheritance) {
 		if(type == ETH_P_IP && packet->len >= ether_size + ip_size) {
-			packet->priority = DATA(packet)[15];
+			packet->priority = PKT_PAYLOAD(packet)[15];
 		} else if(type == ETH_P_IPV6 && packet->len >= ether_size + ip6_size) {
-			packet->priority = ((DATA(packet)[14] & 0x0f) << 4) | (DATA(packet)[15] >> 4);
+			packet->priority = ((PKT_PAYLOAD(packet)[14] & 0x0f) << 4) | (PKT_PAYLOAD(packet)[15] >> 4);
 		}
 	}
 
@@ -1083,12 +1083,12 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 		length_t ethlen = 14;
 
 		if(type == ETH_P_8021Q) {
-			type = DATA(packet)[16] << 8 | DATA(packet)[17];
+			type = PKT_PAYLOAD(packet)[16] << 8 | PKT_PAYLOAD(packet)[17];
 			ethlen += 4;
 		}
 
 		if(type == ETH_P_IP && packet->len > 576 + ethlen) {
-			if(DATA(packet)[6 + ethlen] & 0x40) {
+			if(PKT_PAYLOAD(packet)[6 + ethlen] & 0x40) {
 				packet->len = via->mtu;
 				route_ipv4_unreachable(source, packet, ethlen, ICMP_DEST_UNREACH, ICMP_FRAG_NEEDED);
 			} else {
@@ -1124,7 +1124,7 @@ static void send_pcap(vpn_packet_t *packet) {
 		}
 
 		if(send_request(c, "%d %d %d", CONTROL, REQ_PCAP, len)) {
-			send_meta(c, DATA(packet), len);
+			send_meta(c, PKT_PAYLOAD(packet), len);
 		}
 	}
 }
@@ -1143,7 +1143,7 @@ void route(node_t *source, vpn_packet_t *packet) {
 		return;
 	}
 
-	uint16_t type = DATA(packet)[12] << 8 | DATA(packet)[13];
+	uint16_t type = PKT_PAYLOAD(packet)[12] << 8 | PKT_PAYLOAD(packet)[13];
 
 	switch(routing_mode) {
 	case RMODE_ROUTER:

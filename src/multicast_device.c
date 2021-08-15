@@ -181,13 +181,13 @@ static void close_device(void) {
 static bool read_packet(vpn_packet_t *packet) {
 	ssize_t lenin;
 
-	if((lenin = recv(device_fd, (void *)DATA(packet), MTU, 0)) <= 0) {
+	if((lenin = recv(device_fd, (void *)PKT_PAYLOAD(packet), MTU, 0)) <= 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
 		       device, sockstrerror(sockerrno));
 		return false;
 	}
 
-	if(!memcmp(&ignore_src, DATA(packet) + 6, sizeof(ignore_src))) {
+	if(!memcmp(&ignore_src, PKT_PAYLOAD(packet) + 6, sizeof(ignore_src))) {
 		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Ignoring loopback packet of %zd bytes from %s", lenin, device_info);
 		return false;
 	}
@@ -204,13 +204,13 @@ static bool write_packet(vpn_packet_t *packet) {
 	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Writing packet of %d bytes to %s",
 	       packet->len, device_info);
 
-	if(sendto(device_fd, (void *)DATA(packet), packet->len, 0, ai->ai_addr, ai->ai_addrlen) < 0) {
+	if(sendto(device_fd, (void *)PKT_PAYLOAD(packet), packet->len, 0, ai->ai_addr, ai->ai_addrlen) < 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Can't write to %s %s: %s", device_info, device,
 		       sockstrerror(sockerrno));
 		return false;
 	}
 
-	memcpy(&ignore_src, DATA(packet) + 6, sizeof(ignore_src));
+	memcpy(&ignore_src, PKT_PAYLOAD(packet) + 6, sizeof(ignore_src));
 
 	return true;
 }

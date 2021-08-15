@@ -335,7 +335,7 @@ static bool write_packet(vpn_packet_t *packet) {
 
 	ResetEvent(device_write_overlapped.hEvent);
 
-	if(WriteFile(device_handle, DATA(&device_write_packet), device_write_packet.len, &outlen, &device_write_overlapped)) {
+	if(WriteFile(device_handle, PKT_PAYLOAD(&device_write_packet), device_write_packet.len, &outlen, &device_write_overlapped)) {
 		// Write was completed immediately.
 		device_write_packet.len = 0;
 	} else if(GetLastError() != ERROR_IO_PENDING) {

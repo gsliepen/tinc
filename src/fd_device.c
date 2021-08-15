@@ -181,7 +181,7 @@ static void close_device(void) {
 }
 
 static inline uint16_t get_ip_ethertype(vpn_packet_t *packet) {
-	switch(DATA(packet)[ETH_HLEN] >> 4) {
+	switch(PKT_PAYLOAD(packet)[ETH_HLEN] >> 4) {
 	case 4:
 		return ETH_P_IP;
 
@@ -194,14 +194,14 @@ static inline uint16_t get_ip_ethertype(vpn_packet_t *packet) {
 }
 
 static inline void set_etherheader(vpn_packet_t *packet, uint16_t ethertype) {
-	memset(DATA(packet), 0, ETH_HLEN - ETHER_TYPE_LEN);
+	memset(PKT_PAYLOAD(packet), 0, ETH_HLEN - ETHER_TYPE_LEN);
 
-	DATA(packet)[ETH_HLEN - ETHER_TYPE_LEN] = (ethertype >> 8) & 0xFF;
-	DATA(packet)[ETH_HLEN - ETHER_TYPE_LEN + 1] = ethertype & 0xFF;
+	PKT_PAYLOAD(packet)[ETH_HLEN - ETHER_TYPE_LEN] = (ethertype >> 8) & 0xFF;
+	PKT_PAYLOAD(packet)[ETH_HLEN - ETHER_TYPE_LEN + 1] = ethertype & 0xFF;
 }
 
 static bool read_packet(vpn_packet_t *packet) {
-	ssize_t lenin = read(device_fd, DATA(packet) + ETH_HLEN, MTU - ETH_HLEN);
+	ssize_t lenin = read(device_fd, PKT_PAYLOAD(packet) + ETH_HLEN, MTU - ETH_HLEN);
 
 	if(lenin <= 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from fd/%d: %s!", device_fd, strerror(errno));
@@ -226,7 +226,7 @@ static bool read_packet(vpn_packet_t *packet) {
 static bool write_packet(vpn_packet_t *packet) {
 	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Writing packet of %d bytes to fd/%d.", packet->len, device_fd);
 
-	if(write(device_fd, DATA(packet) + ETH_HLEN, packet->len - ETH_HLEN) < 0) {
+	if(write(device_fd, PKT_PAYLOAD(packet) + ETH_HLEN, packet->len - ETH_HLEN) < 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while writing to fd/%d: %s!", device_fd, strerror(errno));
 		return false;
 	}

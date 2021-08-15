@@ -89,7 +89,7 @@ static void close_device(void) {
 }
 
 static bool read_packet(vpn_packet_t *packet) {
-	ssize_t lenin = vde_recv(conn, DATA(packet), MTU, 0);
+	ssize_t lenin = vde_recv(conn, PKT_PAYLOAD(packet), MTU, 0);
 
 	if(lenin <= 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info, device, strerror(errno));
@@ -117,7 +117,7 @@ static bool read_packet(vpn_packet_t *packet) {
 }
 
 static bool write_packet(vpn_packet_t *packet) {
-	if(vde_send(conn, DATA(packet), packet->len, 0) < 0) {
+	if(vde_send(conn, PKT_PAYLOAD(packet), packet->len, 0) < 0) {
 		if(errno != EINTR && errno != EAGAIN) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Can't write to %s %s: %s", device_info, device, strerror(errno));
 			event_exit();

@@ -87,15 +87,15 @@ typedef union sockaddr_t {
 #define SALEN(s) (s.sa_family==AF_INET?sizeof(struct sockaddr_in):sizeof(struct sockaddr_in6))
 #endif
 
-#define SEQNO(x) ((x)->data + (x)->offset - 4)
-#define SRCID(x) ((node_id_t *)((x)->data + (x)->offset - 6))
-#define DSTID(x) ((node_id_t *)((x)->data + (x)->offset - 12))
-#define DATA(x) ((x)->data + (x)->offset)
+#define PKT_SEQNO(x) ((x)->data + (x)->offset - 4)
+#define PKT_SRCID(x) ((node_id_t *)((x)->data + (x)->offset - 6))
+#define PKT_DSTID(x) ((node_id_t *)((x)->data + (x)->offset - 12))
+#define PKT_PAYLOAD(x) ((x)->data + (x)->offset)
 #define DEFAULT_PACKET_OFFSET 12
 
 typedef struct vpn_packet_t {
 	length_t len;           /* The actual number of valid bytes in the `data' field (including seqno or dstid/srcid) */
-	uint8_t refcnt;         /* Reference Count */ 
+	uint8_t refcnt;         /* Reference Count */
 	uint8_t priority;       /* priority or TOS */
 	offset_t offset;        /* Offset in the buffer where the packet data starts (righter after seqno or dstid/srcid) */
 	uint8_t data[MAXSIZE];
