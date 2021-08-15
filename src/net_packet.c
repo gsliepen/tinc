@@ -815,7 +815,7 @@ static void send_buffered_packets(packet_thread_info_t *packet_thread_info) {
 		iovecs[i].iov_base = (char *) SEQNO(listen_socket.packet_buffer[i]);
 		iovecs[i].iov_len = listen_socket.packet_buffer[i]->len;
 
-		msghdrs[i].msg_hdr.msg_name = (void*)&sa->sa;
+		msghdrs[i].msg_hdr.msg_name = (void *)&sa->sa;
 		msghdrs[i].msg_hdr.msg_namelen = SALEN(sa->sa);
 		msghdrs[i].msg_hdr.msg_iov = iovecs + i;
 		msghdrs[i].msg_hdr.msg_iovlen = 1;
