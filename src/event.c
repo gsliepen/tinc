@@ -219,9 +219,16 @@ void timeout_del(timeout_t *timeout) {
 }
 
 #ifndef HAVE_MINGW
+
+// From Matz's Ruby
+#ifndef NSIG
+# define NSIG (_SIGMAX + 1)      /* For QNX */
+#endif
+
+
 static io_t signalio;
 static int pipefd[2] = {-1, -1};
-static signal_t *signal_handle[SIGSYS + 1] = {};
+static signal_t *signal_handle[NSIG + 1] = {};
 
 static void signal_handler(int signum) {
 	unsigned char num = signum;
