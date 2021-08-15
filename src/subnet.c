@@ -83,7 +83,7 @@ static uint32_t hash_function_ipv6_t(const ipv6_t *p) {
 	uint32_t hash = hash_seed;
 
 	for(int i = 0; i < 4; i++) {
-		hash += fullwidth[i];
+		hash = wrapping_add32(hash, fullwidth[i]);
 		hash = wrapping_mul32(hash, 0x9e370001U);
 	}
 
@@ -95,7 +95,7 @@ static uint32_t hash_function_mac_t(const mac_t *p) {
 	uint32_t hash = hash_seed;
 
 	for(int i = 0; i < 3; i++) {
-		hash += halfwidth[i];
+		hash = wrapping_add32(hash, halfwidth[i]);
 		hash = wrapping_mul32(hash, 0x9e370001U);
 	}
 
