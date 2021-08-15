@@ -485,7 +485,7 @@ static void clamp_mss(const node_t *source, const node_t *via, vpn_packet_t *pac
 		csum += csum >> 16;
 		csum ^= 0xffff;
 		DATA(packet)[start + 16] = csum >> 8;
-		DATA(packet)[start + 17] = csum;
+		DATA(packet)[start + 17] = csum & 0xff;
 		break;
 	}
 }
