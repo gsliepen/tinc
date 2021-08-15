@@ -78,10 +78,10 @@ typedef struct connection_t {
 
 #ifndef DISABLE_LEGACY
 	rsa_t *rsa;                     /* his public RSA key */
-	cipher_t *incipher;             /* Cipher he will use to send data to us */
-	cipher_t *outcipher;            /* Cipher we will use to send data to him */
-	digest_t *indigest;
-	digest_t *outdigest;
+	cipher_t incipher;              /* Cipher he will use to send data to us */
+	cipher_t outcipher;             /* Cipher we will use to send data to him */
+	digest_t indigest;
+	digest_t outdigest;
 	uint64_t inbudget;
 	uint64_t outbudget;
 #endif

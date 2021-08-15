@@ -820,10 +820,15 @@ static bool setup_myself(void) {
 
 	if(!strcasecmp(cipher, "none")) {
 		myself->incipher = NULL;
-	} else if(!(myself->incipher = cipher_open_by_name(cipher))) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Unrecognized cipher type!");
-		free(cipher);
-		return false;
+	} else {
+		myself->incipher = cipher_alloc();
+
+		if(!cipher_open_by_name(myself->incipher, cipher)) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Unrecognized cipher type!");
+			cipher_free(&myself->incipher);
+			free(cipher);
+			return false;
+		}
 	}
 
 	free(cipher);
@@ -850,10 +855,15 @@ static bool setup_myself(void) {
 
 	if(!strcasecmp(digest, "none")) {
 		myself->indigest = NULL;
-	} else if(!(myself->indigest = digest_open_by_name(digest, maclength))) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Unrecognized digest type!");
-		free(digest);
-		return false;
+	} else {
+		myself->indigest = digest_alloc();
+
+		if(!digest_open_by_name(myself->indigest, digest, maclength)) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Unrecognized digest type!");
+			digest_free(&myself->indigest);
+			free(digest);
+			return false;
+		}
 	}
 
 	free(digest);

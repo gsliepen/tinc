@@ -147,7 +147,8 @@ void cipher_close(cipher_t *cipher) {
 	}
 
 	free(cipher->key);
-	cipher->key = NULL;
+
+	memset(cipher, 0, sizeof(*cipher));
 }
 
 size_t cipher_keylength(const cipher_t *cipher) {

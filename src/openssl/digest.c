@@ -18,7 +18,6 @@
 */
 
 #include "../system.h"
-#include "../xalloc.h"
 
 #include <openssl/err.h>
 #include <openssl/hmac.h>
@@ -27,8 +26,7 @@
 #include "../digest.h"
 #include "../logger.h"
 
-static digest_t *digest_open(const EVP_MD *evp_md, size_t maclength) {
-	digest_t *digest = xzalloc(sizeof(*digest));
+static void digest_open(digest_t *digest, const EVP_MD *evp_md, size_t maclength) {
 	digest->digest = evp_md;
 
 	size_t digestlen = EVP_MD_size(digest->digest);
@@ -38,11 +36,9 @@ static digest_t *digest_open(const EVP_MD *evp_md, size_t maclength) {
 	} else {
 		digest->maclength = maclength;
 	}
-
-	return digest;
 }
 
-digest_t *digest_open_by_name(const char *name, size_t maclength) {
+bool digest_open_by_name(digest_t *digest, const char *name, size_t maclength) {
 	const EVP_MD *evp_md = EVP_get_digestbyname(name);
 
 	if(!evp_md) {
@@ -50,10 +46,11 @@ digest_t *digest_open_by_name(const char *name, size_t maclength) {
 		return false;
 	}
 
-	return digest_open(evp_md, maclength);
+	digest_open(digest, evp_md, maclength);
+	return true;
 }
 
-digest_t *digest_open_by_nid(int nid, size_t maclength) {
+bool digest_open_by_nid(digest_t *digest, int nid, size_t maclength) {
 	const EVP_MD *evp_md = EVP_get_digestbynid(nid);
 
 	if(!evp_md) {
@@ -61,7 +58,8 @@ digest_t *digest_open_by_nid(int nid, size_t maclength) {
 		return false;
 	}
 
-	return digest_open(evp_md, maclength);
+	digest_open(digest, evp_md, maclength);
+	return true;
 }
 
 bool digest_set_key(digest_t *digest, const void *key, size_t len) {
@@ -88,7 +86,7 @@ void digest_close(digest_t *digest) {
 		HMAC_CTX_free(digest->hmac_ctx);
 	}
 
-	free(digest);
+	memset(digest, 0, sizeof(*digest));
 }
 
 bool digest_create(digest_t *digest, const void *indata, size_t inlen, void *outdata) {

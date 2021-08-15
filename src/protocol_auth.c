@@ -509,18 +509,24 @@ bool send_metakey(connection_t *c) {
 	*/
 
 	size_t keylen = cipher_keylength(myself->incipher);
+	const char *cipher_name;
 
 	if(keylen <= 16) {
-		c->outcipher = cipher_open_by_name("aes-128-cfb");
+		cipher_name = "aes-128-cfb";
 	} else if(keylen <= 24) {
-		c->outcipher = cipher_open_by_name("aes-192-cfb");
+		cipher_name = "aes-192-cfb";
 	} else {
-		c->outcipher = cipher_open_by_name("aes-256-cfb");
+		cipher_name = "aes-256-cfb";
 	}
 
-	c->outbudget = cipher_budget(c->outcipher);
+	if(!cipher_open_by_name(&c->outcipher, cipher_name)) {
+		return false;
+	}
 
-	if(!(c->outdigest = digest_open_by_name("sha256", DIGEST_ALGO_SIZE))) {
+	c->outbudget = cipher_budget(&c->outcipher);
+
+	if(!digest_open_by_name(&c->outdigest, "sha256", DIGEST_ALGO_SIZE)) {
+		cipher_close(&c->outcipher);
 		return false;
 	}
 
@@ -545,7 +551,7 @@ bool send_metakey(connection_t *c) {
 
 	key[0] &= 0x7F;
 
-	if(!cipher_set_key_from_rsa(c->outcipher, key, len, true)) {
+	if(!cipher_set_key_from_rsa(&c->outcipher, key, len, true)) {
 		return false;
 	}
 
@@ -573,8 +579,8 @@ bool send_metakey(connection_t *c) {
 	/* Send the meta key */
 
 	bool result = send_request(c, "%d %d %d %d %d %s", METAKEY,
-	                           cipher_get_nid(c->outcipher),
-	                           digest_get_nid(c->outdigest), c->outmaclength,
+	                           cipher_get_nid(&c->outcipher),
+	                           digest_get_nid(&c->outdigest), c->outmaclength,
 	                           c->outcompression, hexkey);
 
 	c->status.encryptout = true;
@@ -623,7 +629,7 @@ bool metakey_h(connection_t *c, const char *request) {
 	/* Check and lookup cipher and digest algorithms */
 
 	if(cipher) {
-		if(!(c->incipher = cipher_open_by_nid(cipher)) || !cipher_set_key_from_rsa(c->incipher, key, len, false)) {
+		if(!cipher_open_by_nid(&c->incipher, cipher) || !cipher_set_key_from_rsa(&c->incipher, key, len, false)) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Error during initialisation of cipher from %s (%s)", c->name, c->hostname);
 			return false;
 		}
@@ -632,10 +638,10 @@ bool metakey_h(connection_t *c, const char *request) {
 		return false;
 	}
 
-	c->inbudget = cipher_budget(c->incipher);
+	c->inbudget = cipher_budget(&c->incipher);
 
 	if(digest) {
-		if(!(c->indigest = digest_open_by_nid(digest, DIGEST_ALGO_SIZE))) {
+		if(!digest_open_by_nid(&c->indigest, digest, DIGEST_ALGO_SIZE)) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Error during initialisation of digest from %s (%s)", c->name, c->hostname);
 			return false;
 		}
@@ -709,12 +715,12 @@ bool challenge_h(connection_t *c, const char *request) {
 
 bool send_chal_reply(connection_t *c) {
 	const size_t len = rsa_size(myself->connection->rsa);
-	size_t digestlen = digest_length(c->indigest);
+	size_t digestlen = digest_length(&c->indigest);
 	char digest[digestlen * 2 + 1];
 
 	/* Calculate the hash from the challenge we received */
 
-	if(!digest_create(c->indigest, c->mychallenge, len, digest)) {
+	if(!digest_create(&c->indigest, c->mychallenge, len, digest)) {
 		return false;
 	}
 
@@ -745,7 +751,7 @@ bool chal_reply_h(connection_t *c, const char *request) {
 
 	/* Check if the length of the hash is all right */
 
-	if(inlen != digest_length(c->outdigest)) {
+	if(inlen != digest_length(&c->outdigest)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Possible intruder %s (%s): %s", c->name, c->hostname, "wrong challenge reply length");
 		return false;
 	}
@@ -753,7 +759,7 @@ bool chal_reply_h(connection_t *c, const char *request) {
 
 	/* Verify the hash */
 
-	if(!digest_verify(c->outdigest, c->hischallenge, rsa_size(c->rsa), hishash)) {
+	if(!digest_verify(&c->outdigest, c->hischallenge, rsa_size(c->rsa), hishash)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Possible intruder %s (%s): %s", c->name, c->hostname, "wrong challenge reply");
 		return false;
 	}

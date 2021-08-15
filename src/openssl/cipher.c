@@ -25,45 +25,38 @@
 
 #include "../cipher.h"
 #include "../logger.h"
-#include "../xalloc.h"
 
-struct cipher {
-	EVP_CIPHER_CTX *ctx;
-	const EVP_CIPHER *cipher;
-};
-
-static cipher_t *cipher_open(const EVP_CIPHER *evp_cipher) {
-	cipher_t *cipher = xzalloc(sizeof(*cipher));
+static void cipher_open(cipher_t *cipher, const EVP_CIPHER *evp_cipher) {
 	cipher->cipher = evp_cipher;
 	cipher->ctx = EVP_CIPHER_CTX_new();
 
 	if(!cipher->ctx) {
 		abort();
 	}
-
-	return cipher;
 }
 
-cipher_t *cipher_open_by_name(const char *name) {
+bool cipher_open_by_name(cipher_t *cipher, const char *name) {
 	const EVP_CIPHER *evp_cipher = EVP_get_cipherbyname(name);
 
 	if(!evp_cipher) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Unknown cipher name '%s'!", name);
-		return NULL;
+		return false;
 	}
 
-	return cipher_open(evp_cipher);
+	cipher_open(cipher, evp_cipher);
+	return true;
 }
 
-cipher_t *cipher_open_by_nid(int nid) {
+bool cipher_open_by_nid(cipher_t *cipher, int nid) {
 	const EVP_CIPHER *evp_cipher = EVP_get_cipherbynid(nid);
 
 	if(!evp_cipher) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Unknown cipher nid %d!", nid);
-		return NULL;
+		return false;
 	}
 
-	return cipher_open(evp_cipher);
+	cipher_open(cipher, evp_cipher);
+	return true;
 }
 
 void cipher_close(cipher_t *cipher) {
@@ -71,8 +64,11 @@ void cipher_close(cipher_t *cipher) {
 		return;
 	}
 
-	EVP_CIPHER_CTX_free(cipher->ctx);
-	free(cipher);
+	if(cipher->ctx) {
+		EVP_CIPHER_CTX_free(cipher->ctx);
+	}
+
+	memset(cipher, 0, sizeof(*cipher));
 }
 
 size_t cipher_keylength(const cipher_t *cipher) {

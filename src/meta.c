@@ -78,7 +78,7 @@ bool send_meta(connection_t *c, const void *buffer, size_t length) {
 
 		size_t outlen = length;
 
-		if(!cipher_encrypt(c->outcipher, buffer, length, buffer_prepare(&c->outbuf, length), &outlen, false) || outlen != length) {
+		if(!cipher_encrypt(&c->outcipher, buffer, length, buffer_prepare(&c->outbuf, length), &outlen, false) || outlen != length) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Error while encrypting metadata to %s (%s)",
 			       c->name, c->hostname);
 			return false;
@@ -258,7 +258,7 @@ bool receive_meta(connection_t *c) {
 
 			size_t outlen = inlen;
 
-			if(!cipher_decrypt(c->incipher, bufp, inlen, buffer_prepare(&c->inbuf, inlen), &outlen, false) || (size_t)inlen != outlen) {
+			if(!cipher_decrypt(&c->incipher, bufp, inlen, buffer_prepare(&c->inbuf, inlen), &outlen, false) || (size_t)inlen != outlen) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Error while decrypting metadata from %s (%s)",
 				       c->name, c->hostname);
 				return false;

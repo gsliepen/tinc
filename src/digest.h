@@ -27,10 +27,20 @@
 
 #ifndef DISABLE_LEGACY
 
+#ifdef HAVE_OPENSSL
+#include "openssl/digest.h"
+#elif HAVE_LIBGCRYPT
+#include "gcrypt/digest.h"
+#else
+#error Incorrect cryptographic library, please reconfigure.
+#endif
+
 typedef struct digest digest_t;
 
-extern digest_t *digest_open_by_name(const char *name, size_t maclength) __attribute__((__malloc__));
-extern digest_t *digest_open_by_nid(int nid, size_t maclength) __attribute__((__malloc__));
+extern bool digest_open_by_name(digest_t *digest, const char *name, size_t maclength);
+extern bool digest_open_by_nid(digest_t *digest, int nid, size_t maclength);
+extern digest_t *digest_alloc() __attribute__((__malloc__));
+extern void digest_free(digest_t **digest);
 extern void digest_close(digest_t *digest);
 extern bool digest_create(digest_t *digest, const void *indata, size_t inlen, void *outdata) __attribute__((__warn_unused_result__));
 extern bool digest_verify(digest_t *digest, const void *indata, size_t inlen, const void *digestdata) __attribute__((__warn_unused_result__));

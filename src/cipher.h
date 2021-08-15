@@ -28,10 +28,20 @@
 
 #ifndef DISABLE_LEGACY
 
+#ifdef HAVE_OPENSSL
+#include "openssl/cipher.h"
+#elif HAVE_LIBGCRYPT
+#include "gcrypt/cipher.h"
+#else
+#error Incorrect cryptographic library, please reconfigure.
+#endif
+
 typedef struct cipher cipher_t;
 
-extern cipher_t *cipher_open_by_name(const char *name) __attribute__((__malloc__));
-extern cipher_t *cipher_open_by_nid(int nid) __attribute__((__malloc__));
+extern cipher_t *cipher_alloc() __attribute__((__malloc__));
+extern void cipher_free(cipher_t **cipher);
+extern bool cipher_open_by_name(cipher_t *cipher, const char *name);
+extern bool cipher_open_by_nid(cipher_t *cipher, int nid);
 extern void cipher_close(cipher_t *cipher);
 extern size_t cipher_keylength(const cipher_t *cipher);
 extern size_t cipher_blocksize(const cipher_t *cipher);
@@ -43,6 +53,6 @@ extern bool cipher_decrypt(cipher_t *cipher, const void *indata, size_t inlen, v
 extern int cipher_get_nid(const cipher_t *cipher);
 extern bool cipher_active(const cipher_t *cipher);
 
-#endif
+#endif // DISABLE_LEGACY
 
-#endif
+#endif // TINC_CIPHER_H

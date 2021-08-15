@@ -63,10 +63,10 @@ void free_connection(connection_t *c) {
 	}
 
 #ifndef DISABLE_LEGACY
-	cipher_close(c->incipher);
-	digest_close(c->indigest);
-	cipher_close(c->outcipher);
-	digest_close(c->outdigest);
+	cipher_close(&c->incipher);
+	digest_close(&c->indigest);
+	cipher_close(&c->outcipher);
+	digest_close(&c->outdigest);
 	rsa_free(c->rsa);
 #endif
 

@@ -216,13 +216,13 @@ endif
 
 if OPENSSL
 tincd_SOURCES += \
-	openssl/cipher.c \
+	openssl/cipher.c openssl/cipher.h \
 	openssl/crypto.c \
 	openssl/digest.c openssl/digest.h \
 	openssl/prf.c \
 	openssl/rsa.c
 tinc_SOURCES += \
-	openssl/cipher.c \
+	openssl/cipher.c openssl/cipher.h \
 	openssl/crypto.c \
 	openssl/digest.c openssl/digest.h \
 	openssl/prf.c \
@@ -280,6 +280,13 @@ sptps_speed_SOURCES += \
 	nolegacy/crypto.c \
 	nolegacy/prf.c
 endif
+endif
+
+if WITH_LEGACY_PROTOCOL
+tinc_SOURCES        += digest.c
+tincd_SOURCES       += digest.c cipher.c
+sptps_test_SOURCES  += digest.c
+sptps_speed_SOURCES += digest.c
 endif
 
 if MINIUPNPC

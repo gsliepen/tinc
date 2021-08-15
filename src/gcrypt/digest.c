@@ -120,7 +120,7 @@ void digest_close(digest_t *digest) {
 		gcry_md_close(digest->hmac);
 	}
 
-	digest->hmac = NULL;
+	memset(digest, 0, sizeof(*digest));
 }
 
 bool digest_set_key(digest_t *digest, const void *key, size_t len) {

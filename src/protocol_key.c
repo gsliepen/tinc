@@ -340,13 +340,13 @@ bool send_ans_key(node_t *to) {
 
 	randomize(key, keylen);
 
-	cipher_close(to->incipher);
-	digest_close(to->indigest);
+	cipher_free(&to->incipher);
+	digest_free(&to->indigest);
 
 	if(myself->incipher) {
-		to->incipher = cipher_open_by_nid(cipher_get_nid(myself->incipher));
+		to->incipher = cipher_alloc();
 
-		if(!to->incipher) {
+		if(!cipher_open_by_nid(to->incipher, cipher_get_nid(myself->incipher))) {
 			abort();
 		}
 
@@ -356,10 +356,11 @@ bool send_ans_key(node_t *to) {
 	}
 
 	if(myself->indigest) {
-		to->indigest = digest_open_by_nid(digest_get_nid(myself->indigest),
-		                                  digest_length(myself->indigest));
+		to->indigest = digest_alloc();
 
-		if(!to->indigest) {
+		if(!digest_open_by_nid(to->indigest,
+		                       digest_get_nid(myself->indigest),
+		                       digest_length(myself->indigest))) {
 			abort();
 		}
 
@@ -459,8 +460,8 @@ bool ans_key_h(connection_t *c, const char *request) {
 
 #ifndef DISABLE_LEGACY
 	/* Don't use key material until every check has passed. */
-	cipher_close(from->outcipher);
-	digest_close(from->outdigest);
+	cipher_free(&from->outcipher);
+	digest_free(&from->outdigest);
 #endif
 
 	if(!from->status.sptps) {
@@ -555,7 +556,10 @@ bool ans_key_h(connection_t *c, const char *request) {
 	/* Check and lookup cipher and digest algorithms */
 
 	if(cipher) {
-		if(!(from->outcipher = cipher_open_by_nid(cipher))) {
+		from->outcipher = cipher_alloc();
+
+		if(!cipher_open_by_nid(from->outcipher, cipher)) {
+			cipher_free(&from->outcipher);
 			logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses unknown cipher!", from->name, from->hostname);
 			return false;
 		}
@@ -564,7 +568,10 @@ bool ans_key_h(connection_t *c, const char *request) {
 	}
 
 	if(digest) {
-		if(!(from->outdigest = digest_open_by_nid(digest, maclength))) {
+		from->outdigest = digest_alloc();
+
+		if(!digest_open_by_nid(from->outdigest, digest, maclength)) {
+			digest_free(&from->outdigest);
 			logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses unknown digest!", from->name, from->hostname);
 			return false;
 		}
