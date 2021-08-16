@@ -411,7 +411,7 @@ int cmd_invite(int argc, char *argv[]) {
 
 		if(!f) {
 			fprintf(stderr, "Could not write %s: %s\n", filename, strerror(errno));
-			free(key);
+			ecdsa_free(key);
 			return 1;
 		}
 
@@ -420,7 +420,7 @@ int cmd_invite(int argc, char *argv[]) {
 		if(!ecdsa_write_pem_private_key(key, f)) {
 			fprintf(stderr, "Could not write ECDSA private key\n");
 			fclose(f);
-			free(key);
+			ecdsa_free(key);
 			return 1;
 		}
 
@@ -450,7 +450,7 @@ int cmd_invite(int argc, char *argv[]) {
 	sha512(fingerprint, strlen(fingerprint), hash);
 	b64encode_urlsafe(hash, hash, 18);
 
-	free(key);
+	ecdsa_free(key);
 
 	// Create a random cookie for this invitation.
 	char cookie[25];
@@ -674,7 +674,7 @@ static bool finalize_join(void) {
 	}
 
 	if(!netname) {
-		netname = grep(data, "NetName");
+		netname = xstrdup(grep(data, "NetName"));
 
 		if(netname && !check_netname(netname, true)) {
 			fprintf(stderr, "Unsafe NetName found in invitation!\n");
@@ -1248,6 +1248,7 @@ int cmd_join(int argc, char *argv[]) {
 
 	if(!ai) {
 		free(b64key);
+		ecdsa_free(key);
 		return 1;
 	}
 
@@ -1262,6 +1263,7 @@ next:
 		if(!aip) {
 			freeaddrinfo(ai);
 			free(b64key);
+			ecdsa_free(key);
 			return 1;
 		}
 	}
@@ -1320,11 +1322,13 @@ next:
 
 	if(sha512(fingerprint, strlen(fingerprint), hishash)) {
 		fprintf(stderr, "Could not create digest\n%s\n", line + 2);
+		ecdsa_free(key);
 		return 1;
 	}
 
 	if(memcmp(hishash, hash, 18)) {
 		fprintf(stderr, "Peer has an invalid key!\n%s\n", line + 2);
+		ecdsa_free(key);
 		return 1;
 
 	}
@@ -1332,17 +1336,21 @@ next:
 	ecdsa_t *hiskey = ecdsa_set_base64_public_key(fingerprint);
 
 	if(!hiskey) {
+		ecdsa_free(key);
 		return 1;
 	}
 
 	// Start an SPTPS session
 	if(!sptps_start(&sptps, NULL, true, false, key, hiskey, "tinc invitation", 15, invitation_send, invitation_receive)) {
+		ecdsa_free(hiskey);
+		ecdsa_free(key);
 		return 1;
 	}
 
 	// Feed rest of input buffer to SPTPS
 	if(!sptps_receive_data(&sptps, buffer, blen)) {
-		return 1;
+		success = false;
+		goto exit;
 	}
 
 	while((len = recv(sock, line, sizeof(line), 0))) {
@@ -1362,7 +1370,8 @@ next:
 
 #endif
 			fprintf(stderr, "Error reading data from %s port %s: %s\n", address, port, sockstrerror(sockerrno));
-			return 1;
+			success = false;
+			goto exit;
 		}
 
 		char *p = line;
@@ -1371,7 +1380,8 @@ next:
 			size_t done = sptps_receive_data(&sptps, p, len);
 
 			if(!done) {
-				return 1;
+				success = false;
+				goto exit;
 			}
 
 			len -= (ssize_t) done;
@@ -1379,13 +1389,14 @@ next:
 		}
 	}
 
+exit:
 	sptps_stop(&sptps);
 	ecdsa_free(hiskey);
 	ecdsa_free(key);
 	closesocket(sock);
 
 	if(!success) {
-		fprintf(stderr, "Connection closed by peer, invitation cancelled.\n");
+		fprintf(stderr, "Invitation cancelled.\n");
 		return 1;
 	}
 
