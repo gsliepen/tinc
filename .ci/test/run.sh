@@ -75,6 +75,9 @@ default)
 nolegacy)
   run_tests nolegacy --disable-legacy-protocol
   ;;
+gcrypt)
+  run_tests gcrypt --with-libgcrypt
+  ;;
 *)
   bail "unknown test flavor $1"
   ;;

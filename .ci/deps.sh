@@ -7,7 +7,7 @@ deps_linux_alpine() {
 
   apk add \
     git binutils make autoconf automake gcc linux-headers diffutils texinfo \
-    procps socat shadow sudo \
+    procps socat shadow sudo libgcrypt-dev \
     openssl-dev zlib-dev lzo-dev ncurses-dev readline-dev musl-dev lz4-dev vde2-dev
 }
 
@@ -55,7 +55,7 @@ deps_linux_rhel() {
 
   yum install -y \
     git binutils make autoconf automake gcc diffutils sudo texinfo netcat procps systemd \
-    findutils socat lzo-devel zlib-devel lz4-devel ncurses-devel readline-devel "$@"
+    findutils socat lzo-devel zlib-devel lz4-devel ncurses-devel readline-devel libgcrypt-devel "$@"
 
   if yum info openssl11-devel; then
     yum install -y openssl11-devel
@@ -89,7 +89,7 @@ deps_linux() {
 }
 
 deps_macos() {
-  brew install coreutils netcat automake lzo lz4 miniupnpc "$@"
+  brew install coreutils netcat automake lzo lz4 miniupnpc libgcrypt "$@"
   pip3 install --user compiledb
 }
 

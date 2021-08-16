@@ -10,7 +10,7 @@ on:
 jobs:
   cross:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -39,6 +39,9 @@ jobs:
 
       - name: Run tests without legacy protocol
         run: sudo -u build CI=1 HOST=${{ matrix.arch }} sh .ci/test/run.sh nolegacy
+
+      - name: Run tests with libgcrypt
+        run: sudo -u build CI=1 HOST=${{ matrix.arch }} sh .ci/test/run.sh gcrypt
 
       - name: Upload test results
         uses: actions/upload-artifact@v2
@@ -188,6 +191,9 @@ jobs:
       - name: Run tests without legacy protocol
         run: sudo -u build CI=1 sh .ci/test/run.sh nolegacy
 
+      - name: Run tests with libgcrypt
+        run: sudo -u build CI=1 sh .ci/test/run.sh gcrypt
+
       - name: Upload test results
         uses: actions/upload-artifact@v2
         with:
@@ -244,7 +250,7 @@ jobs:
 
   macos:
     runs-on: macos-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Checkout code
@@ -264,6 +270,9 @@ jobs:
       - name: Run tests without legacy protocol
         run: sh .ci/test/run.sh nolegacy
 
+      - name: Run tests with libgcrypt
+        run: sh .ci/test/run.sh gcrypt
+
       - name: Upload test results
         uses: actions/upload-artifact@v2
         with:
@@ -273,7 +282,7 @@ jobs:
 
   windows:
     runs-on: windows-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     steps:
       - name: Install msys2
@@ -285,6 +294,7 @@ jobs:
             base-devel
             mingw-w64-x86_64-gcc
             mingw-w64-x86_64-openssl
+            mingw-w64-x86_64-libgcrypt
             mingw-w64-x86_64-zlib
             mingw-w64-x86_64-lzo2
             mingw-w64-x86_64-lz4
@@ -316,6 +326,10 @@ jobs:
       - name: Run tests without legacy protocol
         shell: msys2 {0}
         run: sh .ci/test/run.sh nolegacy
+
+      - name: Run tests with libgcrypt
+        shell: msys2 {0}
+        run: sh .ci/test/run.sh gcrypt
 
       - name: Upload test results
         uses: actions/upload-artifact@v2
