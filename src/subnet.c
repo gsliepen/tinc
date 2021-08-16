@@ -22,6 +22,7 @@
 
 #include "splay_tree.h"
 #include "control_common.h"
+#include "crypto.h"
 #include "hash.h"
 #include "logger.h"
 #include "net.h"
@@ -128,7 +129,7 @@ void subnet_cache_flush_table(subnet_type_t stype) {
 /* Initialising trees */
 
 void init_subnets(void) {
-	hash_seed = (uint32_t)rand();
+	hash_seed = prng(UINT32_MAX);
 
 	// tables need to be cleared on startup
 	subnet_cache_flush_tables();

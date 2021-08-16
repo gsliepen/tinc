@@ -24,6 +24,21 @@
 
 extern void crypto_init(void);
 extern void crypto_exit(void);
+extern uint64_t xoshiro(void);
+extern void prng_init(void);
+extern void prng_randomize(void *buf, size_t buflen);
 extern void randomize(void *buf, size_t buflen);
+
+static inline uint32_t prng(uint32_t limit) {
+	uint64_t bins = UINT64_MAX / limit;
+	uint64_t reject_after = bins * limit;
+	uint64_t value;
+
+	do {
+		value = xoshiro();
+	} while(value >= reject_after);
+
+	return value / bins;
+}
 
 #endif

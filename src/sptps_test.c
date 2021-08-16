@@ -375,8 +375,6 @@ int main(int argc, char *argv[]) {
 		initiator = true;
 	}
 
-	srand(getpid());
-
 #ifdef HAVE_LINUX
 
 	if(tun) {
@@ -494,6 +492,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	crypto_init();
+	prng_init();
 
 	FILE *fp = fopen(argv[1], "r");
 
@@ -647,7 +646,7 @@ int main(int argc, char *argv[]) {
 				fprintf(stderr, "Received %zd bytes of data:\n%s\n", len, hex);
 			}
 
-			if(packetloss && (rand() % 100) < packetloss) {
+			if(packetloss && prng(100) < packetloss) {
 				if(verbose) {
 					fprintf(stderr, "Dropped.\n");
 				}

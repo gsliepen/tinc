@@ -22,6 +22,7 @@
 #include "system.h"
 
 #include "conf.h"
+#include "crypto.h"
 #include "connection.h"
 #include "edge.h"
 #include "graph.h"
@@ -43,13 +44,13 @@ bool send_add_edge(connection_t *c, const edge_t *e) {
 		char *local_address, *local_port;
 		sockaddr2str(&e->local_address, &local_address, &local_port);
 
-		x = send_request(c, "%d %x %s %s %s %s %x %d %s %s", ADD_EDGE, rand(),
+		x = send_request(c, "%d %x %s %s %s %s %x %d %s %s", ADD_EDGE, prng(UINT32_MAX),
 		                 e->from->name, e->to->name, address, port,
 		                 e->options, e->weight, local_address, local_port);
 		free(local_address);
 		free(local_port);
 	} else {
-		x = send_request(c, "%d %x %s %s %s %s %x %d", ADD_EDGE, rand(),
+		x = send_request(c, "%d %x %s %s %s %s %x %d", ADD_EDGE, prng(UINT32_MAX),
 		                 e->from->name, e->to->name, address, port,
 		                 e->options, e->weight);
 	}
@@ -218,7 +219,7 @@ bool add_edge_h(connection_t *c, const char *request) {
 }
 
 bool send_del_edge(connection_t *c, const edge_t *e) {
-	return send_request(c, "%d %x %s %s", DEL_EDGE, rand(),
+	return send_request(c, "%d %x %s %s", DEL_EDGE, prng(UINT32_MAX),
 	                    e->from->name, e->to->name);
 }
 

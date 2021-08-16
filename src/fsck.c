@@ -329,7 +329,7 @@ static bool test_rsa_keypair(rsa_t *rsa_priv, rsa_t *rsa_pub, const char *host_f
 	uint8_t *encrypted = xzalloc(len);
 	uint8_t *decrypted = xzalloc(len);
 
-	randomize(plaintext, len);
+	prng_randomize(plaintext, len);
 	plaintext[0] &= 0x7f;
 
 	if(rsa_public_encrypt(rsa_pub, plaintext, len, encrypted)) {

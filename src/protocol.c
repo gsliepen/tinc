@@ -22,9 +22,11 @@
 
 #include "conf.h"
 #include "connection.h"
+#include "crypto.h"
 #include "logger.h"
 #include "meta.h"
 #include "protocol.h"
+#include "utils.h"
 #include "xalloc.h"
 
 bool tunnelserver = false;
@@ -191,7 +193,7 @@ static void age_past_requests(void *data) {
 
 	if(left)
 		timeout_set(&past_request_timeout, &(struct timeval) {
-		10, rand() % 100000
+		10, jitter()
 	});
 }
 
@@ -209,7 +211,7 @@ bool seen_request(const char *request) {
 		new->firstseen = now.tv_sec;
 		splay_insert(&past_request_tree, new);
 		timeout_add(&past_request_timeout, age_past_requests, NULL, &(struct timeval) {
-			10, rand() % 100000
+			10, jitter()
 		});
 		return false;
 	}

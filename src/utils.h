@@ -23,6 +23,8 @@
 
 #include "system.h"
 
+#include "crypto.h"
+
 #define B64_SIZE(len) ((len) * 4 / 3 + 5)
 
 extern size_t hex2bin(const char *src, void *dst, size_t length);
@@ -43,6 +45,10 @@ extern const char *winerror(int);
 #define sockinuse(x) ((x) == WSAEADDRINUSE)
 #define socknotconn(x) ((x) == WSAENOTCONN)
 #define sockshutdown(x) ((x) == WSAESHUTDOWN)
+
+static inline long jitter(void) {
+	return (long)prng(131072);
+}
 #else
 #define sockerrno errno
 #define sockstrerror(x) strerror(x)
@@ -51,6 +57,10 @@ extern const char *winerror(int);
 #define sockinprogress(x) ((x) == EINPROGRESS)
 #define sockinuse(x) ((x) == EADDRINUSE)
 #define socknotconn(x) ((x) == ENOTCONN)
+
+static inline suseconds_t jitter(void) {
+	return (suseconds_t)prng(131072);
+}
 #endif
 
 extern unsigned int bitfield_to_int(const void *bitfield, size_t size);

@@ -22,6 +22,7 @@
 
 #include "connection.h"
 #include "control_common.h"
+#include "crypto.h"
 #include "ethernet.h"
 #include "ipv4.h"
 #include "ipv6.h"
@@ -31,6 +32,7 @@
 #include "protocol.h"
 #include "route.h"
 #include "subnet.h"
+#include "utils.h"
 
 rmode_t routing_mode = RMODE_ROUTER;
 fmode_t forwarding_mode = FMODE_INTERNAL;
@@ -515,7 +517,7 @@ static void age_subnets(void *data) {
 
 	if(left)
 		timeout_set(&age_subnets_timeout, &(struct timeval) {
-		10, rand() % 100000
+		10, jitter()
 	});
 }
 
@@ -545,7 +547,7 @@ static void learn_mac(mac_t *address) {
 			}
 
 		timeout_add(&age_subnets_timeout, age_subnets, NULL, &(struct timeval) {
-			10, rand() % 100000
+			10, jitter()
 		});
 	} else {
 		if(subnet->expires) {

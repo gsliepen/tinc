@@ -111,6 +111,7 @@ tincd_SOURCES = \
 	tincd.c \
 	utils.c utils.h \
 	xalloc.h \
+	xoshiro.c \
 	version.c version.h \
 	ed25519/ecdh.c \
 	ed25519/ecdsa.c \
@@ -140,6 +141,7 @@ tinc_SOURCES = \
 	ed25519/ecdh.c \
 	ed25519/ecdsa.c \
 	ed25519/ecdsagen.c \
+	xoshiro.c \
 	$(ed25519_SOURCES) \
 	$(chacha_poly1305_SOURCES)
 
@@ -148,6 +150,7 @@ sptps_test_SOURCES = \
 	sptps.c sptps.h \
 	sptps_test.c \
 	utils.c utils.h \
+	xoshiro.c \
 	ed25519/ecdh.c \
 	ed25519/ecdsa.c \
 	$(ed25519_SOURCES) \

@@ -739,7 +739,7 @@ static void choose_udp_address(const node_t *n, const sockaddr_t **sa, size_t *s
 	   So we pick a random edge and a random socket. */
 
 	unsigned int i = 0;
-	unsigned int j = rand() % n->edge_tree.count;
+	unsigned int j = prng(n->edge_tree.count);
 	edge_t *candidate = NULL;
 
 	for splay_each(edge_t, e, &n->edge_tree) {
@@ -751,7 +751,7 @@ static void choose_udp_address(const node_t *n, const sockaddr_t **sa, size_t *s
 
 	if(candidate) {
 		*sa = &candidate->address;
-		*sock = rand() % listen_sockets;
+		*sock = prng(listen_sockets);
 	}
 
 	adapt_socket(*sa, sock);
@@ -763,7 +763,7 @@ static void choose_local_address(const node_t *n, const sockaddr_t **sa, size_t 
 	/* Pick one of the edges from this node at random, then use its local address. */
 
 	unsigned int i = 0;
-	unsigned int j = rand() % n->edge_tree.count;
+	unsigned int j = prng(n->edge_tree.count);
 	edge_t *candidate = NULL;
 
 	for splay_each(edge_t, e, &n->edge_tree) {
@@ -775,7 +775,7 @@ static void choose_local_address(const node_t *n, const sockaddr_t **sa, size_t 
 
 	if(candidate && candidate->local_address.sa.sa_family) {
 		*sa = &candidate->local_address;
-		*sock = rand() % listen_sockets;
+		*sock = prng(listen_sockets);
 		adapt_socket(*sa, sock);
 	}
 }

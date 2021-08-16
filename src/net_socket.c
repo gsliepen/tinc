@@ -25,6 +25,7 @@
 #include "address_cache.h"
 #include "conf.h"
 #include "connection.h"
+#include "crypto.h"
 #include "list.h"
 #include "logger.h"
 #include "names.h"
@@ -408,7 +409,7 @@ void retry_outgoing(outgoing_t *outgoing) {
 	}
 
 	timeout_add(&outgoing->ev, retry_outgoing_handler, outgoing, &(struct timeval) {
-		outgoing->timeout, rand() % 100000
+		outgoing->timeout, jitter()
 	});
 
 	logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Trying to re-establish outgoing connection in %d seconds", outgoing->timeout);

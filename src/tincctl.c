@@ -2127,7 +2127,7 @@ int check_port(const char *name) {
 	fprintf(stderr, "Warning: could not bind to port 655. ");
 
 	for(int i = 0; i < 100; i++) {
-		int port = 0x1000 + (rand() & 0x7fff);
+		uint16_t port = 0x1000 + prng(0x8000);
 
 		if(try_bind(port)) {
 			char filename[PATH_MAX];
@@ -3302,8 +3302,8 @@ int main(int argc, char *argv[]) {
 #endif
 
 	gettimeofday(&now, NULL);
-	srand(now.tv_sec + now.tv_usec);
 	crypto_init();
+	prng_init();
 
 	if(optind >= argc) {
 		return cmd_shell(argc, argv);

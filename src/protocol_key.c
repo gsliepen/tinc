@@ -35,7 +35,7 @@
 
 void send_key_changed(void) {
 #ifndef DISABLE_LEGACY
-	send_request(everyone, "%d %x %s", KEY_CHANGED, rand(), myself->name);
+	send_request(everyone, "%d %x %s", KEY_CHANGED, prng(UINT32_MAX), myself->name);
 
 	/* Immediately send new keys to directly connected nodes to keep UDP mappings alive */
 

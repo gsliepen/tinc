@@ -709,7 +709,7 @@ make_names:
 
 		// Generate a random netname, ask for a better one later.
 		ask_netname = true;
-		snprintf(temp_netname, sizeof(temp_netname), "join_%x", rand());
+		snprintf(temp_netname, sizeof(temp_netname), "join_%x", prng(UINT32_MAX));
 		netname = temp_netname;
 		goto make_names;
 	}

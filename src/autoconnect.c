@@ -20,13 +20,14 @@
 #include "system.h"
 
 #include "connection.h"
+#include "crypto.h"
 #include "logger.h"
 #include "node.h"
 #include "xalloc.h"
 
 static void make_new_connection() {
 	/* Select a random node we haven't connected to yet. */
-	int count = 0;
+	uint32_t count = 0;
 
 	for splay_each(node_t, n, &node_tree) {
 		if(n == myself || n->connection || !(n->status.has_address || n->status.reachable)) {
@@ -40,7 +41,7 @@ static void make_new_connection() {
 		return;
 	}
 
-	int r = rand() % count;
+	uint32_t r = prng(count);
 
 	for splay_each(node_t, n, &node_tree) {
 		if(n == myself || n->connection || !(n->status.has_address || n->status.reachable)) {
@@ -80,7 +81,7 @@ static void connect_to_unreachable() {
 	 * are only a few reachable nodes, and many unreachable ones, we're
 	 * going to try harder to connect to them. */
 
-	unsigned int r = rand() % node_tree.count;
+	uint32_t r = prng(node_tree.count);
 
 	for splay_each(node_t, n, &node_tree) {
 		if(r--) {
@@ -111,7 +112,7 @@ static void connect_to_unreachable() {
 
 static void drop_superfluous_outgoing_connection() {
 	/* Choose a random outgoing connection to a node that has at least one other connection. */
-	int count = 0;
+	uint32_t count = 0;
 
 	for list_each(connection_t, c, &connection_list) {
 		if(!c->edge || !c->outgoing || !c->node || c->node->edge_tree.count < 2) {
@@ -125,7 +126,7 @@ static void drop_superfluous_outgoing_connection() {
 		return;
 	}
 
-	int r = rand() % count;
+	uint32_t r = prng(count);
 
 	for list_each(connection_t, c, &connection_list) {
 		if(!c->edge || !c->outgoing || !c->node || c->node->edge_tree.count < 2) {
@@ -167,7 +168,7 @@ static void drop_superfluous_pending_connections() {
 
 void do_autoconnect() {
 	/* Count number of active connections. */
-	int nc = 0;
+	uint32_t nc = 0;
 
 	for list_each(connection_t, c, &connection_list) {
 		if(c->edge) {

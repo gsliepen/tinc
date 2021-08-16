@@ -28,6 +28,7 @@
 #include "connection.h"
 #include "compression.h"
 #include "control.h"
+#include "crypto.h"
 #include "device.h"
 #include "digest.h"
 #include "ecdsa.h"
@@ -142,7 +143,7 @@ static timeout_t keyexpire_timeout;
 static void keyexpire_handler(void *data) {
 	regenerate_key();
 	timeout_set(data, &(struct timeval) {
-		keylifetime, rand() % 100000
+		keylifetime, jitter()
 	});
 }
 #endif
@@ -834,7 +835,7 @@ static bool setup_myself(void) {
 	free(cipher);
 
 	timeout_add(&keyexpire_timeout, keyexpire_handler, &keyexpire_timeout, &(struct timeval) {
-		keylifetime, rand() % 100000
+		keylifetime, jitter()
 	});
 
 	/* Check if we want to use message authentication codes... */

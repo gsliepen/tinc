@@ -22,6 +22,7 @@
 
 #include "address_cache.h"
 #include "connection.h"
+#include "crypto.h"
 #include "logger.h"
 #include "meta.h"
 #include "net.h"
@@ -73,13 +74,23 @@ bool pong_h(connection_t *c, const char *request) {
 	return true;
 }
 
+static bool random_early_drop(connection_t *c) {
+	if(c->outbuf.len > maxoutbufsize / 2) {
+		if((c->outbuf.len - maxoutbufsize / 2) > prng((maxoutbufsize) / 2)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 /* Sending and receiving packets via TCP */
 
 bool send_tcppacket(connection_t *c, const vpn_packet_t *packet) {
 	/* If there already is a lot of data in the outbuf buffer, discard this packet.
 	   We use a very simple Random Early Drop algorithm. */
 
-	if(2.0 * c->outbuf.len / (float)maxoutbufsize - 1 > (float)rand() / (float)RAND_MAX) {
+	if(random_early_drop(c)) {
 		return true;
 	}
 
@@ -110,7 +121,7 @@ bool send_sptps_tcppacket(connection_t *c, const void *packet, size_t len) {
 	/* If there already is a lot of data in the outbuf buffer, discard this packet.
 	   We use a very simple Random Early Drop algorithm. */
 
-	if(2.0 * c->outbuf.len / (float)maxoutbufsize - 1 > (float)rand() / (float)RAND_MAX) {
+	if(random_early_drop(c)) {
 		return true;
 	}
 

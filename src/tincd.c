@@ -489,9 +489,9 @@ int main(int argc, char **argv) {
 	unsetenv("LISTEN_PID");
 #endif
 
-	/* Slllluuuuuuurrrrp! */
-
+	gettimeofday(&now, NULL);
 	crypto_init();
+	prng_init();
 
 	if(!read_server_config(&config_tree)) {
 		return 1;
@@ -543,9 +543,6 @@ int main2(int argc, char **argv) {
 	(void)argv;
 #endif
 	char *priority = NULL;
-
-	gettimeofday(&now, NULL);
-	srand(now.tv_sec + now.tv_usec);
 
 	if(!detach()) {
 		return 1;

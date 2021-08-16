@@ -26,6 +26,7 @@
 #include "conf_net.h"
 #include "conf.h"
 #include "connection.h"
+#include "crypto.h"
 #include "graph.h"
 #include "logger.h"
 #include "meta.h"
@@ -256,7 +257,7 @@ static void timeout_handler(void *data) {
 	}
 
 	timeout_set(data, &(struct timeval) {
-		1, rand() % 100000
+		1, jitter()
 	});
 }
 
@@ -294,7 +295,7 @@ static void periodic_handler(void *data) {
 	}
 
 	timeout_set(data, &(struct timeval) {
-		5, rand() % 100000
+		5, jitter()
 	});
 }
 
@@ -482,7 +483,7 @@ void retry(void) {
 int main_loop(void) {
 	last_periodic_run_time = now;
 	timeout_add(&pingtimer, timeout_handler, &pingtimer, &(struct timeval) {
-		pingtimeout, rand() % 100000
+		pingtimeout, jitter()
 	});
 	timeout_add(&periodictimer, periodic_handler, &periodictimer, &(struct timeval) {
 		0, 0
