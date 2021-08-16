@@ -18,20 +18,43 @@
 */
 
 #include "system.h"
+#include "dropin.h"
+
+#ifdef HAVE_SYS_EPOLL_H
+#include <sys/epoll.h>
+#endif
+
 #include "event.h"
 #include "utils.h"
+#include "net.h"
 
 struct timeval now;
-
 #ifndef HAVE_MINGW
+
+#ifdef HAVE_SYS_EPOLL_H
+static int epollset = 0;
+#else
 static fd_set readfds;
 static fd_set writefds;
+#endif
+
 #else
 static const long READ_EVENTS = FD_READ | FD_ACCEPT | FD_CLOSE;
 static const long WRITE_EVENTS = FD_WRITE | FD_CONNECT;
 static DWORD event_count = 0;
 #endif
 static bool running;
+
+#ifdef HAVE_SYS_EPOLL_H
+static inline int event_epoll_init() {
+	/* NOTE: 1024 limit is only used on ancient (pre 2.6.27) kernels.
+	        Decent kernels will ignore this value making it unlimited.
+	        epoll_create1 might be better, but these kernels would not be supported
+	        in that case.
+	*/
+	return epoll_create(1024);
+}
+#endif
 
 static int io_compare(const io_t *a, const io_t *b) {
 #ifndef HAVE_MINGW
@@ -108,9 +131,13 @@ void io_add(io_t *io, io_cb_t cb, void *data, int fd, int flags) {
 
 	io_set(io, flags);
 
+#ifndef HAVE_SYS_EPOLL_H
+
 	if(!splay_insert_node(&io_tree, &io->node)) {
 		abort();
 	}
+
+#endif
 }
 
 #ifdef HAVE_MINGW
@@ -121,6 +148,14 @@ void io_add_event(io_t *io, io_cb_t cb, void *data, WSAEVENT event) {
 #endif
 
 void io_set(io_t *io, int flags) {
+#ifdef HAVE_SYS_EPOLL_H
+
+	if(!epollset) {
+		epollset = event_epoll_init();
+	}
+
+#endif
+
 	if(flags == io->flags) {
 		return;
 	}
@@ -132,6 +167,30 @@ void io_set(io_t *io, int flags) {
 	}
 
 #ifndef HAVE_MINGW
+#ifdef HAVE_SYS_EPOLL_H
+	epoll_ctl(epollset, EPOLL_CTL_DEL, io->fd, NULL);
+
+	struct epoll_event ev = {
+		.events = 0,
+		.data.ptr = io,
+	};
+
+	if(flags & IO_READ) {
+		ev.events |= EPOLLIN;
+	}
+
+	if(flags & IO_WRITE) {
+		ev.events |= EPOLLOUT;
+	} else if(ev.events == 0) {
+		io_tree.generation++;
+		return;
+	}
+
+	if(epoll_ctl(epollset, EPOLL_CTL_ADD, io->fd, &ev) < 0) {
+		perror("epoll_ctl_add");
+	}
+
+#else
 
 	if(flags & IO_READ) {
 		FD_SET(io->fd, &readfds);
@@ -145,6 +204,7 @@ void io_set(io_t *io, int flags) {
 		FD_CLR(io->fd, &writefds);
 	}
 
+#endif
 #else
 	long events = 0;
 
@@ -178,7 +238,9 @@ void io_del(io_t *io) {
 	event_count--;
 #endif
 
+#ifndef HAVE_SYS_EPOLL_H
 	splay_unlink_node(&io_tree, &io->node);
+#endif
 	io->cb = NULL;
 }
 
@@ -287,7 +349,7 @@ void signal_del(signal_t *sig) {
 }
 #endif
 
-static struct timeval *get_time_remaining(struct timeval *diff) {
+static struct timeval *timeout_execute(struct timeval *diff) {
 	gettimeofday(&now, NULL);
 	struct timeval *tv = NULL;
 
@@ -314,23 +376,46 @@ bool event_loop(void) {
 	running = true;
 
 #ifndef HAVE_MINGW
+
+#ifdef HAVE_SYS_EPOLL_H
+
+	if(!epollset) {
+		epollset = event_epoll_init();
+	}
+
+#else
 	fd_set readable;
 	fd_set writable;
+#endif
 
 	while(running) {
 		struct timeval diff;
-		struct timeval *tv = get_time_remaining(&diff);
+		struct timeval *tv = timeout_execute(&diff);
+#ifndef HAVE_SYS_EPOLL_H
 		memcpy(&readable, &readfds, sizeof(readable));
 		memcpy(&writable, &writefds, sizeof(writable));
+#endif
 
-		int fds = 0;
+
+#ifdef HAVE_SYS_EPOLL_H
+		struct epoll_event events[EPOLL_MAX_EVENTS_PER_LOOP];
+		long timeout = (tv->tv_sec * 1000) + (tv->tv_usec / 1000);
+
+		if(timeout > INT_MAX) {
+			timeout = INT_MAX;
+		}
+
+		int n = epoll_wait(epollset, events, EPOLL_MAX_EVENTS_PER_LOOP, (int)timeout);
+#else
+		int maxfds =  0;
 
 		if(io_tree.tail) {
 			io_t *last = io_tree.tail->data;
-			fds = last->fd + 1;
+			maxfds = last->fd + 1;
 		}
 
-		int n = select(fds, &readable, &writable, NULL, tv);
+		int n = select(maxfds, &readable, &writable, NULL, tv);
+#endif
 
 		if(n < 0) {
 			if(sockwouldblock(sockerrno)) {
@@ -346,6 +431,31 @@ bool event_loop(void) {
 
 		unsigned int curgen = io_tree.generation;
 
+
+#ifdef HAVE_SYS_EPOLL_H
+
+		for(int i = 0; i < n; i++) {
+			io_t *io = events[i].data.ptr;
+
+			if(events[i].events & EPOLLOUT && io->flags & IO_WRITE) {
+				io->cb(io->data, IO_WRITE);
+			}
+
+			if(curgen != io_tree.generation) {
+				break;
+			}
+
+			if(events[i].events & EPOLLIN && io->flags & IO_READ) {
+				io->cb(io->data, IO_READ);
+			}
+
+			if(curgen != io_tree.generation) {
+				break;
+			}
+		}
+
+#else
+
 		for splay_each(io_t, io, &io_tree) {
 			if(FD_ISSET(io->fd, &writable)) {
 				io->cb(io->data, IO_WRITE);
@@ -356,22 +466,24 @@ bool event_loop(void) {
 			}
 
 			/*
-			   There are scenarios in which the callback will remove another io_t from the tree
-			   (e.g. closing a double connection). Since splay_each does not support that, we
-			   need to exit the loop if that happens. That's okay, since any remaining events will
-			   get picked up by the next select() call.
-			 */
+			        There are scenarios in which the callback will remove another io_t from the tree
+			        (e.g. closing a double connection). Since splay_each does not support that, we
+			        need to exit the loop if that happens. That's okay, since any remaining events will
+			        get picked up by the next select() call.
+			*/
 			if(curgen != io_tree.generation) {
 				break;
 			}
 		}
+
+#endif
 	}
 
 #else
 
 	while(running) {
 		struct timeval diff;
-		struct timeval *tv = get_time_remaining(&diff);
+		struct timeval *tv = timeout_execute(&diff);
 		DWORD timeout_ms = tv ? (DWORD)(tv->tv_sec * 1000 + tv->tv_usec / 1000 + 1) : WSA_INFINITE;
 
 		if(!event_count) {
