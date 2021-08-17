@@ -1100,7 +1100,7 @@ static int dump_invitations(void) {
 	while((ent = readdir(dir))) {
 		char buf[MAX_STRING_SIZE];
 
-		if(b64decode(ent->d_name, buf, 24) != 18) {
+		if(b64decode_tinc(ent->d_name, buf, 24) != 18) {
 			continue;
 		}
 
@@ -2802,7 +2802,7 @@ static int cmd_sign(int argc, char *argv[]) {
 		return 1;
 	}
 
-	b64encode(sig, sig, 64);
+	b64encode_tinc(sig, sig, 64);
 	ecdsa_free(key);
 
 	fprintf(stdout, "Signature = %s %ld %s\n", name, t, sig);
@@ -2936,7 +2936,7 @@ static int cmd_verify(int argc, char *argv[]) {
 
 	fclose(fp);
 
-	if(b64decode(sig, sig, 86) != 64 || !ecdsa_verify(key, newline, len + trailer_len - (newline - data), sig)) {
+	if(b64decode_tinc(sig, sig, 86) != 64 || !ecdsa_verify(key, newline, len + trailer_len - (newline - data), sig)) {
 		fprintf(stderr, "Invalid signature\n");
 		free(data);
 		ecdsa_free(key);

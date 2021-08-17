@@ -23,12 +23,14 @@
 
 #include "system.h"
 
+#define B64_SIZE(len) ((len) * 4 / 3 + 5)
+
 extern size_t hex2bin(const char *src, void *dst, size_t length);
 extern size_t bin2hex(const void *src, char *dst, size_t length);
 
-extern size_t b64encode(const void *src, char *dst, size_t length);
-extern size_t b64encode_urlsafe(const void *src, char *dst, size_t length);
-extern size_t b64decode(const char *src, void *dst, size_t length);
+extern size_t b64encode_tinc(const void *src, char *dst, size_t length);
+extern size_t b64encode_tinc_urlsafe(const void *src, char *dst, size_t length);
+extern size_t b64decode_tinc(const char *src, void *dst, size_t length);
 
 #ifdef HAVE_MINGW
 extern const char *winerror(int);

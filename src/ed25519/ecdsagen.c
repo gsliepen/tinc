@@ -54,7 +54,7 @@ static bool write_pem(FILE *fp, const char *type, void *vbuf, size_t size) {
 
 	while(size) {
 		size_t todo = size > 48 ? 48 : size;
-		b64encode(buf, base64, todo);
+		b64encode_tinc(buf, base64, todo);
 		fprintf(fp, "%s\n", base64);
 		buf += todo;
 		size -= todo;

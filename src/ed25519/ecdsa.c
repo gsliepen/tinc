@@ -43,7 +43,7 @@ ecdsa_t *ecdsa_set_base64_public_key(const char *p) {
 	}
 
 	ecdsa_t *ecdsa = xzalloc(sizeof(*ecdsa));
-	len = b64decode(p, ecdsa->public, len);
+	len = b64decode_tinc(p, ecdsa->public, len);
 
 	if(len != 32) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Invalid format of public key! len = %zu", len);
@@ -56,7 +56,7 @@ ecdsa_t *ecdsa_set_base64_public_key(const char *p) {
 
 char *ecdsa_get_base64_public_key(ecdsa_t *ecdsa) {
 	char *base64 = xmalloc(44);
-	b64encode(ecdsa->public, base64, sizeof(ecdsa->public));
+	b64encode_tinc(ecdsa->public, base64, sizeof(ecdsa->public));
 
 	return base64;
 }
@@ -88,7 +88,7 @@ static bool read_pem(FILE *fp, const char *type, void *vbuf, size_t size) {
 		}
 
 		size_t linelen = strcspn(line, "\r\n");
-		size_t len = b64decode(line, line, linelen);
+		size_t len = b64decode_tinc(line, line, linelen);
 
 		if(!len) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Invalid base64 data in PEM file\n");

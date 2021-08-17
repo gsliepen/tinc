@@ -246,7 +246,7 @@ static bool receive_invitation_sptps(void *handle, uint8_t type, const void *dat
 	memcpy(hashbuf, data, 18);
 	memcpy(hashbuf + 18, fingerprint, sizeof(hashbuf) - 18);
 	sha512(hashbuf, sizeof(hashbuf), cookie);
-	b64encode_urlsafe(cookie, cookie, 18);
+	b64encode_tinc_urlsafe(cookie, cookie, 18);
 	free(fingerprint);
 
 	char filename[PATH_MAX], usedname[PATH_MAX];

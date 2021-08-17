@@ -102,9 +102,9 @@ static bool send_initial_sptps_data(void *handle, uint8_t type, const void *data
 	(void)type;
 	node_t *to = handle;
 	to->sptps.send_data = send_sptps_data_myself;
-	char buf[len * 4 / 3 + 5];
 
-	b64encode(data, buf, len);
+	char buf[B64_SIZE(len)];
+	b64encode_tinc(data, buf, len);
 
 	return send_request(to->nexthop->connection, "%d %s %s %d %s", REQ_KEY, myself->name, to->name, REQ_KEY, buf);
 }
@@ -148,7 +148,7 @@ static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, no
 		char buf[MAX_STRING_SIZE];
 		size_t len;
 
-		if(sscanf(request, "%*d %*s %*s %*d " MAX_STRING, buf) != 1 || !(len = b64decode(buf, buf, strlen(buf)))) {
+		if(sscanf(request, "%*d %*s %*s %*d " MAX_STRING, buf) != 1 || !(len = b64decode_tinc(buf, buf, strlen(buf)))) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s) to %s (%s): %s", "SPTPS_PACKET", from->name, from->hostname, to->name, to->hostname, "invalid SPTPS data");
 			return true;
 		}
@@ -233,7 +233,7 @@ static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, no
 		char buf[MAX_STRING_SIZE];
 		size_t len;
 
-		if(sscanf(request, "%*d %*s %*s %*d " MAX_STRING, buf) != 1 || !(len = b64decode(buf, buf, strlen(buf)))) {
+		if(sscanf(request, "%*d %*s %*s %*d " MAX_STRING, buf) != 1 || !(len = b64decode_tinc(buf, buf, strlen(buf)))) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s): %s", "REQ_SPTPS_START", from->name, from->hostname, "invalid SPTPS data");
 			return true;
 		}
@@ -520,7 +520,7 @@ bool ans_key_h(connection_t *c, const char *request) {
 
 	if(from->status.sptps) {
 		uint8_t buf[strlen(key)];
-		size_t len = b64decode(key, buf, strlen(key));
+		size_t len = b64decode_tinc(key, buf, strlen(key));
 
 		if(!len || !sptps_receive_data(&from->sptps, buf, len)) {
 			/* Uh-oh. It might be that the tunnel is stuck in some corrupted state,

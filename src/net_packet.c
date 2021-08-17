@@ -967,8 +967,8 @@ bool send_sptps_data(node_t *to, node_t *from, int type, const void *data, size_
 			return send_sptps_tcppacket(to->nexthop->connection, buf, sizeof(buf));
 		}
 
-		char buf[len * 4 / 3 + 5];
-		b64encode(data, buf, len);
+		char buf[B64_SIZE(len)];
+		b64encode_tinc(data, buf, len);
 
 		/* If this is a handshake packet, use ANS_KEY instead of REQ_KEY, for two reasons:
 		    - We don't want intermediate nodes to switch to UDP to relay these packets;

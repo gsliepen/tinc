@@ -79,7 +79,7 @@ size_t bin2hex(const void *vsrc, char *dst, size_t length) {
 	return length * 2;
 }
 
-size_t b64decode(const char *src, void *dst, size_t length) {
+size_t b64decode_tinc(const char *src, void *dst, size_t length) {
 	size_t i;
 	uint32_t triplet = 0;
 	unsigned char *udst = (unsigned char *)dst;
@@ -119,7 +119,7 @@ size_t b64decode(const char *src, void *dst, size_t length) {
 	}
 }
 
-static size_t b64encode_internal(const void *src, char *dst, size_t length, const char *alphabet) {
+static size_t b64encode_tinc_internal(const void *src, char *dst, size_t length, const char *alphabet) {
 	uint32_t triplet;
 	const unsigned char *usrc = (unsigned char *)src;
 	size_t si = length / 3 * 3;
@@ -168,12 +168,12 @@ static size_t b64encode_internal(const void *src, char *dst, size_t length, cons
 	return length;
 }
 
-size_t b64encode(const void *src, char *dst, size_t length) {
-	return b64encode_internal(src, dst, length, base64_original);
+size_t b64encode_tinc(const void *src, char *dst, size_t length) {
+	return b64encode_tinc_internal(src, dst, length, base64_original);
 }
 
-size_t b64encode_urlsafe(const void *src, char *dst, size_t length) {
-	return b64encode_internal(src, dst, length, base64_urlsafe);
+size_t b64encode_tinc_urlsafe(const void *src, char *dst, size_t length) {
+	return b64encode_tinc_internal(src, dst, length, base64_urlsafe);
 }
 
 #ifdef HAVE_MINGW

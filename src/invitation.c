@@ -448,7 +448,7 @@ int cmd_invite(int argc, char *argv[]) {
 	char hash[64];
 	char *fingerprint = ecdsa_get_base64_public_key(key);
 	sha512(fingerprint, strlen(fingerprint), hash);
-	b64encode_urlsafe(hash, hash, 18);
+	b64encode_tinc_urlsafe(hash, hash, 18);
 
 	ecdsa_free(key);
 
@@ -462,11 +462,11 @@ int cmd_invite(int argc, char *argv[]) {
 	memcpy(buf, cookie, 18);
 	memcpy(buf + 18, fingerprint, sizeof(buf) - 18);
 	sha512(buf, sizeof(buf), cookiehash);
-	b64encode_urlsafe(cookiehash, cookiehash, 18);
+	b64encode_tinc_urlsafe(cookiehash, cookiehash, 18);
 
 	free(fingerprint);
 
-	b64encode_urlsafe(cookie, cookie, 18);
+	b64encode_tinc_urlsafe(cookie, cookie, 18);
 
 	// Create a file containing the details of the invitation.
 	snprintf(filename, sizeof(filename), "%s" SLASH "invitations" SLASH "%s", confbase, cookiehash);
@@ -1230,7 +1230,7 @@ int cmd_join(int argc, char *argv[]) {
 		port = "655";
 	}
 
-	if(!b64decode(slash, hash, 24) || !b64decode(slash + 24, cookie, 24)) {
+	if(!b64decode_tinc(slash, hash, 24) || !b64decode_tinc(slash + 24, cookie, 24)) {
 		goto invalid;
 	}
 
