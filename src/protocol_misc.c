@@ -29,10 +29,6 @@
 #include "protocol.h"
 #include "utils.h"
 
-#ifndef MIN
-#define MIN(x, y) (((x)<(y))?(x):(y))
-#endif
-
 int maxoutbufsize = 0;
 int mtu_info_interval = 5;
 int udp_info_interval = 5;

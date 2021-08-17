@@ -54,10 +54,6 @@ static const size_t icmp6_size = sizeof(struct icmp6_hdr);
 static const size_t ns_size = sizeof(struct nd_neighbor_solicit);
 static const size_t opt_size = sizeof(struct nd_opt_hdr);
 
-#ifndef MAX
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-#endif
-
 static timeout_t age_subnets_timeout;
 
 /* RFC 1071 */

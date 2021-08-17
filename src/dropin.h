@@ -69,4 +69,12 @@ extern int nanosleep(const struct timespec *req, struct timespec *rem);
 #define EAI_SYSTEM 0
 #endif
 
+#ifndef MIN
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#endif
+
+#ifndef MAX
+#define MAX(a,b) (((a)>(b))?(a):(b))
+#endif
+
 #endif

@@ -34,10 +34,6 @@
 #include "sptps.h"
 #include "utils.h"
 
-#ifndef MAX
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-#endif
-
 #ifndef HAVE_MINGW
 #define closesocket(s) close(s)
 #endif
