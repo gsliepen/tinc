@@ -168,26 +168,21 @@ void io_set(io_t *io, int flags) {
 
 #ifndef HAVE_MINGW
 #ifdef HAVE_SYS_EPOLL_H
-	struct epoll_event ev;
-	ev.data.fd = io->fd;
-	ev.data.ptr = io;
-
 	epoll_ctl(epollset, EPOLL_CTL_DEL, io->fd, NULL);
-	io_tree.generation++;
 
-	if((flags & IO_READ) && (flags & IO_WRITE)) {
-		ev.events = EPOLLIN | EPOLLOUT;
+	struct epoll_event ev = {
+		.events = 0,
+		.data.ptr = io,
+	};
+
+	if(flags & IO_READ) {
+		ev.events |= EPOLLIN;
 	}
 
-	else if(flags & IO_READ) {
-		ev.events = EPOLLIN;
-	}
-
-	else if(flags & IO_WRITE) {
-		ev.events = EPOLLOUT;
-	}
-
-	else {
+	if(flags & IO_WRITE) {
+		ev.events |= EPOLLOUT;
+	} else if(ev.events == 0) {
+		io_tree.generation++;
 		return;
 	}
 
@@ -412,16 +407,9 @@ bool event_loop(void) {
 
 		int n = epoll_wait(epollset, events, EPOLL_MAX_EVENTS_PER_LOOP, (int)timeout);
 #else
-		int maxfds = 1;
+		int maxfds =  0;
 
 		if(io_tree.tail) {
-			/*
-			        Use the max FD number to detirmine the max size of events
-			        This abuses the fact that:
-			        a) tinc does not allocate new sockets during operation
-			        b) that tinc does not have many sockets
-			        c) that sockets are allocated from 0 on all systems and so max(fd) is a reasonably approximation of nfds
-			*/
 			io_t *last = io_tree.tail->data;
 			maxfds = last->fd + 1;
 		}
@@ -453,8 +441,16 @@ bool event_loop(void) {
 				io->cb(io->data, IO_WRITE);
 			}
 
-			if(events[i].events & EPOLLIN && curgen == io_tree.generation && io->flags & IO_READ) {
+			if(curgen != io_tree.generation) {
+				break;
+			}
+
+			if(events[i].events & EPOLLIN && io->flags & IO_READ) {
 				io->cb(io->data, IO_READ);
+			}
+
+			if(curgen != io_tree.generation) {
+				break;
 			}
 		}
 
