@@ -297,7 +297,7 @@ static int info_subnet(int fd, const char *item) {
 					continue;
 				}
 
-				if(memcmp(&find.net.ipv4.address, &subnet.net.ipv4.address, sizeof(subnet.net.ipv4))) {
+				if(memcmp(&find.net.ipv4.address, &subnet.net.ipv4.address, sizeof(subnet.net.ipv4.address))) {
 					continue;
 				}
 			}
@@ -311,14 +311,14 @@ static int info_subnet(int fd, const char *item) {
 					continue;
 				}
 
-				if(memcmp(&find.net.ipv6.address, &subnet.net.ipv6.address, sizeof(subnet.net.ipv6))) {
+				if(memcmp(&find.net.ipv6.address, &subnet.net.ipv6.address, sizeof(subnet.net.ipv6.address))) {
 					continue;
 				}
 			}
 		}
 
 		if(find.type == SUBNET_MAC) {
-			if(memcmp(&find.net.mac.address, &subnet.net.mac.address, sizeof(subnet.net.mac))) {
+			if(memcmp(&find.net.mac.address, &subnet.net.mac.address, sizeof(subnet.net.mac.address))) {
 				continue;
 			}
 		}
