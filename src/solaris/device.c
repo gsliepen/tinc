@@ -359,7 +359,7 @@ static bool read_packet(vpn_packet_t *packet) {
 		sbuf.buf = (char *)DATA(packet);
 
 		if((result = getmsg(device_fd, NULL, &sbuf, &f)) < 0) {
-			logger(LOG_ERR, "Error while reading from %s %s: %s", device_info, device, strerror(errno));
+			logger(DEBUG_TRAFFIC, LOG_ERR, "Error while reading from %s %s: %s", device_info, device, strerror(errno));
 			return false;
 		}
 
@@ -386,7 +386,7 @@ static bool write_packet(vpn_packet_t *packet) {
 		sbuf.buf = (char *)DATA(packet) + 14;
 
 		if(putmsg(device_fd, NULL, &sbuf, 0) < 0) {
-			logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device, strerror(errno));
+			logger(DEBUG_TRAFFIC, LOG_ERR, "Can't write to %s %s: %s", device_info, device, strerror(errno));
 			return false;
 		}
 
@@ -397,7 +397,7 @@ static bool write_packet(vpn_packet_t *packet) {
 		sbuf.buf = (char *)DATA(packet);
 
 		if(putmsg(device_fd, NULL, &sbuf, 0) < 0) {
-			logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device, strerror(errno));
+			logger(DEBUG_TRAFFIC, LOG_ERR, "Can't write to %s %s: %s", device_info, device, strerror(errno));
 			return false;
 		}
 
