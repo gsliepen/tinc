@@ -30,7 +30,7 @@ uint32_t modulo(uint32_t hash, size_t n);
 #define hash_insert(t, ...) hash_insert_ ## t (__VA_ARGS__)
 #define hash_delete(t, ...) hash_delete_ ## t (__VA_ARGS__)
 #define hash_search(t, ...) hash_search_ ## t (__VA_ARGS__)
-#define hash_search_idx(t, ...) hash_search_ ## t (__VA_ARGS__)
+#define hash_search_idx (t, ...) hash_search_ ## t (__VA_ARGS__)
 #define hash_clear(t, n) hash_clear_ ## t ((n))
 
 #define hash_define(t, n) \
