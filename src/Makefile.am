@@ -244,12 +244,14 @@ tincd_SOURCES += \
 	gcrypt/cipher.c \
 	gcrypt/crypto.c \
 	gcrypt/digest.c gcrypt/digest.h \
+	gcrypt/pem.c gcrypt/pem.h \
 	gcrypt/prf.c \
 	gcrypt/rsa.c
 tinc_SOURCES += \
 	gcrypt/cipher.c \
 	gcrypt/crypto.c \
 	gcrypt/digest.c gcrypt/digest.h \
+	gcrypt/pem.c gcrypt/pem.h \
 	gcrypt/prf.c \
 	gcrypt/rsa.c \
 	gcrypt/rsagen.c
@@ -259,11 +261,11 @@ sptps_test_SOURCES += \
 	gcrypt/digest.c gcrypt/digest.h \
 	gcrypt/prf.c
 sptps_keypair_SOURCES += \
-	openssl/crypto.c
+	gcrypt/crypto.c
 sptps_speed_SOURCES += \
-	openssl/crypto.c \
-	openssl/digest.c openssl/digest.h \
-	openssl/prf.c
+	gcrypt/crypto.c \
+	gcrypt/digest.c gcrypt/digest.h \
+	gcrypt/prf.c
 else
 tincd_SOURCES += \
 	nolegacy/crypto.c \

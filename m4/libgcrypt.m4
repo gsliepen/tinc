@@ -27,8 +27,9 @@ AC_DEFUN([tinc_LIBGCRYPT],
   )
 
   AC_CHECK_LIB(gcrypt, gcry_cipher_encrypt,
-    [LIBS="-lgcrypt $LIBS"],
-    [AC_MSG_ERROR([libgcrypt libraries not found.])]
+    [LIBS="-lgcrypt -lgpg-error $LIBS"],
+    [AC_MSG_ERROR([libgcrypt libraries not found.])],
+    [-lgpg-error]
   )
 
   AC_DEFINE(HAVE_LIBGCRYPT, 1, [enable libgcrypt support])

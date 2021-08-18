@@ -28,12 +28,4 @@ typedef struct rsa {
 	gcry_mpi_t d;
 } rsa_t;
 
-extern bool rsa_set_hex_public_key(rsa_t *rsa, char *n, char *e);
-extern bool rsa_set_hex_private_key(rsa_t *rsa, char *n, char *e, char *d);
-extern bool rsa_read_pem_public_key(rsa_t *rsa, FILE *fp);
-extern bool rsa_read_pem_private_key(rsa_t *rsa, FILE *fp);
-extern size_t rsa_size(rsa_t *rsa);
-extern bool rsa_public_encrypt(rsa_t *rsa, void *in, size_t len, void *out);
-extern bool rsa_private_decrypt(rsa_t *rsa, void *in, size_t len, void *out);
-
 #endif

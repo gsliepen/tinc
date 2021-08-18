@@ -36,20 +36,20 @@ static struct {
 	{NULL, GCRY_CIPHER_BLOWFISH, GCRY_CIPHER_MODE_CFB, 93},
 	{NULL, GCRY_CIPHER_BLOWFISH, GCRY_CIPHER_MODE_OFB, 94},
 
-	{NULL, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 418},
-	{"aes", GCRY_CIPHER_AES, GCRY_CIPHER_MODE_CBC, 419},
-	{NULL, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_CFB, 421},
-	{NULL, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_OFB, 420},
+	{"aes-128-ecb", GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 418},
+	{"aes-128-cbc", GCRY_CIPHER_AES, GCRY_CIPHER_MODE_CBC, 419},
+	{"aes-128-cfb", GCRY_CIPHER_AES, GCRY_CIPHER_MODE_CFB, 421},
+	{"aes-128-ofb", GCRY_CIPHER_AES, GCRY_CIPHER_MODE_OFB, 420},
 
-	{NULL, GCRY_CIPHER_AES192, GCRY_CIPHER_MODE_ECB, 422},
-	{"aes192", GCRY_CIPHER_AES192, GCRY_CIPHER_MODE_CBC, 423},
-	{NULL, GCRY_CIPHER_AES192, GCRY_CIPHER_MODE_CFB, 425},
-	{NULL, GCRY_CIPHER_AES192, GCRY_CIPHER_MODE_OFB, 424},
+	{"aes-192-ecb", GCRY_CIPHER_AES192, GCRY_CIPHER_MODE_ECB, 422},
+	{"aes-192-cbc", GCRY_CIPHER_AES192, GCRY_CIPHER_MODE_CBC, 423},
+	{"aes-192-cfb", GCRY_CIPHER_AES192, GCRY_CIPHER_MODE_CFB, 425},
+	{"aes-192-ofb", GCRY_CIPHER_AES192, GCRY_CIPHER_MODE_OFB, 424},
 
-	{NULL, GCRY_CIPHER_AES256, GCRY_CIPHER_MODE_ECB, 426},
-	{"aes256", GCRY_CIPHER_AES256, GCRY_CIPHER_MODE_CBC, 427},
-	{NULL, GCRY_CIPHER_AES256, GCRY_CIPHER_MODE_CFB, 429},
-	{NULL, GCRY_CIPHER_AES256, GCRY_CIPHER_MODE_OFB, 428},
+	{"aes-256-ecb", GCRY_CIPHER_AES256, GCRY_CIPHER_MODE_ECB, 426},
+	{"aes-256-cbc", GCRY_CIPHER_AES256, GCRY_CIPHER_MODE_CBC, 427},
+	{"aes-256-cfb", GCRY_CIPHER_AES256, GCRY_CIPHER_MODE_CFB, 429},
+	{"aes-256-ofb", GCRY_CIPHER_AES256, GCRY_CIPHER_MODE_OFB, 428},
 };
 
 static bool nametocipher(const char *name, int *algo, int *mode) {
@@ -152,7 +152,37 @@ void cipher_close(cipher_t *cipher) {
 }
 
 size_t cipher_keylength(const cipher_t *cipher) {
+	if(!cipher) {
+		return 0;
+	}
+
 	return cipher->keylen + cipher->blklen;
+}
+
+uint64_t cipher_budget(const cipher_t *cipher) {
+	if(!cipher) {
+		return UINT64_MAX; // NULL cipher
+	}
+
+	size_t ivlen = cipher->blklen;
+	size_t blklen = cipher->blklen;
+
+	size_t len = blklen > 1
+	             ? blklen
+	             : ivlen > 1 ? ivlen : 8;
+	size_t bits = len * 4 - 1;
+
+	return bits < 64
+	       ? UINT64_C(1) << bits
+	       : UINT64_MAX;
+}
+
+size_t cipher_blocksize(const cipher_t *cipher) {
+	if(!cipher || !cipher->blklen) {
+		return 1;
+	}
+
+	return cipher->blklen;
 }
 
 void cipher_get_key(const cipher_t *cipher, void *key) {
@@ -169,10 +199,14 @@ bool cipher_set_key(cipher_t *cipher, void *key, bool encrypt) {
 }
 
 bool cipher_set_key_from_rsa(cipher_t *cipher, void *key, size_t len, bool encrypt) {
-	memcpy(cipher->key, key + len - cipher->keylen, cipher->keylen + cipher->blklen);
-	memcpy(cipher->key + cipher->keylen, key + len - cipher->keylen - cipher->blklen, cipher->blklen);
-
+	memcpy(cipher->key,
+	       key + len - cipher->keylen,
+	       cipher->keylen);
 	gcry_cipher_setkey(cipher->handle, cipher->key, cipher->keylen);
+
+	memcpy(cipher->key + cipher->keylen,
+	       key + len - cipher->blklen - cipher->keylen,
+	       cipher->blklen);
 	gcry_cipher_setiv(cipher->handle, cipher->key + cipher->keylen, cipher->blklen);
 
 	return true;
@@ -277,6 +311,10 @@ bool cipher_decrypt(cipher_t *cipher, const void *indata, size_t inlen, void *ou
 }
 
 int cipher_get_nid(const cipher_t *cipher) {
+	if(!cipher || !cipher->nid) {
+		return 0;
+	}
+
 	return cipher->nid;
 }
 

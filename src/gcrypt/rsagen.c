@@ -20,220 +20,299 @@
 #include "system.h"
 
 #include <gcrypt.h>
+#include <assert.h>
 
-#include "rsagen.h"
+#include "../rsagen.h"
+#include "xalloc.h"
+#include "rsa.h"
+#include "pem.h"
 
-#if 0
-// Base64 encoding table
+// ASN.1 tags.
+typedef enum {
+	TAG_INTEGER = 2,
+	TAG_SEQUENCE = 16,
+} asn1_tag_t;
 
-static const char b64e[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-
-// PEM encoding
-
-static bool pem_encode(FILE *fp, const char *header, uint8_t *buf, size_t size) {
-	bool decode = false;
-	char line[1024];
-	uint32_t word = 0;
-	int shift = 0;
-	size_t i, j = 0;
-
-	fprintf(fp, "-----BEGIN %s-----\n", header);
-
-	for(i = 0; i < size; i += 3) {
-		if(i <= size - 3) {
-			word = buf[i] << 16 | buf[i + 1] << 8 | buf[i + 2];
-		} else {
-			word = buf[i] << 16;
-
-			if(i == size - 2) {
-				word |= buf[i + 1] << 8;
-			}
-		}
-
-		line[j++] = b64e[(word >> 18)       ];
-		line[j++] = b64e[(word >> 12) & 0x3f];
-		line[j++] = b64e[(word >>  6) & 0x3f];
-		line[j++] = b64e[(word) & 0x3f];
-
-		if(j >= 64) {
-			line[j++] = '\n';
-			line[j] = 0;
-			fputs(line, fp);
-			j = 0;
-		}
+static size_t der_tag_len(size_t n) {
+	if(n < 128) {
+		return 2;
 	}
 
-	if(size % 3 > 0) {
-		if(size % 3 > 1) {
-			line[j++] = '=';
-		}
-
-		line[j++] = '=';
+	if(n < 256) {
+		return 3;
 	}
 
-	if(j) {
-		line[j++] = '\n';
-		line[j] = 0;
-		fputs(line, fp);
+	if(n < 65536) {
+		return 4;
 	}
 
-	fprintf(fp, "-----END %s-----\n", header);
-
-	return true;
+	abort();
 }
 
-
-// BER encoding functions
-
-static bool ber_write_id(uint8_t **p, size_t *buflen, int id) {
-	if(*buflen <= 0) {
-		return false;
+static uint8_t *der_store_tag(uint8_t *p, asn1_tag_t tag, size_t n) {
+	if(tag == TAG_SEQUENCE) {
+		tag |= 0x20;
 	}
 
-	if(id >= 0x1f) {
-		while(id) {
-			if(*buflen <= 0) {
-				return false;
-			}
+	*p++ = tag;
 
-			(*buflen)--;
-			**p = id & 0x7f;
-			id >>= 7;
-
-			if(id) {
-				**p |= 0x80;
-			}
-
-			(*p)++;
-		}
+	if(n < 128) {
+		*p++ = n;
+	} else if(n < 256) {
+		*p++ = 0x81;
+		*p++ = n;
+	} else if(n < 65536) {
+		*p++ = 0x82;
+		*p++ = n >> 8;
+		*p++ = n & 0xff;
 	} else {
-		(*buflen)--;
-		*(*p)++ = id;
+		abort();
 	}
 
-	return true;
+	return p;
 }
 
-static bool ber_write_len(uint8_t **p, size_t *buflen, size_t len) {
-	do {
-		if(*buflen <= 0) {
-			return false;
-		}
+static size_t der_fill(uint8_t *derbuf, bool is_private, const gcry_mpi_t mpi[], size_t num_mpi) {
+	size_t needed = 0;
+	size_t lengths[16] = {0};
 
-		(*buflen)--;
-		**p = len & 0x7f;
-		len >>= 7;
+	assert(num_mpi > 0 && num_mpi < sizeof(lengths) / sizeof(*lengths));
 
-		if(len) {
-			**p |= 0x80;
-		}
-
-		(*p)++;
-	} while(len);
-
-	return true;
-}
-
-static bool ber_write_sequence(uint8_t **p, size_t *buflen, uint8_t *seqbuf, size_t seqlen) {
-	if(!ber_write_id(p, buflen, 0x10) || !ber_write_len(p, buflen, seqlen) || *buflen < seqlen) {
-		return false;
+	if(is_private) {
+		// Add space for the version number.
+		needed += der_tag_len(1) + 1;
 	}
 
-	memcpy(*p, seqbuf, seqlen);
-	*p += seqlen;
-	*buflen -= seqlen;
+	for(size_t i = 0; i < num_mpi; ++i) {
+		gcry_mpi_print(GCRYMPI_FMT_STD, NULL, 0, &lengths[i], mpi[i]);
+		needed += der_tag_len(lengths[i]) + lengths[i];
+	}
 
-	return true;
+	const size_t derlen = der_tag_len(needed) + needed;
+
+	uint8_t *der = derbuf;
+	der = der_store_tag(der, TAG_SEQUENCE, needed);
+
+	if(is_private) {
+		// Private key requires storing version number.
+		der = der_store_tag(der, TAG_INTEGER, 1);
+		*der++ = 0;
+	}
+
+	for(size_t i = 0; i < num_mpi; ++i) {
+		const size_t len = lengths[i];
+		der = der_store_tag(der, TAG_INTEGER, len);
+		gcry_mpi_print(GCRYMPI_FMT_STD, der, len, NULL, mpi[i]);
+		der += len;
+	}
+
+	assert(der - derbuf == derlen);
+	return derlen;
 }
 
-static bool ber_write_mpi(uint8_t **p, size_t *buflen, gcry_mpi_t mpi) {
-	uint8_t tmpbuf[1024];
-	size_t tmplen = sizeof(tmpbuf);
-	gcry_error_t err;
+bool rsa_write_pem_public_key(rsa_t *rsa, FILE *fp) {
+	uint8_t derbuf[8096];
 
-	err = gcry_mpi_aprint(GCRYMPI_FMT_USG, &tmpbuf, &tmplen, mpi);
+	gcry_mpi_t params[] = {
+		rsa->n,
+		rsa->e,
+	};
+
+	size_t derlen = der_fill(derbuf, false, params, sizeof(params) / sizeof(*params));
+
+	return pem_encode(fp, "RSA PUBLIC KEY", derbuf, derlen);
+}
+
+// Calculate p/q primes from n/e/d.
+static void get_p_q(gcry_mpi_t *p,
+                    gcry_mpi_t *q,
+                    const gcry_mpi_t n,
+                    const gcry_mpi_t e,
+                    const gcry_mpi_t d) {
+	const size_t nbits = gcry_mpi_get_nbits(n);
+
+	gcry_mpi_t k = gcry_mpi_new(nbits);
+	gcry_mpi_mul(k, e, d);
+	gcry_mpi_sub_ui(k, k, 1);
+
+	size_t t = 0;
+
+	while(!gcry_mpi_test_bit(k, t)) {
+		++t;
+	}
+
+	gcry_mpi_t g = gcry_mpi_new(nbits);
+	gcry_mpi_t gk = gcry_mpi_new(0);
+	gcry_mpi_t sq = gcry_mpi_new(0);
+	gcry_mpi_t rem = gcry_mpi_new(0);
+	gcry_mpi_t gcd = gcry_mpi_new(0);
+
+	while(true) {
+		gcry_mpi_t kt = gcry_mpi_copy(k);
+		gcry_mpi_randomize(g, nbits, GCRY_STRONG_RANDOM);
+
+		size_t i;
+
+		for(i = 0; i < t; ++i) {
+			gcry_mpi_rshift(kt, kt, 1);
+			gcry_mpi_powm(gk, g, kt, n);
+
+			if(gcry_mpi_cmp_ui(gk, 1) != 0) {
+				gcry_mpi_mul(sq, gk, gk);
+				gcry_mpi_mod(rem, sq, n);
+
+				if(gcry_mpi_cmp_ui(rem, 1) == 0) {
+					break;
+				}
+			}
+		}
+
+		gcry_mpi_release(kt);
+
+		if(i < t) {
+			gcry_mpi_sub_ui(gk, gk, 1);
+			gcry_mpi_gcd(gcd, gk, n);
+
+			if(gcry_mpi_cmp_ui(gcd, 1) != 0) {
+				break;
+			}
+		}
+	}
+
+	gcry_mpi_release(k);
+	gcry_mpi_release(g);
+	gcry_mpi_release(gk);
+	gcry_mpi_release(sq);
+	gcry_mpi_release(rem);
+
+	*p = gcd;
+	*q = gcry_mpi_new(0);
+
+	gcry_mpi_div(*q, NULL, n, *p, 0);
+}
+
+bool rsa_write_pem_private_key(rsa_t *rsa, FILE *fp) {
+	gcry_mpi_t params[] = {
+		rsa->n,
+		rsa->e,
+		rsa->d,
+		NULL, // p
+		NULL, // q
+		gcry_mpi_new(0), // d mod (p-1)
+		gcry_mpi_new(0), // d mod (q-1)
+		gcry_mpi_new(0), // u = p^-1 mod q
+	};
+
+	// Indexes into params.
+	const size_t d = 2;
+	const size_t p = 3;
+	const size_t q = 4;
+	const size_t dp = 5;
+	const size_t dq = 6;
+	const size_t u = 7;
+
+	// Calculate p and q.
+	get_p_q(&params[p], &params[q], rsa->n, rsa->e, rsa->d);
+
+	// Swap p and q if q > p.
+	if(gcry_mpi_cmp(params[q], params[p]) > 0) {
+		gcry_mpi_swap(params[p], params[q]);
+	}
+
+	// Calculate u.
+	gcry_mpi_invm(params[u], params[p], params[q]);
+
+	// Calculate d mod (p - 1).
+	gcry_mpi_sub_ui(params[dp], params[p], 1);
+	gcry_mpi_mod(params[dp], params[d], params[dp]);
+
+	// Calculate d mod (q - 1).
+	gcry_mpi_sub_ui(params[dq], params[q], 1);
+	gcry_mpi_mod(params[dq], params[d], params[dq]);
+
+	uint8_t derbuf[8096];
+	const size_t nparams = sizeof(params) / sizeof(*params);
+	size_t derlen = der_fill(derbuf, true, params, nparams);
+
+	gcry_mpi_release(params[p]);
+	gcry_mpi_release(params[q]);
+	gcry_mpi_release(params[dp]);
+	gcry_mpi_release(params[dq]);
+	gcry_mpi_release(params[u]);
+
+	return pem_encode(fp, "RSA PRIVATE KEY", derbuf, derlen);
+}
+
+static gcry_mpi_t find_mpi(const gcry_sexp_t rsa, const char *token) {
+	gcry_sexp_t sexp = gcry_sexp_find_token(rsa, token, 1);
+
+	if(!sexp) {
+		fprintf(stderr, "Token %s not found in RSA S-expression.\n", token);
+		return NULL;
+	}
+
+	gcry_mpi_t mpi = gcry_sexp_nth_mpi(sexp, 1, GCRYMPI_FMT_USG);
+	gcry_sexp_release(sexp);
+	return mpi;
+}
+
+rsa_t *rsa_generate(size_t bits, unsigned long exponent) {
+	gcry_sexp_t s_params;
+	gcry_error_t err = gcry_sexp_build(&s_params, NULL,
+	                                   "(genkey"
+	                                   "  (rsa"
+	                                   "    (nbits %u)"
+	                                   "    (rsa-use-e %u)))",
+	                                   bits,
+	                                   exponent);
 
 	if(err) {
-		return false;
+		fprintf(stderr, "Error building keygen S-expression: %s.\n", gcry_strerror(err));
+		return NULL;
 	}
 
-	if(!ber_write_id(p, buflen, 0x02) || !ber_write_len(p, buflen, tmplen) || *buflen < tmplen) {
-		return false;
+	gcry_sexp_t s_key;
+	err = gcry_pk_genkey(&s_key, s_params);
+	gcry_sexp_release(s_params);
+
+	if(err) {
+		fprintf(stderr, "Error generating RSA key pair: %s.\n", gcry_strerror(err));
+		return NULL;
 	}
 
-	memcpy(*p, tmpbuf, tmplen);
-	*p += tmplen;
-	*buflen -= tmplen;
+	// `gcry_sexp_extract_param` can replace everything below
+	// with a single line, but it's not available on CentOS 7.
+	gcry_sexp_t s_priv = gcry_sexp_find_token(s_key, "private-key", 0);
 
-	return true;
-}
-
-// Write PEM RSA keys
-
-bool rsa_write_pem_public_key(rsa_t *rsa, FILE *fp) {
-	uint8_t derbuf1[8096];
-	uint8_t derbuf2[8096];
-	uint8_t *derp1 = derbuf1;
-	uint8_t *derp2 = derbuf2;
-	size_t derlen1 = sizeof(derbuf1);
-	size_t derlen2 = sizeof(derbuf2);
-
-	if(!ber_write_mpi(&derp1, &derlen1, &rsa->n)
-	                || !ber_write_mpi(&derp1, &derlen1, &rsa->e)
-	                || !ber_write_sequence(&derp2, &derlen2, derbuf1, derlen1)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error while encoding RSA public key");
-		return false;
+	if(!s_priv) {
+		fprintf(stderr, "Private key not found in gcrypt result.\n");
+		gcry_sexp_release(s_key);
+		return NULL;
 	}
 
-	if(!pem_encode(fp, "RSA PUBLIC KEY", derbuf2, derlen2)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to write RSA public key: %s", strerror(errno));
-		return false;
+	gcry_sexp_t s_rsa = gcry_sexp_find_token(s_priv, "rsa", 0);
+
+	if(!s_rsa) {
+		fprintf(stderr, "RSA not found in gcrypt result.\n");
+		gcry_sexp_release(s_priv);
+		gcry_sexp_release(s_key);
+		return NULL;
 	}
 
-	return true;
-}
+	rsa_t *rsa = xzalloc(sizeof(*rsa));
 
-bool rsa_write_pem_private_key(rsa_t *rsa, FILE *fp) {
-	uint8_t derbuf1[8096];
-	uint8_t derbuf2[8096];
-	uint8_t *derp1 = derbuf1;
-	uint8_t *derp2 = derbuf2;
-	size_t derlen1 = sizeof(derbuf1);
-	size_t derlen2 = sizeof(derbuf2);
+	rsa->n = find_mpi(s_rsa, "n");
+	rsa->e = find_mpi(s_rsa, "e");
+	rsa->d = find_mpi(s_rsa, "d");
 
-	if(!ber_write_mpi(&derp1, &derlen1, &bits)
-	                || ber_write_mpi(&derp1, &derlen1, &rsa->n) // modulus
-	                || ber_write_mpi(&derp1, &derlen1, &rsa->e) // public exponent
-	                || ber_write_mpi(&derp1, &derlen1, &rsa->d) // private exponent
-	                || ber_write_mpi(&derp1, &derlen1, &p)
-	                || ber_write_mpi(&derp1, &derlen1, &q)
-	                || ber_write_mpi(&derp1, &derlen1, &exp1)
-	                || ber_write_mpi(&derp1, &derlen1, &exp2)
-	                || ber_write_mpi(&derp1, &derlen1, &coeff)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error while encoding RSA private key");
+	gcry_sexp_release(s_rsa);
+	gcry_sexp_release(s_priv);
+	gcry_sexp_release(s_key);
+
+	if(rsa->n && rsa->e && rsa->d) {
+		return rsa;
 	}
 
-	return false;
-}
-
-if(!pem_encode(fp, "RSA PRIVATE KEY", derbuf2, derlen2)) {
-	logger(DEBUG_ALWAYS, LOG_ERR, "Unable to write RSA private key: %s", strerror(errno));
-	return false;
-}
-
-return true;
-}
-#endif
-
-bool rsa_write_pem_public_key(rsa_t *rsa, FILE *fp) {
-	return false;
-}
-
-bool rsa_write_pem_private_key(rsa_t *rsa, FILE *fp) {
-	return false;
-}
-
-bool rsa_generate(rsa_t *rsa, size_t bits, unsigned long exponent) {
-	fprintf(stderr, "Generating RSA keys with libgcrypt not implemented yet\n");
-	return false;
+	rsa_free(rsa);
+	return NULL;
 }

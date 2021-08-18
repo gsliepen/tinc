@@ -166,13 +166,21 @@ bool digest_verify(digest_t *digest, const void *indata, size_t inlen, const voi
 }
 
 int digest_get_nid(const digest_t *digest) {
+	if(!digest || !digest->nid) {
+		return 0;
+	}
+
 	return digest->nid;
 }
 
 size_t digest_length(const digest_t *digest) {
+	if(!digest) {
+		return 0;
+	}
+
 	return digest->maclength;
 }
 
 bool digest_active(const digest_t *digest) {
-	return digest->algo != GCRY_MD_NONE;
+	return digest && digest->algo != GCRY_MD_NONE;
 }

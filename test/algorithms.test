@@ -33,7 +33,7 @@ echo [STEP] Test various ciphers and digests
 # The full suite results in a large test matrix and it takes a lot of time to run.
 # The list was reduced to the strongest available algorithms (and "none").
 digests="none sha256 sha512"
-ciphers="none aes-256-cbc camellia-256-cbc"
+ciphers="none aes-256-cbc"
 
 for digest in $digests; do
   for cipher in $ciphers; do
