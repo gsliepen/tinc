@@ -320,8 +320,75 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address) {
 }
 
 void subnet_cache_clear_node(node_t *owner) {
+	bool clear = false;
+
 	for splay_each(subnet_t, subnet, &owner->subnet_tree) {
-		subnet_cache_flush(subnet);
+		switch(subnet->type) {
+		case SUBNET_IPV4:
+			if(subnet->net.ipv4.prefixlength != 32) {
+				clear = true;
+				break;
+			}
+
+			break;
+
+		case SUBNET_IPV6:
+			if(subnet->net.ipv4.prefixlength != 128) {
+				clear = true;
+				break;
+			}
+
+			break;
+
+		default:
+			break;
+		}
+
+		if(clear) {
+			break;
+		}
+	}
+
+	// We cant optimize this work, so just flush the whole cache
+	if(clear) {
+		subnet_cache_flush_tables();
+		return;
+	}
+
+	int idx;
+	subnet_t *cached;
+
+	for splay_each(subnet_t, subnet, &owner->subnet_tree) {
+		switch(subnet->type) {
+		case SUBNET_IPV4:
+			if(subnet->net.ipv4.prefixlength == 32) {
+				idx = hash_search_idx(ipv4_t, &ipv4_cache, &subnet->net.ipv4.address);
+
+				if(idx > 0) {
+					cached = ipv4_cache->values[idx];
+
+					if(cached->owner == owner || cached->weight > subnet->weight) {
+						ipv4_cache.values[idx] = NULL;
+					}
+				}
+
+				return;
+			}
+
+			break;
+
+		case SUBNET_IPV6:
+			if(subnet->net.ipv4.prefixlength == 128) {
+				hash_delete(ipv6_t, &ipv6_cache, &subnet->net.ipv6.address);
+				return;
+			}
+
+			break;
+
+		case SUBNET_MAC:
+			hash_delete(mac_t, &mac_cache, &subnet->net.mac.address);
+			return;
+		}
 	}
 }
 

@@ -28,11 +28,11 @@
 
    For the MST algorithm we can choose from Prim's or Kruskal's. I personally
    favour Kruskal's, because we make an extra AVL tree of edges sorted on
-   weights (metric). That tree only has to be updated when an edge is added or
-   removed, and during the MST algorithm we just have go linearly through that
-   tree, adding safe edges until #edges = #nodes - 1. The implementation here
-   however is not so fast, because I tried to avoid having to make a forest and
-   merge trees.
+   weights (metric). With the lowest weight beings most optimal. That tree only
+   has to be updated when an edge is added or removed, and during the MST algorithm
+   we just have go linearly through that tree, adding safe edges until #edges = #nodes - 1.
+   The implementation here however is not so fast, because I tried to avoid having to
+   make a forest and merge trees.
 
    For the SSSP algorithm Dijkstra's seems to be a nice choice. Currently a
    simple breadth-first search is presented here.
@@ -196,7 +196,6 @@ static void sssp_bfs(void) {
 				update_node_udp(e->to, &e->address);
 			}
 
-			subnet_cache_clear_node(e->to);
 
 			list_insert_tail(todo_list, e->to);
 		}
@@ -280,7 +279,6 @@ static void check_reachability(void) {
 			free(port);
 			environment_exit(&env);
 
-			subnet_cache_clear_node(n);
 			subnet_update(n, NULL, n->status.reachable);
 
 			if(!n->status.reachable) {

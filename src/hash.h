@@ -30,6 +30,7 @@ uint32_t modulo(uint32_t hash, size_t n);
 #define hash_insert(t, ...) hash_insert_ ## t (__VA_ARGS__)
 #define hash_delete(t, ...) hash_delete_ ## t (__VA_ARGS__)
 #define hash_search(t, ...) hash_search_ ## t (__VA_ARGS__)
+#define hash_search_idx(t, ...) hash_search_ ## t (__VA_ARGS__)
 #define hash_clear(t, n) hash_clear_ ## t ((n))
 
 #define hash_define(t, n) \
@@ -54,15 +55,20 @@ uint32_t modulo(uint32_t hash, size_t n);
 		memcpy(&hash->keys[i], key, sizeof(t)); \
 		hash->values[i] = value; \
 	} \
-	void *hash_search_ ## t (const hash_ ##t *hash, const t *key) { \
+	int hash_search_ ## t ## _idx (const hash_ ##t *hash, const t *key) { \
 		uint32_t i = hash_modulo_ ## t(hash_function_ ## t(key)); \
 		for(uint8_t f=0; f<HASH_SEARCH_ITERATIONS; f++){ \
 			if(!memcmp(key, &hash->keys[i], sizeof(t))) { \
-				return (void *)hash->values[i]; \
+				return i; \
 			} \
 			if(++i == n) i = 0; \
 		} \
-		return NULL; \
+		return -1; \
+	} \
+	void *hash_search_ ## t (const hash_ ##t *hash, const t *key) { \
+		uint32_t idx= hash_search_ ## t ## _idx(hash, key); \
+		if(idx < 0) return NULL; \
+		return (void*)hash->values[idx]; \
 	} \
 	void hash_delete_ ## t (hash_ ##t *hash, const t *key) { \
 		uint32_t i = hash_modulo_ ## t(hash_function_ ## t(key)); \
