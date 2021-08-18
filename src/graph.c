@@ -196,6 +196,8 @@ static void sssp_bfs(void) {
 				update_node_udp(e->to, &e->address);
 			}
 
+			subnet_cache_clear_node(e->to);
+
 			list_insert_tail(todo_list, e->to);
 		}
 
@@ -278,6 +280,7 @@ static void check_reachability(void) {
 			free(port);
 			environment_exit(&env);
 
+			subnet_cache_clear_node(n);
 			subnet_update(n, NULL, n->status.reachable);
 
 			if(!n->status.reachable) {
@@ -307,7 +310,6 @@ static void check_reachability(void) {
 }
 
 void graph(void) {
-	subnet_cache_flush_tables();
 	sssp_bfs();
 	check_reachability();
 	mst_kruskal();

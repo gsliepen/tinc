@@ -319,6 +319,12 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address) {
 	return r;
 }
 
+void subnet_cache_clear_node(node_t *owner) {
+	for splay_each(subnet_t, subnet, &owner->subnet_tree) {
+		subnet_cache_flush(subnet);
+	}
+}
+
 void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 	char netstr[MAXNETSTR];
 	char *name, *address, *port;

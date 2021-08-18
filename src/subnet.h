@@ -87,5 +87,6 @@ extern subnet_t *lookup_subnet_ipv6(const ipv6_t *address);
 extern bool dump_subnets(struct connection_t *c);
 extern void subnet_cache_flush_tables(void);
 extern void subnet_cache_flush_table(subnet_type_t ipver);
+void subnet_cache_clear_node(node_t *owner);
 
 #endif
