@@ -27,6 +27,8 @@ run_tests() {
   sudo git clean -dfx
   sudo chown -R "${USER:-$(whoami)}" .
 
+  mkdir -p sanitizer /tmp/logs
+
   header "Running test flavor $flavor"
 
   autoreconf -fsi
@@ -37,21 +39,16 @@ run_tests() {
   code=0
   make check -j2 VERBOSE=1 || code=$?
 
-  mkdir -p /tmp/logs
-  sudo tar -c -z -f "/tmp/logs/tests.$flavor.tar.gz" test/
+  sudo tar -c -z -f "/tmp/logs/tests.$flavor.tar.gz" test/ sanitizer/
 
   return $code
 }
-
-echo "system name $(uname -s)"
-echo "full $(uname -a)"
-echo "o $(uname -o)"
 
 case "$(uname -s)" in
 Linux)
   if [ -n "${HOST:-}" ]; then
     # Needed for cross-compilation for 32-bit targets.
-    export CPPFLAGS='-D_FILE_OFFSET_BITS=64'
+    export CPPFLAGS="${CPPFLAGS:-} -D_FILE_OFFSET_BITS=64"
   fi
   ;;
 
@@ -64,7 +61,7 @@ Darwin)
   nproc() { sysctl -n hw.ncpu; }
   gcrypt=$(brew --prefix libgcrypt)
   openssl=$(brew --prefix openssl)
-  export CPPFLAGS="-I/usr/local/include -I$gcrypt/include -I$openssl/include -I$gcrypt/include"
+  export CPPFLAGS="${CPPFLAGS:-} -I/usr/local/include -I$gcrypt/include -I$openssl/include -I$gcrypt/include"
   ;;
 esac
 

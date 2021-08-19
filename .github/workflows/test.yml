@@ -16,10 +16,10 @@ jobs:
       matrix:
         arch:
           - armhf
-          - mips
+          - mipsel
 
     container:
-      image: debian:buster
+      image: debian:bullseye
       options: --privileged
 
     steps:
@@ -32,6 +32,7 @@ jobs:
       - name: Prepare the system
         run: |
           sh .ci/test/prepare.sh
+          update-binfmts --enable
           rm -f /dev/net/tun
 
       - name: Run tests with default settings
@@ -39,6 +40,7 @@ jobs:
 
       - name: Run tests without legacy protocol
         run: sudo -u build CI=1 HOST=${{ matrix.arch }} sh .ci/test/run.sh nolegacy
+        if: always()
 
       - name: Run tests with libgcrypt
         run: sudo -u build CI=1 HOST=${{ matrix.arch }} sh .ci/test/run.sh gcrypt
@@ -46,7 +48,7 @@ jobs:
       - name: Upload test results
         uses: actions/upload-artifact@v2
         with:
-          name: tests_cross_${{ env.ARTIFACT }}
+          name: tests_cross_${{ matrix.arch }}
           path: /tmp/logs/tests.*.tar.gz
         if: always()
 
@@ -131,24 +133,18 @@ jobs:
       - name: Install deps
         run: sudo sh .ci/deps.sh
 
-      - name: Configure and compile
-        shell: bash
-        run: bash .ci/sanitizers/build.sh
-        env:
-          CC: clang-12
+      - name: Sanitize tests with default settings
+        run: bash .ci/sanitizers/run.sh default
 
-      - name: Run tests
-        run: bash .ci/sanitizers/run.sh
-
-      - name: Archive test results
-        run: sudo tar -c -z -f test-results.tar.gz test/ sanitizer/
+      - name: Sanitize tests without legacy protocol
+        run: bash .ci/sanitizers/run.sh nolegacy
         if: always()
 
       - name: Upload test results
         uses: actions/upload-artifact@v2
         with:
-          name: tests_sanitizer_${{ matrix.sanitizer }}
-          path: test-results.tar.gz
+          name: tests_${{ env.ARTIFACT }}
+          path: /tmp/logs/tests.*.tar.gz
         if: always()
 
   linux:
@@ -190,6 +186,7 @@ jobs:
 
       - name: Run tests without legacy protocol
         run: sudo -u build CI=1 sh .ci/test/run.sh nolegacy
+        if: always()
 
       - name: Run tests with libgcrypt
         run: sudo -u build CI=1 sh .ci/test/run.sh gcrypt
@@ -269,6 +266,7 @@ jobs:
 
       - name: Run tests without legacy protocol
         run: sh .ci/test/run.sh nolegacy
+        if: always()
 
       - name: Run tests with libgcrypt
         run: sh .ci/test/run.sh gcrypt
@@ -326,6 +324,7 @@ jobs:
       - name: Run tests without legacy protocol
         shell: msys2 {0}
         run: sh .ci/test/run.sh nolegacy
+        if: always()
 
       - name: Run tests with libgcrypt
         shell: msys2 {0}
