@@ -32,7 +32,7 @@ conf_linux() {
   if [ -n "${HOST:-}" ]; then
     case "$HOST" in
     armhf) triplet=arm-linux-gnueabihf ;;
-    mips) triplet=mips-linux-gnu ;;
+    mipsel) triplet=mipsel-linux-gnu ;;
     *) exit 1 ;;
     esac
 
