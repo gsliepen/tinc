@@ -603,7 +603,7 @@ Multiple
 .Va Address
 variables can be specified, in which case each address will be tried until a working
 connection has been established.
-.It Va Cipher Li = Ar cipher Pq blowfish
+.It Va Cipher Li = Ar cipher Pq aes-256-cbc
 The symmetric cipher algorithm used to encrypt UDP packets.
 Any cipher supported by LibreSSL or OpenSSL is recognised.
 Furthermore, specifying

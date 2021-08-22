@@ -1328,7 +1328,7 @@ Multiple Address variables can be specified, in which case each address will be
 tried until a working connection has been established.
 
 @cindex Cipher
-@item Cipher = <@var{cipher}> (blowfish)
+@item Cipher = <@var{cipher}> (aes-256-cbc)
 The symmetric cipher algorithm used to encrypt UDP packets using the legacy protocol.
 Any cipher supported by LibreSSL or OpenSSL is recognized.
 Furthermore, specifying @samp{none} will turn off packet encryption.
