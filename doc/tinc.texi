@@ -1025,15 +1025,6 @@ packets for nodes for which we do not have a meta connection with are also dropp
 @cindex Ed25519PrivateKeyFile
 @item Ed25519PrivateKeyFile = <@var{path}> (@file{@value{sysconfdir}/tinc/@var{netname}/ed25519_key.priv})
 The file in which the private Ed25519 key of this tinc daemon resides.
-This is only used if ExperimentalProtocol is enabled.
-
-@cindex ExperimentalProtocol
-@item ExperimentalProtocol = <yes|no> (yes)
-When this option is enabled, the SPTPS protocol will be used when connecting to nodes that also support it.
-Ephemeral ECDH will be used for key exchanges,
-and Ed25519 will be used instead of RSA for authentication.
-When enabled, an Ed25519 key must have been generated before with
-@command{tinc generate-ed25519-keys}.
 
 @cindex Forwarding
 @item Forwarding = <off|internal|kernel> (internal) [experimental]
@@ -1333,7 +1324,7 @@ The symmetric cipher algorithm used to encrypt UDP packets using the legacy prot
 Any cipher supported by LibreSSL or OpenSSL is recognized.
 Furthermore, specifying @samp{none} will turn off packet encryption.
 It is best to use only those ciphers which support CBC mode.
-This option has no effect for connections using the SPTPS protocol, which always use AES-256-CTR.
+This option only affects communication using the legacy protocol.
 
 @cindex ClampMSS
 @item ClampMSS = <yes|no> (yes)
@@ -1352,7 +1343,7 @@ Possible values are 0 (off), 1 (fast zlib) and any integer up to 9 (best zlib),
 The digest algorithm used to authenticate UDP packets using the legacy protocol.
 Any digest supported by LibreSSL or OpenSSL is recognized.
 Furthermore, specifying @samp{none} will turn off packet authentication.
-This option has no effect for connections using the SPTPS protocol, which always use HMAC-SHA-256.
+This option only affects communication using the legacy protocol.
 
 @cindex IndirectData
 @item IndirectData = <yes|no> (no)
@@ -1365,7 +1356,7 @@ It is best to leave this option out or set it to no.
 The length of the message authentication code used to authenticate UDP packets using the legacy protocol.
 Can be anything from 0
 up to the length of the digest produced by the digest algorithm.
-This option has no effect for connections using the SPTPS protocol, which never truncate MACs.
+This option only affects communication using the legacy protocol.
 
 @cindex PMTU
 @item PMTU = <@var{mtu}> (1514)
@@ -3030,9 +3021,9 @@ Therefore, tinc also authenticates the data.
 Finally, tinc uses sequence numbers (which themselves are also authenticated) to prevent an attacker from replaying valid packets.
 
 Since version 1.1pre3, tinc has two protocols used to protect your data; the legacy protocol, and the new Simple Peer-to-Peer Security (SPTPS) protocol.
-The SPTPS protocol is designed to address some weaknesses in the legacy protocol.
-The new authentication protocol is used when two nodes connect to each other that both have the ExperimentalProtocol option set to yes,
-otherwise the legacy protocol will be used.
+The SPTPS protocol is designed to address some weaknesses in the legacy protocol,
+and is used automatically if both sides support it.
+Once two nodes have connected with the new protocol, rollback to the legacy protocol is not allowed.
 
 @menu
 * Legacy authentication protocol::

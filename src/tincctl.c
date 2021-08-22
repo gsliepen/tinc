@@ -1677,7 +1677,7 @@ const var_t variables[] = {
 	{"DeviceType", VAR_SERVER},
 	{"DirectOnly", VAR_SERVER | VAR_SAFE},
 	{"Ed25519PrivateKeyFile", VAR_SERVER},
-	{"ExperimentalProtocol", VAR_SERVER},
+	{"ExperimentalProtocol", VAR_SERVER | VAR_OBSOLETE},
 	{"Forwarding", VAR_SERVER},
 	{"FWMark", VAR_SERVER},
 	{"GraphDumpFile", VAR_SERVER | VAR_OBSOLETE},

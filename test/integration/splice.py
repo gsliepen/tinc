@@ -30,7 +30,7 @@ def init(ctx: Test, *options: str) -> T.Tuple[Tinc, Tinc]:
         set Sandbox {SANDBOX_LEVEL}
         {custom}
     """
-    foo.cmd(stdin=stdin)
+    foo.cmd("--force", stdin=stdin)
 
     stdin = f"""
         init {bar}
@@ -42,7 +42,7 @@ def init(ctx: Test, *options: str) -> T.Tuple[Tinc, Tinc]:
         set Sandbox {SANDBOX_LEVEL}
         {custom}
     """
-    bar.cmd(stdin=stdin)
+    bar.cmd("--force", stdin=stdin)
 
     foo.add_script(Script.SUBNET_UP)
     bar.add_script(Script.SUBNET_UP)

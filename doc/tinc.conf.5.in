@@ -287,15 +287,6 @@ When combined with the IndirectData option,
 packets for nodes for which we do not have a meta connection with are also dropped.
 .It Va Ed25519PrivateKeyFile Li = Ar filename Po Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /ed25519_key.priv Pc
 The file in which the private Ed25519 key of this tinc daemon resides.
-This is only used if
-.Va ExperimentalProtocol
-is enabled.
-.It Va ExperimentalProtocol Li = yes | no Pq yes
-When this option is enabled, the SPTPS protocol will be used when connecting to nodes that also support it.
-Ephemeral ECDH will be used for key exchanges,
-and Ed25519 will be used instead of RSA for authentication.
-When enabled, an Ed25519 key must have been generated before with
-.Nm tinc generate-ed25519-keys .
 .It Va Forwarding Li = off | internal | kernel Po internal Pc Bq experimental
 This option selects the way indirect packets are forwarded.
 .Bl -tag -width indent
@@ -610,8 +601,7 @@ Furthermore, specifying
 .Qq none
 will turn off packet encryption.
 It is best to use only those ciphers which support CBC mode.
-This option has no effect for connections between nodes using
-.Va ExperimentalProtocol .
+This option only affects communication using the legacy protocol.
 .It Va ClampMSS Li = yes | no Pq yes
 This option specifies whether tinc should clamp the maximum segment size (MSS)
 of TCP packets to the path MTU. This helps in situations where ICMP
@@ -626,8 +616,7 @@ Any digest supported by LibreSSL or OpenSSL is recognised.
 Furthermore, specifying
 .Qq none
 will turn off packet authentication.
-This option has no effect for connections between nodes using
-.Va ExperimentalProtocol .
+This option only affects communication using the legacy protocol.
 .It Va IndirectData Li = yes | no Pq no
 When set to yes, only nodes which already have a meta connection to you
 will try to establish direct communication with you.
@@ -637,8 +626,7 @@ The length of the message authentication code used to authenticate UDP packets.
 Can be anything from
 .Qq 0
 up to the length of the digest produced by the digest algorithm.
-This option has no effect for connections between nodes using
-.Va ExperimentalProtocol .
+This option only affects communication using the legacy protocol.
 .It Va PMTU Li = Ar mtu Po 1514 Pc
 This option controls the initial path MTU to this node.
 .It Va PMTUDiscovery Li = yes | no Po yes Pc
