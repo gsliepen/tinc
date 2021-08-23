@@ -1,2 +1,3 @@
 src:ed25519/*
 src:chacha-poly1305/*
+src:xoshiro.c

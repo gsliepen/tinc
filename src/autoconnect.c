@@ -48,7 +48,8 @@ static void make_new_connection() {
 			continue;
 		}
 
-		if(r--) {
+		if(r) {
+			--r;
 			continue;
 		}
 
