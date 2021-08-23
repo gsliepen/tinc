@@ -143,7 +143,7 @@ jobs:
       - name: Upload test results
         uses: actions/upload-artifact@v2
         with:
-          name: tests_${{ env.ARTIFACT }}
+          name: tests_sanitizer_${{ matrix.sanitizer }}
           path: /tmp/logs/tests.*.tar.gz
         if: always()
 
