@@ -5,6 +5,20 @@ public domain
 
 #include "poly1305.h"
 
+/* use memcpy() to copy blocks of memory (typically faster) */
+#define USE_MEMCPY          1
+/* use unaligned little-endian load/store (can be faster) */
+#define USE_UNALIGNED       0
+
+struct poly1305_context {
+	uint32_t r[5];
+	uint32_t h[5];
+	uint32_t pad[4];
+	size_t leftover;
+	unsigned char buffer[POLY1305_BLOCK_SIZE];
+	unsigned char final;
+};
+
 #if (USE_UNALIGNED == 1)
 #define U8TO32(p) \
 	(*((uint32_t *)(p)))
@@ -33,7 +47,7 @@ U32TO8(unsigned char *p, uint32_t v) {
 }
 #endif
 
-void
+static void
 poly1305_init(struct poly1305_context *st, const unsigned char key[32]) {
 	/* r &= 0xffffffc0ffffffc0ffffffc0fffffff */
 	st->r[0] = (U8TO32(&key[ 0])) & 0x3ffffff;
@@ -131,7 +145,7 @@ poly1305_blocks(struct poly1305_context *st, const unsigned char *m, size_t byte
 	st->h[4] = h4;
 }
 
-void
+static void
 poly1305_finish(struct poly1305_context *st, unsigned char mac[16]) {
 	uint32_t h0, h1, h2, h3, h4, c;
 	uint32_t g0, g1, g2, g3, g4;
@@ -241,8 +255,7 @@ poly1305_finish(struct poly1305_context *st, unsigned char mac[16]) {
 	st->pad[3] = 0;
 }
 
-
-void
+static void
 poly1305_update(struct poly1305_context *st, const unsigned char *m, size_t bytes) {
 	size_t i;
 
@@ -293,10 +306,37 @@ poly1305_update(struct poly1305_context *st, const unsigned char *m, size_t byte
 	}
 }
 
+/**
+ * Poly1305 tag generation. This concatenates a string according to the rules
+ * outlined in RFC 7539 and calculates the tag.
+ *
+ * \param key 32 byte secret one-time key for poly1305
+ * \param ct ciphertext
+ * \param ct_len ciphertext length in bytes
+ * \param tag pointer to 16 bytes for tag storage
+ */
 void
-poly1305_auth(unsigned char mac[16], const unsigned char *m, size_t bytes, const unsigned char key[32]) {
+poly1305_get_tag(const unsigned char key[32], const void *ct, int ct_len, unsigned char tag[16]) {
 	struct poly1305_context ctx;
+	unsigned left_over;
+	uint64_t len;
+	unsigned char pad[16];
+
 	poly1305_init(&ctx, key);
-	poly1305_update(&ctx, m, bytes);
-	poly1305_finish(&ctx, mac);
+	memset(&pad, 0, sizeof(pad));
+
+	/* payload and padding */
+	poly1305_update(&ctx, ct, ct_len);
+	left_over = ct_len % 16;
+
+	if(left_over) {
+		poly1305_update(&ctx, pad, 16 - left_over);
+	}
+
+	/* lengths */
+	len = 0;
+	poly1305_update(&ctx, (unsigned char *)&len, 8);
+	len = ct_len;
+	poly1305_update(&ctx, (unsigned char *)&len, 8);
+	poly1305_finish(&ctx, tag);
 }

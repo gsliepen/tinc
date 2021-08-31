@@ -52,8 +52,6 @@ int chachapoly_init(struct chachapoly_ctx *ctx, const void *key, int key_len);
  *
  * \param ctx context data
  * \param nonce nonce (12 bytes)
- * \param ad associated data
- * \param ad_len associated data length in bytes
  * \param input plaintext/ciphertext input
  * \param input_len input length in bytes;
  * \param output plaintext/ciphertext output
@@ -65,7 +63,7 @@ int chachapoly_init(struct chachapoly_ctx *ctx, const void *key, int key_len);
  *         failed when decrypting
  */
 int chachapoly_crypt(struct chachapoly_ctx *ctx, const void *nonce,
-                     const void *ad, int ad_len, void *input, int input_len,
+                     void *input, int input_len,
                      void *output, void *tag, int tag_len, int encrypt);
 
 /**
@@ -76,7 +74,7 @@ int chachapoly_crypt(struct chachapoly_ctx *ctx, const void *nonce,
  * chachapoly_crypt.
  */
 int chachapoly_crypt_short(struct chachapoly_ctx *ctx, const void *nonce,
-                           const void *ad, int ad_len, void *input, int input_len,
+                           void *input, int input_len,
                            void *output, void *tag, int tag_len, int encrypt);
 
 #endif

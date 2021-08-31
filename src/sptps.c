@@ -186,7 +186,7 @@ static bool cipher_encrypt(uint8_t suite, void *ctx, uint32_t seqno, const uint8
 #ifndef HAVE_OPENSSL
 
 	case SPTPS_CHACHA_POLY1305: {
-		if(chachapoly_crypt(ctx, nonce, NULL, 0, (void *)in, inlen, out, out + inlen, 16, 1) != CHACHAPOLY_OK) {
+		if(chachapoly_crypt(ctx, nonce, (void *)in, inlen, out, out + inlen, 16, 1) != CHACHAPOLY_OK) {
 			return false;
 		}
 
@@ -267,7 +267,7 @@ static bool cipher_decrypt(uint8_t suite, void *ctx, uint32_t seqno, const uint8
 #ifndef HAVE_OPENSSL
 
 	case SPTPS_CHACHA_POLY1305:
-		if(chachapoly_crypt(ctx, nonce, NULL, 0, (void *)in, inlen, out, (void *)(in + inlen), 16, 0) != CHACHAPOLY_OK) {
+		if(chachapoly_crypt(ctx, nonce, (void *)in, inlen, out, (void *)(in + inlen), 16, 0) != CHACHAPOLY_OK) {
 			return false;
 		}
 

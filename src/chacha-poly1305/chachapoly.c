@@ -53,52 +53,6 @@ static int memcmp_eq(const void *av, const void *bv, int n) {
 	return res;
 }
 
-/**
- * Poly1305 tag generation. This concatenates a string according to the rules
- * outlined in RFC 7539 and calculates the tag.
- *
- * \param poly_key 32 byte secret one-time key for poly1305
- * \param ad associated data
- * \param ad_len associated data length in bytes
- * \param ct ciphertext
- * \param ct_len ciphertext length in bytes
- * \param tag pointer to 16 bytes for tag storage
- */
-static void poly1305_get_tag(unsigned char *poly_key, const void *ad,
-                             int ad_len, const void *ct, int ct_len, unsigned char *tag) {
-	struct poly1305_context poly;
-	unsigned left_over;
-	uint64_t len;
-	unsigned char pad[16];
-
-	poly1305_init(&poly, poly_key);
-	memset(&pad, 0, sizeof(pad));
-
-	/* associated data and padding */
-	poly1305_update(&poly, ad, ad_len);
-	left_over = ad_len % 16;
-
-	if(left_over) {
-		poly1305_update(&poly, pad, 16 - left_over);
-	}
-
-	/* payload and padding */
-	poly1305_update(&poly, ct, ct_len);
-	left_over = ct_len % 16;
-
-	if(left_over) {
-		poly1305_update(&poly, pad, 16 - left_over);
-	}
-
-	/* lengths */
-	len = ad_len;
-	poly1305_update(&poly, (unsigned char *)&len, 8);
-	len = ct_len;
-	poly1305_update(&poly, (unsigned char *)&len, 8);
-
-	poly1305_finish(&poly, tag);
-}
-
 int chachapoly_init(struct chachapoly_ctx *ctx, const void *key, int key_len) {
 	assert(key_len == 128 || key_len == 256);
 
@@ -108,7 +62,7 @@ int chachapoly_init(struct chachapoly_ctx *ctx, const void *key, int key_len) {
 }
 
 int chachapoly_crypt(struct chachapoly_ctx *ctx, const void *nonce,
-                     const void *ad, int ad_len, void *input, int input_len,
+                     void *input, int input_len,
                      void *output, void *tag, int tag_len, int encrypt) {
 	unsigned char poly_key[CHACHA_BLOCKLEN];
 	unsigned char calc_tag[POLY1305_TAGLEN];
@@ -121,7 +75,7 @@ int chachapoly_crypt(struct chachapoly_ctx *ctx, const void *nonce,
 
 	/* check tag if decrypting */
 	if(encrypt == 0 && tag_len) {
-		poly1305_get_tag(poly_key, ad, ad_len, input, input_len, calc_tag);
+		poly1305_get_tag(poly_key, input, input_len, calc_tag);
 
 		if(memcmp_eq(calc_tag, tag, tag_len) != 0) {
 			return CHACHAPOLY_INVALID_MAC;
@@ -135,7 +89,7 @@ int chachapoly_crypt(struct chachapoly_ctx *ctx, const void *nonce,
 
 	/* add tag if encrypting */
 	if(encrypt && tag_len) {
-		poly1305_get_tag(poly_key, ad, ad_len, output, input_len, calc_tag);
+		poly1305_get_tag(poly_key, output, input_len, calc_tag);
 		memcpy(tag, calc_tag, tag_len);
 	}
 
@@ -143,7 +97,7 @@ int chachapoly_crypt(struct chachapoly_ctx *ctx, const void *nonce,
 }
 
 int chachapoly_crypt_short(struct chachapoly_ctx *ctx, const void *nonce,
-                           const void *ad, int ad_len, void *input, int input_len,
+                           void *input, int input_len,
                            void *output, void *tag, int tag_len, int encrypt) {
 	unsigned char keystream[CHACHA_BLOCKLEN];
 	unsigned char calc_tag[POLY1305_TAGLEN];
@@ -159,7 +113,7 @@ int chachapoly_crypt_short(struct chachapoly_ctx *ctx, const void *nonce,
 
 	/* check tag if decrypting */
 	if(encrypt == 0 && tag_len) {
-		poly1305_get_tag(keystream, ad, ad_len, input, input_len, calc_tag);
+		poly1305_get_tag(keystream, input, input_len, calc_tag);
 
 		if(memcmp_eq(calc_tag, tag, tag_len) != 0) {
 			return CHACHAPOLY_INVALID_MAC;
@@ -174,7 +128,7 @@ int chachapoly_crypt_short(struct chachapoly_ctx *ctx, const void *nonce,
 
 	/* add tag if encrypting */
 	if(encrypt && tag_len) {
-		poly1305_get_tag(keystream, ad, ad_len, output, input_len, calc_tag);
+		poly1305_get_tag(keystream, output, input_len, calc_tag);
 		memcpy(tag, calc_tag, tag_len);
 	}
 
