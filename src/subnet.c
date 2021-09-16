@@ -265,10 +265,16 @@ subnet_t *lookup_subnet_ipv4(const ipv4_t *address) {
 	// Search all subnets for a matching one
 
 	int last_rtt = INT_MAX; // current smallest rtt seen
+	int last_prefix_length = -1; // most specific prefix length seen
 
 	for splay_each(subnet_t, p, &subnet_tree) {
 		if(!p || p->type != SUBNET_IPV4) {
 			continue;
+		}
+
+		// we are on a route less specific than the one we found, break
+		if(p->net.ipv4.prefixlength < last_prefix_length) {
+			break;
 		}
 
 		if(!maskcmp(address, &p->net.ipv4.address, p->net.ipv4.prefixlength)) {
@@ -292,10 +298,11 @@ subnet_t *lookup_subnet_ipv4(const ipv4_t *address) {
 				if(rtt < last_rtt) {
 					r = p;
 					last_rtt = rtt;
+					last_prefix_length = p->net.ipv4.prefixlength;
 				}
 			}
 		} else if(r) {
-			// no more matching subnets
+			// no more matching subnets with equal or greater specificity
 			break;
 		}
 	}
@@ -321,10 +328,16 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address) {
 	// Search all subnets for a matching one
 
 	int last_rtt = INT_MAX; // current smallest rtt seen
+	int last_prefix_length = -1; // most specific prefix length seen
 
 	for splay_each(subnet_t, p, &subnet_tree) {
 		if(!p || p->type != SUBNET_IPV6) {
 			continue;
+		}
+
+		// we are on a route less specific than the one we found, break
+		if(p->net.ipv6.prefixlength < last_prefix_length) {
+			break;
 		}
 
 		if(!maskcmp(address, &p->net.ipv6.address, p->net.ipv6.prefixlength)) {
@@ -348,10 +361,11 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address) {
 				if(rtt < last_rtt) {
 					r = p;
 					last_rtt = rtt;
+					last_prefix_length = p->net.ipv6.prefixlength;
 				}
 			}
 		} else if(r) {
-			// no more matching subnets
+			// no more matching subnets with equal or greater specificity
 			break;
 		}
 	}
