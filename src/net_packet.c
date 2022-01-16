@@ -100,6 +100,22 @@ static void try_fix_mtu(node_t *n) {
 	}
 }
 
+static void reduce_mtu(node_t *n, int mtu) {
+	if(mtu < MINMTU) {
+		mtu = MINMTU;
+	}
+
+	if(n->maxmtu > mtu) {
+		n->maxmtu = mtu;
+	}
+
+	if(n->mtu > mtu) {
+		n->mtu = mtu;
+	}
+
+	try_fix_mtu(n);
+}
+
 static void udp_probe_timeout_handler(void *data) {
 	node_t *n = data;
 
@@ -923,15 +939,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 
 	if(sendto(listen_socket[sock].udp.fd, (void *)SEQNO(inpkt), inpkt->len, 0, &sa->sa, SALEN(sa->sa)) < 0 && !sockwouldblock(sockerrno)) {
 		if(sockmsgsize(sockerrno)) {
-			if(n->maxmtu >= origlen) {
-				n->maxmtu = origlen - 1;
-			}
-
-			if(n->mtu >= origlen) {
-				n->mtu = origlen - 1;
-			}
-
-			try_fix_mtu(n);
+			reduce_mtu(n, origlen - 1);
 		} else {
 			logger(DEBUG_TRAFFIC, LOG_WARNING, "Error sending packet to %s (%s): %s", n->name, n->hostname, sockstrerror(sockerrno));
 		}
@@ -943,14 +951,15 @@ end:
 }
 
 bool send_sptps_data(node_t *to, node_t *from, int type, const void *data, size_t len) {
-	node_t *relay = (to->via != myself && (type == PKT_PROBE || (len - SPTPS_DATAGRAM_OVERHEAD) <= to->via->minmtu)) ? to->via : to->nexthop;
+	size_t origlen = len - SPTPS_DATAGRAM_OVERHEAD;
+	node_t *relay = (to->via != myself && (type == PKT_PROBE || origlen <= to->via->minmtu)) ? to->via : to->nexthop;
 	bool direct = from == myself && to == relay;
 	bool relay_supported = (relay->options >> 24) >= 4;
 	bool tcponly = (myself->options | relay->options) & OPTION_TCPONLY;
 
 	/* Send it via TCP if it is a handshake packet, TCPOnly is in use, this is a relay packet that the other node cannot understand, or this packet is larger than the MTU. */
 
-	if(type == SPTPS_HANDSHAKE || tcponly || (!direct && !relay_supported) || (type != PKT_PROBE && (len - SPTPS_DATAGRAM_OVERHEAD) > relay->minmtu)) {
+	if(type == SPTPS_HANDSHAKE || tcponly || (!direct && !relay_supported) || (type != PKT_PROBE && origlen > relay->minmtu)) {
 		if(type != SPTPS_HANDSHAKE && (to->nexthop->connection->options >> 24) >= 7) {
 			uint8_t buf[len + sizeof(to->id) + sizeof(from->id)];
 			uint8_t *buf_ptr = buf;
@@ -1021,18 +1030,7 @@ bool send_sptps_data(node_t *to, node_t *from, int type, const void *data, size_
 
 	if(sendto(listen_socket[sock].udp.fd, buf, buf_ptr - buf, 0, &sa->sa, SALEN(sa->sa)) < 0 && !sockwouldblock(sockerrno)) {
 		if(sockmsgsize(sockerrno)) {
-			// Compensate for SPTPS overhead
-			len -= SPTPS_DATAGRAM_OVERHEAD;
-
-			if(relay->maxmtu >= len) {
-				relay->maxmtu = len - 1;
-			}
-
-			if(relay->mtu >= len) {
-				relay->mtu = len - 1;
-			}
-
-			try_fix_mtu(relay);
+			reduce_mtu(relay, (int)origlen - 1);
 		} else {
 			logger(DEBUG_TRAFFIC, LOG_WARNING, "Error sending UDP SPTPS packet to %s (%s): %s", relay->name, relay->hostname, sockstrerror(sockerrno));
 			return false;
@@ -1271,6 +1269,11 @@ static length_t choose_initial_maxmtu(node_t *n) {
 
 	close(sock);
 
+	if(ip_mtu < MINMTU) {
+		logger(DEBUG_TRAFFIC, LOG_ERR, "getsockopt(IP_MTU) on %s (%s) returned absurdly small value: %d", n->name, n->hostname, ip_mtu);
+		return MTU;
+	}
+
 	/* getsockopt(IP_MTU) returns the MTU of the physical interface.
 	   We need to remove various overheads to get to the tinc MTU. */
 	length_t mtu = ip_mtu;
@@ -1305,11 +1308,6 @@ static length_t choose_initial_maxmtu(node_t *n) {
 
 		mtu -= 4; // seqno
 #endif
-	}
-
-	if(mtu < 512) {
-		logger(DEBUG_TRAFFIC, LOG_ERR, "getsockopt(IP_MTU) on %s (%s) returned absurdly small value: %d", n->name, n->hostname, ip_mtu);
-		return MTU;
 	}
 
 	if(mtu > MTU) {
@@ -1412,7 +1410,7 @@ static void try_mtu(node_t *n) {
 			const float multiplier = (n->maxmtu == MTU) ? 0.97f : 1.0f;
 
 			const float cycle_position = (float) probes_per_cycle - (float)(n->mtuprobes % probes_per_cycle) - 1.0f;
-			const length_t minmtu = MAX(n->minmtu, 512);
+			const length_t minmtu = MAX(n->minmtu, MINMTU);
 			const float interval = (float)(n->maxmtu - minmtu);
 
 			length_t offset = 0;

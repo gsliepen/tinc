@@ -36,6 +36,8 @@
 #define MTU 1518        /* 1500 bytes payload + 14 bytes ethernet header + 4 bytes VLAN tag */
 #endif
 
+#define MINMTU 512      /* Below this we don't consider UDP to be working */
+
 /* MAXSIZE is the maximum size of an encapsulated packet: MTU + seqno + srcid + dstid + padding + HMAC + compressor overhead */
 #define MAXSIZE (MTU + 4 + sizeof(node_id_t) + sizeof(node_id_t) + CIPHER_MAX_BLOCK_SIZE + DIGEST_MAX_SIZE + MTU/64 + 20)
 
