@@ -2,7 +2,7 @@ dnl Process this file with autoconf to produce a configure script.
 
 origcflags="$CFLAGS"
 
-AC_PREREQ(2.69)
+AC_PREREQ([2.69])
 AC_INIT([tinc], m4_esyscmd_s((git describe || echo UNKNOWN) | sed 's/release-//'))
 AC_CONFIG_SRCDIR([src/tincd.c])
 AM_INIT_AUTOMAKE([std-options subdir-objects nostdinc silent-rules -Wall])
@@ -14,9 +14,10 @@ AC_USE_SYSTEM_EXTENSIONS
 
 dnl Checks for programs.
 AC_PROG_CC
-AC_PROG_CC_STDC
+AC_PROG_CC_C99
 AC_PROG_CPP
 AC_PROG_INSTALL
+AC_PROG_LN_S
 AM_PROG_CC_C_O
 
 dnl Check whether to enable code coverage testing, and if so, clear the default CFLAGS.
@@ -67,7 +68,7 @@ case $host_os in
   *mingw*)
     mingw=true
     AC_DEFINE(HAVE_MINGW, 1, [MinGW])
-    LIBS="$LIBS -lws2_32 -lgdi32 -lcrypt32 -liphlpapi"
+    LIBS="$LIBS -lws2_32 -lgdi32 -lcrypt32 -liphlpapi -lwinpthread"
     LDFLAGS="$LDFLAGS -static"
     CPPFLAGS="$CPPFLAGS -DMINIUPNP_STATICLIB"
   ;;
@@ -149,13 +150,14 @@ AX_CFLAGS_WARN_ALL(CFLAGS)
 
 AC_ARG_ENABLE([hardening], AS_HELP_STRING([--disable-hardening], [disable compiler and linker hardening flags]))
 AS_IF([test "x$enable_hardening" != "xno"],
-  [AX_CHECK_COMPILE_FLAG([-DFORTIFY_SOURCE=2], [CPPFLAGS="$CPPFLAGS -DFORTIFY_SOURCE=2"])
+  [AX_CHECK_COMPILE_FLAG([-D_FORTIFY_SOURCE=2], [CPPFLAGS="$CPPFLAGS -D_FORTIFY_SOURCE=2"])
    AX_CHECK_COMPILE_FLAG([-fwrapv], [CPPFLAGS="$CPPFLAGS -fwrapv"],
    AX_CHECK_COMPILE_FLAG([-fno-strict-overflow], [CPPFLAGS="$CPPFLAGS -fno-strict-overflow"]))
    case $host_os in
      *mingw*)
        AX_CHECK_LINK_FLAG([-Wl,--dynamicbase], [LDFLAGS="$LDFLAGS -Wl,--dynamicbase"])
        AX_CHECK_LINK_FLAG([-Wl,--nxcompat], [LDFLAGS="$LDFLAGS -Wl,--nxcompat"])
+       AX_CHECK_LINK_FLAG([-lssp], [LDFLAGS="$LDFLAGS -lssp"])
        ;;
      *)
        AX_CHECK_COMPILE_FLAG([-fPIE], [CPPFLAGS="$CPPFLAGS -fPIE"])
@@ -164,6 +166,8 @@ AS_IF([test "x$enable_hardening" != "xno"],
    esac
    AX_CHECK_LINK_FLAG([-Wl,-z,relro], [LDFLAGS="$LDFLAGS -Wl,-z,relro"])
    AX_CHECK_LINK_FLAG([-Wl,-z,now], [LDFLAGS="$LDFLAGS -Wl,-z,now"])
+   AX_CHECK_COMPILE_FLAG([-W -Wextra -pedantic -Wreturn-type -Wold-style-definition -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -Wredundant-decls -Wbad-function-cast -Wwrite-strings -fdiagnostics-show-option -fstrict-aliasing -Wmissing-noreturn],
+     [CPPFLAGS="$CPPFLAGS -W -Wextra -pedantic -Wreturn-type -Wold-style-definition -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -Wredundant-decls -Wbad-function-cast -Wwrite-strings -fdiagnostics-show-option -fstrict-aliasing -Wmissing-noreturn"])
   ]
 );
 
@@ -233,8 +237,8 @@ AC_ARG_ENABLE(legacy-protocol,
 
 dnl These are defined in files in m4/
 
-dnl AC_ARG_WITH(libgcrypt, AC_HELP_STRING([--with-libgcrypt], [enable use of libgcrypt instead of OpenSSL])], [])
-dnl AC_ARG_WITH(openssl, AC_HELP_STRING([--without-openssl], [disable support for OpenSSL])], [])
+dnl AC_ARG_WITH(libgcrypt, AS_HELP_STRING([--with-libgcrypt], [enable use of libgcrypt instead of OpenSSL])], [])
+dnl AC_ARG_WITH(openssl, AS_HELP_STRING([--without-openssl], [disable support for OpenSSL])], [])
 
 tinc_CURSES
 tinc_READLINE

@@ -1,6 +1,6 @@
 /*
     cipher.c -- Symmetric block cipher handling
-    Copyright (C) 2007-2017 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2007-2022 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 
+#include "cipher.h"
 #include "../cipher.h"
 #include "../logger.h"
 

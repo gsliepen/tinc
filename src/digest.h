@@ -3,7 +3,7 @@
 
 /*
     digest.h -- header file digest.c
-    Copyright (C) 2007-2016 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2007-2022 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ typedef struct digest digest_t;
 
 extern bool digest_open_by_name(digest_t *digest, const char *name, size_t maclength);
 extern bool digest_open_by_nid(digest_t *digest, int nid, size_t maclength);
-extern digest_t *digest_alloc() __attribute__((__malloc__));
+extern digest_t *digest_alloc(void) __attribute__((__malloc__));
 extern void digest_free(digest_t **digest);
 extern void digest_close(digest_t *digest);
 extern bool digest_create(digest_t *digest, const void *indata, size_t inlen, void *outdata) __attribute__((__warn_unused_result__));

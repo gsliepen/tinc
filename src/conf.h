@@ -4,7 +4,7 @@
 /*
     conf.h -- header for conf.c
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2022 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -40,13 +40,13 @@ extern int maxtimeout;
 extern bool bypass_security;
 extern list_t cmdline_conf;
 
-extern splay_tree_t *create_configuration();
+extern splay_tree_t *create_configuration(void);
 extern void init_configuration(splay_tree_t *);
 extern void exit_configuration(splay_tree_t **config_tree);
 extern config_t *new_config(void) __attribute__((__malloc__));
 extern void free_config(config_t *config);
 extern void config_add(splay_tree_t *config_tree, config_t *config);
-extern config_t *lookup_config(splay_tree_t *config_tree, char *variable);
+extern config_t *lookup_config(splay_tree_t *config_tree, const char *variable);
 extern config_t *lookup_config_next(splay_tree_t *config_tree, const config_t *config);
 extern bool get_config_bool(const config_t *config, bool *result);
 extern bool get_config_int(const config_t *config, int *result);

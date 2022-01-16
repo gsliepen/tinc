@@ -3,7 +3,7 @@
 
 /*
     cipher.h -- header file cipher.c
-    Copyright (C) 2007-2016 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2007-2022 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@
 
 typedef struct cipher cipher_t;
 
-extern cipher_t *cipher_alloc() __attribute__((__malloc__));
+extern cipher_t *cipher_alloc(void) __attribute__((__malloc__));
 extern void cipher_free(cipher_t **cipher);
 extern bool cipher_open_by_name(cipher_t *cipher, const char *name);
 extern bool cipher_open_by_nid(cipher_t *cipher, int nid);

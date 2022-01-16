@@ -22,7 +22,8 @@
 */
 
 #ifdef HAVE_MINGW
-#define WINVER WindowsXP
+#define WINVER 0x0600
+#define _WIN32_WINNT 0x0600
 #define WIN32_LEAN_AND_MEAN
 #endif
 

@@ -1,7 +1,7 @@
 /*
     device.c -- UML network socket
     Copyright (C) 2002-2005 Ivo Timmermans,
-                  2002-2017 Guus Sliepen <guus@tinc-vpn.org>
+                  2002-2022 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -163,7 +163,7 @@ static bool setup_device(void) {
 	return true;
 }
 
-void close_device(void) {
+static void close_device(void) {
 	if(listen_fd >= 0) {
 		close(listen_fd);
 		listen_fd = -1;
@@ -249,7 +249,12 @@ static bool read_packet(vpn_packet_t *packet) {
 			return false;
 		}
 
-		write(request_fd, &data_sun, sizeof(data_sun));
+		if(write(request_fd, &data_sun, sizeof(data_sun)) != sizeof(data_sun)) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Error while responding to request from %s %s: %s", device_info, device, strerror(errno));
+			event_exit();
+			return false;
+		}
+
 		device_fd = data_fd;
 
 		logger(DEBUG_ALWAYS, LOG_INFO, "Connection with UML established");

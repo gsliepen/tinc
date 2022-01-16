@@ -2,7 +2,7 @@
     device.c -- Interaction with Solaris tun device
     Copyright (C) 2001-2005 Ivo Timmermans,
                   2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
-                  2001-2014 Guus Sliepen <guus@tinc-vpn.org>
+                  2001-2022 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -160,7 +160,8 @@ static bool setup_device(void) {
 
 	{
 		/* Remove muxes just in case they are left over from a crashed tincd */
-		struct lifreq ifr = {};
+		struct lifreq ifr;
+		memset(&ifr, 0, sizeof(ifr));
 		strncpy(ifr.lifr_name, iface, sizeof(ifr.lifr_name));
 
 		if(ioctl(ip_fd, SIOCGLIFMUXID, &ifr) >= 0) {
@@ -182,7 +183,8 @@ static bool setup_device(void) {
 	int arp_fd = -1;
 
 	if(device_type == DEVICE_TYPE_TAP) {
-		struct lifreq ifr = {};
+		struct lifreq ifr;
+		memset(&ifr, 0, sizeof(ifr));
 
 		if(ioctl(if_fd, SIOCGLIFFLAGS, &ifr) < 0) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Could not set flags on %s %s!", device_info, device);
@@ -263,7 +265,9 @@ static bool setup_device(void) {
 		close(arp_fd);
 	}
 
-	struct lifreq ifr = {};
+	struct lifreq ifr;
+
+	memset(&ifr, 0, sizeof(ifr));
 
 	strncpy(ifr.lifr_name, iface, sizeof(ifr.lifr_name));
 
@@ -297,7 +301,8 @@ static bool setup_device(void) {
 
 static void close_device(void) {
 	if(iface) {
-		struct lifreq ifr = {};
+		struct lifreq ifr;
+		memset(&ifr, 0, sizeof(ifr));
 		strncpy(ifr.lifr_name, iface, sizeof(ifr.lifr_name));
 
 		if(ioctl(ip_fd, SIOCGLIFMUXID, &ifr) >= 0) {

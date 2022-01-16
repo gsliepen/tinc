@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction with Windows tap driver in a MinGW environment
     Copyright (C) 2002-2005 Ivo Timmermans,
-                  2002-2018 Guus Sliepen <guus@tinc-vpn.org>
+                  2002-2022 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -45,9 +45,7 @@ char *device = NULL;
 char *iface = NULL;
 static const char *device_info = "Windows tap device";
 
-extern char *myport;
-
-static void device_issue_read() {
+static void device_issue_read(void) {
 	int status;
 
 	for(;;) {

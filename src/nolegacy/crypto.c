@@ -67,14 +67,14 @@ void randomize(void *vout, size_t outlen) {
 #include <wincrypt.h>
 HCRYPTPROV prov;
 
-void random_init(void) {
+static void random_init(void) {
 	if(!CryptAcquireContext(&prov, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT)) {
 		fprintf(stderr, "CryptAcquireContext() failed!\n");
 		abort();
 	}
 }
 
-void random_exit(void) {
+static void random_exit(void) {
 	CryptReleaseContext(prov, 0);
 }
 

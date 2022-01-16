@@ -38,7 +38,7 @@ ecdsa_t *ecdsa_set_base64_public_key(const char *p) {
 	size_t len = strlen(p);
 
 	if(len != 43) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Invalid size %zu for public key!", len);
+		logger(DEBUG_ALWAYS, LOG_ERR, "Invalid size %lu for public key!", (unsigned long)len);
 		return 0;
 	}
 
@@ -46,7 +46,7 @@ ecdsa_t *ecdsa_set_base64_public_key(const char *p) {
 	len = b64decode_tinc(p, ecdsa->public, len);
 
 	if(len != 32) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Invalid format of public key! len = %zu", len);
+		logger(DEBUG_ALWAYS, LOG_ERR, "Invalid format of public key! len = %lu", (unsigned long)len);
 		free(ecdsa);
 		return 0;
 	}

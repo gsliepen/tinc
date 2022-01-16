@@ -35,22 +35,21 @@
 #define OPTION_VERSION(x) ((x) >> 24) /* Top 8 bits are for protocol minor version */
 
 typedef struct connection_status_t {
-	bool pinged: 1;                 /* sent ping */
-	bool unused_active: 1;
-	bool connecting: 1;             /* 1 if we are waiting for a non-blocking connect() to finish */
-	bool unused_termreq: 1;         /* the termination of this connection was requested */
-	bool remove_unused: 1;          /* Set to 1 if you want this connection removed */
-	bool timeout_unused: 1;         /* 1 if gotten timeout */
-	bool encryptout: 1;             /* 1 if we can encrypt outgoing traffic */
-	bool decryptin: 1;              /* 1 if we have to decrypt incoming traffic */
-	bool mst: 1;                    /* 1 if this connection is part of a minimum spanning tree */
-	bool control: 1;                /* 1 if this is a control connection */
-	bool pcap: 1;                   /* 1 if this is a control connection requesting packet capture */
-	bool log: 1;                    /* 1 if this is a control connection requesting log dump */
-	bool invitation: 1;             /* 1 if this is an invitation */
-	bool invitation_used: 1;        /* 1 if the invitation has been consumed */
-	bool tarpit: 1;                 /* 1 if the connection should be added to the tarpit */
-	uint32_t unused: 17;
+	uint32_t pinged: 1;                 /* sent ping */
+	uint32_t unused_active: 1;
+	uint32_t connecting: 1;             /* 1 if we are waiting for a non-blocking connect() to finish */
+	uint32_t unused_termreq: 1;         /* the termination of this connection was requested */
+	uint32_t remove_unused: 1;          /* Set to 1 if you want this connection removed */
+	uint32_t timeout_unused: 1;         /* 1 if gotten timeout */
+	uint32_t encryptout: 1;             /* 1 if we can encrypt outgoing traffic */
+	uint32_t decryptin: 1;              /* 1 if we have to decrypt incoming traffic */
+	uint32_t mst: 1;                    /* 1 if this connection is part of a minimum spanning tree */
+	uint32_t control: 1;                /* 1 if this is a control connection */
+	uint32_t pcap: 1;                   /* 1 if this is a control connection requesting packet capture */
+	uint32_t log: 1;                    /* 1 if this is a control connection requesting log dump */
+	uint32_t invitation: 1;             /* 1 if this is an invitation */
+	uint32_t invitation_used: 1;        /* 1 if the invitation has been consumed */
+	uint32_t tarpit: 1;                 /* 1 if the connection should be added to the tarpit */
 } connection_status_t;
 
 #include "ecdsa.h"

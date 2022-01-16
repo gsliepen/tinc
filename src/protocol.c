@@ -1,7 +1,7 @@
 /*
     protocol.c -- handle the meta-protocol, basic functions
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2022 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -49,7 +49,7 @@ static bool (*request_handlers[])(connection_t *, const char *) = {
 
 /* Request names */
 
-static char (*request_name[]) = {
+static const char (*request_name[]) = {
 	"ID", "METAKEY", "CHALLENGE", "CHAL_REPLY", "ACK",
 	"STATUS", "ERROR", "TERMREQ",
 	"PING", "PONG",

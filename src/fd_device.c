@@ -1,7 +1,7 @@
 /*
     fd_device.c -- Interaction with Android tun fd
     Copyright (C)   2001-2005   Ivo Timmermans,
-                    2001-2021   Guus Sliepen <guus@tinc-vpn.org>
+                    2001-2022   Guus Sliepen <guus@tinc-vpn.org>
                     2009        Grzegorz Dymarek <gregd72002@googlemail.com>
                     2016-2020   Pacien TRAN-GIRARD <pacien@pacien.net>
 
@@ -53,7 +53,7 @@ static int read_fd(int socket) {
 	msg.msg_controllen = sizeof(cmsgbuf);
 
 	if((ret = recvmsg(socket, &msg, 0)) < 1) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not read from unix socket (error %zd)!", ret);
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not read from unix socket (error %ld)!", (long)ret);
 		return -1;
 	}
 
@@ -83,8 +83,8 @@ static int read_fd(int socket) {
 	}
 
 	if(cmsgptr->cmsg_len != CMSG_LEN(sizeof(device_fd))) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Wrong CMSG data length: %zu, expected %zu!",
-		       cmsgptr->cmsg_len, CMSG_LEN(sizeof(device_fd)));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Wrong CMSG data length: %lu, expected %lu!",
+		       (unsigned long)cmsgptr->cmsg_len, (unsigned long)CMSG_LEN(sizeof(device_fd)));
 		return -1;
 	}
 

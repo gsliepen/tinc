@@ -1,7 +1,7 @@
 /*
     protocol_auth.c -- handle the meta-protocol, authentication
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2017 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2022 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -287,7 +287,12 @@ static bool receive_invitation_sptps(void *handle, uint8_t type, const void *dat
 
 	// Read the new node's Name from the file
 	char buf[1024] = "";
-	fgets(buf, sizeof(buf), f);
+
+	if(!fgets(buf, sizeof(buf), f)) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not read invitation file %s\n", cookie);
+		return false;
+	}
+
 	size_t buflen = strlen(buf);
 
 	// Strip whitespace at the end

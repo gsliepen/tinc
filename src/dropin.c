@@ -1,7 +1,7 @@
 /*
     dropin.c -- a set of drop-in replacements for libc functions
     Copyright (C) 2000-2005 Ivo Timmermans,
-                  2000-2018 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2022 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -143,13 +143,5 @@ int gettimeofday(struct timeval *tv, void *tz) {
 	tv->tv_usec = 0;
 #endif
 	return 0;
-}
-#endif
-
-#ifndef HAVE_NANOSLEEP
-int nanosleep(const struct timespec *req, struct timespec *rem) {
-	(void)rem;
-	struct timeval tv = {req->tv_sec, req->tv_nsec / 1000};
-	return select(0, NULL, NULL, NULL, &tv);
 }
 #endif

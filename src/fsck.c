@@ -1,6 +1,6 @@
 /*
     fsck.c -- Check the configuration files for problems
-    Copyright (C) 2014-2021 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2014-2022 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -187,7 +187,7 @@ static void check_conffile(const char *nodename, bool server) {
 #ifdef HAVE_MINGW
 typedef int uid_t;
 
-static uid_t getuid() {
+static uid_t getuid(void) {
 	return 0;
 }
 
@@ -220,7 +220,7 @@ static void check_key_file_mode(const char *fname) {
 }
 #endif // HAVE_MINGW
 
-static char *read_node_name() {
+static char *read_node_name(void) {
 	if(access(tinc_conf, R_OK) == 0) {
 		return get_my_name(true);
 	}
@@ -438,7 +438,7 @@ static bool check_config_mode(const char *fname) {
 	return true;
 }
 
-static bool check_script_confdir() {
+static bool check_script_confdir(void) {
 	char fname[PATH_MAX];
 	DIR *dir = opendir(confbase);
 
@@ -616,7 +616,7 @@ static void check_config_variables(const char *host_dir) {
 	}
 }
 
-static bool check_scripts_and_configs() {
+static bool check_scripts_and_configs(void) {
 	// Check whether scripts are executable.
 	if(!check_script_confdir()) {
 		return false;

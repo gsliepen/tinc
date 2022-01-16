@@ -1,6 +1,6 @@
 /*
     rsagen.c -- RSA key generation and export
-    Copyright (C) 2008-2013 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2008-2022 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,6 +16,8 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
+
+#include "system.h"
 
 #include <openssl/pem.h>
 #include <openssl/err.h>

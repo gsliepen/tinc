@@ -1,7 +1,7 @@
 /*
     net_packet.c -- Handles in- and outgoing VPN packets
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2021 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2022 Guus Sliepen <guus@tinc-vpn.org>
                   2010      Timothy Redaelli <timothy@redaelli.eu>
                   2010      Brandon Black <blblack@gmail.com>
 
@@ -992,8 +992,8 @@ bool send_sptps_data(node_t *to, node_t *from, int type, const void *data, size_
 		overhead += sizeof(to->id) + sizeof(from->id);
 	}
 
-	uint8_t buf[len + overhead];
-	uint8_t *buf_ptr = buf;
+	char buf[len + overhead];
+	char *buf_ptr = buf;
 
 	if(relay_supported) {
 		if(direct) {
@@ -1165,7 +1165,7 @@ static void send_udp_probe_packet(node_t *n, size_t len) {
 	vpn_packet_t packet;
 
 	if(len > sizeof(packet.data)) {
-		logger(DEBUG_TRAFFIC, LOG_INFO, "Truncating probe length %zu to %s (%s)", len, n->name, n->hostname);
+		logger(DEBUG_TRAFFIC, LOG_INFO, "Truncating probe length %lu to %s (%s)", (unsigned long)len, n->name, n->hostname);
 		len = sizeof(packet.data);
 	}
 
@@ -1175,7 +1175,7 @@ static void send_udp_probe_packet(node_t *n, size_t len) {
 	packet.len = len;
 	packet.priority = 0;
 
-	logger(DEBUG_TRAFFIC, LOG_INFO, "Sending UDP probe length %zu to %s (%s)", len, n->name, n->hostname);
+	logger(DEBUG_TRAFFIC, LOG_INFO, "Sending UDP probe length %lu to %s (%s)", (unsigned long)len, n->name, n->hostname);
 
 	send_udppacket(n, &packet);
 }
@@ -1261,7 +1261,7 @@ static length_t choose_initial_maxmtu(node_t *n) {
 	int ip_mtu;
 	socklen_t ip_mtu_len = sizeof(ip_mtu);
 
-	if(getsockopt(sock, IPPROTO_IP, IP_MTU, &ip_mtu, &ip_mtu_len)) {
+	if(getsockopt(sock, IPPROTO_IP, IP_MTU, (void *)&ip_mtu, &ip_mtu_len)) {
 		logger(DEBUG_TRAFFIC, LOG_ERR, "getsockopt(IP_MTU) on %s (%s) failed: %s", n->name, n->hostname, sockstrerror(sockerrno));
 		close(sock);
 		return MTU;
@@ -1424,7 +1424,7 @@ static void try_mtu(node_t *n) {
 				        on the precise MTU as we are approaching it.
 				        The last probe of the cycle is always 1 byte in size - this is to make sure we'll get at least one
 				        reply per cycle so that we can make progress. */
-				offset = (length_t) powf(interval, multiplier * cycle_position / ((float) probes_per_cycle - 1.0f));
+				offset = lrintf(powf(interval, multiplier * cycle_position / (float)(probes_per_cycle - 1)));
 			}
 
 			length_t maxmtu = n->maxmtu;

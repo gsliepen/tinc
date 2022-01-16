@@ -1,6 +1,6 @@
 /*
     cipher.c -- Symmetric block cipher handling
-    Copyright (C) 2007-2012 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2007-2022 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,11 +17,12 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include "system.h"
+#include "../system.h"
 
 #include "cipher.h"
-#include "logger.h"
-#include "xalloc.h"
+#include "../cipher.h"
+#include "../logger.h"
+#include "../xalloc.h"
 
 static struct {
 	const char *name;
@@ -53,9 +54,7 @@ static struct {
 };
 
 static bool nametocipher(const char *name, int *algo, int *mode) {
-	size_t i;
-
-	for(i = 0; i < sizeof(ciphertable) / sizeof(*ciphertable); i++) {
+	for(size_t i = 0; i < sizeof(ciphertable) / sizeof(*ciphertable); i++) {
 		if(ciphertable[i].name && !strcasecmp(name, ciphertable[i].name)) {
 			*algo = ciphertable[i].algo;
 			*mode = ciphertable[i].mode;
@@ -67,9 +66,7 @@ static bool nametocipher(const char *name, int *algo, int *mode) {
 }
 
 static bool nidtocipher(int nid, int *algo, int *mode) {
-	size_t i;
-
-	for(i = 0; i < sizeof(ciphertable) / sizeof(*ciphertable); i++) {
+	for(size_t i = 0; i < sizeof(ciphertable) / sizeof(*ciphertable); i++) {
 		if(nid == ciphertable[i].nid) {
 			*algo = ciphertable[i].algo;
 			*mode = ciphertable[i].mode;
@@ -81,9 +78,7 @@ static bool nidtocipher(int nid, int *algo, int *mode) {
 }
 
 static bool ciphertonid(int algo, int mode, int *nid) {
-	size_t i;
-
-	for(i = 0; i < sizeof(ciphertable) / sizeof(*ciphertable); i++) {
+	for(size_t i = 0; i < sizeof(ciphertable) / sizeof(*ciphertable); i++) {
 		if(algo == ciphertable[i].algo && mode == ciphertable[i].mode) {
 			*nid = ciphertable[i].nid;
 			return true;
@@ -136,10 +131,6 @@ bool cipher_open_by_nid(cipher_t *cipher, int nid) {
 	return cipher_open(cipher, algo, mode);
 }
 
-bool cipher_open_blowfish_ofb(cipher_t *cipher) {
-	return cipher_open(cipher, GCRY_CIPHER_BLOWFISH, GCRY_CIPHER_MODE_OFB);
-}
-
 void cipher_close(cipher_t *cipher) {
 	if(cipher->handle) {
 		gcry_cipher_close(cipher->handle);
@@ -185,11 +176,9 @@ size_t cipher_blocksize(const cipher_t *cipher) {
 	return cipher->blklen;
 }
 
-void cipher_get_key(const cipher_t *cipher, void *key) {
-	memcpy(key, cipher->key, cipher->keylen + cipher->blklen);
-}
-
 bool cipher_set_key(cipher_t *cipher, void *key, bool encrypt) {
+	(void)encrypt;
+
 	memcpy(cipher->key, key, cipher->keylen + cipher->blklen);
 
 	gcry_cipher_setkey(cipher->handle, cipher->key, cipher->keylen);
@@ -199,23 +188,12 @@ bool cipher_set_key(cipher_t *cipher, void *key, bool encrypt) {
 }
 
 bool cipher_set_key_from_rsa(cipher_t *cipher, void *key, size_t len, bool encrypt) {
-	memcpy(cipher->key,
-	       key + len - cipher->keylen,
-	       cipher->keylen);
+	(void)encrypt;
+
+	memcpy(cipher->key, (char *)key + len - cipher->keylen, cipher->keylen);
 	gcry_cipher_setkey(cipher->handle, cipher->key, cipher->keylen);
 
-	memcpy(cipher->key + cipher->keylen,
-	       key + len - cipher->blklen - cipher->keylen,
-	       cipher->blklen);
-	gcry_cipher_setiv(cipher->handle, cipher->key + cipher->keylen, cipher->blklen);
-
-	return true;
-}
-
-bool cipher_regenerate_key(cipher_t *cipher, bool encrypt) {
-	gcry_create_nonce(cipher->key, cipher->keylen + cipher->blklen);
-
-	gcry_cipher_setkey(cipher->handle, cipher->key, cipher->keylen);
+	memcpy((char *)cipher->key + cipher->keylen, (char *)key + len - cipher->blklen - cipher->keylen, cipher->blklen);
 	gcry_cipher_setiv(cipher->handle, cipher->key + cipher->keylen, cipher->blklen);
 
 	return true;
@@ -258,7 +236,7 @@ bool cipher_encrypt(cipher_t *cipher, const void *indata, size_t inlen, void *ou
 	}
 
 	if(cipher->padding) {
-		if((err = gcry_cipher_encrypt(cipher->handle, outdata + inlen, cipher->blklen, pad, cipher->blklen))) {
+		if((err = gcry_cipher_encrypt(cipher->handle, (char *)outdata + inlen, cipher->blklen, pad, cipher->blklen))) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Error while encrypting: %s", gcry_strerror(err));
 			return false;
 		}

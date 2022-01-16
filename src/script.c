@@ -1,7 +1,7 @@
 /*
     script.c -- call an external script
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2018 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2022 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -80,7 +80,12 @@ int environment_add(environment_t *env, const char *format, ...) {
 	if(format) {
 		va_list ap;
 		va_start(ap, format);
-		vasprintf(&env->entries[env->n], format, ap);
+
+		if(vasprintf(&env->entries[env->n], format, ap) == -1) {
+			// Assume we are out of memory.
+			abort();
+		}
+
 		va_end(ap);
 	} else {
 		env->entries[env->n] = NULL;
@@ -93,7 +98,11 @@ void environment_update(environment_t *env, int pos, const char *format, ...) {
 	free(env->entries[pos]);
 	va_list ap;
 	va_start(ap, format);
-	vasprintf(&env->entries[pos], format, ap);
+
+	if(vasprintf(&env->entries[pos], format, ap) == -1) {
+		abort();
+	}
+
 	va_end(ap);
 }
 

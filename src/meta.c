@@ -56,8 +56,8 @@ bool send_meta(connection_t *c, const void *buffer, size_t length) {
 		abort();
 	}
 
-	logger(DEBUG_META, LOG_DEBUG, "Sending %zu bytes of metadata to %s (%s)",
-	       length, c->name, c->hostname);
+	logger(DEBUG_META, LOG_DEBUG, "Sending %lu bytes of metadata to %s (%s)",
+	       (unsigned long)length, c->name, c->hostname);
 
 	if(c->protocol_minor >= 2) {
 		return sptps_send_record(&c->sptps, 0, buffer, length);
@@ -100,8 +100,8 @@ void send_meta_raw(connection_t *c, const void *buffer, size_t length) {
 		abort();
 	}
 
-	logger(DEBUG_META, LOG_DEBUG, "Sending %zu bytes of raw metadata to %s (%s)",
-	       length, c->name, c->hostname);
+	logger(DEBUG_META, LOG_DEBUG, "Sending %lu bytes of raw metadata to %s (%s)",
+	       (unsigned long)length, c->name, c->hostname);
 
 	buffer_add(&c->outbuf, buffer, length);
 

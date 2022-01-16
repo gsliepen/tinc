@@ -1,6 +1,6 @@
 /*
     rsa.c -- RSA key handling
-    Copyright (C) 2007-2012 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2007-2022 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,14 +17,16 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include "system.h"
+#include "../system.h"
 
 #include <gcrypt.h>
 
-#include "logger.h"
-#include "rsa.h"
 #include "pem.h"
-#include "xalloc.h"
+
+#include "rsa.h"
+#include "../logger.h"
+#include "../rsa.h"
+#include "../xalloc.h"
 
 // BER decoding functions
 
@@ -62,7 +64,7 @@ static size_t ber_read_len(unsigned char **p, size_t *buflen) {
 
 	if(**p & 0x80) {
 		size_t result = 0;
-		int len = *(*p)++ & 0x7f;
+		size_t len = *(*p)++ & 0x7f;
 		(*buflen)--;
 
 		if(len > *buflen) {
@@ -117,11 +119,14 @@ static bool ber_read_mpi(unsigned char **p, size_t *buflen, gcry_mpi_t *mpi) {
 	return mpi ? !err : true;
 }
 
-rsa_t *rsa_set_hex_public_key(char *n, char *e) {
+rsa_t *rsa_set_hex_public_key(const char *n, const char *e) {
 	rsa_t *rsa = xzalloc(sizeof(rsa_t));
 
-	gcry_error_t err = gcry_mpi_scan(&rsa->n, GCRYMPI_FMT_HEX, n, 0, NULL)
-	                   ? : gcry_mpi_scan(&rsa->e, GCRYMPI_FMT_HEX, e, 0, NULL);
+	gcry_error_t err = gcry_mpi_scan(&rsa->n, GCRYMPI_FMT_HEX, n, 0, NULL);
+
+	if(!err) {
+		err = gcry_mpi_scan(&rsa->e, GCRYMPI_FMT_HEX, e, 0, NULL);
+	}
 
 	if(err) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading RSA public key: %s", gcry_strerror(errno));
@@ -132,12 +137,18 @@ rsa_t *rsa_set_hex_public_key(char *n, char *e) {
 	return rsa;
 }
 
-rsa_t *rsa_set_hex_private_key(char *n, char *e, char *d) {
+rsa_t *rsa_set_hex_private_key(const char *n, const char *e, const char *d) {
 	rsa_t *rsa = xzalloc(sizeof(rsa_t));
 
-	gcry_error_t err = gcry_mpi_scan(&rsa->n, GCRYMPI_FMT_HEX, n, 0, NULL)
-	                   ? : gcry_mpi_scan(&rsa->e, GCRYMPI_FMT_HEX, e, 0, NULL)
-	                   ? : gcry_mpi_scan(&rsa->d, GCRYMPI_FMT_HEX, d, 0, NULL);
+	gcry_error_t err = gcry_mpi_scan(&rsa->n, GCRYMPI_FMT_HEX, n, 0, NULL);
+
+	if(!err) {
+		err = gcry_mpi_scan(&rsa->e, GCRYMPI_FMT_HEX, e, 0, NULL);
+	}
+
+	if(!err) {
+		err = gcry_mpi_scan(&rsa->d, GCRYMPI_FMT_HEX, d, 0, NULL);
+	}
 
 	if(err) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading RSA public key: %s", gcry_strerror(errno));
@@ -203,7 +214,7 @@ rsa_t *rsa_read_pem_private_key(FILE *fp) {
 	return rsa;
 }
 
-size_t rsa_size(rsa_t *rsa) {
+size_t rsa_size(const rsa_t *rsa) {
 	return (gcry_mpi_get_nbits(rsa->n) + 7) / 8;
 }
 
@@ -214,7 +225,7 @@ size_t rsa_size(rsa_t *rsa) {
 // TODO: get rid of this macro, properly clean up gcry_ structures after use
 #define check(foo) { gcry_error_t err = (foo); if(err) {logger(DEBUG_ALWAYS, LOG_ERR, "gcrypt error %s/%s at %s:%d", gcry_strsource(err), gcry_strerror(err), __FILE__, __LINE__); return false; }}
 
-bool rsa_public_encrypt(rsa_t *rsa, void *in, size_t len, void *out) {
+bool rsa_public_encrypt(rsa_t *rsa, const void *in, size_t len, void *out) {
 	gcry_mpi_t inmpi;
 	check(gcry_mpi_scan(&inmpi, GCRYMPI_FMT_USG, in, len, NULL));
 
@@ -223,17 +234,18 @@ bool rsa_public_encrypt(rsa_t *rsa, void *in, size_t len, void *out) {
 
 	size_t out_bytes = (gcry_mpi_get_nbits(outmpi) + 7) / 8;
 	size_t pad = len - MIN(out_bytes, len);
+	unsigned char *pout = out;
 
 	for(; pad; --pad) {
-		*(char *)out++ = 0;
+		*pout++ = 0;
 	}
 
-	check(gcry_mpi_print(GCRYMPI_FMT_USG, out, len, NULL, outmpi));
+	check(gcry_mpi_print(GCRYMPI_FMT_USG, pout, len, NULL, outmpi));
 
 	return true;
 }
 
-bool rsa_private_decrypt(rsa_t *rsa, void *in, size_t len, void *out) {
+bool rsa_private_decrypt(rsa_t *rsa, const void *in, size_t len, void *out) {
 	gcry_mpi_t inmpi;
 	check(gcry_mpi_scan(&inmpi, GCRYMPI_FMT_USG, in, len, NULL));
 
@@ -241,12 +253,13 @@ bool rsa_private_decrypt(rsa_t *rsa, void *in, size_t len, void *out) {
 	gcry_mpi_powm(outmpi, inmpi, rsa->d, rsa->n);
 
 	size_t pad = len - (gcry_mpi_get_nbits(outmpi) + 7) / 8;
+	unsigned char *pout = out;
 
 	for(; pad; --pad) {
-		*(char *)out++ = 0;
+		*pout++ = 0;
 	}
 
-	check(gcry_mpi_print(GCRYMPI_FMT_USG, out, len, NULL, outmpi));
+	check(gcry_mpi_print(GCRYMPI_FMT_USG, pout, len, NULL, outmpi));
 
 	return true;
 }

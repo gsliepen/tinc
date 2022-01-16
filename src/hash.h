@@ -3,7 +3,7 @@
 
 /*
     hash.h -- header file for hash.c
-    Copyright (C) 2012 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2012-2022 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -37,10 +37,10 @@ uint32_t modulo(uint32_t hash, size_t n);
 		t keys[n]; \
 		const void *values[n]; \
 	} hash_ ## t; \
-	static uint32_t inline hash_modulo_ ## t(uint32_t hash) { \
+	static inline uint32_t hash_modulo_ ## t(uint32_t hash) { \
 		return hash & (n - 1); \
 	} \
-	void hash_insert_ ## t (hash_ ##t *hash, const t *key, const void *value) { \
+	static inline void hash_insert_ ## t (hash_ ##t *hash, const t *key, const void *value) { \
 		uint32_t i = hash_modulo_ ## t(hash_function_ ## t(key)); \
 		for(uint8_t f=0; f< (HASH_SEARCH_ITERATIONS - 1); f++){ \
 			if(hash->values[i] == NULL || !memcmp(key, &hash->keys[i], sizeof(t))) { \
@@ -54,7 +54,7 @@ uint32_t modulo(uint32_t hash, size_t n);
 		memcpy(&hash->keys[i], key, sizeof(t)); \
 		hash->values[i] = value; \
 	} \
-	void *hash_search_ ## t (const hash_ ##t *hash, const t *key) { \
+	static inline void *hash_search_ ## t (const hash_ ##t *hash, const t *key) { \
 		uint32_t i = hash_modulo_ ## t(hash_function_ ## t(key)); \
 		for(uint8_t f=0; f<HASH_SEARCH_ITERATIONS; f++){ \
 			if(!memcmp(key, &hash->keys[i], sizeof(t))) { \
@@ -64,7 +64,7 @@ uint32_t modulo(uint32_t hash, size_t n);
 		} \
 		return NULL; \
 	} \
-	void hash_delete_ ## t (hash_ ##t *hash, const t *key) { \
+	static inline void hash_delete_ ## t (hash_ ##t *hash, const t *key) { \
 		uint32_t i = hash_modulo_ ## t(hash_function_ ## t(key)); \
 		for(uint8_t f=0; f<HASH_SEARCH_ITERATIONS; f++){ \
 			if(!memcmp(key, &hash->keys[i], sizeof(t))) { \
@@ -74,7 +74,7 @@ uint32_t modulo(uint32_t hash, size_t n);
 			if(++i == n) i = 0; \
 		} \
 	} \
-	void hash_clear_ ## t(hash_ ##t *hash) { \
+	static inline void hash_clear_ ## t(hash_ ##t *hash) { \
 		memset(hash->values, 0, n * sizeof(*hash->values)); \
 		memset(hash->keys, 0, n * sizeof(*hash->keys)); \
 	}

@@ -1,6 +1,6 @@
 /*
     invitation.c -- Create and accept invitations
-    Copyright (C) 2013-2017 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2013-2022 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -97,7 +97,7 @@ static void scan_for_hostname(const char *filename, char **hostname, char **port
 	fclose(f);
 }
 
-char *get_my_hostname() {
+static char *get_my_hostname(void) {
 	char *hostname = NULL;
 	char *port = NULL;
 	char *hostport = NULL;
@@ -545,13 +545,11 @@ int cmd_invite(int argc, char *argv[]) {
 }
 
 static int sock;
-static char cookie[18];
+static char cookie[18], hash[18];
 static sptps_t sptps;
 static char *data;
 static size_t datalen;
 static bool success = false;
-
-static char cookie[18], hash[18];
 
 static char *get_line(const char **data) {
 	if(!data || !*data) {
@@ -1087,7 +1085,7 @@ ask_netname:
 static bool invitation_send(void *handle, uint8_t type, const void *vdata, size_t len) {
 	(void)handle;
 	(void)type;
-	const uint8_t *data = vdata;
+	const char *data = vdata;
 
 	while(len) {
 		ssize_t result = send(sock, data, len, 0);
@@ -1227,7 +1225,8 @@ int cmd_join(int argc, char *argv[]) {
 	}
 
 	if(!port || !*port) {
-		port = "655";
+		static char default_port[] = "655";
+		port = default_port;
 	}
 
 	if(!b64decode_tinc(slash, hash, 24) || !b64decode_tinc(slash + 24, cookie, 24)) {

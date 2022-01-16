@@ -1,6 +1,6 @@
 /*
     tincctl.c -- Controlling a running tincd
-    Copyright (C) 2007-2021 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2007-2022 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -72,7 +72,8 @@ bool force = false;
 bool tty = true;
 bool confbasegiven = false;
 char *scriptinterpreter = NULL;
-char *scriptextension = "";
+static char defaultextension[] = "";
+char *scriptextension = defaultextension;
 static char *prompt;
 char *device = NULL;
 char *iface = NULL;
@@ -90,88 +91,95 @@ static struct option const long_options[] = {
 };
 
 static void version(void) {
-	printf("%s version %s (built %s %s, protocol %d.%d)\n", PACKAGE,
-	       BUILD_VERSION, BUILD_DATE, BUILD_TIME, PROT_MAJOR, PROT_MINOR);
-	printf("Features:"
+	static const char *message =
+	        "%s version %s (built %s %s, protocol %d.%d)\n"
+	        "Features:"
 #ifdef HAVE_READLINE
-	       " readline"
+	        " readline"
 #endif
 #ifdef HAVE_CURSES
-	       " curses"
+	        " curses"
 #endif
 #ifndef DISABLE_LEGACY
-	       " legacy_protocol"
+	        " legacy_protocol"
 #endif
-	       "\n\n");
-	printf("Copyright (C) 1998-2018 Ivo Timmermans, Guus Sliepen and others.\n"
-	       "See the AUTHORS file for a complete list.\n\n"
-	       "tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
-	       "and you are welcome to redistribute it under certain conditions;\n"
-	       "see the file COPYING for details.\n");
+	        "\n\n"
+	        "Copyright (C) 1998-2018 Ivo Timmermans, Guus Sliepen and others.\n"
+	        "See the AUTHORS file for a complete list.\n"
+	        "\n"
+	        "tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
+	        "and you are welcome to redistribute it under certain conditions;\n"
+	        "see the file COPYING for details.\n";
+
+	printf(message, PACKAGE, BUILD_VERSION, BUILD_DATE, BUILD_TIME, PROT_MAJOR, PROT_MINOR);
 }
 
 static void usage(bool status) {
 	if(status) {
 		fprintf(stderr, "Try `%s --help\' for more information.\n", program_name);
 	} else {
-		printf("Usage: %s [options] command\n\n", program_name);
-		printf("Valid options are:\n"
-		       "  -b, --batch             Don't ask for anything (non-interactive mode).\n"
-		       "  -c, --config=DIR        Read configuration options from DIR.\n"
-		       "  -n, --net=NETNAME       Connect to net NETNAME.\n"
-		       "      --pidfile=FILENAME  Read control cookie from FILENAME.\n"
-		       "      --force             Force some commands to work despite warnings.\n"
-		       "      --help              Display this help and exit.\n"
-		       "      --version           Output version information and exit.\n"
-		       "\n"
-		       "Valid commands are:\n"
-		       "  init [name]                Create initial configuration files.\n"
-		       "  get VARIABLE               Print current value of VARIABLE\n"
-		       "  set VARIABLE VALUE         Set VARIABLE to VALUE\n"
-		       "  add VARIABLE VALUE         Add VARIABLE with the given VALUE\n"
-		       "  del VARIABLE [VALUE]       Remove VARIABLE [only ones with watching VALUE]\n"
-		       "  start [tincd options]      Start tincd.\n"
-		       "  stop                       Stop tincd.\n"
-		       "  restart [tincd options]    Restart tincd.\n"
-		       "  reload                     Partially reload configuration of running tincd.\n"
-		       "  pid                        Show PID of currently running tincd.\n"
+		static const char *message =
+		        "Usage: %s [options] command\n"
+		        "\n"
+		        "Valid options are:\n"
+		        "  -b, --batch             Don't ask for anything (non-interactive mode).\n"
+		        "  -c, --config=DIR        Read configuration options from DIR.\n"
+		        "  -n, --net=NETNAME       Connect to net NETNAME.\n"
+		        "      --pidfile=FILENAME  Read control cookie from FILENAME.\n"
+		        "      --force             Force some commands to work despite warnings.\n"
+		        "      --help              Display this help and exit.\n"
+		        "      --version           Output version information and exit.\n"
+		        "\n"
+		        "Valid commands are:\n"
+		        "  init [name]                Create initial configuration files.\n"
+		        "  get VARIABLE               Print current value of VARIABLE\n"
+		        "  set VARIABLE VALUE         Set VARIABLE to VALUE\n"
+		        "  add VARIABLE VALUE         Add VARIABLE with the given VALUE\n"
+		        "  del VARIABLE [VALUE]       Remove VARIABLE [only ones with watching VALUE]\n"
+		        "  start [tincd options]      Start tincd.\n"
+		        "  stop                       Stop tincd.\n"
+		        "  restart [tincd options]    Restart tincd.\n"
+		        "  reload                     Partially reload configuration of running tincd.\n"
+		        "  pid                        Show PID of currently running tincd.\n"
 #ifdef DISABLE_LEGACY
-		       "  generate-keys              Generate a new Ed25519 public/private key pair.\n"
+		        "  generate-keys              Generate a new Ed25519 public/private key pair.\n"
 #else
-		       "  generate-keys [bits]       Generate new RSA and Ed25519 public/private key pairs.\n"
-		       "  generate-rsa-keys [bits]   Generate a new RSA public/private key pair.\n"
+		        "  generate-keys [bits]       Generate new RSA and Ed25519 public/private key pairs.\n"
+		        "  generate-rsa-keys [bits]   Generate a new RSA public/private key pair.\n"
 #endif
-		       "  generate-ed25519-keys      Generate a new Ed25519 public/private key pair.\n"
-		       "  dump                       Dump a list of one of the following things:\n"
-		       "    [reachable] nodes        - all known nodes in the VPN\n"
-		       "    edges                    - all known connections in the VPN\n"
-		       "    subnets                  - all known subnets in the VPN\n"
-		       "    connections              - all meta connections with ourself\n"
-		       "    [di]graph                - graph of the VPN in dotty format\n"
-		       "    invitations              - outstanding invitations\n"
-		       "  info NODE|SUBNET|ADDRESS   Give information about a particular NODE, SUBNET or ADDRESS.\n"
-		       "  purge                      Purge unreachable nodes\n"
-		       "  debug N                    Set debug level\n"
-		       "  retry                      Retry all outgoing connections\n"
-		       "  disconnect NODE            Close meta connection with NODE\n"
+		        "  generate-ed25519-keys      Generate a new Ed25519 public/private key pair.\n"
+		        "  dump                       Dump a list of one of the following things:\n"
+		        "    [reachable] nodes        - all known nodes in the VPN\n"
+		        "    edges                    - all known connections in the VPN\n"
+		        "    subnets                  - all known subnets in the VPN\n"
+		        "    connections              - all meta connections with ourself\n"
+		        "    [di]graph                - graph of the VPN in dotty format\n"
+		        "    invitations              - outstanding invitations\n"
+		        "  info NODE|SUBNET|ADDRESS   Give information about a particular NODE, SUBNET or ADDRESS.\n"
+		        "  purge                      Purge unreachable nodes\n"
+		        "  debug N                    Set debug level\n"
+		        "  retry                      Retry all outgoing connections\n"
+		        "  disconnect NODE            Close meta connection with NODE\n"
 #ifdef HAVE_CURSES
-		       "  top                        Show real-time statistics\n"
+		        "  top                        Show real-time statistics\n"
 #endif
-		       "  pcap [snaplen]             Dump traffic in pcap format [up to snaplen bytes per packet]\n"
-		       "  log [level]                Dump log output [up to the specified level]\n"
-		       "  export                     Export host configuration of local node to standard output\n"
-		       "  export-all                 Export all host configuration files to standard output\n"
-		       "  import                     Import host configuration file(s) from standard input\n"
-		       "  exchange                   Same as export followed by import\n"
-		       "  exchange-all               Same as export-all followed by import\n"
-		       "  invite NODE [...]          Generate an invitation for NODE\n"
-		       "  join INVITATION            Join a VPN using an INVITATION\n"
-		       "  network [NETNAME]          List all known networks, or switch to the one named NETNAME.\n"
-		       "  fsck                       Check the configuration files for problems.\n"
-		       "  sign [FILE]                Generate a signed version of a file.\n"
-		       "  verify NODE [FILE]         Verify that a file was signed by the given NODE.\n"
-		       "\n");
-		printf("Report bugs to tinc@tinc-vpn.org.\n");
+		        "  pcap [snaplen]             Dump traffic in pcap format [up to snaplen bytes per packet]\n"
+		        "  log [level]                Dump log output [up to the specified level]\n"
+		        "  export                     Export host configuration of local node to standard output\n"
+		        "  export-all                 Export all host configuration files to standard output\n"
+		        "  import                     Import host configuration file(s) from standard input\n"
+		        "  exchange                   Same as export followed by import\n"
+		        "  exchange-all               Same as export-all followed by import\n"
+		        "  invite NODE [...]          Generate an invitation for NODE\n"
+		        "  join INVITATION            Join a VPN using an INVITATION\n"
+		        "  network [NETNAME]          List all known networks, or switch to the one named NETNAME.\n"
+		        "  fsck                       Check the configuration files for problems.\n"
+		        "  sign [FILE]                Generate a signed version of a file.\n"
+		        "  verify NODE [FILE]         Verify that a file was signed by the given NODE.\n"
+		        "\n"
+		        "Report bugs to tinc@tinc-vpn.org.\n";
+
+		printf(message, program_name);
 	}
 }
 
@@ -282,8 +290,12 @@ ask_filename:
 
 	if(filename[0] != '/') {
 #endif
+
 		/* The directory is a relative path or a filename. */
-		getcwd(directory, sizeof(directory));
+		if(!getcwd(directory, sizeof(directory))) {
+			fprintf(stderr, "Could not get current directory: %s\n", strerror(errno));
+			return NULL;
+		}
 
 		if((size_t)snprintf(buf2, sizeof(buf2), "%s" SLASH "%s", directory, filename) >= sizeof(buf2)) {
 			fprintf(stderr, "Filename too long: %s" SLASH "%s\n", directory, filename);
@@ -508,7 +520,7 @@ static bool recvdata(int fd, char *data, size_t len) {
 	return true;
 }
 
-bool sendline(int fd, char *format, ...) {
+bool sendline(int fd, const char *format, ...) {
 	static char buffer[4096];
 	char *p = buffer;
 	ssize_t blen;
@@ -578,8 +590,8 @@ static void pcap(int fd, FILE *out, uint32_t snaplen) {
 
 	while(recvline(fd, line, sizeof(line))) {
 		int code, req;
-		size_t len;
-		int n = sscanf(line, "%d %d %zd", &code, &req, &len);
+		unsigned long len;
+		int n = sscanf(line, "%d %d %lu", &code, &req, &len);
 		gettimeofday(&tv, NULL);
 
 		if(n != 3 || code != CONTROL || req != REQ_PCAP || len > sizeof(data)) {
@@ -884,12 +896,10 @@ static int cmd_start(int argc, char *argv[]) {
 
 #endif
 
-	char *default_c = "tincd";
-
 	if(slash++) {
 		xasprintf(&c, "%.*stincd", (int)(slash - program_name), program_name);
 	} else {
-		c = default_c;
+		c = xstrdup("tincd");
 	}
 
 	int nargc = 0;
@@ -921,10 +931,7 @@ static int cmd_start(int argc, char *argv[]) {
 	int status = spawnvp(_P_WAIT, c, nargv);
 
 	free(nargv);
-
-	if(c != default_c) {
-		free(c);
-	}
+	free(c);
 
 	if(status == -1) {
 		fprintf(stderr, "Error starting %s: %s\n", c, strerror(errno));
@@ -938,11 +945,7 @@ static int cmd_start(int argc, char *argv[]) {
 	if(socketpair(AF_UNIX, SOCK_STREAM, 0, pfd)) {
 		fprintf(stderr, "Could not create umbilical socket: %s\n", strerror(errno));
 		free(nargv);
-
-		if(c != default_c) {
-			free(c);
-		}
-
+		free(c);
 		return 1;
 	}
 
@@ -951,11 +954,7 @@ static int cmd_start(int argc, char *argv[]) {
 	if(pid == -1) {
 		fprintf(stderr, "Could not fork: %s\n", strerror(errno));
 		free(nargv);
-
-		if(c != default_c) {
-			free(c);
-		}
-
+		free(c);
 		return 1;
 	}
 
@@ -988,7 +987,9 @@ static int cmd_start(int argc, char *argv[]) {
 			len--;
 		}
 
-		write(2, buf, len);
+		if(write(2, buf, len) != len) {
+			// Nothing we can do about it.
+		}
 	}
 
 	if(len) {
@@ -1011,9 +1012,7 @@ static int cmd_start(int argc, char *argv[]) {
 		fprintf(stderr, "Error starting %s\n", c);
 	}
 
-	if(c != default_c) {
-		free(c);
-	}
+	free(c);
 
 	return failed ? EXIT_FAILURE : EXIT_SUCCESS;
 #endif
@@ -1244,7 +1243,8 @@ static int cmd_dump(int argc, char *argv[]) {
 		char nexthop[4096];
 		int cipher, digest, maclength, compression, distance, socket, weight;
 		short int pmtu, minmtu, maxmtu;
-		unsigned int options, status_int;
+		unsigned int options;
+		uint32_t status_int;
 		node_status_t status;
 		long int last_state_change;
 		int udp_ping_rtt;
@@ -1252,7 +1252,7 @@ static int cmd_dump(int argc, char *argv[]) {
 
 		switch(req) {
 		case REQ_DUMP_NODES: {
-			int n = sscanf(line, "%*d %*d %4095s %4095s %4095s port %4095s %d %d %d %d %x %x %4095s %4095s %d %hd %hd %hd %ld %d %"PRIu64" %"PRIu64" %"PRIu64" %"PRIu64, node, id, host, port, &cipher, &digest, &maclength, &compression, &options, &status_int, nexthop, via, &distance, &pmtu, &minmtu, &maxmtu, &last_state_change, &udp_ping_rtt, &in_packets, &in_bytes, &out_packets, &out_bytes);
+			int n = sscanf(line, "%*d %*d %4095s %4095s %4095s port %4095s %d %d %d %d %x %"PRIx32" %4095s %4095s %d %hd %hd %hd %ld %d %"PRIu64" %"PRIu64" %"PRIu64" %"PRIu64, node, id, host, port, &cipher, &digest, &maclength, &compression, &options, &status_int, nexthop, via, &distance, &pmtu, &minmtu, &maxmtu, &last_state_change, &udp_ping_rtt, &in_packets, &in_bytes, &out_packets, &out_bytes);
 
 			if(n != 22) {
 				fprintf(stderr, "Unable to parse node dump from tincd: %s\n", line);
@@ -3158,6 +3158,7 @@ static int cmd_shell(int argc, char *argv[]) {
 
 #ifdef HAVE_READLINE
 	rl_readline_name = "tinc";
+	rl_basic_word_break_characters = "\t\n ";
 	rl_completion_entry_function = complete_nothing;
 	rl_attempted_completion_function = completion;
 	rl_filename_completion_desired = 0;
@@ -3170,7 +3171,6 @@ static int cmd_shell(int argc, char *argv[]) {
 		if(tty) {
 			free(copy);
 			free(line);
-			rl_basic_word_break_characters = "\t\n ";
 			line = readline(prompt);
 			copy = line ? xstrdup(line) : NULL;
 		} else {
@@ -3261,7 +3261,7 @@ static int cmd_shell(int argc, char *argv[]) {
 	return result;
 }
 
-static void cleanup() {
+static void cleanup(void) {
 	free(tinc_conf);
 	free(hosts_dir);
 	free_names();

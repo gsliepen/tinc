@@ -1,6 +1,6 @@
 /*
     subnet.c -- handle subnet lookups and lists
-    Copyright (C) 2000-2017 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2000-2022 Guus Sliepen <guus@tinc-vpn.org>,
                   2000-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -162,7 +162,7 @@ void subnet_cache_flush_tables(void) {
 	hash_clear(mac_t, &mac_cache);
 }
 
-void subnet_cache_flush(subnet_t *subnet) {
+static void subnet_cache_flush(subnet_t *subnet) {
 	switch(subnet->type) {
 	case SUBNET_IPV4:
 		if(subnet->net.ipv4.prefixlength == 32) {
@@ -322,7 +322,7 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address) {
 
 void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 	char netstr[MAXNETSTR];
-	char *name, *address, *port;
+	char *address, *port;
 	char empty[] = "";
 
 	// Prepare environment variables to be passed to the script
@@ -342,7 +342,7 @@ void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 	int env_subnet = environment_add(&env, NULL);
 	int env_weight = environment_add(&env, NULL);
 
-	name = up ? "subnet-up" : "subnet-down";
+	const char *name = up ? "subnet-up" : "subnet-down";
 
 	if(!subnet) {
 		for splay_each(subnet_t, subnet, &owner->subnet_tree) {

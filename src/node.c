@@ -202,12 +202,12 @@ bool dump_nodes(connection_t *c) {
 		}
 
 		id[sizeof(id) - 1] = 0;
-		send_request(c, "%d %d %s %s %s %d %d %zu %d %x %x %s %s %d %d %d %d %ld %d %"PRIu64" %"PRIu64" %"PRIu64" %"PRIu64, CONTROL, REQ_DUMP_NODES,
+		send_request(c, "%d %d %s %s %s %d %d %lu %d %x %x %s %s %d %d %d %d %ld %d %"PRIu64" %"PRIu64" %"PRIu64" %"PRIu64, CONTROL, REQ_DUMP_NODES,
 		             n->name, id, n->hostname ? n->hostname : "unknown port unknown",
 #ifdef DISABLE_LEGACY
 		             0, 0, 0UL,
 #else
-		             cipher_get_nid(n->outcipher), digest_get_nid(n->outdigest), digest_length(n->outdigest),
+		             cipher_get_nid(n->outcipher), digest_get_nid(n->outdigest), (unsigned long)digest_length(n->outdigest),
 #endif
 		             n->outcompression, n->options, bitfield_to_int(&n->status, sizeof(n->status)),
 		             n->nexthop ? n->nexthop->name : "-", n->via && n->via->name ? n->via->name : "-", n->distance,

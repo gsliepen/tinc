@@ -1,6 +1,6 @@
 /*
     autoconnect.c -- automatic connection establishment
-    Copyright (C) 2017 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2017-2022 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,13 +19,14 @@
 
 #include "system.h"
 
+#include "autoconnect.h"
 #include "connection.h"
 #include "crypto.h"
 #include "logger.h"
 #include "node.h"
 #include "xalloc.h"
 
-static void make_new_connection() {
+static void make_new_connection(void) {
 	/* Select a random node we haven't connected to yet. */
 	uint32_t count = 0;
 
@@ -74,7 +75,7 @@ static void make_new_connection() {
 	}
 }
 
-static void connect_to_unreachable() {
+static void connect_to_unreachable(void) {
 	/* Select a random known node. The rationale is that if there are many
 	 * reachable nodes, and only a few unreachable nodes, we don't want all
 	 * reachable nodes to try to connect to the unreachable ones at the
@@ -111,7 +112,7 @@ static void connect_to_unreachable() {
 	}
 }
 
-static void drop_superfluous_outgoing_connection() {
+static void drop_superfluous_outgoing_connection(void) {
 	/* Choose a random outgoing connection to a node that has at least one other connection. */
 	uint32_t count = 0;
 
@@ -146,7 +147,7 @@ static void drop_superfluous_outgoing_connection() {
 	}
 }
 
-static void drop_superfluous_pending_connections() {
+static void drop_superfluous_pending_connections(void) {
 	for list_each(outgoing_t, o, &outgoing_list) {
 		/* Only look for connections that are waiting to be retried later. */
 		bool found = false;
@@ -167,7 +168,7 @@ static void drop_superfluous_pending_connections() {
 	}
 }
 
-void do_autoconnect() {
+void do_autoconnect(void) {
 	/* Count number of active connections. */
 	uint32_t nc = 0;
 

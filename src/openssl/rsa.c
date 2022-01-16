@@ -1,6 +1,6 @@
 /*
     rsa.c -- RSA key handling
-    Copyright (C) 2007-2021 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2007-2022 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ typedef RSA rsa_t;
 
 // Set RSA keys
 
-rsa_t *rsa_set_hex_public_key(char *n, char *e) {
+rsa_t *rsa_set_hex_public_key(const char *n, const char *e) {
 	BIGNUM *bn_n = NULL;
 	BIGNUM *bn_e = NULL;
 
@@ -52,7 +52,7 @@ rsa_t *rsa_set_hex_public_key(char *n, char *e) {
 	return rsa;
 }
 
-rsa_t *rsa_set_hex_private_key(char *n, char *e, char *d) {
+rsa_t *rsa_set_hex_private_key(const char *n, const char *e, const char *d) {
 	BIGNUM *bn_n = NULL;
 	BIGNUM *bn_e = NULL;
 	BIGNUM *bn_d = NULL;
@@ -106,7 +106,7 @@ size_t rsa_size(const rsa_t *rsa) {
 	return RSA_size(rsa);
 }
 
-bool rsa_public_encrypt(rsa_t *rsa, void *in, size_t len, void *out) {
+bool rsa_public_encrypt(rsa_t *rsa, const void *in, size_t len, void *out) {
 	if((size_t)RSA_public_encrypt((int) len, in, out, rsa, RSA_NO_PADDING) == len) {
 		return true;
 	}
@@ -115,7 +115,7 @@ bool rsa_public_encrypt(rsa_t *rsa, void *in, size_t len, void *out) {
 	return false;
 }
 
-bool rsa_private_decrypt(rsa_t *rsa, void *in, size_t len, void *out) {
+bool rsa_private_decrypt(rsa_t *rsa, const void *in, size_t len, void *out) {
 	if((size_t)RSA_private_decrypt((int) len, in, out, rsa, RSA_NO_PADDING) == len) {
 		return true;
 	}

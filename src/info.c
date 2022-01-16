@@ -1,6 +1,6 @@
 /*
     info.c -- Show information about a node, subnet or address
-    Copyright (C) 2012-2017 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2012-2022 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,9 +20,10 @@
 #include "system.h"
 
 #include "control_common.h"
+#include "info.h"
+#include "logger.h"
 #include "subnet.h"
 #include "tincctl.h"
-#include "info.h"
 #include "utils.h"
 
 void logger(int level, int priority, const char *format, ...) {

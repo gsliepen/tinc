@@ -1,6 +1,6 @@
 /*
     logger.c -- logging code
-    Copyright (C) 2004-2017 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2004-2022 Guus Sliepen <guus@tinc-vpn.org>
                   2004-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -91,8 +91,11 @@ static void real_logger(debug_t level, int priority, const char *message) {
 		}
 
 		if(umbilical && do_detach) {
-			write(umbilical, message, strlen(message));
-			write(umbilical, "\n", 1);
+			size_t len = strlen(message);
+
+			if(write(umbilical, message, len) != (ssize_t)len || write(umbilical, "\n", 1) != 1) {
+				// Other end broken, nothing we can do about it.
+			}
 		}
 	}
 
@@ -113,7 +116,7 @@ static void real_logger(debug_t level, int priority, const char *message) {
 
 			size_t len = strlen(message);
 
-			if(send_request(c, "%d %d %zu", CONTROL, REQ_LOG, len)) {
+			if(send_request(c, "%d %d %lu", CONTROL, REQ_LOG, (unsigned long)len)) {
 				send_meta(c, message, len);
 			}
 		}
@@ -220,7 +223,7 @@ void openlogger(const char *ident, logmode_t mode) {
 	}
 }
 
-void reopenlogger() {
+void reopenlogger(void) {
 	if(logmode != LOGMODE_FILE) {
 		return;
 	}

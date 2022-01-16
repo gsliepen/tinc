@@ -1,6 +1,6 @@
 /*
     digest.c -- Digest handling
-    Copyright (C) 2007-2012 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2007-2022 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,10 +17,11 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include "system.h"
+#include "../system.h"
 
 #include "digest.h"
-#include "logger.h"
+#include "../digest.h"
+#include "../logger.h"
 
 static struct {
 	const char *name;
@@ -35,9 +36,7 @@ static struct {
 };
 
 static bool nametodigest(const char *name, enum gcry_md_algos *algo) {
-	int i;
-
-	for(i = 0; i < sizeof(digesttable) / sizeof(*digesttable); i++) {
+	for(size_t i = 0; i < sizeof(digesttable) / sizeof(*digesttable); i++) {
 		if(digesttable[i].name && !strcasecmp(name, digesttable[i].name)) {
 			*algo = digesttable[i].algo;
 			return true;
@@ -48,7 +47,7 @@ static bool nametodigest(const char *name, enum gcry_md_algos *algo) {
 }
 
 static bool nidtodigest(int nid, enum gcry_md_algos *algo) {
-	for(int i = 0; i < sizeof(digesttable) / sizeof(*digesttable); i++) {
+	for(size_t i = 0; i < sizeof(digesttable) / sizeof(*digesttable); i++) {
 		if(nid == digesttable[i].nid) {
 			*algo = digesttable[i].algo;
 			return true;
@@ -59,7 +58,7 @@ static bool nidtodigest(int nid, enum gcry_md_algos *algo) {
 }
 
 static bool digesttonid(enum gcry_md_algos algo, int *nid) {
-	for(int i = 0; i < sizeof(digesttable) / sizeof(*digesttable); i++) {
+	for(size_t i = 0; i < sizeof(digesttable) / sizeof(*digesttable); i++) {
 		if(algo == digesttable[i].algo) {
 			*nid = digesttable[i].nid;
 			return true;
@@ -77,7 +76,7 @@ static bool digest_open(digest_t *digest, enum gcry_md_algos algo, size_t maclen
 
 	unsigned int len = gcry_md_get_algo_dlen(algo);
 
-	if(maclength > len || maclength < 0) {
+	if(maclength > len) {
 		digest->maclength = len;
 	} else {
 		digest->maclength = maclength;
@@ -109,10 +108,6 @@ bool digest_open_by_nid(digest_t *digest, int nid, size_t maclength) {
 	}
 
 	return digest_open(digest, algo, maclength);
-}
-
-bool digest_open_sha1(digest_t *digest, size_t maclength) {
-	return digest_open(digest, GCRY_MD_SHA1, maclength);
 }
 
 void digest_close(digest_t *digest) {

@@ -1,6 +1,6 @@
 /*
     rsagen.c -- RSA key generation and export
-    Copyright (C) 2008-2012 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2008-2022 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,15 +17,15 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include "system.h"
+#include "../system.h"
 
 #include <gcrypt.h>
 #include <assert.h>
 
-#include "../rsagen.h"
-#include "xalloc.h"
 #include "rsa.h"
 #include "pem.h"
+#include "../rsagen.h"
+#include "../xalloc.h"
 
 // ASN.1 tags.
 typedef enum {
@@ -106,7 +106,7 @@ static size_t der_fill(uint8_t *derbuf, bool is_private, const gcry_mpi_t mpi[],
 		der += len;
 	}
 
-	assert(der - derbuf == derlen);
+	assert((size_t)(der - derbuf) == derlen);
 	return derlen;
 }
 

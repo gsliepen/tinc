@@ -188,7 +188,7 @@ static bool read_packet(vpn_packet_t *packet) {
 	}
 
 	if(!memcmp(&ignore_src, DATA(packet) + 6, sizeof(ignore_src))) {
-		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Ignoring loopback packet of %zd bytes from %s", lenin, device_info);
+		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Ignoring loopback packet of %ld bytes from %s", (long)lenin, device_info);
 		return false;
 	}
 

@@ -3,7 +3,7 @@
 
 /*
     rsa.h -- RSA key handling
-    Copyright (C) 2007-2013 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2007-2022 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -27,12 +27,12 @@ typedef struct rsa rsa_t;
 #endif
 
 extern void rsa_free(rsa_t *rsa);
-extern rsa_t *rsa_set_hex_public_key(char *n, char *e) __attribute__((__malloc__));
-extern rsa_t *rsa_set_hex_private_key(char *n, char *e, char *d) __attribute__((__malloc__));
+extern rsa_t *rsa_set_hex_public_key(const char *n, const char *e) __attribute__((__malloc__));
+extern rsa_t *rsa_set_hex_private_key(const char *n, const char *e, const char *d) __attribute__((__malloc__));
 extern rsa_t *rsa_read_pem_public_key(FILE *fp) __attribute__((__malloc__));
 extern rsa_t *rsa_read_pem_private_key(FILE *fp) __attribute__((__malloc__));
 extern size_t rsa_size(const rsa_t *rsa);
-extern bool rsa_public_encrypt(rsa_t *rsa, void *in, size_t len, void *out) __attribute__((__warn_unused_result__));
-extern bool rsa_private_decrypt(rsa_t *rsa, void *in, size_t len, void *out) __attribute__((__warn_unused_result__));
+extern bool rsa_public_encrypt(rsa_t *rsa, const void *in, size_t len, void *out) __attribute__((__warn_unused_result__));
+extern bool rsa_private_decrypt(rsa_t *rsa, const void *in, size_t len, void *out) __attribute__((__warn_unused_result__));
 
 #endif

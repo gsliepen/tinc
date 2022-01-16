@@ -1,7 +1,7 @@
 /*
     tincd.c -- the main file for tincd
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2000-2021 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2022 Guus Sliepen <guus@tinc-vpn.org>
                   2008      Max Rijevski <maksuf@gmail.com>
                   2009      Michael Tokarev <mjt@tls.msk.ru>
                   2010      Julien Muchembled <jm@jmuchemb.eu>
@@ -119,26 +119,31 @@ static void usage(bool status) {
 		fprintf(stderr, "Try `%s --help\' for more information.\n",
 		        program_name);
 	else {
-		printf("Usage: %s [option]...\n\n", program_name);
-		printf("  -c, --config=DIR              Read configuration options from DIR.\n"
-		       "  -D, --no-detach               Don't fork and detach.\n"
-		       "  -d, --debug[=LEVEL]           Increase debug level or set it to LEVEL.\n"
-		       "  -n, --net=NETNAME             Connect to net NETNAME.\n"
+		static const char *message =
+		        "Usage: %s [option]...\n"
+		        "\n"
+		        "  -c, --config=DIR              Read configuration options from DIR.\n"
+		        "  -D, --no-detach               Don't fork and detach.\n"
+		        "  -d, --debug[=LEVEL]           Increase debug level or set it to LEVEL.\n"
+		        "  -n, --net=NETNAME             Connect to net NETNAME.\n"
 #ifdef HAVE_MLOCKALL
-		       "  -L, --mlock                   Lock tinc into main memory.\n"
+		        "  -L, --mlock                   Lock tinc into main memory.\n"
 #endif
-		       "      --logfile[=FILENAME]      Write log entries to a logfile.\n"
-		       "  -s  --syslog                  Use syslog instead of stderr with --no-detach.\n"
-		       "      --pidfile=FILENAME        Write PID and control socket cookie to FILENAME.\n"
-		       "      --bypass-security         Disables meta protocol security, for debugging.\n"
-		       "  -o, --option[HOST.]KEY=VALUE  Set global/host configuration value.\n"
+		        "      --logfile[=FILENAME]      Write log entries to a logfile.\n"
+		        "  -s  --syslog                  Use syslog instead of stderr with --no-detach.\n"
+		        "      --pidfile=FILENAME        Write PID and control socket cookie to FILENAME.\n"
+		        "      --bypass-security         Disables meta protocol security, for debugging.\n"
+		        "  -o, --option[HOST.]KEY=VALUE  Set global/host configuration value.\n"
 #ifndef HAVE_MINGW
-		       "  -R, --chroot                  chroot to NET dir at startup.\n"
-		       "  -U, --user=USER               setuid to given USER at startup.\n"
+		        "  -R, --chroot                  chroot to NET dir at startup.\n"
+		        "  -U, --user=USER               setuid to given USER at startup.\n"
 #endif
-		       "      --help                    Display this help and exit.\n"
-		       "      --version                 Output version information and exit.\n\n");
-		printf("Report bugs to tinc@tinc-vpn.org.\n");
+		        "      --help                    Display this help and exit.\n"
+		        "      --version                 Output version information and exit.\n"
+		        "\n"
+		        "Report bugs to tinc@tinc-vpn.org.\n";
+
+		fprintf(stderr, message, program_name);
 	}
 }
 
@@ -378,7 +383,7 @@ static BOOL WINAPI console_ctrl_handler(DWORD type) {
 # define setpriority(level) (setpriority(PRIO_PROCESS, 0, (level)))
 #endif
 
-static void cleanup() {
+static void cleanup(void) {
 	splay_empty_tree(&config_tree);
 	list_empty_list(&cmdline_conf);
 	free_names();
@@ -392,49 +397,51 @@ int main(int argc, char **argv) {
 	}
 
 	if(show_version) {
-		printf("%s version %s (built %s %s, protocol %d.%d)\n", PACKAGE,
-		       BUILD_VERSION, BUILD_DATE, BUILD_TIME, PROT_MAJOR, PROT_MINOR);
-		printf("Features:"
+		static const char *message =
+		        "%s version %s (built %s %s, protocol %d.%d)\n"
+		        "Features:"
 #ifdef HAVE_OPENSSL
-		       " openssl"
+		        " openssl"
 #endif
 #ifdef HAVE_LIBGCRYPT
-		       " libgcrypt"
+		        " libgcrypt"
 #endif
 #ifdef HAVE_LZO
-		       " comp_lzo"
+		        " comp_lzo"
 #endif
 #ifdef HAVE_ZLIB
-		       " comp_zlib"
+		        " comp_zlib"
 #endif
 #ifdef HAVE_LZ4
-		       " comp_lz4"
+		        " comp_lz4"
 #endif
 #ifndef DISABLE_LEGACY
-		       " legacy_protocol"
+		        " legacy_protocol"
 #endif
 #ifdef ENABLE_JUMBOGRAMS
-		       " jumbograms"
+		        " jumbograms"
 #endif
 #ifdef ENABLE_TUNEMU
-		       " tunemu"
+		        " tunemu"
 #endif
 #ifdef HAVE_MINIUPNPC
-		       " miniupnpc"
+		        " miniupnpc"
 #endif
 #ifdef ENABLE_UML
-		       " uml"
+		        " uml"
 #endif
 #ifdef ENABLE_VDE
-		       " vde"
+		        " vde"
 #endif
-		       "\n\n");
-		printf("Copyright (C) 1998-2021 Ivo Timmermans, Guus Sliepen and others.\n"
-		       "See the AUTHORS file for a complete list.\n\n"
-		       "tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
-		       "and you are welcome to redistribute it under certain conditions;\n"
-		       "see the file COPYING for details.\n");
+		        "\n\n"
+		        "Copyright (C) 1998-2021 Ivo Timmermans, Guus Sliepen and others.\n"
+		        "See the AUTHORS file for a complete list.\n"
+		        "\n"
+		        "tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
+		        "and you are welcome to redistribute it under certain conditions;\n"
+		        "see the file COPYING for details.\n";
 
+		printf(message, PACKAGE, BUILD_VERSION, BUILD_DATE, BUILD_TIME, PROT_MAJOR, PROT_MINOR);
 		return 0;
 	}
 
@@ -446,7 +453,10 @@ int main(int argc, char **argv) {
 	make_names(true);
 	atexit(cleanup);
 
-	chdir(confbase);
+	if(chdir(confbase) == -1) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not change to configuration directory: %s", strerror(errno));
+		return 1;
+	}
 
 #ifdef HAVE_MINGW
 
@@ -601,7 +611,10 @@ int main2(int argc, char **argv) {
 	logger(DEBUG_ALWAYS, LOG_NOTICE, "Ready");
 
 	if(umbilical) { // snip!
-		write(umbilical, "", 1);
+		if(write(umbilical, "", 1) != 1) {
+			// Pipe full or broken, nothing we can do about it.
+		}
+
 		close(umbilical);
 		umbilical = 0;
 	}

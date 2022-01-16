@@ -1,5 +1,26 @@
+/*
+    pem.c -- PEM encoding and decoding
+    Copyright (C) 2007-2022 Guus Sliepen <guus@tinc-vpn.org>
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+*/
+
+#include "../system.h"
+
 #include "pem.h"
-#include "utils.h"
+#include "../utils.h"
 
 // Base64 decoding table
 
@@ -35,7 +56,7 @@ static const char b64enc[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 // Heavily based on code by Jouni Malinen <j@w1.fi>
 // https://web.mit.edu/freebsd/head/contrib/wpa/src/utils/base64.c
 static size_t b64encode(char *dst, const void *src, const size_t length) {
-	const uint8_t *end = src + length;
+	const uint8_t *end = (const uint8_t *)src + length;
 	const uint8_t *in = src;
 	char *pos = dst;
 

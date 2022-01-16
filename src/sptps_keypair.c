@@ -1,6 +1,6 @@
 /*
     sptps_test.c -- Simple Peer-to-Peer Security test program
-    Copyright (C) 2011-2013 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2011-2022 Guus Sliepen <guus@tinc-vpn.org>,
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ void logger(debug_t level, int priority, const char *format, ...) {
 	fputc('\n', stderr);
 }
 
-static void usage() {
+static void usage(void) {
 	fprintf(stderr, "Usage: %s [options] private_key_file public_key_file\n\n", program_name);
 	fprintf(stderr, "Valid options are:\n"
 	        "  --help  Display this help and exit.\n"

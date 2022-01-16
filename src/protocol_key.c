@@ -383,11 +383,11 @@ bool send_ans_key(node_t *to) {
 
 	to->status.validkey_in = true;
 
-	return send_request(to->nexthop->connection, "%d %s %s %s %d %d %zu %d", ANS_KEY,
+	return send_request(to->nexthop->connection, "%d %s %s %s %d %d %lu %d", ANS_KEY,
 	                    myself->name, to->name, key,
 	                    cipher_get_nid(to->incipher),
 	                    digest_get_nid(to->indigest),
-	                    digest_length(to->indigest),
+	                    (unsigned long)digest_length(to->indigest),
 	                    to->incompression);
 #endif
 }
@@ -399,11 +399,11 @@ bool ans_key_h(connection_t *c, const char *request) {
 	char address[MAX_STRING_SIZE] = "";
 	char port[MAX_STRING_SIZE] = "";
 	int cipher, digest;
-	size_t maclength;
+	unsigned long maclength;
 	int compression;
 	node_t *from, *to;
 
-	if(sscanf(request, "%*d "MAX_STRING" "MAX_STRING" "MAX_STRING" %d %d %zu %d "MAX_STRING" "MAX_STRING,
+	if(sscanf(request, "%*d "MAX_STRING" "MAX_STRING" "MAX_STRING" %d %d %lu %d "MAX_STRING" "MAX_STRING,
 	                from_name, to_name, key, &cipher, &digest, &maclength,
 	                &compression, address, port) < 7) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "ANS_KEY", c->name,

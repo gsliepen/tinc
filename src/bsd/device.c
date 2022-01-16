@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction BSD tun/tap device
     Copyright (C) 2001-2005 Ivo Timmermans,
-                  2001-2021 Guus Sliepen <guus@tinc-vpn.org>
+                  2001-2022 Guus Sliepen <guus@tinc-vpn.org>
                   2009      Grzegorz Dymarek <gregd72002@googlemail.com>
 
     This program is free software; you can redistribute it and/or modify
@@ -76,7 +76,9 @@ static bool setup_utun(void) {
 		return false;
 	}
 
-	struct ctl_info info = {};
+	struct ctl_info info;
+
+	memset(&info, 0, sizeof(info));
 
 	strlcpy(info.ctl_name, UTUN_CONTROL_NAME, sizeof(info.ctl_name));
 

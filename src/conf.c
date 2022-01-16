@@ -4,7 +4,7 @@
                   1998-2005 Ivo Timmermans
                   2000      Cris van Pelt
                   2010-2011 Julien Muchembled <jm@jmuchemb.eu>
-                  2000-2021 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2022 Guus Sliepen <guus@tinc-vpn.org>
                   2013      Florent Clairambault <florent@clairambault.fr>
 
     This program is free software; you can redistribute it and/or modify
@@ -75,7 +75,7 @@ splay_tree_t config_tree = {
 	.delete = (splay_action_t) free_config,
 };
 
-splay_tree_t *create_configuration() {
+splay_tree_t *create_configuration(void) {
 	splay_tree_t *tree = splay_alloc_tree(NULL, NULL);
 	init_configuration(tree);
 	return tree;
@@ -107,14 +107,14 @@ void config_add(splay_tree_t *config_tree, config_t *cfg) {
 	splay_insert(config_tree, cfg);
 }
 
-config_t *lookup_config(splay_tree_t *config_tree, char *variable) {
-	config_t cfg, *found;
+config_t *lookup_config(splay_tree_t *config_tree, const char *variable) {
+	const config_t cfg = {
+		.variable = (char *)variable,
+		.file = NULL,
+		.line = 0,
+	};
 
-	cfg.variable = variable;
-	cfg.file = NULL;
-	cfg.line = 0;
-
-	found = splay_search_closest_greater(config_tree, &cfg);
+	config_t *found = splay_search_closest_greater(config_tree, &cfg);
 
 	if(!found) {
 		return NULL;

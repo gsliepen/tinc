@@ -1,6 +1,6 @@
 /*
     sptps_test.c -- Simple Peer-to-Peer Security test program
-    Copyright (C) 2011-2014 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2011-2022 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -31,6 +31,8 @@
 
 #include "crypto.h"
 #include "ecdsa.h"
+#include "meta.h"
+#include "protocol.h"
 #include "sptps.h"
 #include "utils.h"
 
@@ -39,15 +41,15 @@
 #endif
 
 // Symbols necessary to link with logger.o
-bool send_request(void *c, const char *msg, ...) {
+bool send_request(struct connection_t *c, const char *msg, ...) {
 	(void)c;
 	(void)msg;
 	return false;
 }
 
-struct list_t *connection_list = NULL;
+list_t connection_list;
 
-bool send_meta(void *c, const char *msg, int len) {
+bool send_meta(struct connection_t *c, const void *msg, size_t len) {
 	(void)c;
 	(void)msg;
 	(void)len;
@@ -64,7 +66,7 @@ static bool readonly;
 static bool writeonly;
 static int in = 0;
 static int out = 1;
-static int addressfamily = AF_UNSPEC;
+int addressfamily = AF_UNSPEC;
 
 static bool send_data(void *handle, uint8_t type, const void *data, size_t len) {
 	(void)type;
@@ -72,13 +74,22 @@ static bool send_data(void *handle, uint8_t type, const void *data, size_t len) 
 	bin2hex(data, hex, len);
 
 	if(verbose) {
-		fprintf(stderr, "Sending %zu bytes of data:\n%s\n", len, hex);
+		fprintf(stderr, "Sending %lu bytes of data:\n%s\n", (unsigned long)len, hex);
 	}
 
 	const int *sock = handle;
+	const char *p = data;
 
-	if((size_t)send(*sock, data, len, 0) != len) {
-		return false;
+	while(len) {
+		ssize_t sent = send(*sock, p, len, 0);
+
+		if(sent <= 0) {
+			fprintf(stderr, "Error sending data: %s\n", strerror(errno));
+			return false;
+		}
+
+		p += sent;
+		len -= sent;
 	}
 
 	return true;
@@ -91,8 +102,22 @@ static bool receive_record(void *handle, uint8_t type, const void *data, uint16_
 		fprintf(stderr, "Received type %d record of %u bytes:\n", type, len);
 	}
 
-	if(!writeonly) {
-		write(out, data, len);
+	if(writeonly) {
+		return true;
+	}
+
+	const char *p = data;
+
+	while(len) {
+		ssize_t written = write(out, p, len);
+
+		if(written <= 0) {
+			fprintf(stderr, "Error writing received data: %s\n", strerror(errno));
+			return false;
+		}
+
+		p += written;
+		len -= written;
 	}
 
 	return true;
@@ -113,9 +138,11 @@ static struct option const long_options[] = {
 
 const char *program_name;
 
-static void usage() {
-	fprintf(stderr, "Usage: %s [options] my_ed25519_key_file his_ed25519_key_file [host] port\n\n", program_name);
-	fprintf(stderr, "Valid options are:\n"
+static void usage(void) {
+	static const char *message =
+	        "Usage: %s [options] my_ed25519_key_file his_ed25519_key_file [host] port\n"
+	        "\n"
+	        "Valid options are:\n"
 	        "  -d, --datagram          Enable datagram mode.\n"
 	        "  -q, --quit              Quit when EOF occurs on stdin.\n"
 	        "  -r, --readonly          Only send data from the socket to stdout.\n"
@@ -129,8 +156,10 @@ static void usage() {
 	        "  -v, --verbose           Display debug messages.\n"
 	        "  -4                      Use IPv4.\n"
 	        "  -6                      Use IPv6.\n"
-	        "\n");
-	fprintf(stderr, "Report bugs to tinc@tinc-vpn.org.\n");
+	        "\n"
+	        "Report bugs to tinc@tinc-vpn.org.\n";
+
+	fprintf(stderr, message, program_name);
 }
 
 #ifdef HAVE_MINGW
@@ -142,7 +171,7 @@ int stdin_sock_fd = -1;
 // separate thread between the stdin and the sptps loop way below. This thread
 // reads stdin and sends its content to the main thread through a TCP socket,
 // which can be properly select()'ed.
-void *stdin_reader_thread(void *arg) {
+static void *stdin_reader_thread(void *arg) {
 	struct sockaddr_in sa;
 	socklen_t sa_size = sizeof(sa);
 
@@ -158,7 +187,7 @@ void *stdin_reader_thread(void *arg) {
 			fprintf(stderr, "New connection received from :%d\n", ntohs(sa.sin_port));
 		}
 
-		uint8_t buf[1024];
+		char buf[1024];
 		ssize_t nread;
 
 		while((nread = read(STDIN_FILENO, buf, sizeof(buf))) > 0) {
@@ -166,7 +195,7 @@ void *stdin_reader_thread(void *arg) {
 				fprintf(stderr, "Read %lld bytes from input\n", nread);
 			}
 
-			uint8_t *start = buf;
+			char *start = buf;
 			ssize_t nleft = nread;
 
 			while(nleft) {
@@ -199,9 +228,10 @@ void *stdin_reader_thread(void *arg) {
 
 	closesocket(stdin_sock_fd);
 	stdin_sock_fd = -1;
+	return NULL;
 }
 
-int start_input_reader() {
+static int start_input_reader(void) {
 	if(stdin_sock_fd != -1) {
 		fprintf(stderr, "stdin thread can only be started once.\n");
 		return -1;
@@ -473,7 +503,7 @@ int main(int argc, char *argv[]) {
 		} else {
 			fprintf(stderr, "Listening...\n");
 
-			uint8_t buf[65536];
+			char buf[65536];
 			struct sockaddr addr;
 			socklen_t addrlen = sizeof(addr);
 
@@ -643,10 +673,10 @@ int main(int argc, char *argv[]) {
 			if(verbose) {
 				char hex[len * 2 + 1];
 				bin2hex(buf, hex, len);
-				fprintf(stderr, "Received %zd bytes of data:\n%s\n", len, hex);
+				fprintf(stderr, "Received %ld bytes of data:\n%s\n", (long)len, hex);
 			}
 
-			if(packetloss && prng(100) < packetloss) {
+			if(packetloss && (int)prng(100) < packetloss) {
 				if(verbose) {
 					fprintf(stderr, "Dropped.\n");
 				}

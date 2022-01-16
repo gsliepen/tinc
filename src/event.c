@@ -1,6 +1,6 @@
 /*
     event.c -- I/O, timeout and signal event handling
-    Copyright (C) 2012-2021 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2012-2022 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,12 +18,14 @@
 */
 
 #include "system.h"
-#include "dropin.h"
+
+#include <assert.h>
 
 #ifdef HAVE_SYS_EPOLL_H
 #include <sys/epoll.h>
 #endif
 
+#include "dropin.h"
 #include "event.h"
 #include "utils.h"
 #include "net.h"
@@ -46,7 +48,7 @@ static DWORD event_count = 0;
 static bool running;
 
 #ifdef HAVE_SYS_EPOLL_H
-static inline int event_epoll_init() {
+static inline int event_epoll_init(void) {
 	/* NOTE: 1024 limit is only used on ancient (pre 2.6.27) kernels.
 	        Decent kernels will ignore this value making it unlimited.
 	        epoll_create1 might be better, but these kernels would not be supported
@@ -290,11 +292,14 @@ void timeout_del(timeout_t *timeout) {
 
 static io_t signalio;
 static int pipefd[2] = {-1, -1};
-static signal_t *signal_handle[NSIG + 1] = {};
+static signal_t *signal_handle[NSIG + 1] = {NULL};
 
 static void signal_handler(int signum) {
 	unsigned char num = signum;
-	write(pipefd[1], &num, 1);
+
+	if(write(pipefd[1], &num, 1) != 1) {
+		// Pipe full or broken, nothing we can do about it.
+	}
 }
 
 static void signalio_handler(void *data, int flags) {
@@ -480,6 +485,7 @@ bool event_loop(void) {
 	}
 
 #else
+	assert(WSA_WAIT_EVENT_0 == 0);
 
 	while(running) {
 		struct timeval diff;
@@ -541,12 +547,12 @@ bool event_loop(void) {
 				break;
 			}
 
-			if(result < WSA_WAIT_EVENT_0 || result >= WSA_WAIT_EVENT_0 + event_count - event_offset) {
+			if(result >= event_count - event_offset) {
 				return false;
 			}
 
 			/* Look up io in the map by index. */
-			event_index = result - WSA_WAIT_EVENT_0 + event_offset;
+			event_index = result + event_offset;
 			io_t *io = io_map[event_index];
 
 			if(io->fd == -1) {

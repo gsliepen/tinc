@@ -46,7 +46,8 @@ static SERVICE_STATUS_HANDLE statushandle = 0;
 
 static bool install_service(void) {
 	char command[4096] = "\"";
-	SERVICE_DESCRIPTION description = {"Virtual Private Network daemon"};
+	char description_buffer[] = "Virtual Private Network daemon";
+	SERVICE_DESCRIPTION description = {description_buffer};
 
 	manager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
 
@@ -107,7 +108,7 @@ static bool install_service(void) {
 
 io_t stop_io;
 
-DWORD WINAPI controlhandler(DWORD request, DWORD type, LPVOID data, LPVOID context) {
+static DWORD WINAPI controlhandler(DWORD request, DWORD type, LPVOID data, LPVOID context) {
 	(void)type;
 	(void)data;
 	(void)context;
@@ -141,7 +142,7 @@ DWORD WINAPI controlhandler(DWORD request, DWORD type, LPVOID data, LPVOID conte
 	return NO_ERROR;
 }
 
-VOID WINAPI run_service(DWORD argc, LPTSTR *argv) {
+static VOID WINAPI run_service(DWORD argc, LPTSTR *argv) {
 	extern int main2(int argc, char **argv);
 
 	status.dwServiceType = SERVICE_WIN32;
