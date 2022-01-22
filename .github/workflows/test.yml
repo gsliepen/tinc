@@ -259,11 +259,6 @@ jobs:
       - name: Run tests with default settings
         run: sh .ci/test/run.sh default
 
-      - name: Run clang-tidy
-        run: |
-          export PATH="$PATH:$(brew --prefix llvm)/bin:$HOME/Library/Python/3.9/bin"
-          sh .ci/tidy/run.sh
-
       - name: Run tests without legacy protocol
         run: sh .ci/test/run.sh nolegacy
         if: always()
@@ -290,6 +285,8 @@ jobs:
           # https://packages.msys2.org/package/
           install: >-
             base-devel
+            autoconf-wrapper
+            automake-wrapper
             mingw-w64-x86_64-gcc
             mingw-w64-x86_64-openssl
             mingw-w64-x86_64-libgcrypt
@@ -300,7 +297,7 @@ jobs:
             mingw-w64-x86_64-miniupnpc
             mingw-w64-x86_64-nsis
             git
-            netcat
+            openbsd-netcat
             procps
 
       - name: Checkout code
