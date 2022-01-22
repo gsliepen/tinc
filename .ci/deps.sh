@@ -24,7 +24,7 @@ deps_linux_debian() {
   apt-get upgrade -y
 
   apt-get install -y \
-    git binutils make autoconf automake gcc diffutils sudo texinfo netcat procps socat \
+    git binutils make autoconf automake gcc diffutils sudo texinfo netcat-openbsd procps socat \
     zlib1g-dev:"$HOST" \
     libssl-dev:"$HOST" \
     liblzo2-dev:"$HOST" \
