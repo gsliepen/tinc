@@ -143,34 +143,6 @@ AC_CACHE_SAVE
 AS_IF([test -d /sw/include], [CPPFLAGS="$CPPFLAGS -I/sw/include"])
 AS_IF([test -d /sw/lib], [LIBS="$LIBS -L/sw/lib"])
 
-dnl Compiler hardening flags
-dnl No -fstack-protector-all because it doesn't work on all platforms or architectures.
-
-AX_CFLAGS_WARN_ALL(CFLAGS)
-
-AC_ARG_ENABLE([hardening], AS_HELP_STRING([--disable-hardening], [disable compiler and linker hardening flags]))
-AS_IF([test "x$enable_hardening" != "xno"],
-  [AX_CHECK_COMPILE_FLAG([-D_FORTIFY_SOURCE=2], [CPPFLAGS="$CPPFLAGS -D_FORTIFY_SOURCE=2"])
-   AX_CHECK_COMPILE_FLAG([-fwrapv], [CPPFLAGS="$CPPFLAGS -fwrapv"],
-   AX_CHECK_COMPILE_FLAG([-fno-strict-overflow], [CPPFLAGS="$CPPFLAGS -fno-strict-overflow"]))
-   case $host_os in
-     *mingw*)
-       AX_CHECK_LINK_FLAG([-Wl,--dynamicbase], [LDFLAGS="$LDFLAGS -Wl,--dynamicbase"])
-       AX_CHECK_LINK_FLAG([-Wl,--nxcompat], [LDFLAGS="$LDFLAGS -Wl,--nxcompat"])
-       AX_CHECK_LINK_FLAG([-lssp], [LDFLAGS="$LDFLAGS -lssp"])
-       ;;
-     *)
-       AX_CHECK_COMPILE_FLAG([-fPIE], [CPPFLAGS="$CPPFLAGS -fPIE"])
-       AX_CHECK_LINK_FLAG([-pie], [LDFLAGS="$LDFLAGS -pie"])
-       ;;
-   esac
-   AX_CHECK_LINK_FLAG([-Wl,-z,relro], [LDFLAGS="$LDFLAGS -Wl,-z,relro"])
-   AX_CHECK_LINK_FLAG([-Wl,-z,now], [LDFLAGS="$LDFLAGS -Wl,-z,now"])
-   AX_CHECK_COMPILE_FLAG([-W -Wextra -pedantic -Wreturn-type -Wold-style-definition -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -Wredundant-decls -Wbad-function-cast -Wwrite-strings -fdiagnostics-show-option -fstrict-aliasing -Wmissing-noreturn],
-     [CPPFLAGS="$CPPFLAGS -W -Wextra -pedantic -Wreturn-type -Wold-style-definition -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -Wredundant-decls -Wbad-function-cast -Wwrite-strings -fdiagnostics-show-option -fstrict-aliasing -Wmissing-noreturn"])
-  ]
-);
-
 dnl Checks for header files.
 dnl We do this in multiple stages, because unlike Linux all the other operating systems really suck and don't include their own dependencies.
 
@@ -266,6 +238,34 @@ AC_ARG_ENABLE(jumbograms,
       [ AC_DEFINE(ENABLE_JUMBOGRAMS, 1, [Support for jumbograms (packets up to 9000 bytes)]) ])
   ]
 )
+
+dnl Compiler hardening flags
+dnl No -fstack-protector-all because it doesn't work on all platforms or architectures.
+
+AX_CFLAGS_WARN_ALL(CFLAGS)
+
+AC_ARG_ENABLE([hardening], AS_HELP_STRING([--disable-hardening], [disable compiler and linker hardening flags]))
+AS_IF([test "x$enable_hardening" != "xno"],
+  [AX_CHECK_COMPILE_FLAG([-D_FORTIFY_SOURCE=2], [CPPFLAGS="$CPPFLAGS -D_FORTIFY_SOURCE=2"])
+   AX_CHECK_COMPILE_FLAG([-fwrapv], [CPPFLAGS="$CPPFLAGS -fwrapv"],
+   AX_CHECK_COMPILE_FLAG([-fno-strict-overflow], [CPPFLAGS="$CPPFLAGS -fno-strict-overflow"]))
+   case $host_os in
+     *mingw*)
+       AX_CHECK_LINK_FLAG([-Wl,--dynamicbase], [LDFLAGS="$LDFLAGS -Wl,--dynamicbase"])
+       AX_CHECK_LINK_FLAG([-Wl,--nxcompat], [LDFLAGS="$LDFLAGS -Wl,--nxcompat"])
+       AX_CHECK_LINK_FLAG([-lssp], [LDFLAGS="$LDFLAGS -lssp"])
+       ;;
+     *)
+       AX_CHECK_COMPILE_FLAG([-fPIE], [CPPFLAGS="$CPPFLAGS -fPIE"])
+       AX_CHECK_LINK_FLAG([-pie], [LDFLAGS="$LDFLAGS -pie"])
+       ;;
+   esac
+   AX_CHECK_LINK_FLAG([-Wl,-z,relro], [LDFLAGS="$LDFLAGS -Wl,-z,relro"])
+   AX_CHECK_LINK_FLAG([-Wl,-z,now], [LDFLAGS="$LDFLAGS -Wl,-z,now"])
+   AX_CHECK_COMPILE_FLAG([-W -Wextra -pedantic -Wreturn-type -Wold-style-definition -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -Wredundant-decls -Wbad-function-cast -Wwrite-strings -fdiagnostics-show-option -fstrict-aliasing -Wmissing-noreturn],
+     [CPPFLAGS="$CPPFLAGS -W -Wextra -pedantic -Wreturn-type -Wold-style-definition -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -Wredundant-decls -Wbad-function-cast -Wwrite-strings -fdiagnostics-show-option -fstrict-aliasing -Wmissing-noreturn"])
+  ]
+);
 
 dnl Ensure runstatedir is set if we are using a version of autoconf that does not support it
 if test "x$runstatedir" = "x"; then
