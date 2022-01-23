@@ -3,7 +3,7 @@
 set -eu
 
 # Which paths to ignore.
-paths='src/solaris src/mingw'
+paths='src/solaris src/mingw src/gcrypt'
 
 case "$(uname -s)" in
 Linux)
