@@ -253,7 +253,7 @@ AS_IF([test "x$enable_hardening" != "xno"],
      *mingw*)
        AX_CHECK_LINK_FLAG([-Wl,--dynamicbase], [LDFLAGS="$LDFLAGS -Wl,--dynamicbase"])
        AX_CHECK_LINK_FLAG([-Wl,--nxcompat], [LDFLAGS="$LDFLAGS -Wl,--nxcompat"])
-       AX_CHECK_LINK_FLAG([-lssp], [LDFLAGS="$LDFLAGS -lssp"])
+       AX_CHECK_LINK_FLAG([-lssp], [LIBS="$LIBS -lssp"])
        ;;
      *)
        AX_CHECK_COMPILE_FLAG([-fPIE], [CPPFLAGS="$CPPFLAGS -fPIE"])
