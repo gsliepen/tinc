@@ -244,22 +244,22 @@ sptps_speed_SOURCES += \
 else
 if GCRYPT
 tincd_SOURCES += \
-	gcrypt/cipher.c \
+	gcrypt/cipher.c gcrypt/cipher.h \
 	gcrypt/crypto.c \
 	gcrypt/digest.c gcrypt/digest.h \
 	gcrypt/pem.c gcrypt/pem.h \
 	gcrypt/prf.c \
-	gcrypt/rsa.c
+	gcrypt/rsa.c gcrypt/rsa.h
 tinc_SOURCES += \
-	gcrypt/cipher.c \
+	gcrypt/cipher.c gcrypt/cipher.h \
 	gcrypt/crypto.c \
 	gcrypt/digest.c gcrypt/digest.h \
 	gcrypt/pem.c gcrypt/pem.h \
 	gcrypt/prf.c \
-	gcrypt/rsa.c \
+	gcrypt/rsa.c gcrypt/rsa.h \
 	gcrypt/rsagen.c
 sptps_test_SOURCES += \
-	gcrypt/cipher.c \
+	gcrypt/cipher.c gcrypt/cipher.h \
 	gcrypt/crypto.c \
 	gcrypt/digest.c gcrypt/digest.h \
 	gcrypt/prf.c

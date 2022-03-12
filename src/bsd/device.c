@@ -28,7 +28,7 @@
 #include "../xalloc.h"
 
 #ifdef ENABLE_TUNEMU
-#include "bsd/tunemu.h"
+#include "tunemu.h"
 #endif
 
 #ifdef HAVE_NET_IF_UTUN_H
