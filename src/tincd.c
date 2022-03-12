@@ -143,7 +143,7 @@ static void usage(bool status) {
 		        "\n"
 		        "Report bugs to tinc@tinc-vpn.org.\n";
 
-		fprintf(stderr, message, program_name);
+		printf(message, program_name);
 	}
 }
 
