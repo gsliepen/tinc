@@ -6,8 +6,8 @@ deps_linux_alpine() {
   apk upgrade
 
   apk add \
-    git binutils make autoconf automake gcc linux-headers diffutils texinfo \
-    procps socat shadow sudo libgcrypt-dev \
+    git binutils make autoconf automake gcc linux-headers diffutils \
+    procps socat shadow sudo libgcrypt-dev texinfo texlive gzip \
     openssl-dev zlib-dev lzo-dev ncurses-dev readline-dev musl-dev lz4-dev vde2-dev
 }
 
@@ -24,7 +24,7 @@ deps_linux_debian() {
   apt-get upgrade -y
 
   apt-get install -y \
-    git binutils make autoconf automake gcc diffutils sudo texinfo netcat-openbsd procps socat \
+    git binutils make autoconf automake gcc diffutils sudo texinfo texlive netcat-openbsd procps socat \
     zlib1g-dev:"$HOST" \
     libssl-dev:"$HOST" \
     liblzo2-dev:"$HOST" \
@@ -54,7 +54,7 @@ deps_linux_rhel() {
   yum upgrade -y
 
   yum install -y \
-    git binutils make autoconf automake gcc diffutils sudo texinfo netcat procps systemd \
+    git binutils make autoconf automake gcc diffutils sudo texinfo-tex netcat procps systemd \
     findutils socat lzo-devel zlib-devel lz4-devel ncurses-devel readline-devel libgcrypt-devel "$@"
 
   if yum info openssl11-devel; then

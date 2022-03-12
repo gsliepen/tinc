@@ -1,3 +1,9 @@
+# plain make
 src:ed25519/*
 src:chacha-poly1305/*
 src:xoshiro.c
+
+# make distcheck
+src:../../../src/ed25519/*
+src:../../../src/chacha-poly1305/*
+src:../../../src/xoshiro.c

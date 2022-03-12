@@ -32,12 +32,23 @@ run_tests() {
   header "Running test flavor $flavor"
 
   autoreconf -fsi
-  # shellcheck disable=SC2046
-  ./configure $(sh .ci/conf.sh "$@")
+
+  DISTCHECK_CONFIGURE_FLAGS=$(sh .ci/conf.sh "$@")
+  export DISTCHECK_CONFIGURE_FLAGS
+
+  # shellcheck disable=SC2086
+  ./configure $DISTCHECK_CONFIGURE_FLAGS
+
   make -j"$(nproc)" all extra
 
+  if [ "$(uname -s)" = Linux ]; then
+    cmd=distcheck
+  else
+    cmd=check
+  fi
+
   code=0
-  make check -j2 VERBOSE=1 || code=$?
+  make $cmd -j2 VERBOSE=1 || code=$?
 
   sudo tar -c -z -f "/tmp/logs/tests.$flavor.tar.gz" test/ sanitizer/
 

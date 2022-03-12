@@ -26,6 +26,12 @@ README: configure-version README.md
 
 CLEANFILES = README
 
+# If we're running on a CI server, we may not be able to remove some test
+# artifacts without using sudo because they are created by tincd running
+# with root privileges.
+clean-local:
+	if test -n "${CI}"; then sudo rm -rf test/*.test.*/; fi
+
 ChangeLog:
 	(cd $(srcdir) && git log) > ChangeLog
 
