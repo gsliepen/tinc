@@ -27,6 +27,7 @@ for path in $paths; do
 done
 
 if ! [ -f compile_commands.json ]; then
+  make clean
   compiledb make all extra
 fi
 
