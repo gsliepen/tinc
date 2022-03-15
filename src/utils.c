@@ -195,17 +195,6 @@ const char *winerror(int err) {
 }
 #endif
 
-unsigned int bitfield_to_int(const void *bitfield, size_t size) {
-	unsigned int value = 0;
-
-	if(size > sizeof(value)) {
-		size = sizeof(value);
-	}
-
-	memcpy(&value, bitfield, size);
-	return value;
-}
-
 bool check_id(const char *id) {
 	if(!id || !*id) {
 		return false;

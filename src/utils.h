@@ -63,8 +63,6 @@ static inline suseconds_t jitter(void) {
 }
 #endif
 
-extern unsigned int bitfield_to_int(const void *bitfield, size_t size);
-
 extern bool check_id(const char *id);
 extern bool check_netname(const char *netname, bool strict);
 char *replace_name(const char *name);

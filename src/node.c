@@ -209,7 +209,7 @@ bool dump_nodes(connection_t *c) {
 #else
 		             cipher_get_nid(n->outcipher), digest_get_nid(n->outdigest), (unsigned long)digest_length(n->outdigest),
 #endif
-		             n->outcompression, n->options, bitfield_to_int(&n->status, sizeof(n->status)),
+		             n->outcompression, n->options, n->status.value,
 		             n->nexthop ? n->nexthop->name : "-", n->via && n->via->name ? n->via->name : "-", n->distance,
 		             n->mtu, n->minmtu, n->maxmtu, (long)n->last_state_change, n->udp_ping_rtt,
 		             n->in_packets, n->in_bytes, n->out_packets, n->out_bytes);
