@@ -54,7 +54,7 @@ jobs:
 
   static-analysis:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
       - name: Checkout code
         uses: actions/checkout@v1
@@ -115,7 +115,7 @@ jobs:
 
   sanitizer:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -133,6 +133,9 @@ jobs:
       - name: Install deps
         run: sudo sh .ci/deps.sh
 
+      - name: Run tests with OpenSSL 3
+        run: bash .ci/sanitizers/run.sh openssl3
+
       - name: Sanitize tests with default settings
         run: bash .ci/sanitizers/run.sh default
 
@@ -149,7 +152,7 @@ jobs:
 
   linux:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -180,6 +183,9 @@ jobs:
 
       - name: Create a non-privileged user
         run: sh .ci/test/prepare.sh
+
+      - name: Run tests with OpenSSL 3
+        run: sudo -u build CI=1 sh .ci/test/run.sh openssl3
 
       - name: Run tests with default settings
         run: sudo -u build CI=1 sh .ci/test/run.sh default

@@ -54,7 +54,7 @@ deps_linux_rhel() {
   yum upgrade -y
 
   yum install -y \
-    git binutils make autoconf automake gcc diffutils sudo texinfo-tex netcat procps systemd \
+    git binutils make autoconf automake gcc diffutils sudo texinfo-tex netcat procps systemd perl-IPC-Cmd \
     findutils socat lzo-devel zlib-devel lz4-devel ncurses-devel readline-devel libgcrypt-devel "$@"
 
   if yum info openssl11-devel; then
@@ -68,6 +68,29 @@ deps_linux_rhel() {
   fi
 }
 
+linux_openssl3() {
+  if [ -n "${HOST:-}" ]; then
+    echo >&2 "Not installing OpenSSL 3 to a cross-compilation job"
+    return
+  fi
+
+  src=/usr/local/src/openssl
+  ssl3=/opt/ssl3
+
+  mkdir -p $src
+
+  git clone --depth 1 --branch openssl-3.0.2 https://github.com/openssl/openssl $src
+  cd $src
+
+  ./Configure --prefix=$ssl3 --openssldir=$ssl3
+  make -j"$(nproc)"
+  make install_sw
+
+  ldconfig -v $ssl3/lib64
+
+  cd -
+}
+
 deps_linux() {
   . /etc/os-release
 
@@ -78,10 +101,12 @@ deps_linux() {
 
   debian | ubuntu)
     deps_linux_debian "$@"
+    linux_openssl3
     ;;
 
   centos | almalinux | fedora)
     deps_linux_rhel "$@"
+    linux_openssl3
     ;;
 
   *) exit 1 ;;

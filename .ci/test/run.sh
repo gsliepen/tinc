@@ -86,6 +86,13 @@ nolegacy)
 gcrypt)
   run_tests gcrypt --with-libgcrypt
   ;;
+openssl3)
+  if [ -d /opt/ssl3 ]; then
+    run_tests openssl3 --with-openssl=/opt/ssl3 --with-openssl-include=/opt/ssl3/include --with-openssl-lib=/opt/ssl3/lib64
+  else
+    echo >&2 "OpenSSL 3 not installed, skipping test"
+  fi
+  ;;
 *)
   bail "unknown test flavor $1"
   ;;
