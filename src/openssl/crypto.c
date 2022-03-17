@@ -93,7 +93,9 @@ void randomize(void *out, size_t outlen) {
 void crypto_init(void) {
 	random_init();
 
+#if OPENSSL_VERSION_MAJOR < 3
 	ENGINE_load_builtin_engines();
+#endif
 
 	if(!RAND_status()) {
 		fprintf(stderr, "Not enough entropy for the PRNG!\n");

@@ -25,7 +25,11 @@
 
 struct digest {
 	const EVP_MD *digest;
+#if OPENSSL_VERSION_MAJOR < 3
 	HMAC_CTX *hmac_ctx;
+#else
+	EVP_MAC_CTX *hmac_ctx;
+#endif
 	EVP_MD_CTX *md_ctx;
 	size_t maclength;
 };

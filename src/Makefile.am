@@ -223,24 +223,28 @@ tincd_SOURCES += \
 	openssl/crypto.c \
 	openssl/digest.c openssl/digest.h \
 	openssl/prf.c \
-	openssl/rsa.c
+	openssl/rsa.c \
+	openssl/log.c openssl/log.h
 tinc_SOURCES += \
 	openssl/cipher.c openssl/cipher.h \
 	openssl/crypto.c \
 	openssl/digest.c openssl/digest.h \
 	openssl/prf.c \
 	openssl/rsa.c \
-	openssl/rsagen.c
+	openssl/rsagen.c \
+	openssl/log.c openssl/log.h
 sptps_test_SOURCES += \
 	openssl/crypto.c \
 	openssl/digest.c openssl/digest.h \
-	openssl/prf.c
+	openssl/prf.c \
+	openssl/log.c openssl/log.h
 sptps_keypair_SOURCES += \
 	openssl/crypto.c
 sptps_speed_SOURCES += \
 	openssl/crypto.c \
 	openssl/digest.c openssl/digest.h \
-	openssl/prf.c
+	openssl/prf.c \
+	openssl/log.c openssl/log.h
 else
 if GCRYPT
 tincd_SOURCES += \

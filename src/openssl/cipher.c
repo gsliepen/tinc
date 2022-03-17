@@ -19,10 +19,10 @@
 
 #include "../system.h"
 
-#include <openssl/rand.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
 
+#include "log.h"
 #include "cipher.h"
 #include "../cipher.h"
 #include "../logger.h"
@@ -120,7 +120,7 @@ bool cipher_set_key(cipher_t *cipher, void *key, bool encrypt) {
 		return true;
 	}
 
-	logger(DEBUG_ALWAYS, LOG_ERR, "Error while setting key: %s", ERR_error_string(ERR_get_error(), NULL));
+	openssl_err("set key");
 	return false;
 }
 
@@ -137,7 +137,7 @@ bool cipher_set_key_from_rsa(cipher_t *cipher, void *key, size_t len, bool encry
 		return true;
 	}
 
-	logger(DEBUG_ALWAYS, LOG_ERR, "Error while setting key: %s", ERR_error_string(ERR_get_error(), NULL));
+	openssl_err("set key");
 	return false;
 }
 
@@ -166,7 +166,7 @@ bool cipher_encrypt(cipher_t *cipher, const void *indata, size_t inlen, void *ou
 		}
 	}
 
-	logger(DEBUG_ALWAYS, LOG_ERR, "Error while encrypting: %s", ERR_error_string(ERR_get_error(), NULL));
+	openssl_err("encrypt data");
 	return false;
 }
 
@@ -195,7 +195,7 @@ bool cipher_decrypt(cipher_t *cipher, const void *indata, size_t inlen, void *ou
 		}
 	}
 
-	logger(DEBUG_ALWAYS, LOG_ERR, "Error while decrypting: %s", ERR_error_string(ERR_get_error(), NULL));
+	openssl_err("decrypt data");
 	return false;
 }
 
