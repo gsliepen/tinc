@@ -1,67 +1,38 @@
 #!/bin/sh
 
-set -eu
+set -eux
 
 add_flag() {
   printf ' %s ' "$@"
 }
 
 conf_linux() {
-  . /etc/os-release
-
-  if type rpm >&2; then
-    # CentOS 7 has OpenSSL 1.1 installed in a non-default location.
-    if [ -d /usr/include/openssl11 ]; then
-      add_flag --with-openssl-include=/usr/include/openssl11
-    fi
-
-    if [ -d /usr/lib64/openssl11 ]; then
-      add_flag --with-openssl-lib=/usr/lib64/openssl11
-    fi
-
-    # RHEL 8 does not ship miniupnpc.
-    if rpm -q miniupnpc-devel >&2; then
-      add_flag --enable-miniupnpc
-    fi
+  HOST="${HOST:-nonexistent}"
+  if [ "$HOST" = mingw ]; then
+    cross=".ci/cross/windows/amd64"
   else
-    # vde2 is available everywhere except the RHEL family.
-    add_flag --enable-vde
+    cross=".ci/cross/linux/$HOST"
   fi
-
-  # Cross-compilation.
-  if [ -n "${HOST:-}" ]; then
-    case "$HOST" in
-    armhf) triplet=arm-linux-gnueabihf ;;
-    mipsel) triplet=mipsel-linux-gnu ;;
-    *) exit 1 ;;
-    esac
-
-    add_flag --host="$triplet"
+  if [ -f "$cross" ]; then
+    add_flag --cross-file "$cross"
   fi
-
-  add_flag --enable-uml "$@"
+  add_flag -Dminiupnpc=auto -Duml=true
 }
 
 conf_windows() {
-  add_flag \
-    --enable-miniupnpc \
-    --disable-readline \
-    --with-curses-include=/mingw64/include/ncurses \
-    "$@"
+  add_flag -Dminiupnpc=auto
 }
 
 conf_macos() {
-  add_flag \
-    --with-openssl="$(brew --prefix openssl)" \
-    --with-miniupnpc="$(brew --prefix miniupnpc)" \
-    --enable-tunemu \
-    --enable-miniupnpc \
-    "$@"
+  openssl=$(brew --prefix openssl)
+  add_flag -Dminiupnpc=auto -Dpkg_config_path="$openssl/lib/pkgconfig"
 }
 
+add_flag -Dbuildtype=release "$@"
+
 case "$(uname -s)" in
-Linux) conf_linux "$@" ;;
-MINGW*) conf_windows "$@" ;;
-Darwin) conf_macos "$@" ;;
+Linux) conf_linux ;;
+MINGW*) conf_windows ;;
+Darwin) conf_macos ;;
 *) exit 1 ;;
 esac

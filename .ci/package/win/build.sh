@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -euo pipefail
+set -euxo pipefail
 
 curl -o wintap.exe -L 'https://build.openvpn.net/downloads/releases/latest/tap-windows-latest-stable.exe'
 

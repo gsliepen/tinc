@@ -1,0 +1,4 @@
+[binaries]
+c = 'arm-linux-gnueabihf-gcc'
+pkgconfig = 'arm-linux-gnueabihf-pkg-config'
+

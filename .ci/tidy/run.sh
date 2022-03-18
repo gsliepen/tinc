@@ -2,6 +2,8 @@
 
 set -eu
 
+./.ci/build.sh "$@"
+
 # Which paths to ignore.
 paths='src/solaris src/mingw src/gcrypt'
 
@@ -26,11 +28,6 @@ for path in $paths; do
   path_filters=" $path_filters ! ( -path $path -prune ) "
 done
 
-if ! [ -f compile_commands.json ]; then
-  make clean
-  compiledb make all extra
-fi
-
 echo >&2 "Running clang-tidy without $paths"
 
 # This is fine, our paths are relative and do not contain any whitespace.
@@ -38,4 +35,4 @@ echo >&2 "Running clang-tidy without $paths"
 find src \
   $path_filters \
   -name '*.c' \
-  -exec clang-tidy --header-filter='.*' '{}' +
+  -exec clang-tidy -p build --header-filter='.*' '{}' +

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -eu
+set -eux
 
 bail() {
   echo >&2 "@"
@@ -31,64 +31,41 @@ run_tests() {
 
   header "Running test flavor $flavor"
 
-  autoreconf -fsi
+  ./.ci/build.sh "$@"
 
-  DISTCHECK_CONFIGURE_FLAGS=$(sh .ci/conf.sh "$@")
-  export DISTCHECK_CONFIGURE_FLAGS
-
-  # shellcheck disable=SC2086
-  ./configure $DISTCHECK_CONFIGURE_FLAGS
-
-  make -j"$(nproc)" all extra
-
-  if [ "$(uname -s)" = Linux ]; then
-    cmd=distcheck
-  else
-    cmd=check
+  if [ "${HOST:-}" = mingw ]; then
+    echo >&2 "Integration tests cannot run under wine, skipping"
+    return 0
   fi
 
   code=0
-  make $cmd -j2 VERBOSE=1 || code=$?
+  meson test -C build --verbose || code=$?
 
-  sudo tar -c -z -f "/tmp/logs/tests.$flavor.tar.gz" test/ sanitizer/
+  sudo tar -c -z -f "/tmp/logs/tests.$flavor.tar.gz" build/ sanitizer/
 
   return $code
 }
 
 case "$(uname -s)" in
-Linux)
-  if [ -n "${HOST:-}" ]; then
-    # Needed for cross-compilation for 32-bit targets.
-    export CPPFLAGS="${CPPFLAGS:-} -D_FILE_OFFSET_BITS=64"
-  fi
-  ;;
-
-MINGW*)
-  # No-op.
-  sudo() { "$@"; }
-  ;;
-
-Darwin)
-  nproc() { sysctl -n hw.ncpu; }
-  gcrypt=$(brew --prefix libgcrypt)
-  openssl=$(brew --prefix openssl)
-  export CPPFLAGS="${CPPFLAGS:-} -I/usr/local/include -I$gcrypt/include -I$openssl/include -I$gcrypt/include"
-  ;;
+MINGW* | Darwin) sudo() { "$@"; } ;;
 esac
 
-case "$1" in
+flavor=$1
+shift
+
+case "$flavor" in
 default)
-  run_tests default
+  run_tests default "$@"
   ;;
 nolegacy)
-  run_tests nolegacy --disable-legacy-protocol
+  run_tests nolegacy -Dcrypto=nolegacy "$@"
   ;;
 gcrypt)
-  run_tests gcrypt --with-libgcrypt
+  run_tests gcrypt -Dcrypto=gcrypt "$@"
   ;;
 openssl3)
   if [ -d /opt/ssl3 ]; then
-    run_tests openssl3 --with-openssl=/opt/ssl3 --with-openssl-include=/opt/ssl3/include --with-openssl-lib=/opt/ssl3/lib64
+    run_tests openssl3 -Dpkg_config_path=/opt/ssl3/lib64/pkgconfig "$@"
   else
     echo >&2 "OpenSSL 3 not installed, skipping test"
   fi

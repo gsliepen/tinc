@@ -18,8 +18,8 @@ RequestExecutionLevel admin
 Section "Tinc"
   SetOutPath $INSTDIR
 
-  File ..\..\..\src\tinc.exe
-  File ..\..\..\src\tincd.exe
+  File ..\..\..\build\src\tinc.exe
+  File ..\..\..\build\src\tincd.exe
   File ..\..\..\wintap.exe
 
   CreateDirectory "$SMPROGRAMS\Tinc"

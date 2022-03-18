@@ -1,2 +1,3 @@
 Checks: '-*,bugprone-narrowing-conversions'
+HeaderFilterRegex: '.*'
 WarningsAsErrors: '*'

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -euo pipefail
+set -euxo pipefail
 
 . /etc/os-release
 
@@ -18,8 +18,9 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get install -y devscripts git-buildpackage dh-make
 
 export USER=${USER:-$(whoami)}
+export EMAIL=ci@tinc-vpn.org
 
-os="$ID-$VERSION_ID"
+os="$ID-${VERSION_ID:-unknown}"
 templates=$(dirname "$0")/debian
 
 git clean -dfx
@@ -47,5 +48,5 @@ cp "$templates/"* debian/
 # remove useless READMEs created by dh_make
 rm -f debian/README.*
 
-dpkg-buildpackage -d -us -uc
+dpkg-buildpackage -rfakeroot -us -uc -b
 mv ../*.deb .

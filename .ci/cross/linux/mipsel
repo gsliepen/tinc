@@ -1,0 +1,4 @@
+[binaries]
+c = 'mipsel-linux-gnu-gcc'
+pkgconfig = 'mipsel-linux-gnu-pkg-config'
+

@@ -17,6 +17,7 @@ jobs:
         arch:
           - armhf
           - mipsel
+          - mingw
 
     container:
       image: debian:bullseye
@@ -30,10 +31,7 @@ jobs:
         run: HOST=${{ matrix.arch }} sh .ci/deps.sh
 
       - name: Prepare the system
-        run: |
-          sh .ci/test/prepare.sh
-          update-binfmts --enable
-          rm -f /dev/net/tun
+        run: HOST=${{ matrix.arch }} sh .ci/test/prepare.sh
 
       - name: Run tests with default settings
         run: sudo -u build CI=1 HOST=${{ matrix.arch }} sh .ci/test/run.sh default
@@ -76,17 +74,12 @@ jobs:
       - name: Install deps
         run: sudo sh .ci/deps.sh
 
-      - name: Configure and compile
-        run: |
-          autoreconf -fsi
-          ./configure $(sh .ci/conf.sh)
-
       - name: Run clang-tidy
         run: sh .ci/tidy/run.sh
         if: always()
 
       - name: Check code formatting
-        run: "! astyle -r --options=.astylerc --dry-run --formatted '*.c' '*.h' | grep '^Formatted'"
+        run: "! astyle --exclude=build -r --options=.astylerc --dry-run --formatted '*.c' '*.h' | grep '^Formatted'"
         if: always()
 
       - name: Check scripts formatting
@@ -104,13 +97,13 @@ jobs:
       - name: Check warnings (gcc)
         run: bash .ci/warn/run.sh
         env:
-          CC: gcc
+          CC: gcc-10
         if: always()
 
       - name: Check warnings (clang)
         run: bash .ci/warn/run.sh
         env:
-          CC: clang
+          CC: clang-12
         if: always()
 
   sanitizer:
@@ -291,8 +284,8 @@ jobs:
           # https://packages.msys2.org/package/
           install: >-
             base-devel
-            autoconf-wrapper
-            automake-wrapper
+            mingw-w64-x86_64-meson
+            mingw-w64-x86_64-pkgconf
             mingw-w64-x86_64-gcc
             mingw-w64-x86_64-openssl
             mingw-w64-x86_64-libgcrypt

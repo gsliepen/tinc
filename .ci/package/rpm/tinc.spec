@@ -6,7 +6,15 @@ Summary:        A virtual private network daemon
 License:        GPLv2+
 URL:            https://www.tinc-vpn.org/
 
+BuildRequires: gcc
+BuildRequires: meson
 BuildRequires: systemd
+BuildRequires: openssl-devel
+BuildRequires: lzo-devel
+BuildRequires: zlib-devel
+BuildRequires: lz4-devel
+BuildRequires: ncurses-devel
+BuildRequires: readline-devel
 
 Requires(post):   systemd
 Requires(preun):  systemd
@@ -22,16 +30,16 @@ information with each other over the Internet without exposing any
 information to others.
 
 %define debug_package %{nil}
+%define __meson_auto_features auto
 
 %prep
 
 %build
-%configure --with-systemd=%{_unitdir} __CONFIGURE_ARGS__
-%make_build
+%meson
+%meson_build
 
 %install
-%make_install
-rm -f %{buildroot}%{_infodir}/dir
+%meson_install
 
 %post
 %systemd_post %{name}@.service
@@ -43,7 +51,7 @@ rm -f %{buildroot}%{_infodir}/dir
 %systemd_postun_with_restart %{name}@.service
 
 %files
-%doc AUTHORS COPYING.README NEWS README.md THANKS doc/sample* doc/*.tex
+%doc AUTHORS COPYING.README NEWS README.md THANKS doc/sample*
 %license COPYING
 %{_mandir}/man*/%{name}*.*
 %{_infodir}/%{name}.info.*

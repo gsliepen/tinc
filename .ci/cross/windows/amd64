@@ -1,0 +1,17 @@
+[properties]
+root = '/usr/x86_64-w64-mingw32'
+
+[binaries]
+c = 'x86_64-w64-mingw32-gcc'
+ar = 'x86_64-w64-mingw32-ar'
+as = 'x86_64-w64-mingw32-as'
+strip = 'x86_64-w64-mingw32-strip'
+windres = 'x86_64-w64-mingw32-windres'
+pkgconfig = 'x86_64-w64-mingw32-pkg-config'
+
+[host_machine]
+system = 'windows'
+endian = 'little'
+cpu = 'x86_64'
+cpu_family = 'x86_64'
+
