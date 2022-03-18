@@ -27,6 +27,10 @@
 #include "../cipher.h"
 #include "../logger.h"
 
+typedef int (enc_init_t)(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl, const unsigned char *key, const unsigned char *iv);
+typedef int (enc_update_t)(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl, const unsigned char *in, int inl);
+typedef int (enc_final_t)(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl);
+
 static void cipher_open(cipher_t *cipher, const EVP_CIPHER *evp_cipher) {
 	cipher->cipher = evp_cipher;
 	cipher->ctx = EVP_CIPHER_CTX_new();
@@ -107,13 +111,13 @@ size_t cipher_blocksize(const cipher_t *cipher) {
 	return EVP_CIPHER_block_size(cipher->cipher);
 }
 
-bool cipher_set_key(cipher_t *cipher, void *key, bool encrypt) {
+static bool cipher_init_ctx(cipher_t *cipher, bool encrypt, const unsigned char *key, const unsigned char *iv) {
 	bool result;
 
 	if(encrypt) {
-		result = EVP_EncryptInit_ex(cipher->ctx, cipher->cipher, NULL, (unsigned char *)key, (unsigned char *)key + EVP_CIPHER_key_length(cipher->cipher));
+		result = EVP_EncryptInit_ex(cipher->ctx, cipher->cipher, NULL, key, iv);
 	} else {
-		result = EVP_DecryptInit_ex(cipher->ctx, cipher->cipher, NULL, (unsigned char *)key, (unsigned char *)key + EVP_CIPHER_key_length(cipher->cipher));
+		result = EVP_DecryptInit_ex(cipher->ctx, cipher->cipher, NULL, key, iv);
 	}
 
 	if(result) {
@@ -124,79 +128,55 @@ bool cipher_set_key(cipher_t *cipher, void *key, bool encrypt) {
 	return false;
 }
 
+bool cipher_set_key(cipher_t *cipher, void *key, bool encrypt) {
+	unsigned char *iv = (unsigned char *)key + EVP_CIPHER_key_length(cipher->cipher);
+	return cipher_init_ctx(cipher, encrypt, key, iv);
+}
+
 bool cipher_set_key_from_rsa(cipher_t *cipher, void *key, size_t len, bool encrypt) {
-	bool result;
+	unsigned char *k = (unsigned char *)key + len - EVP_CIPHER_key_length(cipher->cipher);
+	unsigned char *iv = k - EVP_CIPHER_iv_length(cipher->cipher);
+	return cipher_init_ctx(cipher, encrypt, k, iv);
+}
 
-	if(encrypt) {
-		result = EVP_EncryptInit_ex(cipher->ctx, cipher->cipher, NULL, (unsigned char *)key + len - EVP_CIPHER_key_length(cipher->cipher), (unsigned char *)key + len - EVP_CIPHER_iv_length(cipher->cipher) - EVP_CIPHER_key_length(cipher->cipher));
+static bool cipher_encrypt_decrypt(cipher_t *cipher, const void *indata, size_t inlen, void *outdata, size_t *outlen, bool oneshot,
+                                   enc_init_t init, enc_update_t update, enc_final_t final) {
+	if(oneshot) {
+		int len, pad;
+
+		if(init(cipher->ctx, NULL, NULL, NULL, NULL)
+		                && update(cipher->ctx, (unsigned char *)outdata, &len, indata, (int)inlen)
+		                && final(cipher->ctx, (unsigned char *)outdata + len, &pad)) {
+			if(outlen) {
+				*outlen = len + pad;
+			}
+
+			return true;
+		}
 	} else {
-		result = EVP_DecryptInit_ex(cipher->ctx, cipher->cipher, NULL, (unsigned char *)key + len - EVP_CIPHER_key_length(cipher->cipher), (unsigned char *)key + len - EVP_CIPHER_iv_length(cipher->cipher) - EVP_CIPHER_key_length(cipher->cipher));
+		int len;
+
+		if(update(cipher->ctx, outdata, &len, indata, (int)inlen)) {
+			if(outlen) {
+				*outlen = len;
+			}
+
+			return true;
+		}
 	}
 
-	if(result) {
-		return true;
-	}
-
-	openssl_err("set key");
+	openssl_err("encrypt or decrypt data");
 	return false;
 }
 
 bool cipher_encrypt(cipher_t *cipher, const void *indata, size_t inlen, void *outdata, size_t *outlen, bool oneshot) {
-	if(oneshot) {
-		int len, pad;
-
-		if(EVP_EncryptInit_ex(cipher->ctx, NULL, NULL, NULL, NULL)
-		                && EVP_EncryptUpdate(cipher->ctx, (unsigned char *)outdata, &len, indata, (int)inlen)
-		                && EVP_EncryptFinal_ex(cipher->ctx, (unsigned char *)outdata + len, &pad)) {
-			if(outlen) {
-				*outlen = len + pad;
-			}
-
-			return true;
-		}
-	} else {
-		int len;
-
-		if(EVP_EncryptUpdate(cipher->ctx, outdata, &len, indata, (int)inlen)) {
-			if(outlen) {
-				*outlen = len;
-			}
-
-			return true;
-		}
-	}
-
-	openssl_err("encrypt data");
-	return false;
+	return cipher_encrypt_decrypt(cipher, indata, inlen, outdata, outlen, oneshot,
+	                              EVP_EncryptInit_ex, EVP_EncryptUpdate, EVP_EncryptFinal_ex);
 }
 
 bool cipher_decrypt(cipher_t *cipher, const void *indata, size_t inlen, void *outdata, size_t *outlen, bool oneshot) {
-	if(oneshot) {
-		int len, pad;
-
-		if(EVP_DecryptInit_ex(cipher->ctx, NULL, NULL, NULL, NULL)
-		                && EVP_DecryptUpdate(cipher->ctx, (unsigned char *)outdata, &len, indata, (int)inlen)
-		                && EVP_DecryptFinal_ex(cipher->ctx, (unsigned char *)outdata + len, &pad)) {
-			if(outlen) {
-				*outlen = len + pad;
-			}
-
-			return true;
-		}
-	} else {
-		int len;
-
-		if(EVP_DecryptUpdate(cipher->ctx, outdata, &len, indata, (int)inlen)) {
-			if(outlen) {
-				*outlen = len;
-			}
-
-			return true;
-		}
-	}
-
-	openssl_err("decrypt data");
-	return false;
+	return cipher_encrypt_decrypt(cipher, indata, inlen, outdata, outlen, oneshot,
+	                              EVP_DecryptInit_ex, EVP_DecryptUpdate, EVP_DecryptFinal_ex);
 }
 
 int cipher_get_nid(const cipher_t *cipher) {
