@@ -29,10 +29,6 @@
 #define _P1003_1B_VISIBLE
 #endif
 
-#ifdef HAVE_SYS_MMAN_H
-#include <sys/mman.h>
-#endif
-
 #ifdef HAVE_LZO
 #include LZO1X_H
 #endif
