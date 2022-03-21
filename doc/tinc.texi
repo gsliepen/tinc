@@ -549,11 +549,7 @@ for yourself, you can use the source.  The source is distributed under
 the GNU General Public License (GPL).  Download the source from the
 @uref{https://www.tinc-vpn.org/download/, download page}.
 
-Tinc comes in a convenient autoconf/automake package, which you can just
-treat the same as any other package.  Which is just untar it, type
-`./configure' and then `make'.
-More detailed instructions are in the file @file{INSTALL}, which is
-included in the source distribution.
+Please refer to @file{INSTALL.md} for information on how to build tinc from source.
 
 @menu
 * Building and installing tinc::

@@ -12,6 +12,10 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or (at
 your option) any later version. See the file COPYING for more details.
 
+## Building
+
+A detailed instruction on how to build tinc from source is available in [INSTALL.md](INSTALL.md).
+
 ## Nightly builds
 
 You can download pre-built binary packages for multiple Linux distributions and Windows here:
