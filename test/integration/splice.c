@@ -17,7 +17,7 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include "../src/system.h"
+#include "../../src/system.h"
 
 #ifdef HAVE_MINGW
 static const char *winerror(int err) {
