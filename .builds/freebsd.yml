@@ -13,6 +13,7 @@ packages:
   - texinfo
   - vde2
   - libgcrypt
+  - cmocka
 
 sources:
   - https://github.com/gsliepen/tinc

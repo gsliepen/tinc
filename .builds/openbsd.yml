@@ -8,6 +8,7 @@ packages:
   - miniupnpc
   - readline
   - texinfo
+  - cmocka
 
 sources:
   - https://github.com/gsliepen/tinc

@@ -8,7 +8,7 @@ deps_linux_alpine() {
   apk add \
     git binutils meson pkgconf gcc linux-headers diffutils \
     procps socat shadow sudo libgcrypt-dev texinfo gzip \
-    openssl-dev zlib-dev lzo-dev ncurses-dev readline-dev musl-dev lz4-dev vde2-dev
+    openssl-dev zlib-dev lzo-dev ncurses-dev readline-dev musl-dev lz4-dev vde2-dev cmocka-dev
 }
 
 deps_linux_debian_mingw() {
@@ -37,6 +37,7 @@ deps_linux_debian_linux() {
     libgcrypt-dev:"$HOST" \
     libminiupnpc-dev:"$HOST" \
     libvdeplug-dev:"$HOST" \
+    libcmocka-dev:"$HOST" \
     "$@"
 
   if [ -n "$HOST" ]; then
