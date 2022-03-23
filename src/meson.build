@@ -79,7 +79,7 @@ check_types = [
 subdir('ed25519')
 subdir('chacha-poly1305')
 
-src_lib_tinc = [
+src_lib_common = [
   'conf.c',
   'dropin.c',
   'keys.c',
@@ -101,7 +101,6 @@ src_tinc = [
   'ifconfig.c',
   'info.c',
   'invitation.c',
-  'tincctl.c',
   'top.c',
 ]
 
@@ -135,7 +134,6 @@ src_tincd = [
   'raw_socket_device.c',
   'route.c',
   'subnet.c',
-  'tincd.c',
 ]
 
 cc_flags_tincd = cc_flags
@@ -198,7 +196,7 @@ foreach type : check_types
 endforeach
 
 if not cdata.has('HAVE_GETOPT_H') or not cc.has_function('getopt_long', prefix: have_prefix, args: cc_defs)
-  src_lib_tinc += ['getopt.c', 'getopt1.c']
+  src_lib_common += ['getopt.c', 'getopt1.c']
 endif
 
 if not opt_miniupnpc.disabled()
@@ -326,13 +324,36 @@ lib_crypto = static_library(
   build_by_default: false,
 )
 
-deps_lib_tinc = [deps_common, dep_crypto]
+deps_lib_common = [deps_common, dep_crypto]
+deps_tinc += deps_lib_common
+deps_tincd += deps_lib_common
+
+lib_common = static_library(
+  'common',
+  sources: src_lib_common,
+  dependencies: deps_lib_common,
+  link_with: [lib_ed25519, lib_chacha_poly, lib_crypto],
+  implicit_include_directories: false,
+  include_directories: inc_conf,
+  build_by_default: false,
+)
 
 lib_tinc = static_library(
   'tinc',
-  sources: src_lib_tinc,
-  dependencies: deps_lib_tinc,
-  link_with: [lib_ed25519, lib_chacha_poly, lib_crypto],
+  sources: src_tinc,
+  dependencies: deps_tinc,
+  link_with: lib_common,
+  implicit_include_directories: false,
+  include_directories: inc_conf,
+  build_by_default: false,
+)
+
+lib_tincd = static_library(
+  'tincd',
+  sources: src_tincd,
+  dependencies: deps_tincd,
+  link_with: lib_common,
+  c_args: cc_flags_tincd,
   implicit_include_directories: false,
   include_directories: inc_conf,
   build_by_default: false,
@@ -340,8 +361,8 @@ lib_tinc = static_library(
 
 exe_tinc = executable(
   'tinc',
-  sources: src_tinc,
-  dependencies: [deps_lib_tinc, deps_tinc],
+  sources: 'tincctl.c',
+  dependencies: deps_tinc,
   link_with: lib_tinc,
   implicit_include_directories: false,
   include_directories: inc_conf,
@@ -351,9 +372,9 @@ exe_tinc = executable(
 
 exe_tincd = executable(
   'tincd',
-  sources: src_tincd,
-  dependencies: [deps_lib_tinc, deps_tincd],
-  link_with: lib_tinc,
+  sources: 'tincd.c',
+  dependencies: deps_tincd,
+  link_with: lib_tincd,
   c_args: cc_flags_tincd,
   implicit_include_directories: false,
   include_directories: inc_conf,
@@ -364,8 +385,8 @@ exe_tincd = executable(
 exe_sptps_test = executable(
   'sptps_test',
   sources: 'sptps_test.c',
-  dependencies: deps_lib_tinc,
-  link_with: lib_tinc,
+  dependencies: deps_lib_common,
+  link_with: lib_common,
   implicit_include_directories: false,
   include_directories: inc_conf,
   build_by_default: false,
@@ -374,8 +395,8 @@ exe_sptps_test = executable(
 exe_sptps_keypair = executable(
   'sptps_keypair',
   sources: 'sptps_keypair.c',
-  dependencies: deps_lib_tinc,
-  link_with: lib_tinc,
+  dependencies: deps_lib_common,
+  link_with: lib_common,
   implicit_include_directories: false,
   include_directories: inc_conf,
   build_by_default: false,
@@ -387,8 +408,8 @@ if os_name == 'linux'
   exe_sptps_speed = executable(
     'sptps_speed',
     sources: 'sptps_speed.c',
-    dependencies: [deps_lib_tinc, dep_rt],
-    link_with: lib_tinc,
+    dependencies: [deps_lib_common, dep_rt],
+    link_with: lib_common,
     implicit_include_directories: false,
     include_directories: inc_conf,
     build_by_default: false,
