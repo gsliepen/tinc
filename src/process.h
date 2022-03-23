@@ -24,6 +24,8 @@
 #include "system.h"
 
 extern bool do_detach;
+extern bool use_logfile;
+extern bool use_syslog;
 
 extern bool detach(void);
 

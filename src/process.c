@@ -33,8 +33,12 @@
 bool do_detach = true;
 
 extern char **g_argv;
-extern bool use_logfile;
-extern bool use_syslog;
+
+/* If nonzero, use syslog instead of stderr in no-detach mode. */
+bool use_syslog = false;
+
+/* If nonzero, write log entries to a separate file. */
+bool use_logfile = false;
 
 /* Some functions the less gifted operating systems might lack... */
 

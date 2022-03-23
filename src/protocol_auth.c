@@ -46,6 +46,9 @@
 #include "ed25519/sha512.h"
 #include "keys.h"
 
+/* If nonzero, use null ciphers and skip all key exchanges. */
+bool bypass_security = false;
+
 int invitation_lifetime;
 ecdsa_t *invitation_key = NULL;
 
