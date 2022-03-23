@@ -1,18 +1,19 @@
 #!/bin/sh
 
-. ./testlib.sh
+# shellcheck disable=SC1090
+. "$TESTLIB_PATH"
 
 echo [STEP] Skip this test if tools are missing
 
-command -v nc >/dev/null || exit $EXIT_SKIP_TEST
-command -v timeout >/dev/null || exit $EXIT_SKIP_TEST
+command -v nc >/dev/null || exit "$EXIT_SKIP_TEST"
+command -v timeout >/dev/null || exit "$EXIT_SKIP_TEST"
 
 foo_port=30050
 bar_port=30051
 
 # usage: splice protocol_version
 splice() {
-  ./splice foo localhost $foo_port bar localhost $bar_port "$1" &
+  "$SPLICE_PATH" foo localhost $foo_port bar localhost $bar_port "$1" &
   sleep 10
 }
 
@@ -28,7 +29,7 @@ send_with_timeout() {
     ) | timeout 10 nc localhost $foo_port
   ) && exit 1
 
-  test $? = $EXIT_TIMEOUT
+  test $? = "$EXIT_TIMEOUT"
 
   if [ -z "$expected" ]; then
     test -z "$result"

@@ -25,7 +25,6 @@
 #include <sys/epoll.h>
 #endif
 
-#include "dropin.h"
 #include "event.h"
 #include "utils.h"
 #include "net.h"

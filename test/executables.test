@@ -1,6 +1,7 @@
 #!/bin/sh
 
-. ./testlib.sh
+# shellcheck disable=SC1090
+. "$TESTLIB_PATH"
 
 echo [STEP] Just test whether the executables work
 
@@ -8,6 +9,6 @@ tinc foo --help
 
 tincd foo --help
 
-if [ -e "$SPTPS_TEST" ]; then
-  $SPTPS_TEST --help
+if [ -e "$SPTPS_TEST_PATH" ]; then
+  "$SPTPS_TEST_PATH" --help
 fi

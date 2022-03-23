@@ -16,14 +16,6 @@ realdir() {
   fi
 }
 
-tincd_path=$(realdir "../src/tincd@EXEEXT@")
-tinc_path=$(realdir "../src/tinc@EXEEXT@")
-
-# shellcheck disable=SC2034
-SPTPS_TEST=$(realdir "../src/sptps_test@EXEEXT@")
-# shellcheck disable=SC2034
-SPTPS_KEYPAIR=$(realdir "../src/sptps_keypair@EXEEXT@")
-
 # Exit status list
 # shellcheck disable=SC2034
 EXIT_FAILURE=1
@@ -182,22 +174,6 @@ expect_code() {
   fi
 }
 
-# Runs its arguments with timeout(1) or gtimeout(1) if either are installed.
-# Usage: try_limit_time 10 command --with --args
-if type timeout >/dev/null; then
-  try_limit_time() {
-    time=$1
-    shift
-    timeout "$time" "$@"
-  }
-else
-  try_limit_time() {
-    echo >&2 "timeout was not found, running without time limits!"
-    shift
-    "$@"
-  }
-fi
-
 # wc -l on mac prints whitespace before the actual number.
 # This is simplest cross-platform alternative without that behavior.
 count_lines() {
@@ -211,9 +187,9 @@ tinc() {
   shift
 
   case "$peer" in
-  foo) try_limit_time 30 "$tinc_path" -n "$net1" --config="$DIR_FOO" --pidfile="$DIR_FOO/pid" "$@" ;;
-  bar) try_limit_time 30 "$tinc_path" -n "$net2" --config="$DIR_BAR" --pidfile="$DIR_BAR/pid" "$@" ;;
-  baz) try_limit_time 30 "$tinc_path" -n "$net3" --config="$DIR_BAZ" --pidfile="$DIR_BAZ/pid" "$@" ;;
+  foo) "$TINC_PATH" -n "$net1" --config="$DIR_FOO" --pidfile="$DIR_FOO/pid" "$@" ;;
+  bar) "$TINC_PATH" -n "$net2" --config="$DIR_BAR" --pidfile="$DIR_BAR/pid" "$@" ;;
+  baz) "$TINC_PATH" -n "$net3" --config="$DIR_BAZ" --pidfile="$DIR_BAZ/pid" "$@" ;;
   *) bail "invalid command [[$peer $*]]" ;;
   esac
 }
@@ -225,9 +201,9 @@ tincd() {
   shift
 
   case "$peer" in
-  foo) try_limit_time 30 "$tincd_path" -n "$net1" --config="$DIR_FOO" --pidfile="$DIR_FOO/pid" --logfile="$DIR_FOO/log" -d5 "$@" ;;
-  bar) try_limit_time 30 "$tincd_path" -n "$net2" --config="$DIR_BAR" --pidfile="$DIR_BAR/pid" --logfile="$DIR_BAR/log" -d5 "$@" ;;
-  baz) try_limit_time 30 "$tincd_path" -n "$net3" --config="$DIR_BAZ" --pidfile="$DIR_BAZ/pid" --logfile="$DIR_BAZ/log" -d5 "$@" ;;
+  foo) "$TINCD_PATH" -n "$net1" --config="$DIR_FOO" --pidfile="$DIR_FOO/pid" --logfile="$DIR_FOO/log" -d5 "$@" ;;
+  bar) "$TINCD_PATH" -n "$net2" --config="$DIR_BAR" --pidfile="$DIR_BAR/pid" --logfile="$DIR_BAR/log" -d5 "$@" ;;
+  baz) "$TINCD_PATH" -n "$net3" --config="$DIR_BAZ" --pidfile="$DIR_BAZ/pid" --logfile="$DIR_BAZ/log" -d5 "$@" ;;
   *) bail "invalid command [[$peer $*]]" ;;
   esac
 }
@@ -319,7 +295,7 @@ EOF
 #!/bin/sh
 (
   cd "$PWD" || exit 1
-  SCRIPTNAME="$SCRIPTNAME" . ./testlib.sh
+  SCRIPTNAME="$SCRIPTNAME" . "$TESTLIB_PATH"
   $@
   echo "$script,\$$,$TINC_SCRIPT_VARS" >>"$script_log"
 ) >/dev/null 2>&1 || kill -TERM $$
@@ -384,7 +360,7 @@ wait_script() {
   (tail -n +"$line" -f "$script_log" >"$fifo") &
 
   new_line=$(
-    try_limit_time 60 sh -c "
+    sh -c "
       grep -n -m $count '^$script,' <'$fifo'
     " | awk -F: 'END { print $1 }'
   )
@@ -403,12 +379,6 @@ $((line + new_line))
 EOF
 }
 
-# Are we running tests in parallel?
-is_parallel() {
-  # Grep the make flags for any of: '-j', '-j5', '-j 42', but not 'n-j', '-junk'.
-  echo "$MAKEFLAGS" | grep -E -q '(^|[[:space:]])-j[[:digit:]]*([[:space:]]|$)'
-}
-
 # Cleanup after running each script.
 cleanup() {
   (
@@ -420,20 +390,6 @@ cleanup() {
     fi
 
     stop_all_tincs
-
-    # Ask nicely, then kill anything that's left.
-    if is_ci && ! is_parallel; then
-      kill_processes() {
-        signal=$1
-        shift
-        for process in "$@"; do
-          pkill -"SIG$signal" -x -u "$(id -u)" "$process"
-        done
-      }
-      echo >&2 "CI server detected, performing aggressive cleanup"
-      kill_processes TERM tinc tincd
-      kill_processes KILL tinc tincd
-    fi
   ) || true
 }
 
@@ -456,7 +412,7 @@ require_root() {
   else
     # Avoid these kinds of surprises outside CI. Just skip the test.
     echo "root is required for test $SCRIPTNAME, but we're a regular user; skipping"
-    exit $EXIT_SKIP_TEST
+    exit "$EXIT_SKIP_TEST"
   fi
 }
 
@@ -473,9 +429,7 @@ echo [STEP] Check for leftover tinc daemons and test directories
 # Cleanup leftovers from previous runs.
 stop_all_tincs
 
-if [ -d "$DIR_FOO" ]; then rm -rf "$DIR_FOO"; fi
-if [ -d "$DIR_BAR" ]; then rm -rf "$DIR_BAR"; fi
-if [ -d "$DIR_BAZ" ]; then rm -rf "$DIR_BAZ"; fi
+rm -rf "$DIR_FOO" "$DIR_BAR" "$DIR_BAZ"
 
 # Register cleanup function so we don't have to call it everywhere
 # (and failed scripts do not leave stray tincd running).

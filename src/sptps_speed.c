@@ -45,7 +45,6 @@ bool send_meta(struct connection_t *c, const void *msg, size_t len) {
 	(void)len;
 	return false;
 }
-char *logfilename = NULL;
 bool do_detach = false;
 struct timeval now;
 

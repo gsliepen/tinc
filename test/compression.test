@@ -1,11 +1,12 @@
 #!/bin/sh
 
-. ./testlib.sh
+# shellcheck disable=SC1090
+. "$TESTLIB_PATH"
 
 require_root "$0" "$@"
-test -e /dev/net/tun || exit $EXIT_SKIP_TEST
-ip netns list || exit $EXIT_SKIP_TEST
-command -v socat || exit $EXIT_SKIP_TEST
+test -e /dev/net/tun || exit "$EXIT_SKIP_TEST"
+ip netns list || exit "$EXIT_SKIP_TEST"
+command -v socat || exit "$EXIT_SKIP_TEST"
 
 ip_foo=192.168.1.1
 ip_bar=192.168.1.2
@@ -106,7 +107,7 @@ for level in $levels; do
   wait_script foo hosts/bar-up
   wait_script bar hosts/foo-up
 
-  try_limit_time 60 sh <<EOF
+  sh <<EOF
     set -eu
     ip netns exec foo socat -u TCP4-LISTEN:$recv_port_foo,reuseaddr OPEN:"$tmp_file",creat &
     ip netns exec bar socat -u OPEN:"$ref_file" TCP4:$ip_foo:$recv_port_foo,retry=30 &

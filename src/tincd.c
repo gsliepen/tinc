@@ -33,8 +33,8 @@
 #include LZO1X_H
 #endif
 
-#ifdef LZ4_H
-#include LZ4_H
+#ifdef HAVE_LZ4
+#include <lz4.h>
 #endif
 
 #ifndef HAVE_MINGW

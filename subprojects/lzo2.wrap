@@ -1,0 +1,12 @@
+[wrap-file]
+directory = lzo-2.10
+source_url = https://www.oberhumer.com/opensource/lzo/download/lzo-2.10.tar.gz
+source_filename = lzo-2.10.tar.gz
+source_hash = c0f892943208266f9b6543b3ae308fab6284c5c90e627931446fb49b4221a072
+patch_filename = lzo2_2.10-1_patch.zip
+patch_url = https://wrapdb.mesonbuild.com/v2/lzo2_2.10-1/get_patch
+patch_hash = 181cf865ea5317b6e8822c71385325328863489a4e5f49177ff67fd13ea1220e
+
+[provide]
+lzo2 = lzo2_dep
+

@@ -30,9 +30,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define _NO_PROTO
 #endif
 
-#ifdef HAVE_CONFIG_H
-#include "../config.h"
-#endif
+#include "config.h"
 
 #if !defined (__STDC__) || !__STDC__
 /* This is a separate conditional since some stdc systems

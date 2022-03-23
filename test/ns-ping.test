@@ -1,10 +1,11 @@
 #!/bin/sh
 
-. ./testlib.sh
+# shellcheck disable=SC1090
+. "$TESTLIB_PATH"
 
 require_root "$0" "$@"
-test -e /dev/net/tun || exit $EXIT_SKIP_TEST
-ip netns list || exit $EXIT_SKIP_TEST
+test -e /dev/net/tun || exit "$EXIT_SKIP_TEST"
+ip netns list || exit "$EXIT_SKIP_TEST"
 
 ip_foo=192.168.1.1
 ip_bar=192.168.1.2

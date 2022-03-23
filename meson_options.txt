@@ -1,0 +1,91 @@
+option('runstatedir',
+       type: 'string',
+       value: '',
+       description: 'state directory for sockets, PID files')
+
+option('docs',
+       type: 'feature',
+       value: 'auto',
+       description: 'generate documentation')
+
+option('tests',
+       type: 'feature',
+       value: 'auto',
+       description: 'enable tests')
+
+option('hardening',
+       type: 'boolean',
+       value: true,
+       description: 'add compiler and linker hardening flags')
+
+option('static',
+       type: 'feature',
+       value: 'auto',
+       description: 'statically link dependencies (auto: YES on Windows, NO everywhere else)')
+
+option('systemd',
+       type: 'feature',
+       value: 'auto',
+       description: 'install systemd service files')
+
+option('systemd_dir',
+       type: 'string',
+       value: '',
+       description: 'systemd service directory (defaults to $prefix/lib/systemd/system)')
+
+option('crypto',
+       type: 'combo',
+       choices: ['openssl', 'gcrypt', 'nolegacy'],
+       value: 'openssl',
+       description: 'which cryptographic library to use')
+
+option('miniupnpc',
+       type: 'feature',
+       value: 'disabled',
+       description: 'miniupnpc support')
+
+option('lzo',
+       type: 'feature',
+       value: 'auto',
+       description: 'lzo compression support')
+
+option('lz4',
+       type: 'feature',
+       value: 'auto',
+       description: 'lz4 compression support')
+
+option('curses',
+       type: 'feature',
+       value: 'auto',
+       description: 'curses support')
+
+option('readline',
+       type: 'feature',
+       value: 'auto',
+       description: 'readline support')
+
+option('zlib',
+       type: 'feature',
+       value: 'auto',
+       description: 'zlib compression support')
+
+option('uml',
+       type: 'boolean',
+       value: false,
+       description: 'User Mode Linux support')
+
+option('tunemu',
+       type: 'feature',
+       value: 'auto',
+       description: 'support for the tunemu driver')
+
+option('vde',
+       type: 'feature',
+       value: 'auto',
+       description: 'support for Virtual Distributed Ethernet')
+
+option('jumbograms',
+       type: 'boolean',
+       value: false,
+       description: 'support for jumbograms (packets up to 9000 bytes)')
+

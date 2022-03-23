@@ -1,10 +1,11 @@
 #!/bin/sh
 
-. ./testlib.sh
+# shellcheck disable=SC1090
+. "$TESTLIB_PATH"
 
 echo [STEP] Skip this test if we did not compile sptps_test
 
-test -e "$SPTPS_TEST" -a -e "$SPTPS_KEYPAIR" || exit $EXIT_SKIP_TEST
+test -e "$SPTPS_TEST" -a -e "$SPTPS_KEYPAIR_PATH" || exit "$EXIT_SKIP_TEST"
 
 port=30080
 
@@ -16,8 +17,8 @@ client_pub="$DIR_FOO/client.pub"
 echo [STEP] Generate keys
 
 mkdir -p "$DIR_FOO"
-$SPTPS_KEYPAIR "$server_priv" "$server_pub"
-$SPTPS_KEYPAIR "$client_priv" "$client_pub"
+"$SPTPS_KEYPAIR_PATH" "$server_priv" "$server_pub"
+"$SPTPS_KEYPAIR_PATH" "$client_priv" "$client_pub"
 
 echo [STEP] Test transfer of a simple file
 
@@ -25,20 +26,20 @@ reference=testlib.sh
 
 (
   sleep 3
-  $SPTPS_TEST -4 -q "$client_priv" "$server_pub" localhost $port <"$reference"
+  "$SPTPS_TEST_PATH" -4 -q "$client_priv" "$server_pub" localhost $port <"$reference"
 ) &
 
-$SPTPS_TEST -4 "$server_priv" "$client_pub" $port >"$DIR_FOO/out1"
+"$SPTPS_TEST_PATH" -4 "$server_priv" "$client_pub" $port >"$DIR_FOO/out1"
 diff -w "$DIR_FOO/out1" "$reference"
 
-$SPTPS_TEST -4 -q "$server_priv" "$client_pub" $port <"$reference" &
+"$SPTPS_TEST_PATH" -4 -q "$server_priv" "$client_pub" $port <"$reference" &
 sleep 3
-$SPTPS_TEST -4 "$client_priv" "$server_pub" localhost $port >"$DIR_FOO/out2"
+"$SPTPS_TEST_PATH" -4 "$client_priv" "$server_pub" localhost $port >"$DIR_FOO/out2"
 diff -w "$DIR_FOO/out2" "$reference"
 
 echo [STEP] Datagram mode
 
-$SPTPS_TEST -4 -dq "$server_priv" "$client_pub" $port <"$reference" &
+"$SPTPS_TEST_PATH" -4 -dq "$server_priv" "$client_pub" $port <"$reference" &
 sleep 3
-sleep 3 | $SPTPS_TEST -4 -dq "$client_priv" "$server_pub" localhost $port >"$DIR_FOO/out3"
+sleep 3 | "$SPTPS_TEST_PATH" -4 -dq "$client_priv" "$server_pub" localhost $port >"$DIR_FOO/out3"
 diff -w "$DIR_FOO/out3" "$reference"

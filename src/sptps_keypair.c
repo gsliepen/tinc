@@ -24,8 +24,7 @@
 #include "crypto.h"
 #include "ecdsagen.h"
 #include "logger.h"
-
-static char *program_name;
+#include "names.h"
 
 void logger(debug_t level, int priority, const char *format, ...) {
 	(void)level;

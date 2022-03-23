@@ -1,6 +1,8 @@
 --indent=tab=8
 --convert-tabs
---exclude=src/lib
+--exclude=subprojects
+--exclude=build
+--recursive
 -i
 -j
 -f
@@ -10,3 +12,5 @@
 -xg
 -k3
 -w
+--formatted
+

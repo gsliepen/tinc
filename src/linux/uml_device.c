@@ -18,18 +18,18 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include "system.h"
+#include "../system.h"
 
 #include <sys/un.h>
 
-#include "conf.h"
-#include "device.h"
-#include "names.h"
-#include "net.h"
-#include "logger.h"
-#include "utils.h"
-#include "route.h"
-#include "xalloc.h"
+#include "../conf.h"
+#include "../device.h"
+#include "../names.h"
+#include "../net.h"
+#include "../logger.h"
+#include "../utils.h"
+#include "../route.h"
+#include "../xalloc.h"
 
 static int listen_fd = -1;
 static int request_fd = -1;

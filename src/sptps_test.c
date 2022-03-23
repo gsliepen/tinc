@@ -35,6 +35,7 @@
 #include "protocol.h"
 #include "sptps.h"
 #include "utils.h"
+#include "names.h"
 
 #ifndef HAVE_MINGW
 #define closesocket(s) close(s)
@@ -56,7 +57,6 @@ bool send_meta(struct connection_t *c, const void *msg, size_t len) {
 	return false;
 }
 
-char *logfilename = NULL;
 bool do_detach = false;
 struct timeval now;
 
@@ -135,8 +135,6 @@ static struct option const long_options[] = {
 	{"help", no_argument, NULL, 1},
 	{NULL, 0, NULL, 0}
 };
-
-const char *program_name;
 
 static void usage(void) {
 	static const char *message =

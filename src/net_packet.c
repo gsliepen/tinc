@@ -25,7 +25,6 @@
 #ifdef HAVE_ZLIB
 #define ZLIB_CONST
 #include <zlib.h>
-#include <assert.h>
 
 #endif
 
@@ -33,8 +32,8 @@
 #include LZO1X_H
 #endif
 
-#ifdef LZ4_H
-#include LZ4_H
+#ifdef HAVE_LZ4
+#include <lz4.h>
 #endif
 
 #include "address_cache.h"
@@ -65,11 +64,15 @@ int keylifetime = 0;
 static char lzo_wrkmem[LZO1X_999_MEM_COMPRESS > LZO1X_1_MEM_COMPRESS ? LZO1X_999_MEM_COMPRESS : LZO1X_1_MEM_COMPRESS];
 #endif
 
+#ifdef HAVE_LZ4
+
 #ifdef HAVE_LZ4_BUILTIN
 static LZ4_stream_t lz4_stream;
 #else
 static void *lz4_state = NULL;
-#endif /* HAVE_LZ4_BUILTIN */
+#endif // HAVE_LZ4_BUILTIN
+
+#endif // HAVE_LZ4
 
 static void send_udppacket(node_t *, vpn_packet_t *);
 
@@ -252,8 +255,6 @@ static length_t compress_packet_lz4(uint8_t *dest, const uint8_t *source, length
 
 #ifdef HAVE_LZO
 static length_t compress_packet_lzo(uint8_t *dest, const uint8_t *source, length_t len, compression_level_t level) {
-	assert(level == COMPRESS_LZO_LO || level == COMPRESS_LZO_HI);
-
 	lzo_uint lzolen = MAXSIZE;
 	int result;
 
