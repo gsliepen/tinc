@@ -571,7 +571,7 @@ The documentation that comes along with your distribution will tell you how to d
 
 @menu
 * Darwin (MacOS/X) build environment::
-* MinGW (Windows) build environment::
+* Windows build environment::
 @end menu
 
 
@@ -586,14 +586,16 @@ You need to download and install LibreSSL (or OpenSSL) and LZO,
 either directly from their websites (see @ref{Libraries}) or using Fink.
 
 @c ==================================================================
-@node       MinGW (Windows) build environment
-@subsection MinGW (Windows) build environment
+@node       Windows build environment
+@subsection Windows build environment
 
-You will need to install the MinGW environment from @uref{http://www.mingw.org}.
+You will need to install either the native Windows SDK from @uref{https://visualstudio.com},
+or the MinGW environment from @uref{https://msys2.org}.
+
 You also need to download and install LibreSSL (or OpenSSL) and LZO.
 
-When tinc is compiled using MinGW it runs natively under Windows,
-it is not necessary to keep MinGW installed.
+Whether tinc is compiled using MinGW or the native SDK, it runs natively under Windows,
+so it is not necessary to keep either SDK to run the compiled binaries.
 
 When detaching, tinc will install itself as a service,
 which will be restarted automatically after reboots.

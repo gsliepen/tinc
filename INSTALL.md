@@ -35,12 +35,20 @@ Please consult your operating system's documentation for more details.
 
 ## Windows
 
-You will need to install [msys2][msys2] to build tinc under Windows.
+You can build tinc using either the native [Windows SDK][sdk-ms] (which comes with Visual Studio),
+or with the Unix-like [msys2 environment][sdk-msys2]. Install either one of them, plus
+the latest version of [meson][meson-release].
 
-[msys2]: https://msys2.org/
+If you prefer the native SDK, you might want to work on tinc (or build it) under Visual Studio.
+To do so, follow [these instructions][meson-vs].
 
 By default, tinc produces a static Windows build, so you don't need to install anything
 in order to _run_ the compiled binaries.
+
+[sdk-ms]: https://visualstudio.com/
+[sdk-msys2]: https://msys2.org/
+[meson-release]: https://github.com/mesonbuild/meson/releases
+[meson-vs]: https://mesonbuild.com/Using-with-Visual-Studio.html
 
 # Building
 
