@@ -214,7 +214,7 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - linux
-      - windows
+      - mingw
 
     steps:
       - name: Create artifact directory
@@ -272,7 +272,7 @@ jobs:
           path: /tmp/logs/tests.*.tar.gz
         if: always()
 
-  windows:
+  mingw:
     runs-on: windows-latest
     timeout-minutes: 30
 
@@ -331,4 +331,42 @@ jobs:
         with:
           name: tests_windows
           path: /tmp/logs/tests.*.tar.gz
+        if: always()
+
+  msvc:
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+          - amd64
+          - amd64_x86
+
+    steps:
+      - name: Install meson
+        run: pip3 install meson
+
+      - name: Checkout code
+        uses: actions/checkout@v1
+
+      - name: Activate dev environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.arch }}
+
+      - name: Build (nolegacy)
+        run: .ci\windows\build.cmd nolegacy
+
+      - name: Test (nolegacy)
+        run: .ci\windows\test.cmd nolegacy
+        if: always()
+
+      - name: Build (OpenSSL)
+        run: .ci\windows\build.cmd openssl
+        if: always()
+
+      - name: Test (OpenSSL)
+        run: .ci\windows\test.cmd openssl
         if: always()
