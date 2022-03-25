@@ -118,10 +118,11 @@ void forward_request(connection_t *from, const char *request) {
 
 	// Create a temporary newline-terminated copy of the request
 	size_t len = strlen(request);
-	char tmp[len + 1];
+	const size_t tmplen = len + 1;
+	char *tmp = alloca(tmplen);
 	memcpy(tmp, request, len);
 	tmp[len] = '\n';
-	broadcast_meta(from, tmp, sizeof(tmp));
+	broadcast_meta(from, tmp, tmplen);
 }
 
 bool receive_request(connection_t *c, const char *request) {

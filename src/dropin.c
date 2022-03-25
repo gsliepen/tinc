@@ -145,3 +145,12 @@ int gettimeofday(struct timeval *tv, void *tz) {
 	return 0;
 }
 #endif
+
+bool sleep_millis(unsigned int ms) {
+#ifdef _MSC_VER
+	Sleep(ms);
+	return true;
+#else
+	return !usleep(ms * 1000);
+#endif
+}

@@ -141,8 +141,9 @@ static void check_conffile(const char *nodename, bool server) {
 		++total_vars;
 	}
 
-	int count[total_vars];
-	memset(count, 0, sizeof(count));
+	const size_t countlen = total_vars * sizeof(int);
+	int *count = alloca(countlen);
+	memset(count, 0, countlen);
 
 	for splay_each(config_t, conf, &config) {
 		int var_type = 0;

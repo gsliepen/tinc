@@ -25,6 +25,8 @@
 #define WINVER 0x0600
 #define _WIN32_WINNT 0x0600
 #define WIN32_LEAN_AND_MEAN
+#define _CRT_SECURE_NO_WARNINGS
+#define _CRT_NONSTDC_NO_WARNINGS
 #endif
 
 #include <stdio.h>
@@ -36,17 +38,34 @@
 #include <signal.h>
 #include <errno.h>
 #include <fcntl.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <limits.h>
 #include <math.h>
 #include <time.h>
 
+#ifdef HAVE_ALLOCA_H
+#include <alloca.h>
+#elif defined(HAVE_NETBSD)
+#define alloca(size) __builtin_alloca(size)
+#endif
+
 #ifdef HAVE_MINGW
+#ifdef HAVE_W32API_H
 #include <w32api.h>
+#endif
+
 #include <winsock2.h>
 #include <windows.h>
 #include <ws2tcpip.h>
+
+#ifdef _MSC_VER
+#include <io.h>
+#include <process.h>
+#include <direct.h>
 #endif
+#endif // HAVE_MINGW
 
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
@@ -109,6 +128,8 @@
 
 #ifdef HAVE_DIRENT_H
 #include <dirent.h>
+#elif defined(_MSC_VER)
+#include "dirent.h"
 #endif
 
 /* SunOS really wants sys/socket.h BEFORE net/if.h,

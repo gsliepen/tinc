@@ -32,7 +32,8 @@ static const size_t mdlen = 64;
 static const size_t blklen = 128;
 
 static bool hmac_sha512(const uint8_t *key, size_t keylen, const uint8_t *msg, size_t msglen, uint8_t *out) {
-	uint8_t tmp[blklen + mdlen];
+	const size_t tmplen = blklen + mdlen;
+	uint8_t *tmp = alloca(tmplen);
 	sha512_context md;
 
 	if(keylen <= blklen) {
@@ -69,7 +70,7 @@ static bool hmac_sha512(const uint8_t *key, size_t keylen, const uint8_t *msg, s
 	// opad
 	memxor(tmp, 0x36 ^ 0x5c, blklen);
 
-	if(sha512(tmp, sizeof(tmp), out) != 0) {
+	if(sha512(tmp, tmplen, out) != 0) {
 		return false;
 	}
 
@@ -86,28 +87,29 @@ bool prf(const uint8_t *secret, size_t secretlen, uint8_t *seed, size_t seedlen,
 	   It consists of the previous HMAC result plus the seed.
 	 */
 
-	uint8_t data[mdlen + seedlen];
+	const size_t datalen = mdlen + seedlen;
+	uint8_t *data = alloca(datalen);
 	memset(data, 0, mdlen);
 	memcpy(data + mdlen, seed, seedlen);
 
-	uint8_t hash[mdlen];
+	uint8_t *hash = alloca(mdlen);
 
 	while(outlen > 0) {
 		/* Inner HMAC */
-		if(!hmac_sha512(secret, secretlen, data, sizeof(data), data)) {
+		if(!hmac_sha512(secret, secretlen, data, datalen, data)) {
 			return false;
 		}
 
 		/* Outer HMAC */
 		if(outlen >= mdlen) {
-			if(!hmac_sha512(secret, secretlen, data, sizeof(data), out)) {
+			if(!hmac_sha512(secret, secretlen, data, datalen, out)) {
 				return false;
 			}
 
 			out += mdlen;
 			outlen -= mdlen;
 		} else {
-			if(!hmac_sha512(secret, secretlen, data, sizeof(data), hash)) {
+			if(!hmac_sha512(secret, secretlen, data, datalen, hash)) {
 				return false;
 			}
 

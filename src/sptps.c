@@ -92,7 +92,7 @@ static void warning(sptps_t *s, const char *format, ...) {
 
 // Send a record (datagram version, accepts all record types, handles encryption and authentication).
 static bool send_record_priv_datagram(sptps_t *s, uint8_t type, const void *data, uint16_t len) {
-	uint8_t buffer[len + 21UL];
+	uint8_t *buffer = alloca(len + 21UL);
 
 	// Create header with sequence number, length and record type
 	uint32_t seqno = s->outseqno++;
@@ -117,7 +117,7 @@ static bool send_record_priv(sptps_t *s, uint8_t type, const void *data, uint16_
 		return send_record_priv_datagram(s, type, data, len);
 	}
 
-	uint8_t buffer[len + 19UL];
+	uint8_t *buffer = alloca(len + 19UL);
 
 	// Create header with sequence number, length and record type
 	uint32_t seqno = s->outseqno++;
@@ -187,8 +187,9 @@ static bool send_sig(sptps_t *s) {
 	size_t siglen = ecdsa_size(s->mykey);
 
 	// Concatenate both KEX messages, plus tag indicating if it is from the connection originator, plus label
-	uint8_t msg[(1 + 32 + keylen) * 2 + 1 + s->labellen];
-	uint8_t sig[siglen];
+	const size_t msglen = (1 + 32 + keylen) * 2 + 1 + s->labellen;
+	uint8_t *msg = alloca(msglen);
+	uint8_t *sig = alloca(siglen);
 
 	msg[0] = s->initiator;
 	memcpy(msg + 1, s->mykex, 1 + 32 + keylen);
@@ -196,12 +197,12 @@ static bool send_sig(sptps_t *s) {
 	memcpy(msg + 1 + 2 * (33 + keylen), s->label, s->labellen);
 
 	// Sign the result.
-	if(!ecdsa_sign(s->mykey, msg, sizeof(msg), sig)) {
+	if(!ecdsa_sign(s->mykey, msg, msglen, sig)) {
 		return error(s, EINVAL, "Failed to sign SIG record");
 	}
 
 	// Send the SIG exchange record.
-	return send_record_priv(s, SPTPS_HANDSHAKE, sig, sizeof(sig));
+	return send_record_priv(s, SPTPS_HANDSHAKE, sig, siglen);
 }
 
 // Generate key material from the shared secret created from the ECDHE key exchange.
@@ -226,7 +227,7 @@ static bool generate_key_material(sptps_t *s, const uint8_t *shared, size_t len)
 	}
 
 	// Create the HMAC seed, which is "key expansion" + session label + server nonce + client nonce
-	uint8_t seed[s->labellen + 64 + 13];
+	uint8_t *seed = alloca(s->labellen + 64 + 13);
 	memcpy(seed, "key expansion", 13);
 
 	if(s->initiator) {
@@ -317,7 +318,8 @@ static bool receive_sig(sptps_t *s, const uint8_t *data, uint16_t len) {
 	}
 
 	// Concatenate both KEX messages, plus tag indicating if it is from the connection originator
-	uint8_t msg[(1 + 32 + keylen) * 2 + 1 + s->labellen];
+	const size_t msglen = (1 + 32 + keylen) * 2 + 1 + s->labellen;
+	uint8_t *msg = alloca(msglen);
 
 	msg[0] = !s->initiator;
 	memcpy(msg + 1, s->hiskex, 1 + 32 + keylen);
@@ -325,7 +327,7 @@ static bool receive_sig(sptps_t *s, const uint8_t *data, uint16_t len) {
 	memcpy(msg + 1 + 2 * (33 + keylen), s->label, s->labellen);
 
 	// Verify signature.
-	if(!ecdsa_verify(s->hiskey, msg, sizeof(msg), data)) {
+	if(!ecdsa_verify(s->hiskey, msg, msglen, data)) {
 		return error(s, EIO, "Failed to verify SIG record");
 	}
 
@@ -522,7 +524,7 @@ bool sptps_verify_datagram(sptps_t *s, const void *vdata, size_t len) {
 		return false;
 	}
 
-	uint8_t buffer[len];
+	uint8_t *buffer = alloca(len);
 	size_t outlen;
 	return chacha_poly1305_decrypt(s->incipher, seqno, data + 4, len - 4, buffer, &outlen);
 }
@@ -558,7 +560,7 @@ static bool sptps_receive_data_datagram(sptps_t *s, const uint8_t *data, size_t 
 
 	// Decrypt
 
-	uint8_t buffer[len];
+	uint8_t *buffer = alloca(len);
 	size_t outlen;
 
 	if(!chacha_poly1305_decrypt(s->incipher, seqno, data, len, buffer, &outlen)) {

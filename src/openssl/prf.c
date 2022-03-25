@@ -48,11 +48,11 @@ static bool prf_xor(int nid, const uint8_t *secret, size_t secretlen, uint8_t *s
 	   It consists of the previous HMAC result plus the seed.
 	 */
 
-	char data[len + seedlen];
+	char *data = alloca(len + seedlen);
 	memset(data, 0, len);
 	memcpy(data + len, seed, seedlen);
 
-	uint8_t hash[len];
+	uint8_t *hash = alloca(len);
 
 	while(outlen > 0) {
 		/* Inner HMAC */

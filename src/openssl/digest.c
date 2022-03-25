@@ -138,7 +138,7 @@ void digest_close(digest_t *digest) {
 
 bool digest_create(digest_t *digest, const void *indata, size_t inlen, void *outdata) {
 	size_t len = EVP_MD_size(digest->digest);
-	unsigned char tmpdata[len];
+	unsigned char *tmpdata = alloca(len);
 
 	if(digest->hmac_ctx) {
 		bool ok;
@@ -152,7 +152,7 @@ bool digest_create(digest_t *digest, const void *indata, size_t inlen, void *out
 
 		ok = mac_ctx
 		     && EVP_MAC_update(mac_ctx, indata, inlen)
-		     && EVP_MAC_final(mac_ctx, tmpdata, NULL, sizeof(tmpdata));
+		     && EVP_MAC_final(mac_ctx, tmpdata, NULL, len);
 
 		EVP_MAC_CTX_free(mac_ctx);
 #endif
@@ -184,7 +184,7 @@ bool digest_create(digest_t *digest, const void *indata, size_t inlen, void *out
 
 bool digest_verify(digest_t *digest, const void *indata, size_t inlen, const void *cmpdata) {
 	size_t len = digest->maclength;
-	unsigned char outdata[len];
+	unsigned char *outdata = alloca(len);
 
 	return digest_create(digest, indata, inlen, outdata) && !memcmp(cmpdata, outdata, digest->maclength);
 }

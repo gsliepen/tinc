@@ -21,6 +21,8 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#include "system.h"
+
 typedef enum debug_t {
 	DEBUG_UNSET = -1,               /* Used by tinc as the default debug level. */
 	DEBUG_NOTHING = 0,              /* Quiet mode, only show starting/stopping of the daemon */

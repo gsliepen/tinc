@@ -457,11 +457,13 @@ int cmd_invite(int argc, char *argv[]) {
 	randomize(cookie, 18);
 
 	// Create a filename that doesn't reveal the cookie itself
-	uint8_t buf[18 + strlen(fingerprint)];
+	const size_t buflen = 18 + strlen(fingerprint);
+	uint8_t *buf = alloca(buflen);
+
 	char cookiehash[64];
 	memcpy(buf, cookie, 18);
-	memcpy(buf + 18, fingerprint, sizeof(buf) - 18);
-	sha512(buf, sizeof(buf), cookiehash);
+	memcpy(buf + 18, fingerprint, buflen - 18);
+	sha512(buf, buflen, cookiehash);
 	b64encode_tinc_urlsafe(cookiehash, cookiehash, 18);
 
 	free(fingerprint);
@@ -551,7 +553,7 @@ static char *data;
 static size_t datalen;
 static bool success = false;
 
-static char *get_line(const char **data) {
+static char *get_line(char *line, size_t linelen, const char **data) {
 	if(!data || !*data) {
 		return NULL;
 	}
@@ -561,11 +563,10 @@ static char *get_line(const char **data) {
 		return NULL;
 	}
 
-	static char line[1024];
 	const char *end = strchr(*data, '\n');
 	size_t len = end ? (size_t)(end - *data) : strlen(*data);
 
-	if(len >= sizeof(line)) {
+	if(len >= linelen) {
 		fprintf(stderr, "Maximum line length exceeded!\n");
 		return NULL;
 	}
@@ -587,7 +588,9 @@ static char *get_line(const char **data) {
 }
 
 static char *get_value(const char *data, const char *var) {
-	char *line = get_line(&data);
+	static char buf[1024];
+
+	char *line = get_line(buf, sizeof(buf), &data);
 
 	if(!line) {
 		return NULL;
@@ -654,17 +657,12 @@ static char *grep(const char *data, const char *var) {
 }
 
 static bool finalize_join(void) {
-	const char *temp_name = get_value(data, "Name");
+	const char *name = get_value(data, "Name");
 
-	if(!temp_name) {
+	if(!name) {
 		fprintf(stderr, "No Name found in invitation!\n");
 		return false;
 	}
-
-	size_t len = strlen(temp_name);
-	char name[len + 1];
-	memcpy(name, temp_name, len);
-	name[len] = 0;
 
 	if(!check_id(name)) {
 		fprintf(stderr, "Invalid Name found in invitation!\n");
@@ -772,7 +770,9 @@ make_names:
 	const char *p = data;
 	char *l, *value;
 
-	while((l = get_line(&p))) {
+	static char line[1024];
+
+	while((l = get_line(line, sizeof(line), &p))) {
 		// Ignore comments
 		if(*l == '#') {
 			continue;
@@ -879,7 +879,7 @@ make_names:
 			return false;
 		}
 
-		while((l = get_line(&p))) {
+		while((l = get_line(line, sizeof(line), &p))) {
 			if(!strcmp(l, "#---------------------------------------------------------------#")) {
 				continue;
 			}

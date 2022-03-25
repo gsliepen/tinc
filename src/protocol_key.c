@@ -103,7 +103,7 @@ static bool send_initial_sptps_data(void *handle, uint8_t type, const void *data
 	node_t *to = handle;
 	to->sptps.send_data = send_sptps_data_myself;
 
-	char buf[B64_SIZE(len)];
+	char *buf = alloca(B64_SIZE(len));
 	b64encode_tinc(data, buf, len);
 
 	return send_request(to->nexthop->connection, "%d %s %s %d %s", REQ_KEY, myself->name, to->name, REQ_KEY, buf);
@@ -117,14 +117,16 @@ bool send_req_key(node_t *to) {
 			return true;
 		}
 
-		char label[25 + strlen(myself->name) + strlen(to->name)];
-		snprintf(label, sizeof(label), "tinc UDP key expansion %s %s", myself->name, to->name);
+		const size_t labellen = 25 + strlen(myself->name) + strlen(to->name);
+		char *label = alloca(labellen);
+		snprintf(label, labellen, "tinc UDP key expansion %s %s", myself->name, to->name);
+
 		sptps_stop(&to->sptps);
 		to->status.validkey = false;
 		to->status.waitingforkey = true;
 		to->last_req_key = now.tv_sec;
 		to->incompression = myself->incompression;
-		return sptps_start(&to->sptps, to, true, true, myself->connection->ecdsa, to->ecdsa, label, sizeof(label), send_initial_sptps_data, receive_sptps_record);
+		return sptps_start(&to->sptps, to, true, true, myself->connection->ecdsa, to->ecdsa, label, labellen, send_initial_sptps_data, receive_sptps_record);
 	}
 
 	return send_request(to->nexthop->connection, "%d %s %s", REQ_KEY, myself->name, to->name);
@@ -238,13 +240,14 @@ static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, no
 			return true;
 		}
 
-		char label[25 + strlen(from->name) + strlen(myself->name)];
-		snprintf(label, sizeof(label), "tinc UDP key expansion %s %s", from->name, myself->name);
+		const size_t labellen = 25 + strlen(from->name) + strlen(myself->name);
+		char *label = alloca(labellen);
+		snprintf(label, labellen, "tinc UDP key expansion %s %s", from->name, myself->name);
 		sptps_stop(&from->sptps);
 		from->status.validkey = false;
 		from->status.waitingforkey = true;
 		from->last_req_key = now.tv_sec;
-		sptps_start(&from->sptps, from, false, true, myself->connection->ecdsa, from->ecdsa, label, sizeof(label), send_sptps_data_myself, receive_sptps_record);
+		sptps_start(&from->sptps, from, false, true, myself->connection->ecdsa, from->ecdsa, label, labellen, send_sptps_data_myself, receive_sptps_record);
 		sptps_receive_data(&from->sptps, buf, len);
 		send_mtu_info(myself, from, MTU);
 		return true;
@@ -336,7 +339,7 @@ bool send_ans_key(node_t *to) {
 	return false;
 #else
 	size_t keylen = myself->incipher ? cipher_keylength(myself->incipher) : 1;
-	char key[keylen * 2 + 1];
+	char *key = alloca(keylen * 2 + 1);
 
 	randomize(key, keylen);
 
@@ -519,8 +522,9 @@ bool ans_key_h(connection_t *c, const char *request) {
 	/* SPTPS or old-style key exchange? */
 
 	if(from->status.sptps) {
-		uint8_t buf[strlen(key)];
-		size_t len = b64decode_tinc(key, buf, strlen(key));
+		const size_t buflen = strlen(key);
+		uint8_t *buf = alloca(buflen);
+		size_t len = b64decode_tinc(key, buf, buflen);
 
 		if(!len || !sptps_receive_data(&from->sptps, buf, len)) {
 			/* Uh-oh. It might be that the tunnel is stuck in some corrupted state,

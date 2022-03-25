@@ -16,6 +16,7 @@ foreach attr : ['malloc', 'nonnull', 'warn_unused_result']
 endforeach
 
 check_headers = [
+  'alloca.h',
   'arpa/inet.h',
   'arpa/nameser.h',
   'dirent.h',
@@ -48,7 +49,9 @@ check_headers = [
   'sys/types.h',
   'sys/wait.h',
   'syslog.h',
+  'string.h',
   'termios.h',
+  'unistd.h',
 ]
 
 # 'struct msghdr' misses some required fields

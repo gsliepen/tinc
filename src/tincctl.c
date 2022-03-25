@@ -19,8 +19,6 @@
 
 #include "system.h"
 
-#include <getopt.h>
-
 #ifdef HAVE_READLINE
 #include "readline/readline.h"
 #include "readline/history.h"

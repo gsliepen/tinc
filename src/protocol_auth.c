@@ -71,7 +71,8 @@ static bool send_proxyrequest(connection_t *c) {
 			return false;
 		}
 
-		uint8_t s4req[9 + (proxyuser ? strlen(proxyuser) : 0)];
+		const size_t s4reqlen = 9 + (proxyuser ? strlen(proxyuser) : 0);
+		uint8_t *s4req = alloca(s4reqlen);
 		s4req[0] = 4;
 		s4req[1] = 1;
 		memcpy(s4req + 2, &c->address.in.sin_port, 2);
@@ -81,9 +82,9 @@ static bool send_proxyrequest(connection_t *c) {
 			memcpy(s4req + 8, proxyuser, strlen(proxyuser));
 		}
 
-		s4req[sizeof(s4req) - 1] = 0;
+		s4req[s4reqlen - 1] = 0;
 		c->tcplen = 8;
-		return send_meta(c, s4req, sizeof(s4req));
+		return send_meta(c, s4req, s4reqlen);
 	}
 
 	case PROXY_SOCKS5: {
@@ -94,7 +95,8 @@ static bool send_proxyrequest(connection_t *c) {
 			len += 3 + strlen(proxyuser) + strlen(proxypass);
 		}
 
-		uint8_t s5req[len];
+		uint8_t *s5req = alloca(len);
+
 		size_t i = 0;
 		s5req[i++] = 5;
 		s5req[i++] = 1;
@@ -140,7 +142,7 @@ static bool send_proxyrequest(connection_t *c) {
 			abort();
 		}
 
-		return send_meta(c, s5req, sizeof(s5req));
+		return send_meta(c, s5req, len);
 	}
 
 	case PROXY_SOCKS4A:
@@ -244,11 +246,12 @@ static bool receive_invitation_sptps(void *handle, uint8_t type, const void *dat
 
 	// Recover the filename from the cookie and the key
 	char *fingerprint = ecdsa_get_base64_public_key(invitation_key);
-	char hashbuf[18 + strlen(fingerprint)];
+	const size_t hashbuflen = 18 + strlen(fingerprint);
+	char *hashbuf = alloca(hashbuflen);
 	char cookie[64];
 	memcpy(hashbuf, data, 18);
-	memcpy(hashbuf + 18, fingerprint, sizeof(hashbuf) - 18);
-	sha512(hashbuf, sizeof(hashbuf), cookie);
+	memcpy(hashbuf + 18, fingerprint, hashbuflen - 18);
+	sha512(hashbuf, hashbuflen, cookie);
 	b64encode_tinc_urlsafe(cookie, cookie, 18);
 	free(fingerprint);
 
@@ -486,15 +489,17 @@ bool id_h(connection_t *c, const char *request) {
 
 	if(c->protocol_minor >= 2) {
 		c->allow_request = ACK;
-		char label[25 + strlen(myself->name) + strlen(c->name)];
+
+		const size_t labellen = 25 + strlen(myself->name) + strlen(c->name);
+		char *label = alloca(labellen);
 
 		if(c->outgoing) {
-			snprintf(label, sizeof(label), "tinc TCP key expansion %s %s", myself->name, c->name);
+			snprintf(label, labellen, "tinc TCP key expansion %s %s", myself->name, c->name);
 		} else {
-			snprintf(label, sizeof(label), "tinc TCP key expansion %s %s", c->name, myself->name);
+			snprintf(label, labellen, "tinc TCP key expansion %s %s", c->name, myself->name);
 		}
 
-		return sptps_start(&c->sptps, c, c->outgoing, false, myself->connection->ecdsa, c->ecdsa, label, sizeof(label), send_meta_sptps, receive_meta_sptps);
+		return sptps_start(&c->sptps, c, c->outgoing, false, myself->connection->ecdsa, c->ecdsa, label, labellen, send_meta_sptps, receive_meta_sptps);
 	} else {
 		return send_metakey(c);
 	}
@@ -539,9 +544,9 @@ bool send_metakey(connection_t *c) {
 	}
 
 	const size_t len = rsa_size(c->rsa);
-	char key[len];
-	char enckey[len];
-	char hexkey[2 * len + 1];
+	char *key = alloca(len);
+	char *enckey = alloca(len);
+	char *hexkey = alloca(2 * len + 1);
 
 	/* Create a random key */
 
@@ -603,8 +608,8 @@ bool metakey_h(connection_t *c, const char *request) {
 	char hexkey[MAX_STRING_SIZE];
 	int cipher, digest, maclength, compression;
 	const size_t len = rsa_size(myself->connection->rsa);
-	char enckey[len];
-	char key[len];
+	char *enckey = alloca(len);
+	char *key = alloca(len);
 
 	if(sscanf(request, "%*d %d %d %d %d " MAX_STRING, &cipher, &digest, &maclength, &compression, hexkey) != 5) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "METAKEY", c->name, c->hostname);
@@ -613,7 +618,7 @@ bool metakey_h(connection_t *c, const char *request) {
 
 	/* Convert the challenge from hexadecimal back to binary */
 
-	size_t inlen = hex2bin(hexkey, enckey, sizeof(enckey));
+	size_t inlen = hex2bin(hexkey, enckey, len);
 
 	/* Check if the length of the meta key is all right */
 
@@ -667,7 +672,7 @@ bool metakey_h(connection_t *c, const char *request) {
 
 bool send_challenge(connection_t *c) {
 	const size_t len = rsa_size(c->rsa);
-	char buffer[len * 2 + 1];
+	char *buffer = alloca(len * 2 + 1);
 
 	c->hischallenge = xrealloc(c->hischallenge, len);
 
@@ -724,7 +729,7 @@ bool challenge_h(connection_t *c, const char *request) {
 bool send_chal_reply(connection_t *c) {
 	const size_t len = rsa_size(myself->connection->rsa);
 	size_t digestlen = digest_length(&c->indigest);
-	char digest[digestlen * 2 + 1];
+	char *digest = alloca(digestlen * 2 + 1);
 
 	/* Calculate the hash from the challenge we received */
 

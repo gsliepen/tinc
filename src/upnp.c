@@ -159,9 +159,7 @@ static void *upnp_thread(void *data) {
 		time_t now = time(NULL);
 
 		if(now < refresh_time) {
-			nanosleep(&(struct timespec) {
-				refresh_time - now, 0
-			}, NULL);
+			sleep_millis((refresh_time - now) * 1000);
 		}
 	}
 

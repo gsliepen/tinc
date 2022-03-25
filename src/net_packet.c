@@ -962,7 +962,8 @@ bool send_sptps_data(node_t *to, node_t *from, int type, const void *data, size_
 
 	if(type == SPTPS_HANDSHAKE || tcponly || (!direct && !relay_supported) || (type != PKT_PROBE && origlen > relay->minmtu)) {
 		if(type != SPTPS_HANDSHAKE && (to->nexthop->connection->options >> 24) >= 7) {
-			uint8_t buf[len + sizeof(to->id) + sizeof(from->id)];
+			const size_t buflen = len + sizeof(to->id) + sizeof(from->id);
+			uint8_t *buf = alloca(buflen);
 			uint8_t *buf_ptr = buf;
 			memcpy(buf_ptr, &to->id, sizeof(to->id));
 			buf_ptr += sizeof(to->id);
@@ -970,10 +971,10 @@ bool send_sptps_data(node_t *to, node_t *from, int type, const void *data, size_
 			buf_ptr += sizeof(from->id);
 			memcpy(buf_ptr, data, len);
 			logger(DEBUG_TRAFFIC, LOG_INFO, "Sending packet from %s (%s) to %s (%s) via %s (%s) (TCP)", from->name, from->hostname, to->name, to->hostname, to->nexthop->name, to->nexthop->hostname);
-			return send_sptps_tcppacket(to->nexthop->connection, buf, sizeof(buf));
+			return send_sptps_tcppacket(to->nexthop->connection, buf, buflen);
 		}
 
-		char buf[B64_SIZE(len)];
+		char *buf = alloca(B64_SIZE(len));
 		b64encode_tinc(data, buf, len);
 
 		/* If this is a handshake packet, use ANS_KEY instead of REQ_KEY, for two reasons:
@@ -993,7 +994,7 @@ bool send_sptps_data(node_t *to, node_t *from, int type, const void *data, size_
 		overhead += sizeof(to->id) + sizeof(from->id);
 	}
 
-	char buf[len + overhead];
+	char *buf = alloca(len + overhead);
 	char *buf_ptr = buf;
 
 	if(relay_supported) {
@@ -1904,7 +1905,7 @@ void handle_device_data(void *data, int flags) {
 		myself->in_bytes += packet.len;
 		route(myself, &packet);
 	} else {
-		usleep(errors * 50000);
+		sleep_millis(errors * 50);
 		errors++;
 
 		if(errors > 10) {

@@ -42,7 +42,7 @@ static void unputenv(const char *p) {
 	len++;
 #endif
 #endif
-	char var[len + 1];
+	char *var = alloca(len + 1);
 	strncpy(var, p, len);
 	var[len] = 0;
 #ifdef HAVE_UNSETENV
@@ -159,9 +159,11 @@ bool execute_script(const char *name, environment_t *env) {
 
 		size_t pathlen = strlen(pathext);
 		size_t scriptlen = strlen(scriptname);
-		char fullname[scriptlen + pathlen + 1];
+
+		const size_t fullnamelen = scriptlen + pathlen + 1;
+		char *fullname = alloca(fullnamelen);
 		char *ext = fullname + scriptlen;
-		strncpy(fullname, scriptname, sizeof(fullname));
+		strncpy(fullname, scriptname, fullnamelen);
 
 		const char *p = pathext;
 		bool found = false;

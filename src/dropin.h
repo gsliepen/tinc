@@ -71,4 +71,30 @@ extern int gettimeofday(struct timeval *, void *);
 #define MAX(a,b) (((a)>(b))?(a):(b))
 #endif
 
-#endif
+#ifdef _MSC_VER
+
+#define __attribute(args)
+#define __attribute__(args)
+
+#define PATH_MAX MAX_PATH
+#define strcasecmp _stricmp
+#define strncasecmp _strnicmp
+#define __const const
+
+typedef int mode_t;
+typedef int pid_t;
+typedef SSIZE_T ssize_t;
+
+static const int STDIN_FILENO = 0;
+static const int F_OK = 0;
+static const int X_OK = 0;
+static const int W_OK = 2;
+static const int R_OK = 4;
+
+#else // _MSC_VER
+
+#endif // _MSC_VER
+
+extern bool sleep_millis(unsigned int ms);
+
+#endif // TINC_DROPIN_H
