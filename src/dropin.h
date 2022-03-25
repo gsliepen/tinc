@@ -52,7 +52,7 @@ extern int gettimeofday(struct timeval *, void *);
 	} while (0)
 #endif
 
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 #define mkdir(a, b) mkdir(a)
 #ifndef SHUT_RDWR
 #define SHUT_RDWR SD_BOTH

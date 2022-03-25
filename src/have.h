@@ -21,7 +21,7 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 #define WINVER 0x0600
 #define _WIN32_WINNT 0x0600
 #define WIN32_LEAN_AND_MEAN
@@ -51,7 +51,7 @@
 #define alloca(size) __builtin_alloca(size)
 #endif
 
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 #ifdef HAVE_W32API_H
 #include <w32api.h>
 #endif
@@ -65,7 +65,7 @@
 #include <process.h>
 #include <direct.h>
 #endif
-#endif // HAVE_MINGW
+#endif // HAVE_WINDOWS
 
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
@@ -237,7 +237,7 @@
 #undef STATUS
 #endif
 
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 #define SLASH "\\"
 #else
 #define SLASH "/"

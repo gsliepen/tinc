@@ -24,7 +24,7 @@
 
 #include "../crypto.h"
 
-#ifndef HAVE_MINGW
+#ifndef HAVE_WINDOWS
 
 static int random_fd = -1;
 

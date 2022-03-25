@@ -34,7 +34,7 @@ debug_t debug_level = DEBUG_NOTHING;
 static logmode_t logmode = LOGMODE_STDERR;
 static pid_t logpid;
 static FILE *logfile = NULL;
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 static HANDLE loghandle = NULL;
 #endif
 static const char *logident = NULL;
@@ -72,7 +72,7 @@ static void real_logger(debug_t level, int priority, const char *message) {
 			break;
 
 		case LOGMODE_SYSLOG:
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 			{
 				const char *messages[] = {message};
 				ReportEvent(loghandle, priority, 0, 0, NULL, 1, 0, messages, NULL);
@@ -195,7 +195,7 @@ void openlogger(const char *ident, logmode_t mode) {
 		break;
 
 	case LOGMODE_SYSLOG:
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 		loghandle = RegisterEventSource(NULL, logident);
 
 		if(!loghandle) {
@@ -248,7 +248,7 @@ void closelogger(void) {
 		break;
 
 	case LOGMODE_SYSLOG:
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 		DeregisterEventSource(loghandle);
 		break;
 #else

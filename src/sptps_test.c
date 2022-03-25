@@ -25,7 +25,7 @@
 
 #include <getopt.h>
 
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 #include <pthread.h>
 #endif
 
@@ -37,7 +37,7 @@
 #include "utils.h"
 #include "names.h"
 
-#ifndef HAVE_MINGW
+#ifndef HAVE_WINDOWS
 #define closesocket(s) close(s)
 #endif
 
@@ -160,7 +160,7 @@ static void usage(void) {
 	fprintf(stderr, message, program_name);
 }
 
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 
 int stdin_sock_fd = -1;
 
@@ -308,7 +308,7 @@ server_err:
 	return -1;
 }
 
-#endif // HAVE_MINGW
+#endif // HAVE_WINDOWS
 
 int main(int argc, char *argv[]) {
 	program_name = argv[0];
@@ -428,7 +428,7 @@ int main(int argc, char *argv[]) {
 
 #endif
 
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 	static struct WSAData wsa_state;
 
 	if(WSAStartup(MAKEWORD(2, 2), &wsa_state)) {
@@ -566,7 +566,7 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 
 	if(!readonly) {
 		in = start_input_reader();
@@ -607,7 +607,7 @@ int main(int argc, char *argv[]) {
 		}
 
 		if(FD_ISSET(in, &fds)) {
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 			ssize_t len = recv(in, buf, readsize, 0);
 #else
 			ssize_t len = read(in, buf, readsize);
@@ -621,7 +621,7 @@ int main(int argc, char *argv[]) {
 			}
 
 			if(len == 0) {
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 				shutdown(in, SD_SEND);
 				closesocket(in);
 #endif

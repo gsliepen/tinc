@@ -1,5 +1,5 @@
 /*
-    device.c -- Interaction with Windows tap driver in a MinGW environment
+    device.c -- Interaction with the TAP-Windows driver
     Copyright (C) 2002-2005 Ivo Timmermans,
                   2002-2022 Guus Sliepen <guus@tinc-vpn.org>
 

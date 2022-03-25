@@ -5,7 +5,7 @@ set -eu
 ./.ci/build.sh "$@"
 
 # Which paths to ignore.
-paths='src/solaris src/mingw src/gcrypt'
+paths='src/solaris src/windows src/gcrypt'
 
 case "$(uname -s)" in
 Linux)

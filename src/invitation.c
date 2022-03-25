@@ -996,7 +996,7 @@ ask_netname:
 	char filename2[PATH_MAX];
 	snprintf(filename, sizeof(filename), "%s" SLASH "tinc-up.invitation", confbase);
 
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 	snprintf(filename2, sizeof(filename2), "%s" SLASH "tinc-up.bat", confbase);
 #else
 	snprintf(filename2, sizeof(filename2), "%s" SLASH "tinc-up", confbase);
@@ -1028,7 +1028,7 @@ ask_netname:
 
 				if(response == 'e') {
 					char *command;
-#ifndef HAVE_MINGW
+#ifndef HAVE_WINDOWS
 					const char *editor = getenv("VISUAL");
 
 					if(!editor) {
@@ -1358,7 +1358,7 @@ next:
 				continue;
 			}
 
-#if HAVE_MINGW
+#if HAVE_WINDOWS
 
 			// If socket has been shut down, recv() on Windows returns -1 and sets sockerrno
 			// to WSAESHUTDOWN, while on UNIX-like operating systems recv() returns 0, so we

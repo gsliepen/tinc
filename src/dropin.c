@@ -130,7 +130,7 @@ int vasprintf(char **buf, const char *fmt, va_list ap) {
 
 #ifndef HAVE_GETTIMEOFDAY
 int gettimeofday(struct timeval *tv, void *tz) {
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 	FILETIME ft;
 	GetSystemTimeAsFileTime(&ft);
 	uint64_t lt = (uint64_t)ft.dwLowDateTime | ((uint64_t)ft.dwHighDateTime << 32);

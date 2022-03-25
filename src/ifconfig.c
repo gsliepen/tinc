@@ -25,7 +25,7 @@
 
 static long start;
 
-#ifndef HAVE_MINGW
+#ifndef HAVE_WINDOWS
 void ifconfig_header(FILE *out) {
 	fprintf(out, "#!/bin/sh\n");
 	start = ftell(out);
@@ -128,7 +128,7 @@ void ifconfig_address(FILE *out, const char *value) {
 		return;
 	}
 
-#elif defined(HAVE_MINGW)
+#elif defined(HAVE_WINDOWS)
 
 	switch(address.type) {
 	case SUBNET_MAC:
@@ -226,7 +226,7 @@ void ifconfig_route(FILE *out, const char *value) {
 		}
 	}
 
-#elif defined(HAVE_MINGW)
+#elif defined(HAVE_WINDOWS)
 
 	if(*gateway_str) {
 		switch(subnet.type) {

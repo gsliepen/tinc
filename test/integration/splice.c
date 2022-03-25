@@ -19,7 +19,7 @@
 
 #include "../../src/system.h"
 
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 static const char *winerror(int err) {
 	static char buf[1024], *ptr;
 
@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
 		protocol = "17.7";
 	}
 
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 	static struct WSAData wsa_state;
 
 	if(WSAStartup(MAKEWORD(2, 2), &wsa_state)) {

@@ -29,7 +29,7 @@ extern bool use_syslog;
 
 extern bool detach(void);
 
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 #include "event.h"
 
 extern io_t stop_io;

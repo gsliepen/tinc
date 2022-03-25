@@ -67,7 +67,7 @@ static inline char *xstrdup(const char *s) {
 }
 
 static inline int xvasprintf(char **strp, const char *fmt, va_list ap) {
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 	char buf[1024];
 	int result = vsnprintf(buf, sizeof(buf), fmt, ap);
 

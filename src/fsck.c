@@ -185,7 +185,7 @@ static void check_conffile(const char *nodename, bool server) {
 	splay_empty_tree(&config);
 }
 
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 typedef int uid_t;
 
 static uid_t getuid(void) {
@@ -219,7 +219,7 @@ static void check_key_file_mode(const char *fname) {
 		}
 	}
 }
-#endif // HAVE_MINGW
+#endif // HAVE_WINDOWS
 
 static char *read_node_name(void) {
 	if(access(tinc_conf, R_OK) == 0) {

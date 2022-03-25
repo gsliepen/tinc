@@ -215,7 +215,7 @@ extern void load_all_nodes(void);
 extern void try_tx(struct node_t *n, bool mtu);
 extern void tarpit(int fd);
 
-#ifndef HAVE_MINGW
+#ifndef HAVE_WINDOWS
 #define closesocket(s) close(s)
 #endif
 

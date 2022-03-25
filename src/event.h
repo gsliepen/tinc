@@ -33,7 +33,7 @@ typedef void (*signal_cb_t)(void *data);
 typedef struct io_t {
 	int fd;
 	int flags;
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 	WSAEVENT event;
 #endif
 	io_cb_t cb;
@@ -57,7 +57,7 @@ typedef struct signal_t {
 extern struct timeval now;
 
 extern void io_add(io_t *io, io_cb_t cb, void *data, int fd, int flags);
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 extern void io_add_event(io_t *io, io_cb_t cb, void *data, WSAEVENT event);
 #endif
 extern void io_del(io_t *io);

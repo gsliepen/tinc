@@ -1,5 +1,5 @@
-#ifndef TINC_MINGW_COMMON_H
-#define TINC_MINGW_COMMON_H
+#ifndef TINC_WINDOWS_COMMON_H
+#define TINC_WINDOWS_COMMON_H
 
 /*
  *  TAP-Win32 -- A kernel driver to provide virtual tap device functionality

@@ -44,7 +44,7 @@ typedef enum logmode_t {
 	LOGMODE_SYSLOG
 } logmode_t;
 
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 #define LOG_EMERG EVENTLOG_ERROR_TYPE
 #define LOG_ALERT EVENTLOG_ERROR_TYPE
 #define LOG_CRIT EVENTLOG_ERROR_TYPE

@@ -30,7 +30,7 @@
 #include "net.h"
 
 struct timeval now;
-#ifndef HAVE_MINGW
+#ifndef HAVE_WINDOWS
 
 #ifdef HAVE_SYS_EPOLL_H
 static int epollset = 0;
@@ -58,7 +58,7 @@ static inline int event_epoll_init(void) {
 #endif
 
 static int io_compare(const io_t *a, const io_t *b) {
-#ifndef HAVE_MINGW
+#ifndef HAVE_WINDOWS
 	return a->fd - b->fd;
 #else
 
@@ -114,7 +114,7 @@ void io_add(io_t *io, io_cb_t cb, void *data, int fd, int flags) {
 	}
 
 	io->fd = fd;
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 
 	if(io->fd != -1) {
 		io->event = WSACreateEvent();
@@ -141,7 +141,7 @@ void io_add(io_t *io, io_cb_t cb, void *data, int fd, int flags) {
 #endif
 }
 
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 void io_add_event(io_t *io, io_cb_t cb, void *data, WSAEVENT event) {
 	io->event = event;
 	io_add(io, cb, data, -1, 0);
@@ -167,7 +167,7 @@ void io_set(io_t *io, int flags) {
 		return;
 	}
 
-#ifndef HAVE_MINGW
+#ifndef HAVE_WINDOWS
 #ifdef HAVE_SYS_EPOLL_H
 	epoll_ctl(epollset, EPOLL_CTL_DEL, io->fd, NULL);
 
@@ -230,7 +230,7 @@ void io_del(io_t *io) {
 	}
 
 	io_set(io, 0);
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 
 	if(io->fd != -1 && WSACloseEvent(io->event) == FALSE) {
 		abort();
@@ -281,7 +281,7 @@ void timeout_del(timeout_t *timeout) {
 	};
 }
 
-#ifndef HAVE_MINGW
+#ifndef HAVE_WINDOWS
 
 // From Matz's Ruby
 #ifndef NSIG
@@ -379,7 +379,7 @@ static struct timeval *timeout_execute(struct timeval *diff) {
 bool event_loop(void) {
 	running = true;
 
-#ifndef HAVE_MINGW
+#ifndef HAVE_WINDOWS
 
 #ifdef HAVE_SYS_EPOLL_H
 

@@ -79,7 +79,7 @@ bool disable_old_keys(const char *filename, const char *what) {
 			return false;
 		}
 
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 		// We cannot atomically replace files on Windows.
 		char bakfile[PATH_MAX] = "";
 		snprintf(bakfile, sizeof(bakfile), "%s.bak", filename);
@@ -95,7 +95,7 @@ bool disable_old_keys(const char *filename, const char *what) {
 			return false;
 		}
 
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 		unlink(bakfile);
 #endif
 		fprintf(stderr, "Warning: old key(s) found and disabled.\n");
@@ -128,7 +128,7 @@ ecdsa_t *read_ecdsa_private_key(splay_tree_t *config_tree, char **keyfile) {
 		return NULL;
 	}
 
-#ifndef HAVE_MINGW
+#ifndef HAVE_WINDOWS
 	struct stat s;
 
 	if(fstat(fileno(fp), &s)) {
@@ -262,7 +262,7 @@ rsa_t *read_rsa_private_key(splay_tree_t *config_tree, char **keyfile) {
 		return NULL;
 	}
 
-#ifndef HAVE_MINGW
+#ifndef HAVE_WINDOWS
 	struct stat s;
 
 	if(fstat(fileno(fp), &s)) {

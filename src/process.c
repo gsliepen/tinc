@@ -25,7 +25,7 @@
 #include "process.h"
 #include "version.h"
 
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 #include "utils.h"
 #endif
 
@@ -42,7 +42,7 @@ bool use_logfile = false;
 
 /* Some functions the less gifted operating systems might lack... */
 
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 static SC_HANDLE manager = NULL;
 static SC_HANDLE service = NULL;
 static SERVICE_STATUS status = {0};
@@ -202,7 +202,7 @@ bool init_service(void) {
 bool detach(void) {
 	logmode_t logmode;
 
-#ifndef HAVE_MINGW
+#ifndef HAVE_WINDOWS
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGUSR1, SIG_IGN);
 	signal(SIGUSR2, SIG_IGN);
@@ -212,7 +212,7 @@ bool detach(void) {
 #endif
 
 	if(do_detach) {
-#ifndef HAVE_MINGW
+#ifndef HAVE_WINDOWS
 
 		if(daemon(1, 0)) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Couldn't detach from terminal: %s", strerror(errno));

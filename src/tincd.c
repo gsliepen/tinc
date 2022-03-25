@@ -37,7 +37,7 @@
 #include <lz4.h>
 #endif
 
-#ifndef HAVE_MINGW
+#ifndef HAVE_WINDOWS
 #include <pwd.h>
 #include <grp.h>
 #include <time.h>
@@ -66,7 +66,7 @@ static bool show_version = false;
 static bool do_mlock = false;
 #endif
 
-#ifndef HAVE_MINGW
+#ifndef HAVE_WINDOWS
 /* If nonzero, chroot to netdir after startup. */
 static bool do_chroot = false;
 
@@ -96,7 +96,7 @@ static struct option const long_options[] = {
 	{NULL, 0, NULL, 0}
 };
 
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 static struct WSAData wsa_state;
 int main2(int argc, char **argv);
 #endif
@@ -121,7 +121,7 @@ static void usage(bool status) {
 		        "      --pidfile=FILENAME        Write PID and control socket cookie to FILENAME.\n"
 		        "      --bypass-security         Disables meta protocol security, for debugging.\n"
 		        "  -o, --option[HOST.]KEY=VALUE  Set global/host configuration value.\n"
-#ifndef HAVE_MINGW
+#ifndef HAVE_WINDOWS
 		        "  -R, --chroot                  chroot to NET dir at startup.\n"
 		        "  -U, --user=USER               setuid to given USER at startup.\n"
 #endif
@@ -196,7 +196,7 @@ static bool parse_options(int argc, char **argv) {
 			list_insert_tail(&cmdline_conf, cfg);
 			break;
 
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 
 		case 'R':
 		case 'U':
@@ -289,7 +289,7 @@ exit_fail:
 }
 
 static bool drop_privs(void) {
-#ifndef HAVE_MINGW
+#ifndef HAVE_WINDOWS
 	uid_t uid = 0;
 
 	if(switchuser) {
@@ -342,7 +342,7 @@ static bool drop_privs(void) {
 	return true;
 }
 
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 # define setpriority(level) !SetPriorityClass(GetCurrentProcess(), (level))
 
 static void stop_handler(void *data, int flags) {
@@ -445,7 +445,7 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 
 	if(WSAStartup(MAKEWORD(2, 2), &wsa_state)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "WSAStartup", winerror(GetLastError()));
@@ -511,7 +511,7 @@ int main(int argc, char **argv) {
 
 #endif
 
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 	io_add_event(&stop_io, stop_handler, NULL, WSACreateEvent());
 
 	if(stop_io.event == FALSE) {

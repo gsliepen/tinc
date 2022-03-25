@@ -159,7 +159,7 @@ elif os_name.endswith('bsd') or os_name in ['dragonfly', 'darwin']
 elif os_name == 'sunos'
   subdir('solaris')
 elif os_name == 'windows'
-  subdir('mingw')
+  subdir('windows')
 endif
 
 foreach h : check_headers
@@ -228,9 +228,7 @@ if not opt_miniupnpc.disabled()
   endif
 endif
 
-if opt_curses.auto() and os_name == 'windows'
-  message('curses does not link under MinGW')
-else
+if not opt_curses.disabled()
   # The meta-dependency covers more alternatives, but is only available in 0.54+
   curses_name = meson_version.version_compare('>=0.54') ? 'curses' : 'ncurses'
   dep_curses = dependency(curses_name, required: opt_curses, static: static)
@@ -242,7 +240,7 @@ endif
 
 # Some distributions do not supply pkg-config files for readline
 if opt_readline.auto() and os_name == 'windows'
-  message('readline does not link under MinGW')
+  message('readline not available on Windows')
 else
   dep_readline = dependency('readline', required: opt_readline, static: static)
   if not dep_readline.found()

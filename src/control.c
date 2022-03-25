@@ -185,7 +185,7 @@ bool init_control(void) {
 	free(localhost);
 	fclose(f);
 
-#ifndef HAVE_MINGW
+#ifndef HAVE_WINDOWS
 	int unix_fd = socket(AF_UNIX, SOCK_STREAM, 0);
 
 	if(unix_fd < 0) {
@@ -232,7 +232,7 @@ bool init_control(void) {
 }
 
 void exit_control(void) {
-#ifndef HAVE_MINGW
+#ifndef HAVE_WINDOWS
 	unlink(unixsocketname);
 	io_del(&unix_socket);
 	close(unix_socket.fd);

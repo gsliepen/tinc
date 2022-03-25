@@ -37,7 +37,7 @@ static void unputenv(const char *p) {
 
 	ptrdiff_t len = e - p;
 #ifndef HAVE_UNSETENV
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 	// Windows requires putenv("FOO=") to unset %FOO%
 	len++;
 #endif
@@ -148,7 +148,7 @@ bool execute_script(const char *name, environment_t *env) {
 
 	/* First check if there is a script */
 
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 
 	if(!*scriptextension) {
 		const char *pathext = getenv("PATHEXT");

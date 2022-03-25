@@ -16,5 +16,3 @@ endforeach
 
 src_tincd += files('device.c')
 
-cdata.set('HAVE_MINGW', 1)
-

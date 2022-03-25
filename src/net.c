@@ -160,7 +160,7 @@ void terminate_connection(connection_t *c, bool report) {
 		do_outgoing_connection(outgoing);
 	}
 
-#ifndef HAVE_MINGW
+#ifndef HAVE_WINDOWS
 	/* Clean up dead proxy processes */
 
 	while(waitpid(-1, NULL, WNOHANG) > 0);
@@ -308,7 +308,7 @@ void handle_meta_connection_data(connection_t *c) {
 	}
 }
 
-#ifndef HAVE_MINGW
+#ifndef HAVE_WINDOWS
 static void sigterm_handler(void *data) {
 	logger(DEBUG_ALWAYS, LOG_NOTICE, "Got %s signal", strsignal(((signal_t *)data)->signum));
 	event_exit();
@@ -487,7 +487,7 @@ int main_loop(void) {
 		0, 0
 	});
 
-#ifndef HAVE_MINGW
+#ifndef HAVE_WINDOWS
 	signal_t sighup = {0};
 	signal_t sigterm = {0};
 	signal_t sigquit = {0};
@@ -506,7 +506,7 @@ int main_loop(void) {
 		return 1;
 	}
 
-#ifndef HAVE_MINGW
+#ifndef HAVE_WINDOWS
 	signal_del(&sighup);
 	signal_del(&sigterm);
 	signal_del(&sigquit);

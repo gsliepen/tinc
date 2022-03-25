@@ -281,7 +281,7 @@ ask_filename:
 		}
 	}
 
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 
 	if(filename[0] != '\\' && filename[0] != '/' && !strchr(filename, ':')) {
 #else
@@ -651,7 +651,7 @@ static bool stop_tincd(void) {
 	return true;
 }
 
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 static bool remove_service(void) {
 	SC_HANDLE manager = NULL;
 	SC_HANDLE service = NULL;
@@ -748,7 +748,7 @@ bool connect_tincd(bool verbose) {
 
 	fclose(f);
 
-#ifndef HAVE_MINGW
+#ifndef HAVE_WINDOWS
 
 	if((pid == 0) || (kill(pid, 0) && (errno == ESRCH))) {
 		fprintf(stderr, "Could not find tincd running at pid %d\n", pid);
@@ -886,7 +886,7 @@ static int cmd_start(int argc, char *argv[]) {
 	char *c;
 	char *slash = strrchr(program_name, '/');
 
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 
 	if((c = strrchr(program_name, '\\')) > slash) {
 		slash = c;
@@ -904,7 +904,7 @@ static int cmd_start(int argc, char *argv[]) {
 	char **nargv = xzalloc((optind + argc) * sizeof(*nargv));
 
 	char *arg0 = c;
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 	/*
 	   Windows has no real concept of an "argv array". A command line is just one string.
 	   The CRT of the new process will decode the command line string to generate argv before calling main(), and (by convention)
@@ -925,7 +925,7 @@ static int cmd_start(int argc, char *argv[]) {
 		nargv[nargc++] = argv[i];
 	}
 
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 	int status = spawnvp(_P_WAIT, c, nargv);
 
 	free(nargv);
@@ -1024,7 +1024,7 @@ static int cmd_stop(int argc, char *argv[]) {
 		return 1;
 	}
 
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 	return remove_service() ? EXIT_SUCCESS : EXIT_FAILURE;
 #else
 
@@ -2058,7 +2058,7 @@ static int cmd_config(int argc, char *argv[]) {
 	}
 
 	// Replace the configuration file with the new one
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 
 	if(remove(filename)) {
 		fprintf(stderr, "Error replacing file %s: %s\n", filename, strerror(errno));
@@ -2234,7 +2234,7 @@ static int cmd_init(int argc, char *argv[]) {
 
 	check_port(name);
 
-#ifndef HAVE_MINGW
+#ifndef HAVE_WINDOWS
 	char filename[PATH_MAX];
 	snprintf(filename, sizeof(filename), "%s" SLASH "tinc-up", confbase);
 
@@ -2396,7 +2396,7 @@ static int cmd_edit(int argc, char *argv[]) {
 	}
 
 	char *command;
-#ifndef HAVE_MINGW
+#ifndef HAVE_WINDOWS
 	const char *editor = getenv("VISUAL");
 
 	if(!editor) {
@@ -3290,7 +3290,7 @@ int main(int argc, char *argv[]) {
 		return 0;
 	}
 
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 	static struct WSAData wsa_state;
 
 	if(WSAStartup(MAKEWORD(2, 2), &wsa_state)) {

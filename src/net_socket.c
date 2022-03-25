@@ -47,7 +47,7 @@ int fwmark;
 
 listen_socket_t listen_socket[MAXSOCKETS];
 int listen_sockets;
-#ifndef HAVE_MINGW
+#ifndef HAVE_WINDOWS
 io_t unix_socket;
 #endif
 
@@ -425,7 +425,7 @@ void finish_connecting(connection_t *c) {
 }
 
 static void do_outgoing_pipe(connection_t *c, const char *command) {
-#ifndef HAVE_MINGW
+#ifndef HAVE_WINDOWS
 	int fd[2];
 
 	if(socketpair(AF_UNIX, SOCK_STREAM, 0, fd)) {
@@ -783,7 +783,7 @@ void handle_new_meta_connection(void *data, int flags) {
 	c->allow_request = ID;
 }
 
-#ifndef HAVE_MINGW
+#ifndef HAVE_WINDOWS
 /*
   accept a new UNIX socket connection
 */

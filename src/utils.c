@@ -176,7 +176,7 @@ size_t b64encode_tinc_urlsafe(const void *src, char *dst, size_t length) {
 	return b64encode_tinc_internal(src, dst, length, base64_urlsafe);
 }
 
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 const char *winerror(int err) {
 	static char buf[1024], *ptr;
 

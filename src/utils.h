@@ -34,7 +34,7 @@ extern size_t b64encode_tinc(const void *src, char *dst, size_t length);
 extern size_t b64encode_tinc_urlsafe(const void *src, char *dst, size_t length);
 extern size_t b64decode_tinc(const char *src, void *dst, size_t length);
 
-#ifdef HAVE_MINGW
+#ifdef HAVE_WINDOWS
 extern const char *winerror(int);
 #define strerror(x) ((x)>0?strerror(x):winerror(GetLastError()))
 #define sockerrno WSAGetLastError()
