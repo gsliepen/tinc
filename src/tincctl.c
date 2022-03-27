@@ -1894,7 +1894,11 @@ static int cmd_config(int argc, char *argv[]) {
 	char filename[PATH_MAX];
 
 	if(node) {
-		snprintf(filename, sizeof(filename), "%s" SLASH "%s", hosts_dir, node);
+		if((size_t)snprintf(filename, sizeof(filename), "%s" SLASH "%s", hosts_dir, node) >= sizeof(filename)) {
+			fprintf(stderr, "Filename too long: %s" SLASH "%s\n", hosts_dir, node);
+			free(node);
+			return 1;
+		}
 
 		if(node != line) {
 			free(node);
