@@ -46,23 +46,31 @@ check_headers = [
   'sys/stat.h',
   'sys/time.h',
   'sys/types.h',
-  'sys/un.h',
   'sys/wait.h',
   'syslog.h',
   'termios.h',
 ]
 
+# 'struct msghdr' misses some required fields
+if os_name != 'sunos'
+  check_headers += 'sys/un.h'
+endif
+
 check_functions = [
   'asprintf',
   'daemon',
   'fchmod',
-  'fork',
   'gettimeofday',
   'mlockall',
   'putenv',
   'strsignal',
   'unsetenv',
 ]
+
+# Broken definition, fails to link
+if os_name != 'windows'
+  check_functions += 'fork'
+endif
 
 check_types = [
   'struct arphdr',
@@ -115,7 +123,6 @@ src_tincd = [
   'dummy_device.c',
   'edge.c',
   'event.c',
-  'fd_device.c',
   'graph.c',
   'meta.c',
   'multicast_device.c',
@@ -160,6 +167,10 @@ foreach h : check_headers
   endif
 endforeach
 
+if cdata.has('HAVE_SYS_UN_H')
+  src_tincd += 'fd_device.c'
+endif
+
 confdata = configuration_data()
 confdata.merge_from(cdata)
 configure_file(output: 'meson_config.h', configuration: confdata)
@@ -170,14 +181,10 @@ have_prefix = '''
 '''.format(build_root, meson.current_source_dir())
 
 foreach f : check_functions
-  if f == 'fork' and os_name == 'windows'
-    message('MinGW does not have correct definition for fork()')
-  else
-    if cc.has_function(f, prefix: have_prefix, args: cc_defs)
-      cdata.set('HAVE_' + f.to_upper(),
-                1,
-                description: 'function ' + f)
-    endif
+  if cc.has_function(f, prefix: have_prefix, args: cc_defs)
+    cdata.set('HAVE_' + f.to_upper(),
+              1,
+              description: 'function ' + f)
   endif
 endforeach
 

@@ -6,7 +6,6 @@ tests = [
   'invite-join.test',
   'invite-offline.test',
   'invite-tinc-up.test',
-  'scripts.test',
   'security.test',
   'variables.test',
 ]
@@ -22,6 +21,10 @@ endif
 
 if os_name == 'linux'
   tests += 'ns-ping.test'
+endif
+
+if os_name != 'sunos'
+  tests += 'scripts.test'
 endif
 
 exe_splice = executable(

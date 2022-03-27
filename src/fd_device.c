@@ -22,7 +22,6 @@
 
 #include "system.h"
 
-#ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
 
 #include "conf.h"
@@ -240,4 +239,3 @@ const devops_t fd_devops = {
 	.read = read_packet,
 	.write = write_packet,
 };
-#endif

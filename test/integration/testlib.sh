@@ -45,6 +45,21 @@ DIR_BAZ=$(realdir "$PWD/$net3")
 
 # Register helper functions
 
+if [ "$(uname -s)" = SunOS ]; then
+  gnu=/usr/gnu/bin
+  grep="$gnu/grep"
+
+  grep() { $gnu/grep "$@"; }
+  tail() { $gnu/tail "$@"; }
+
+  if ! tail /dev/null || ! echo '' | grep ''; then
+    echo >&2 'Sorry, native Solaris tools are not supported. Please install GNU Coreutils.'
+    exit $EXIT_SKIP_TEST
+  fi
+else
+  grep='grep'
+fi
+
 # Alias gtimeout to timeout if it exists.
 if type gtimeout >/dev/null; then
   timeout() { gtimeout "$@"; }
@@ -361,7 +376,7 @@ wait_script() {
 
   new_line=$(
     sh -c "
-      grep -n -m $count '^$script,' <'$fifo'
+      $grep -n -m $count '^$script,' <'$fifo'
     " | awk -F: 'END { print $1 }'
   )
 

@@ -34,6 +34,10 @@ os_name = host_machine.system()
 cc_name = cc.get_id()
 
 cc_defs = ['-D_GNU_SOURCE']
+if os_name == 'sunos'
+  cc_defs += '-D__EXTENSIONS__'
+endif
+
 cc_flags = [cc_defs]
 ld_flags = []
 
