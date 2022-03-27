@@ -2,7 +2,6 @@
 --convert-tabs
 --exclude=subprojects
 --exclude=build
---recursive
 -i
 -j
 -f
@@ -13,4 +12,3 @@
 -k3
 -w
 --formatted
-

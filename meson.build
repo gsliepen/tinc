@@ -121,7 +121,7 @@ prog_reformat = find_program('astyle', native: true, required: false)
 if prog_reformat.found()
   run_target('reformat', command: [
     prog_reformat,
-    '--options=@SOURCE_ROOT@/.astylerc',
+    '--options=@SOURCE_ROOT@/.astylerc', '--recursive',
     '@SOURCE_ROOT@/*.c', '@SOURCE_ROOT@/*.h',
   ])
 endif
