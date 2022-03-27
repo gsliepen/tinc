@@ -1,5 +1,5 @@
 project('tinc', 'c',
-  version: '1.18pre',
+  version: run_command([find_program('python3'), 'version.py', 'short'], check: true).stdout(),
   license: 'GPL-2.0-or-later',
   meson_version: '>=0.51',
   default_options: [
@@ -34,6 +34,13 @@ cc = meson.get_compiler('c')
 os_name = host_machine.system()
 cpu_family = host_machine.cpu_family()
 cc_name = cc.get_id()
+
+python = find_program('python3')
+if meson_version.version_compare('>=0.55')
+  python_path = python.full_path()
+else
+  python_path = python.path()
+endif
 
 cc_defs = ['-D_GNU_SOURCE']
 if os_name == 'sunos'
