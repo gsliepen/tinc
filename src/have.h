@@ -51,6 +51,16 @@
 #define STATIC_ASSERT(check, msg)
 #endif
 
+#ifdef HAVE_ATTR_PACKED
+#define PACKED(...) __VA_ARGS__ __attribute__((__packed__))
+#else
+#ifdef _MSC_VER
+#define PACKED(...) __pragma(pack(push, 1)) __VA_ARGS__ __pragma(pack(pop))
+#else
+#warning Your compiler does not support __packed__. Use at your own risk.
+#endif
+#endif
+
 #ifdef HAVE_ALLOCA_H
 #include <alloca.h>
 #elif defined(HAVE_NETBSD)

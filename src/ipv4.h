@@ -64,26 +64,30 @@
 #endif
 
 #ifndef HAVE_STRUCT_IP
-struct ip {
 #if __BYTE_ORDER == __LITTLE_ENDIAN
-	unsigned int ip_hl: 4;
-	unsigned int ip_v: 4;
+#define IP_NIBBLE1 ip_hl
+#define IP_NIBBLE2 ip_v
 #else
-	unsigned int ip_v: 4;
-	unsigned int ip_hl: 4;
+#define IP_NIBBLE1 ip_v
+#define IP_NIBBLE2 ip_hl
 #endif
+PACKED(struct ip {
+	uint8_t IP_NIBBLE1: 4;
+	uint8_t IP_NIBBLE2: 4;
 	uint8_t ip_tos;
 	uint16_t ip_len;
 	uint16_t ip_id;
 	uint16_t ip_off;
-#define IP_RF 0x8000
-#define IP_DF 0x4000
-#define IP_MF 0x2000
 	uint8_t ip_ttl;
 	uint8_t ip_p;
 	uint16_t ip_sum;
 	struct in_addr ip_src, ip_dst;
-};
+});
+#undef IP_NIBBLE1
+#undef IP_NIBBLE2
+#define IP_RF 0x8000
+#define IP_DF 0x4000
+#define IP_MF 0x2000
 #endif
 
 STATIC_ASSERT(sizeof(struct ip) == 20, "ip has incorrect size");
@@ -93,7 +97,7 @@ STATIC_ASSERT(sizeof(struct ip) == 20, "ip has incorrect size");
 #endif
 
 #ifndef HAVE_STRUCT_ICMP
-struct icmp {
+PACKED(struct icmp {
 	uint8_t icmp_type;
 	uint8_t icmp_code;
 	uint16_t icmp_cksum;
@@ -118,16 +122,6 @@ struct icmp {
 			uint16_t irt_lifetime;
 		} ih_rtradv;
 	} icmp_hun;
-#define icmp_pptr icmp_hun.ih_pptr
-#define icmp_gwaddr icmp_hun.ih_gwaddr
-#define icmp_id icmp_hun.ih_idseq.icd_id
-#define icmp_seq icmp_hun.ih_idseq.icd_seq
-#define icmp_void icmp_hun.ih_void
-#define icmp_pmvoid icmp_hun.ih_pmtu.ipm_void
-#define icmp_nextmtu icmp_hun.ih_pmtu.ipm_nextmtu
-#define icmp_num_addrs icmp_hun.ih_rtradv.irt_num_addrs
-#define icmp_wpa icmp_hun.ih_rtradv.irt_wpa
-#define icmp_lifetime icmp_hun.ih_rtradv.irt_lifetime
 	union {
 		struct {
 			uint32_t its_otime;
@@ -140,6 +134,17 @@ struct icmp {
 		uint32_t id_mask;
 		uint8_t id_data[1];
 	} icmp_dun;
+});
+#define icmp_pptr icmp_hun.ih_pptr
+#define icmp_gwaddr icmp_hun.ih_gwaddr
+#define icmp_id icmp_hun.ih_idseq.icd_id
+#define icmp_seq icmp_hun.ih_idseq.icd_seq
+#define icmp_void icmp_hun.ih_void
+#define icmp_pmvoid icmp_hun.ih_pmtu.ipm_void
+#define icmp_nextmtu icmp_hun.ih_pmtu.ipm_nextmtu
+#define icmp_num_addrs icmp_hun.ih_rtradv.irt_num_addrs
+#define icmp_wpa icmp_hun.ih_rtradv.irt_wpa
+#define icmp_lifetime icmp_hun.ih_rtradv.irt_lifetime
 #define icmp_otime icmp_dun.id_ts.its_otime
 #define icmp_rtime icmp_dun.id_ts.its_rtime
 #define icmp_ttime icmp_dun.id_ts.its_ttime
@@ -147,7 +152,6 @@ struct icmp {
 #define icmp_radv icmp_dun.id_radv
 #define icmp_mask icmp_dun.id_mask
 #define icmp_data icmp_dun.id_data
-};
 #endif
 
 STATIC_ASSERT(sizeof(struct icmp) == 28, "icmp has incorrect size");

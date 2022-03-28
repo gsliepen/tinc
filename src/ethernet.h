@@ -61,24 +61,23 @@
 #endif
 
 #ifndef HAVE_STRUCT_ETHER_HEADER
-struct ether_header {
+PACKED(struct ether_header {
 	uint8_t ether_dhost[ETH_ALEN];
 	uint8_t ether_shost[ETH_ALEN];
 	uint16_t ether_type;
-};
+});
 #endif
 
 STATIC_ASSERT(sizeof(struct ether_header) == 14, "ether_header has incorrect size");
 
 #ifndef HAVE_STRUCT_ARPHDR
-struct arphdr {
+PACKED(struct arphdr {
 	uint16_t ar_hrd;
 	uint16_t ar_pro;
 	uint8_t ar_hln;
 	uint8_t ar_pln;
 	uint16_t ar_op;
-};
-
+});
 #define ARPOP_REQUEST 1
 #define ARPOP_REPLY 2
 #define ARPOP_RREQUEST 3
@@ -91,13 +90,13 @@ struct arphdr {
 STATIC_ASSERT(sizeof(struct arphdr) == 8, "arphdr has incorrect size");
 
 #ifndef HAVE_STRUCT_ETHER_ARP
-struct  ether_arp {
+PACKED(struct ether_arp {
 	struct  arphdr ea_hdr;
 	uint8_t arp_sha[ETH_ALEN];
 	uint8_t arp_spa[4];
 	uint8_t arp_tha[ETH_ALEN];
 	uint8_t arp_tpa[4];
-};
+});
 #define arp_hrd ea_hdr.ar_hrd
 #define arp_pro ea_hdr.ar_pro
 #define arp_hln ea_hdr.ar_hln

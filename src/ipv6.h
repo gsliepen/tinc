@@ -39,7 +39,7 @@
 #endif
 
 #ifndef HAVE_STRUCT_IP6_HDR
-struct ip6_hdr {
+PACKED(struct ip6_hdr {
 	union {
 		struct ip6_hdrctl {
 			uint32_t ip6_un1_flow;
@@ -51,7 +51,7 @@ struct ip6_hdr {
 	} ip6_ctlun;
 	struct in6_addr ip6_src;
 	struct in6_addr ip6_dst;
-};
+});
 #define ip6_vfc ip6_ctlun.ip6_un2_vfc
 #define ip6_flow ip6_ctlun.ip6_un1.ip6_un1_flow
 #define ip6_plen ip6_ctlun.ip6_un1.ip6_un1_plen
@@ -63,7 +63,7 @@ struct ip6_hdr {
 STATIC_ASSERT(sizeof(struct ip6_hdr) == 40, "ip6_hdr has incorrect size");
 
 #ifndef HAVE_STRUCT_ICMP6_HDR
-struct icmp6_hdr {
+PACKED(struct icmp6_hdr {
 	uint8_t icmp6_type;
 	uint8_t icmp6_code;
 	uint16_t icmp6_cksum;
@@ -72,7 +72,7 @@ struct icmp6_hdr {
 		uint16_t icmp6_un_data16[2];
 		uint8_t icmp6_un_data8[4];
 	} icmp6_dataun;
-};
+});
 #define ICMP6_DST_UNREACH_NOROUTE 0
 #define ICMP6_DST_UNREACH 1
 #define ICMP6_PACKET_TOO_BIG 2
@@ -91,10 +91,10 @@ struct icmp6_hdr {
 STATIC_ASSERT(sizeof(struct icmp6_hdr) == 8, "icmp6_hdr has incorrect size");
 
 #ifndef HAVE_STRUCT_ND_NEIGHBOR_SOLICIT
-struct nd_neighbor_solicit {
+PACKED(struct nd_neighbor_solicit {
 	struct icmp6_hdr nd_ns_hdr;
 	struct in6_addr nd_ns_target;
-};
+});
 #define ND_OPT_SOURCE_LINKADDR 1
 #define ND_OPT_TARGET_LINKADDR 2
 #define nd_ns_type nd_ns_hdr.icmp6_type
@@ -106,10 +106,10 @@ struct nd_neighbor_solicit {
 STATIC_ASSERT(sizeof(struct nd_neighbor_solicit) == 24, "nd_neighbor_solicit has incorrect size");
 
 #ifndef HAVE_STRUCT_ND_OPT_HDR
-struct nd_opt_hdr {
+PACKED(struct nd_opt_hdr {
 	uint8_t nd_opt_type;
 	uint8_t nd_opt_len;
-};
+});
 #endif
 
 STATIC_ASSERT(sizeof(struct nd_opt_hdr) == 2, "nd_opt_hdr has incorrect size");
