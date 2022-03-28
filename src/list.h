@@ -45,7 +45,7 @@ typedef struct list_t {
 
 /* (De)constructors */
 
-extern list_t *list_alloc(list_action_t delete) __attribute__((__malloc__));
+extern list_t *list_alloc(list_action_t delete) ATTR_MALLOC;
 extern void list_free(list_t *list);
 extern list_node_t *list_alloc_node(void);
 extern void list_free_node(list_t *list, list_node_t *node);

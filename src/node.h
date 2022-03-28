@@ -120,7 +120,7 @@ extern struct node_t *myself;
 extern splay_tree_t node_tree;
 
 extern void exit_nodes(void);
-extern node_t *new_node(void) __attribute__((__malloc__));
+extern node_t *new_node(void) ATTR_MALLOC;
 extern void free_node(node_t *n);
 extern void node_add(node_t *n);
 extern void node_del(node_t *n);

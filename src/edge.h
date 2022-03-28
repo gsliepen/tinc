@@ -42,7 +42,7 @@ typedef struct edge_t {
 extern splay_tree_t edge_weight_tree;          /* Tree with all known edges sorted on weight */
 
 extern void exit_edges(void);
-extern edge_t *new_edge(void) __attribute__((__malloc__));
+extern edge_t *new_edge(void) ATTR_MALLOC;
 extern void free_edge(edge_t *e);
 extern void init_edge_tree(splay_tree_t *tree);
 extern void edge_add(edge_t *e);

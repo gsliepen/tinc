@@ -22,6 +22,6 @@
 
 #include "system.h"
 
-extern bool prf(const uint8_t *secret, size_t secretlen, uint8_t *seed, size_t seedlen, uint8_t *out, size_t outlen) __attribute__((__warn_unused_result__));
+extern bool prf(const uint8_t *secret, size_t secretlen, uint8_t *seed, size_t seedlen, uint8_t *out, size_t outlen) ATTR_WARN_UNUSED;
 
 #endif

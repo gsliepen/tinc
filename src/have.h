@@ -61,6 +61,30 @@
 #endif
 #endif
 
+#ifdef HAVE_ATTR_MALLOC
+#define ATTR_MALLOC __attribute__((__malloc__))
+#else
+#define ATTR_MALLOC
+#endif
+
+#ifdef HAVE_ATTR_NONNULL
+#define ATTR_NONNULL __attribute__((__nonnull__))
+#else
+#define ATTR_NONNULL
+#endif
+
+#ifdef HAVE_ATTR_WARN_UNUSED_RESULT
+#define ATTR_WARN_UNUSED __attribute__((__warn_unused_result__))
+#else
+#define ATTR_WARN_UNUSED
+#endif
+
+#ifdef HAVE_ATTR_FORMAT
+#define ATTR_FORMAT(func, str, nonstr) __attribute__((format(func, str, nonstr)))
+#else
+#define ATTR_FORMAT(func, str, nonstr)
+#endif
+
 #ifdef HAVE_ALLOCA_H
 #include <alloca.h>
 #elif defined(HAVE_NETBSD)

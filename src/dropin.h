@@ -73,9 +73,6 @@ extern int gettimeofday(struct timeval *, void *);
 
 #ifdef _MSC_VER
 
-#define __attribute(args)
-#define __attribute__(args)
-
 #define PATH_MAX MAX_PATH
 #define strcasecmp _stricmp
 #define strncasecmp _strnicmp

@@ -25,10 +25,10 @@
 
 extern bool hostnames;
 
-extern struct addrinfo *str2addrinfo(const char *address, const char *service, int socktype) __attribute__((__malloc__));
+extern struct addrinfo *str2addrinfo(const char *address, const char *service, int socktype) ATTR_MALLOC;
 extern sockaddr_t str2sockaddr(const char *address, const char *port);
 extern void sockaddr2str(const sockaddr_t *sa, char **address, char **port);
-extern char *sockaddr2hostname(const sockaddr_t *sa) __attribute__((__malloc__));
+extern char *sockaddr2hostname(const sockaddr_t *sa) ATTR_MALLOC;
 extern int sockaddrcmp(const sockaddr_t *a, const sockaddr_t *b);
 extern int sockaddrcmp_noport(const sockaddr_t *a, const sockaddr_t *b);
 extern void sockaddrunmap(sockaddr_t *sa);

@@ -80,7 +80,7 @@ extern ecdsa_t *invitation_key;
 
 /* Basic functions */
 
-extern bool send_request(struct connection_t *c, const char *format, ...) __attribute__((__format__(printf, 2, 3)));
+extern bool send_request(struct connection_t *c, const char *format, ...) ATTR_FORMAT(printf, 2, 3);
 extern void forward_request(struct connection_t *c, const char *request);
 extern bool receive_request(struct connection_t *c, const char *request);
 
