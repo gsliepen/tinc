@@ -68,6 +68,8 @@ struct ether_header {
 };
 #endif
 
+STATIC_ASSERT(sizeof(struct ether_header) == 14, "ether_header has incorrect size");
+
 #ifndef HAVE_STRUCT_ARPHDR
 struct arphdr {
 	uint16_t ar_hrd;
@@ -86,6 +88,8 @@ struct arphdr {
 #define ARPOP_NAK 10
 #endif
 
+STATIC_ASSERT(sizeof(struct arphdr) == 8, "arphdr has incorrect size");
+
 #ifndef HAVE_STRUCT_ETHER_ARP
 struct  ether_arp {
 	struct  arphdr ea_hdr;
@@ -100,5 +104,7 @@ struct  ether_arp {
 #define arp_pln ea_hdr.ar_pln
 #define arp_op ea_hdr.ar_op
 #endif
+
+STATIC_ASSERT(sizeof(struct ether_arp) == 28, "ether_arp has incorrect size");
 
 #endif

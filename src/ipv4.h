@@ -86,6 +86,8 @@ struct ip {
 };
 #endif
 
+STATIC_ASSERT(sizeof(struct ip) == 20, "ip has incorrect size");
+
 #ifndef IP_OFFMASK
 #define IP_OFFMASK 0x1fff
 #endif
@@ -147,5 +149,7 @@ struct icmp {
 #define icmp_data icmp_dun.id_data
 };
 #endif
+
+STATIC_ASSERT(sizeof(struct icmp) == 28, "icmp has incorrect size");
 
 #endif

@@ -15,6 +15,14 @@ foreach attr : ['malloc', 'nonnull', 'warn_unused_result']
   cc.has_function_attribute(attr)
 endforeach
 
+if cc.compiles('''
+    _Static_assert(1, "ok");
+    int main(void) { return 0; }
+''')
+  cdata.set('HAVE_STATIC_ASSERT', 1,
+            description: 'C11 _Static_assert()')
+endif
+
 check_headers = [
   'alloca.h',
   'arpa/inet.h',

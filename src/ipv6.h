@@ -60,6 +60,8 @@ struct ip6_hdr {
 #define ip6_hops ip6_ctlun.ip6_un1.ip6_un1_hlim
 #endif
 
+STATIC_ASSERT(sizeof(struct ip6_hdr) == 40, "ip6_hdr has incorrect size");
+
 #ifndef HAVE_STRUCT_ICMP6_HDR
 struct icmp6_hdr {
 	uint8_t icmp6_type;
@@ -86,6 +88,8 @@ struct icmp6_hdr {
 #define icmp6_mtu icmp6_data32[0]
 #endif
 
+STATIC_ASSERT(sizeof(struct icmp6_hdr) == 8, "icmp6_hdr has incorrect size");
+
 #ifndef HAVE_STRUCT_ND_NEIGHBOR_SOLICIT
 struct nd_neighbor_solicit {
 	struct icmp6_hdr nd_ns_hdr;
@@ -99,11 +103,15 @@ struct nd_neighbor_solicit {
 #define nd_ns_reserved nd_ns_hdr.icmp6_data32[0]
 #endif
 
+STATIC_ASSERT(sizeof(struct nd_neighbor_solicit) == 24, "nd_neighbor_solicit has incorrect size");
+
 #ifndef HAVE_STRUCT_ND_OPT_HDR
 struct nd_opt_hdr {
 	uint8_t nd_opt_type;
 	uint8_t nd_opt_len;
 };
 #endif
+
+STATIC_ASSERT(sizeof(struct nd_opt_hdr) == 2, "nd_opt_hdr has incorrect size");
 
 #endif

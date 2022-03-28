@@ -45,6 +45,12 @@
 #include <math.h>
 #include <time.h>
 
+#ifdef HAVE_STATIC_ASSERT
+#define STATIC_ASSERT(expr, msg) _Static_assert((expr), msg)
+#else
+#define STATIC_ASSERT(check, msg)
+#endif
+
 #ifdef HAVE_ALLOCA_H
 #include <alloca.h>
 #elif defined(HAVE_NETBSD)
