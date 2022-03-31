@@ -24,24 +24,30 @@ run_tests() {
     sudo pkill -KILL -x "$name" || true
   done
 
-  sudo git clean -dfx
   sudo chown -R "${USER:-$(whoami)}" .
 
   mkdir -p sanitizer /tmp/logs
 
   header "Running test flavor $flavor"
 
-  ./.ci/build.sh "$@"
+  ./.ci/build.sh "$flavor" "$@"
 
   if [ "${HOST:-}" = mingw ]; then
     echo >&2 "Integration tests cannot run under wine, skipping"
     return 0
   fi
 
-  code=0
-  meson test -C build --verbose || code=$?
+  if [ -n "${HOST:-}" ]; then
+    echo >&2 "Using higher test timeout for cross-compilation job $HOST"
+    timeout=10
+  else
+    timeout=1
+  fi
 
-  sudo tar -c -z -f "/tmp/logs/tests.$flavor.tar.gz" build/ sanitizer/
+  code=0
+  meson test -C "$flavor" --timeout-multiplier $timeout --verbose || code=$?
+
+  sudo tar -c -z -f "/tmp/logs/tests.$flavor.tar.gz" "$flavor" sanitizer/ || true
 
   return $code
 }

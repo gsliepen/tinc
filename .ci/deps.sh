@@ -6,8 +6,7 @@ deps_linux_alpine() {
   apk upgrade
 
   apk add \
-    git binutils meson pkgconf gcc linux-headers diffutils \
-    procps socat shadow sudo libgcrypt-dev texinfo gzip \
+    git binutils meson pkgconf gcc linux-headers shadow sudo libgcrypt-dev texinfo gzip \
     openssl-dev zlib-dev lzo-dev ncurses-dev readline-dev musl-dev lz4-dev vde2-dev cmocka-dev
 }
 
@@ -52,8 +51,7 @@ deps_linux_debian() {
 
   apt-get update
   apt-get upgrade -y
-  apt-get install -y git pkgconf diffutils sudo texinfo \
-    netcat-openbsd procps socat
+  apt-get install -y git pkgconf sudo texinfo
 
   HOST=${HOST:-}
   if [ "$HOST" = mingw ]; then
@@ -88,8 +86,8 @@ deps_linux_rhel() {
   yum upgrade -y
 
   yum install -y \
-    git binutils make meson pkgconf gcc diffutils sudo texinfo-tex netcat procps systemd perl-IPC-Cmd \
-    findutils socat lzo-devel zlib-devel lz4-devel ncurses-devel readline-devel libgcrypt-devel "$@"
+    git binutils make meson pkgconf gcc sudo texinfo-tex systemd perl-IPC-Cmd \
+    lzo-devel zlib-devel lz4-devel ncurses-devel readline-devel libgcrypt-devel "$@"
 
   if yum info openssl11-devel; then
     yum install -y openssl11-devel
@@ -103,6 +101,11 @@ deps_linux_rhel() {
 }
 
 linux_openssl3() {
+  if [ -n "${SKIP_OPENSSL3:-}" ]; then
+    echo >&2 "skipping openssl3 installation in this job"
+    return
+  fi
+
   src=/usr/local/src/openssl
   ssl3=/opt/ssl3
 
@@ -147,8 +150,7 @@ deps_linux() {
 }
 
 deps_macos() {
-  brew install coreutils netcat lzo lz4 miniupnpc libgcrypt openssl meson "$@"
-  pip3 install --user compiledb
+  brew install lzo lz4 miniupnpc libgcrypt openssl meson "$@"
 }
 
 case "$(uname -s)" in

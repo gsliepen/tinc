@@ -2,7 +2,7 @@
 
 set -eu
 
-./.ci/build.sh "$@"
+./.ci/build.sh build "$@"
 
 # Which paths to ignore.
 paths='src/solaris src/windows src/gcrypt'

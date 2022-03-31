@@ -1,24 +1,8 @@
 set builddir=%1
-set data=%builddir%\test-data
-set tinc=%builddir%\src\tinc
-set tincd=%tinc%d
 
-mkdir %data% || exit 1
+REM Windows jobs on GitHub CI sometimes show surprisingly poor performance
+REM (building tinc with default flags can take from 3 to upwards of 20+
+REM minutes, depending on which machine you happened to land on), so timeout
+REM is set a bit higher here.
 
-echo can tinc run at all?
-%tinc% --version || exit 1
-
-echo try to initialize a node
-%tinc% -c %data% -b init foo || exit 1
-
-echo try to generate EC keys
-%tinc% -c %data% -b generate-ed25519-keys || exit 1
-
-echo can tincd run?
-%tincd% --version || exit 1
-
-echo bail out if we're missing support for the legacy protocol
-%tinc% --version | findstr legacy_protocol || exit 0
-
-echo try to generate RSA keys
-%tinc% -c %data% -b generate-keys || exit 1
+meson test -C %builddir% --timeout-multiplier 2 --verbose || exit 1

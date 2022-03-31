@@ -65,33 +65,25 @@ jobs:
           tar -C ~ --strip-components=1 --wildcards -xf ./shellcheck-*.tar.xz 'shellcheck-*/shellcheck'
           curl -o ~/shfmt -L "https://github.com/mvdan/sh/releases/download/v$SHFMT/shfmt_v${SHFMT}_linux_amd64"
           chmod 755 ~/shfmt ~/shellcheck
-          pip3 install --user compiledb
+          python3 -m venv /tmp/venv
+          . /tmp/venv/bin/activate
+          pip3 install black pylint mypy
         env:
           CLANG: 11
           SHELLCHECK: 0.7.2
           SHFMT: 3.3.0
 
       - name: Install deps
-        run: sudo sh .ci/deps.sh
+        run: sudo SKIP_OPENSSL3=1 sh .ci/deps.sh
+
+      - name: Lint/typecheck/check formatting on C/shell/Python code
+        run: |
+          . /tmp/venv/bin/activate
+          PATH=$PATH:$HOME ./lint.py
+        if: always()
 
       - name: Run clang-tidy
         run: sh .ci/tidy/run.sh
-        if: always()
-
-      - name: Check code formatting
-        run: "! astyle --exclude=build -r --options=.astylerc --dry-run --formatted '*.c' '*.h' | grep '^Formatted'"
-        if: always()
-
-      - name: Check scripts formatting
-        run: find -type f -regextype egrep -regex '.+\.(sh|sh\.in|test)$' -exec ~/shfmt -d -i 2 -s '{}' +
-        if: always()
-
-      - name: Run static analysis on scripts
-        run: find -type f -regextype egrep -regex '.+\.sh(\.in)?$' -exec shellcheck -x '{}' +
-        if: always()
-
-      - name: Run static analysis on tests
-        run: find -type f -name '*.test' -execdir shellcheck -x '{}' +
         if: always()
 
       - name: Check warnings (gcc)
@@ -340,9 +332,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        arch:
-          - amd64
-          - amd64_x86
+        target:
+          - { build: amd64, host: amd64, test: test }
+          - { build: amd64, host: x86, test: test }
+          - { build: amd64, host: arm64, test: notest }
+
+    env:
+      HOST_ARCH: ${{ matrix.target.host }}
+      BUILD_ARCH: ${{ matrix.target.build }}
 
     steps:
       - name: Install meson
@@ -354,14 +351,14 @@ jobs:
       - name: Activate dev environment
         uses: ilammy/msvc-dev-cmd@v1
         with:
-          arch: ${{ matrix.arch }}
+          arch: ${{ matrix.target.build == matrix.target.host && matrix.target.host || format('{0}_{1}', matrix.target.build, matrix.target.host) }}
 
       - name: Build (nolegacy)
         run: .ci\windows\build.cmd nolegacy
 
       - name: Test (nolegacy)
         run: .ci\windows\test.cmd nolegacy
-        if: always()
+        if: always() && matrix.target.test == 'test'
 
       - name: Build (OpenSSL)
         run: .ci\windows\build.cmd openssl
@@ -369,4 +366,4 @@ jobs:
 
       - name: Test (OpenSSL)
         run: .ci\windows\test.cmd openssl
-        if: always()
+        if: always() && matrix.target.test == 'test'

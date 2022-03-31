@@ -2,9 +2,12 @@
 
 set -eux
 
+dir="$1"
+shift
+
 flags=$(./.ci/conf.sh "$@")
 
 # shellcheck disable=SC2086
-meson setup build $flags
+meson setup "$dir" $flags
 
-ninja -C build
+ninja -C "$dir"

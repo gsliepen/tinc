@@ -8,7 +8,7 @@ result=0
 
 check_warnings() {
   git clean -dfx
-  ./.ci/build.sh -Dwerror=true "$@" || result=$?
+  ./.ci/build.sh build -Dwerror=true "$@" || result=$?
 }
 
 check_warnings
