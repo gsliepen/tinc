@@ -21,10 +21,16 @@ cmd = [
 if "short" in argv:
     cmd.append("--abbrev=0")
 
-result = subp.run(cmd, stdout=subp.PIPE, encoding="utf-8")
-version = result.stdout
+version = None
 
-if result.returncode or not version:
+try:
+    result = subp.run(cmd, stdout=subp.PIPE, encoding="utf-8")
+    if not result.returncode:
+        version = result.stdout
+except FileNotFoundError:
+    pass
+
+if not version:
     try:
         with open(path.join(source_root, "VERSION"), "r") as f:
             version = f.read().strip()
