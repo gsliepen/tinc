@@ -150,7 +150,7 @@ static void sptps_logger(sptps_t *s, int s_errno, const char *format, va_list ap
 	char message[1024];
 	size_t msglen = sizeof(message);
 
-	if(!should_log(DEBUG_ALWAYS)) {
+	if(!should_log(DEBUG_TRAFFIC)) {
 		return;
 	}
 
@@ -171,7 +171,7 @@ static void sptps_logger(sptps_t *s, int s_errno, const char *format, va_list ap
 		}
 	}
 
-	real_logger(DEBUG_ALWAYS, LOG_ERR, message);
+	real_logger(DEBUG_TRAFFIC, LOG_ERR, message);
 }
 
 void openlogger(const char *ident, logmode_t mode) {
