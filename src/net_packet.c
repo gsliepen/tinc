@@ -1171,6 +1171,7 @@ static void send_udp_probe_packet(node_t *n, size_t len) {
 		len = sizeof(packet.data);
 	}
 
+	len = MAX(len, MIN_PROBE_SIZE);
 	packet.offset = DEFAULT_PACKET_OFFSET;
 	memset(DATA(&packet), 0, 14);
 	randomize(DATA(&packet) + 14, len - 14);
