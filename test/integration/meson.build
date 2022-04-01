@@ -7,6 +7,8 @@ tests = [
   'invite-offline.test',
   'invite-tinc-up.test',
   'security.test',
+  'security-legacy.test',
+  'security-sptps.test',
   'variables.test',
 ]
 
