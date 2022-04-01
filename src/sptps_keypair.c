@@ -19,8 +19,6 @@
 
 #include "system.h"
 
-#include <getopt.h>
-
 #include "crypto.h"
 #include "ecdsagen.h"
 #include "logger.h"

@@ -216,8 +216,10 @@ foreach type : check_types
   endif
 endforeach
 
+src_getopt = []
 if not cdata.has('HAVE_GETOPT_H') or not cc.has_function('getopt_long', prefix: have_prefix, args: cc_defs)
-  src_lib_common += ['getopt.c', 'getopt1.c']
+  src_getopt = ['getopt.c', 'getopt1.c']
+  src_lib_common += src_getopt
 endif
 
 if not opt_miniupnpc.disabled()
@@ -403,7 +405,7 @@ exe_tincd = executable(
 
 exe_sptps_test = executable(
   'sptps_test',
-  sources: 'sptps_test.c',
+  sources: [src_getopt, 'sptps_test.c'],
   dependencies: deps_lib_common,
   link_with: lib_common,
   implicit_include_directories: false,
@@ -413,7 +415,7 @@ exe_sptps_test = executable(
 
 exe_sptps_keypair = executable(
   'sptps_keypair',
-  sources: 'sptps_keypair.c',
+  sources: [src_getopt, 'sptps_keypair.c'],
   dependencies: deps_lib_common,
   link_with: lib_common,
   implicit_include_directories: false,

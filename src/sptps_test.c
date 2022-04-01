@@ -23,12 +23,6 @@
 #include <linux/if_tun.h>
 #endif
 
-#include <getopt.h>
-
-#ifdef HAVE_WINDOWS
-#include <pthread.h>
-#endif
-
 #include "crypto.h"
 #include "ecdsa.h"
 #include "meta.h"
@@ -70,7 +64,7 @@ int addressfamily = AF_UNSPEC;
 
 static bool send_data(void *handle, uint8_t type, const void *data, size_t len) {
 	(void)type;
-	char hex[len * 2 + 1];
+	char *hex = alloca(len * 2 + 1);
 	bin2hex(data, hex, len);
 
 	if(verbose) {
@@ -169,7 +163,7 @@ int stdin_sock_fd = -1;
 // separate thread between the stdin and the sptps loop way below. This thread
 // reads stdin and sends its content to the main thread through a TCP socket,
 // which can be properly select()'ed.
-static void *stdin_reader_thread(void *arg) {
+static DWORD WINAPI stdin_reader_thread(LPVOID arg) {
 	struct sockaddr_in sa;
 	socklen_t sa_size = sizeof(sa);
 
@@ -226,7 +220,7 @@ static void *stdin_reader_thread(void *arg) {
 
 	closesocket(stdin_sock_fd);
 	stdin_sock_fd = -1;
-	return NULL;
+	return 0;
 }
 
 static int start_input_reader(void) {
@@ -275,11 +269,8 @@ static int start_input_reader(void) {
 		fprintf(stderr, "stdin thread is listening on :%d\n", ntohs(connect_sa.sin_port));
 	}
 
-	pthread_t th;
-	int err = pthread_create(&th, NULL, stdin_reader_thread, NULL);
-
-	if(err) {
-		fprintf(stderr, "Could not start reader thread: %s\n", strerror(err));
+	if(!CreateThread(NULL, 0, stdin_reader_thread, NULL, 0, NULL)) {
+		fprintf(stderr, "Could not start reader thread: %d\n", GetLastError());
 		goto server_err;
 	}
 
@@ -669,7 +660,7 @@ int main(int argc, char *argv[]) {
 			}
 
 			if(verbose) {
-				char hex[len * 2 + 1];
+				char *hex = alloca(len * 2 + 1);
 				bin2hex(buf, hex, len);
 				fprintf(stderr, "Received %ld bytes of data:\n%s\n", (long)len, hex);
 			}
