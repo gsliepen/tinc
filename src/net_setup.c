@@ -606,7 +606,7 @@ static bool add_listen_address(char *address, bool bindto) {
 		int udp_fd = setup_vpn_in_socket((sockaddr_t *) aip->ai_addr);
 
 		if(udp_fd < 0) {
-			close(tcp_fd);
+			closesocket(tcp_fd);
 			continue;
 		}
 
@@ -1180,8 +1180,8 @@ void close_network_connections(void) {
 	for(int i = 0; i < listen_sockets; i++) {
 		io_del(&listen_socket[i].tcp);
 		io_del(&listen_socket[i].udp);
-		close(listen_socket[i].tcp.fd);
-		close(listen_socket[i].udp.fd);
+		closesocket(listen_socket[i].tcp.fd);
+		closesocket(listen_socket[i].udp.fd);
 	}
 
 	exit_requests();

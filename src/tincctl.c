@@ -644,7 +644,7 @@ static bool stop_tincd(void) {
 		// wait for tincd to close the connection...
 	}
 
-	close(fd);
+	closesocket(fd);
 	pid = 0;
 	fd = -1;
 
@@ -717,7 +717,7 @@ bool connect_tincd(bool verbose) {
 
 		if(select(fd + 1, &r, NULL, NULL, &tv)) {
 			fprintf(stderr, "Previous connection to tincd lost, reconnecting.\n");
-			close(fd);
+			closesocket(fd);
 			fd = -1;
 		} else {
 			return true;
@@ -784,7 +784,7 @@ bool connect_tincd(bool verbose) {
 			fprintf(stderr, "Cannot connect to UNIX socket %s: %s\n", unixsocketname, sockstrerror(sockerrno));
 		}
 
-		close(fd);
+		closesocket(fd);
 		fd = -1;
 		return false;
 	}
@@ -830,7 +830,7 @@ bool connect_tincd(bool verbose) {
 			fprintf(stderr, "Cannot connect to %s port %s: %s\n", host, port, sockstrerror(sockerrno));
 		}
 
-		close(fd);
+		closesocket(fd);
 		fd = -1;
 		return false;
 	}
@@ -853,7 +853,7 @@ bool connect_tincd(bool verbose) {
 			fprintf(stderr, "Cannot read greeting from control socket: %s\n", sockstrerror(sockerrno));
 		}
 
-		close(fd);
+		closesocket(fd);
 		fd = -1;
 		return false;
 	}
@@ -863,7 +863,7 @@ bool connect_tincd(bool verbose) {
 			fprintf(stderr, "Could not fully establish control socket connection\n");
 		}
 
-		close(fd);
+		closesocket(fd);
 		fd = -1;
 		return false;
 	}
@@ -1528,7 +1528,7 @@ static int cmd_log(int argc, char *argv[]) {
 	signal(SIGINT, SIG_DFL);
 #endif
 
-	close(fd);
+	closesocket(fd);
 	fd = -1;
 	return 0;
 }
@@ -2623,7 +2623,7 @@ static int switch_network(char *name) {
 	}
 
 	if(fd >= 0) {
-		close(fd);
+		closesocket(fd);
 		fd = -1;
 	}
 

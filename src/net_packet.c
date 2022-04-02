@@ -1257,7 +1257,7 @@ static length_t choose_initial_maxmtu(node_t *n) {
 
 	if(connect(sock, &sa->sa, SALEN(sa->sa))) {
 		logger(DEBUG_TRAFFIC, LOG_ERR, "Connecting MTU assessment socket for %s (%s) failed: %s", n->name, n->hostname, sockstrerror(sockerrno));
-		close(sock);
+		closesocket(sock);
 		return MTU;
 	}
 
@@ -1266,11 +1266,11 @@ static length_t choose_initial_maxmtu(node_t *n) {
 
 	if(getsockopt(sock, IPPROTO_IP, IP_MTU, (void *)&ip_mtu, &ip_mtu_len)) {
 		logger(DEBUG_TRAFFIC, LOG_ERR, "getsockopt(IP_MTU) on %s (%s) failed: %s", n->name, n->hostname, sockstrerror(sockerrno));
-		close(sock);
+		closesocket(sock);
 		return MTU;
 	}
 
-	close(sock);
+	closesocket(sock);
 
 	if(ip_mtu < MINMTU) {
 		logger(DEBUG_TRAFFIC, LOG_ERR, "getsockopt(IP_MTU) on %s (%s) returned absurdly small value: %d", n->name, n->hostname, ip_mtu);

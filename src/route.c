@@ -164,7 +164,7 @@ static void route_ipv4_unreachable(node_t *source, vpn_packet_t *packet, length_
 				}
 			}
 
-			close(sockfd);
+			closesocket(sockfd);
 		}
 	}
 
@@ -269,7 +269,7 @@ static void route_ipv6_unreachable(node_t *source, vpn_packet_t *packet, length_
 				}
 			}
 
-			close(sockfd);
+			closesocket(sockfd);
 		}
 	}
 
