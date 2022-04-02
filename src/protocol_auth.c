@@ -296,6 +296,7 @@ static bool receive_invitation_sptps(void *handle, uint8_t type, const void *dat
 
 	if(!fgets(buf, sizeof(buf), f)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not read invitation file %s\n", cookie);
+		fclose(f);
 		return false;
 	}
 
@@ -334,6 +335,12 @@ static bool receive_invitation_sptps(void *handle, uint8_t type, const void *dat
 
 	while((result = fread(buf, 1, sizeof(buf), f))) {
 		sptps_send_record(&c->sptps, 0, buf, result);
+	}
+
+	if(!feof(f)) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not read invitation file %s\n", cookie);
+		fclose(f);
+		return false;
 	}
 
 	sptps_send_record(&c->sptps, 1, buf, 0);
