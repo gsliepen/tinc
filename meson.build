@@ -139,6 +139,12 @@ if os_name == 'linux' and not opt_systemd.disabled()
 endif
 
 run_target('reformat', command: [
-  find_program('python3'),
-  '@SOURCE_ROOT@/reformat.py',
+  python,
+  '@SOURCE_ROOT@/lint.py',
+  '--fix',
+])
+
+run_target('lint', command: [
+  python,
+  '@SOURCE_ROOT@/lint.py',
 ])
