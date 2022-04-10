@@ -1,0 +1,19 @@
+[MASTER]
+jobs=0
+persistent=yes
+py-version=3.6
+recursive=yes
+ignore=build
+
+[BASIC]
+good-names=foo, bar, baz, f, k, ex
+
+[REPORTS]
+output-format=colorized
+
+[DESIGN]
+min-public-methods=0
+
+[SIMILARITIES]
+min-similarity-lines=10
+

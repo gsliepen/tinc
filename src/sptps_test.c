@@ -301,6 +301,19 @@ server_err:
 
 #endif // HAVE_WINDOWS
 
+static void print_listening_msg(int sock) {
+	sockaddr_t sa = {0};
+	socklen_t salen = sizeof(sa);
+	int port = 0;
+
+	if(!getsockname(sock, &sa.sa, &salen)) {
+		port = ntohs(sa.in.sin_port);
+	}
+
+	fprintf(stderr, "Listening on %d...\n", port);
+	fflush(stderr);
+}
+
 int main(int argc, char *argv[]) {
 	program_name = argv[0];
 	bool initiator = false;
@@ -481,7 +494,7 @@ int main(int argc, char *argv[]) {
 				return 1;
 			}
 
-			fprintf(stderr, "Listening...\n");
+			print_listening_msg(sock);
 
 			sock = accept(sock, NULL, NULL);
 
@@ -490,7 +503,7 @@ int main(int argc, char *argv[]) {
 				return 1;
 			}
 		} else {
-			fprintf(stderr, "Listening...\n");
+			print_listening_msg(sock);
 
 			char buf[65536];
 			struct sockaddr addr;
