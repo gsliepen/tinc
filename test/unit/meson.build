@@ -27,6 +27,9 @@ tests = {
   'subnet': {
     'code': 'test_subnet.c',
   },
+  'protocol': {
+    'code': 'test_protocol.c',
+  },
   'splay_tree': {
     'code': 'test_splay_tree.c',
     'link': link_tinc,

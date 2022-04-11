@@ -33,30 +33,47 @@ bool tunnelserver = false;
 bool strictsubnets = false;
 bool experimental = true;
 
-/* Jumptable for the request handlers */
+static inline bool is_valid_request(request_t req) {
+	return req > ALL && req < LAST;
+}
 
-static bool (*request_handlers[])(connection_t *, const char *) = {
-	id_h, metakey_h, challenge_h, chal_reply_h, ack_h,
-	NULL, NULL, termreq_h,
-	ping_h, pong_h,
-	add_subnet_h, del_subnet_h,
-	add_edge_h, del_edge_h,
-	key_changed_h, req_key_h, ans_key_h, tcppacket_h, control_h,
-	NULL, NULL, /* Not "real" requests (yet) */
-	sptps_tcppacket_h,
-	udp_info_h, mtu_info_h,
-};
+/* Request handlers */
+const request_entry_t *get_request_entry(request_t req) {
+	if(!is_valid_request(req)) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Invalid request %d", req);
+		return NULL;
+	}
 
-/* Request names */
-
-static const char (*request_name[]) = {
-	"ID", "METAKEY", "CHALLENGE", "CHAL_REPLY", "ACK",
-	"STATUS", "ERROR", "TERMREQ",
-	"PING", "PONG",
-	"ADD_SUBNET", "DEL_SUBNET",
-	"ADD_EDGE", "DEL_EDGE", "KEY_CHANGED", "REQ_KEY", "ANS_KEY", "PACKET", "CONTROL",
-	"REQ_PUBKEY", "ANS_PUBKEY", "SPTPS_PACKET", "UDP_INFO", "MTU_INFO",
-};
+	// Prevent user from accessing the table directly to always have bound checks
+	static const request_entry_t request_entries[] = {
+		[ID] = {id_h, "ID"},
+		[METAKEY] = {metakey_h, "METAKEY"},
+		[CHALLENGE] = {challenge_h, "CHALLENGE"},
+		[CHAL_REPLY] = {chal_reply_h, "CHAL_REPLY"},
+		[ACK] = {ack_h, "ACK"},
+		[STATUS] = {NULL, "STATUS"},
+		[ERROR] = {NULL, "ERROR"},
+		[TERMREQ] = {termreq_h, "TERMREQ"},
+		[PING] = {ping_h, "PING"},
+		[PONG] = {pong_h, "PONG"},
+		[ADD_SUBNET] = {add_subnet_h, "ADD_SUBNET"},
+		[DEL_SUBNET] = {del_subnet_h, "DEL_SUBNET"},
+		[ADD_EDGE] = {add_edge_h, "ADD_EDGE"},
+		[DEL_EDGE] = {del_edge_h, "DEL_EDGE"},
+		[KEY_CHANGED] = {key_changed_h, "KEY_CHANGED"},
+		[REQ_KEY] = {req_key_h, "REQ_KEY"},
+		[ANS_KEY] = {ans_key_h, "ANS_KEY"},
+		[PACKET] = {tcppacket_h, "PACKET"},
+		[CONTROL] = {control_h, "CONTROL"},
+		/* Not "real" requests yet */
+		[REQ_PUBKEY] = {NULL, "REQ_PUBKEY"},
+		[ANS_PUBKEY] = {NULL, "ANS_PUBKEY"},
+		[SPTPS_PACKET] = {sptps_tcppacket_h, "SPTPS_PACKET"},
+		[UDP_INFO] = {udp_info_h, "UDP_INFO"},
+		[MTU_INFO] = {mtu_info_h, "MTU_INFO"},
+	};
+	return &request_entries[req];
+}
 
 static int past_request_compare(const past_request_t *a, const past_request_t *b) {
 	return strcmp(a->request, b->request);
@@ -96,7 +113,7 @@ bool send_request(connection_t *c, const char *format, ...) {
 	}
 
 	int id = atoi(request);
-	logger(DEBUG_META, LOG_DEBUG, "Sending %s to %s (%s): %s", request_name[id], c->name, c->hostname, request);
+	logger(DEBUG_META, LOG_DEBUG, "Sending %s to %s (%s): %s", get_request_entry(id)->name, c->name, c->hostname, request);
 
 	request[len++] = '\n';
 
@@ -114,7 +131,7 @@ bool send_request(connection_t *c, const char *format, ...) {
 }
 
 void forward_request(connection_t *from, const char *request) {
-	logger(DEBUG_META, LOG_DEBUG, "Forwarding %s from %s (%s): %s", request_name[atoi(request)], from->name, from->hostname, request);
+	logger(DEBUG_META, LOG_DEBUG, "Forwarding %s from %s (%s): %s", get_request_entry(atoi(request))->name, from->name, from->hostname, request);
 
 	// Create a temporary newline-terminated copy of the request
 	size_t len = strlen(request);
@@ -145,23 +162,24 @@ bool receive_request(connection_t *c, const char *request) {
 	int reqno = atoi(request);
 
 	if(reqno || *request == '0') {
-		if((reqno < 0) || (reqno >= LAST) || !request_handlers[reqno]) {
+		if(!is_valid_request(reqno) || !get_request_entry(reqno)->handler) {
 			logger(DEBUG_META, LOG_DEBUG, "Unknown request from %s (%s): %s", c->name, c->hostname, request);
 			return false;
-		} else {
-			logger(DEBUG_META, LOG_DEBUG, "Got %s from %s (%s): %s", request_name[reqno], c->name, c->hostname, request);
 		}
+
+		const request_entry_t *entry = get_request_entry(reqno);
+		logger(DEBUG_META, LOG_DEBUG, "Got %s from %s (%s): %s", entry->name, c->name, c->hostname, request);
 
 		if((c->allow_request != ALL) && (c->allow_request != reqno)) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Unauthorized request from %s (%s)", c->name, c->hostname);
 			return false;
 		}
 
-		if(!request_handlers[reqno](c, request)) {
+		if(!entry->handler(c, request)) {
 			/* Something went wrong. Probably scriptkiddies. Terminate. */
 
 			if(reqno != TERMREQ) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "Error while processing %s from %s (%s)", request_name[reqno], c->name, c->hostname);
+				logger(DEBUG_ALWAYS, LOG_ERR, "Error while processing %s from %s (%s)", entry->name, c->name, c->hostname);
 			}
 
 			return false;
