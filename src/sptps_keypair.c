@@ -20,6 +20,7 @@
 #include "system.h"
 
 #include "crypto.h"
+#include "random.h"
 #include "ecdsagen.h"
 #include "logger.h"
 #include "names.h"
@@ -49,40 +50,7 @@ static struct option const long_options[] = {
 	{NULL, 0, NULL, 0}
 };
 
-int main(int argc, char *argv[]) {
-	program_name = argv[0];
-	int r;
-	int option_index = 0;
-
-	while((r = getopt_long(argc, argv, "", long_options, &option_index)) != EOF) {
-		switch(r) {
-		case 0:   /* long option */
-			break;
-
-		case '?': /* wrong options */
-			usage();
-			return 1;
-
-		case 1: /* help */
-			usage();
-			return 0;
-
-		default:
-			break;
-		}
-	}
-
-	argc -= optind - 1;
-	argv += optind - 1;
-
-	if(argc != 3) {
-		fprintf(stderr, "Wrong number of arguments.\n");
-		usage();
-		return 1;
-	}
-
-	crypto_init();
-
+static int generate_keypair(char *argv[]) {
 	ecdsa_t *key = ecdsa_generate();
 
 	if(!key) {
@@ -120,4 +88,46 @@ int main(int argc, char *argv[]) {
 		free(key);
 		return 1;
 	}
+}
+
+int main(int argc, char *argv[]) {
+	program_name = argv[0];
+	int r;
+	int option_index = 0;
+
+	while((r = getopt_long(argc, argv, "", long_options, &option_index)) != EOF) {
+		switch(r) {
+		case 0:   /* long option */
+			break;
+
+		case '?': /* wrong options */
+			usage();
+			return 1;
+
+		case 1: /* help */
+			usage();
+			return 0;
+
+		default:
+			break;
+		}
+	}
+
+	argc -= optind - 1;
+	argv += optind - 1;
+
+	if(argc != 3) {
+		fprintf(stderr, "Wrong number of arguments.\n");
+		usage();
+		return 1;
+	}
+
+	random_init();
+	crypto_init();
+
+	int result = generate_keypair(argv);
+
+	random_exit();
+
+	return result;
 }

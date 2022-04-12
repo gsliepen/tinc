@@ -27,10 +27,10 @@ typedef struct {
 	uint8_t public[32];
 } ecdsa_t;
 
-#include "../crypto.h"
 #include "../ecdsagen.h"
 #include "../utils.h"
 #include "../xalloc.h"
+#include "../random.h"
 
 // Generate ECDSA key
 

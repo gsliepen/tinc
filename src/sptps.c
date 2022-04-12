@@ -21,12 +21,12 @@
 #include "system.h"
 
 #include "chacha-poly1305/chacha-poly1305.h"
-#include "crypto.h"
 #include "ecdh.h"
 #include "ecdsa.h"
 #include "logger.h"
 #include "prf.h"
 #include "sptps.h"
+#include "random.h"
 
 unsigned int sptps_replaywin = 16;
 

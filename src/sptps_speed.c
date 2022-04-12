@@ -29,6 +29,7 @@
 #include "meta.h"
 #include "protocol.h"
 #include "sptps.h"
+#include "random.h"
 
 // Symbols necessary to link with logger.o
 bool send_request(struct connection_t *c, const char *msg, ...) {
@@ -104,14 +105,12 @@ static bool clock_countto(double seconds) {
 	return false;
 }
 
-int main(int argc, char *argv[]) {
+static int run_benchmark(int argc, char *argv[]) {
 	ecdsa_t *key1, *key2;
 	ecdh_t *ecdh1, *ecdh2;
 	sptps_t sptps1, sptps2;
 	uint8_t buf1[4096], buf2[4096], buf3[4096];
 	double duration = argc > 1 ? atof(argv[1]) : 10;
-
-	crypto_init();
 
 	randomize(buf1, sizeof(buf1));
 	randomize(buf2, sizeof(buf2));
@@ -316,7 +315,17 @@ int main(int argc, char *argv[]) {
 	close(fd[1]);
 	ecdsa_free(key1);
 	ecdsa_free(key2);
-	crypto_exit();
 
 	return 0;
+}
+
+int main(int argc, char *argv[]) {
+	random_init();
+	crypto_init();
+
+	int result = run_benchmark(argc, argv);
+
+	random_exit();
+
+	return result;
 }

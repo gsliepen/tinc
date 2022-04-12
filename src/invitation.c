@@ -34,6 +34,7 @@
 #include "tincctl.h"
 #include "utils.h"
 #include "xalloc.h"
+#include "random.h"
 
 #include "ed25519/sha512.h"
 

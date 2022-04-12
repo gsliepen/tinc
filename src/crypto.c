@@ -17,18 +17,8 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include "../system.h"
+#include "crypto.h"
 
-#include <gcrypt.h>
-
-#include "../crypto.h"
-
-void crypto_init(void) {
-}
-
-void crypto_exit(void) {
-}
-
-void randomize(void *out, size_t outlen) {
-	gcry_create_nonce(out, outlen);
-}
+// No-op for those cryptographic libraries that
+// do not require any additional initialization.
+void crypto_init(void) {}

@@ -40,6 +40,7 @@
 #include "version.h"
 #include "subnet.h"
 #include "keys.h"
+#include "random.h"
 
 #ifndef MSG_NOSIGNAL
 #define MSG_NOSIGNAL 0
@@ -3266,6 +3267,22 @@ static void cleanup(void) {
 	free_names();
 }
 
+static int run_command(int argc, char *argv[]) {
+	if(optind >= argc) {
+		return cmd_shell(argc, argv);
+	}
+
+	for(int i = 0; commands[i].command; i++) {
+		if(!strcasecmp(argv[optind], commands[i].command)) {
+			return commands[i].function(argc - optind, argv + optind);
+		}
+	}
+
+	fprintf(stderr, "Unknown command `%s'.\n", argv[optind]);
+	usage(true);
+	return 1;
+}
+
 int main(int argc, char *argv[]) {
 	program_name = argv[0];
 	orig_argv = argv;
@@ -3301,20 +3318,13 @@ int main(int argc, char *argv[]) {
 #endif
 
 	gettimeofday(&now, NULL);
+	random_init();
 	crypto_init();
 	prng_init();
 
-	if(optind >= argc) {
-		return cmd_shell(argc, argv);
-	}
+	int result = run_command(argc, argv);
 
-	for(int i = 0; commands[i].command; i++) {
-		if(!strcasecmp(argv[optind], commands[i].command)) {
-			return commands[i].function(argc - optind, argv + optind);
-		}
-	}
+	random_exit();
 
-	fprintf(stderr, "Unknown command `%s'.\n", argv[optind]);
-	usage(true);
-	return 1;
+	return result;
 }
