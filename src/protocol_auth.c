@@ -25,7 +25,6 @@
 #include "control.h"
 #include "control_common.h"
 #include "cipher.h"
-#include "crypto.h"
 #include "digest.h"
 #include "ecdsa.h"
 #include "edge.h"
@@ -42,6 +41,7 @@
 #include "sptps.h"
 #include "utils.h"
 #include "xalloc.h"
+#include "random.h"
 
 #include "ed25519/sha512.h"
 #include "keys.h"

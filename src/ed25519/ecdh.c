@@ -18,6 +18,7 @@
 */
 
 #include "../system.h"
+#include "../random.h"
 
 #include "ed25519.h"
 
@@ -26,7 +27,6 @@ typedef struct ecdh_t {
 	uint8_t private[64];
 } ecdh_t;
 
-#include "../crypto.h"
 #include "../ecdh.h"
 #include "../xalloc.h"
 

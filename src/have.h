@@ -125,10 +125,13 @@
 #include <syslog.h>
 #endif
 
+#ifdef HAVE_SYS_RANDOM_H
+#include <sys/random.h>
+#endif
+
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
-
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>

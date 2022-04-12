@@ -53,6 +53,7 @@
 #include "protocol.h"
 #include "route.h"
 #include "utils.h"
+#include "random.h"
 
 /* The minimum size of a probe is 14 bytes, but since we normally use CBC mode
    encryption, we can add a few extra random bytes without increasing the

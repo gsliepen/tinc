@@ -1,10 +1,14 @@
 check_headers += [
   'linux/if_tun.h',
-  'sys/epoll.h',
   'netpacket/packet.h',
+  'sys/epoll.h',
+  'sys/random.h',
 ]
 
-check_functions += 'recvmmsg'
+check_functions += [
+  'recvmmsg',
+  'getrandom',
+]
 
 src_tincd += files('device.c')
 

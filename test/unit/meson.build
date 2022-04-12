@@ -17,9 +17,17 @@ link_tincd = { 'lib': lib_tincd, 'dep': deps_tincd }
 #   'code': 'test1.c',      // or ['test1.c', 'test1_util.c']
 #   'mock': ['foo', 'bar'], // list of functions to mock (default: empty)
 #   'link': link_tinc,      // which binary to link with (default: tincd)
+#   'fail': true,           // whether the test should fail (default: false)
 # }
 
 tests = {
+  'random': {
+    'code': 'test_random.c',
+  },
+  'random_noinit': {
+    'code': 'test_random_noinit.c',
+    'fail': true,
+  },
   'net': {
     'code': 'test_net.c',
     'mock': ['execute_script', 'environment_init', 'environment_exit'],
@@ -56,11 +64,14 @@ foreach test, data : tests
                    include_directories: inc_conf,
                    build_by_default: false)
 
+  must_fail = data.get('fail', false)
+
   test(test,
        exe,
        suite: 'unit',
        timeout: 60,
-       protocol: 'tap',
-       env: env)
+       protocol: must_fail ? 'exitcode' : 'tap',
+       env: env,
+       should_fail: must_fail)
 endforeach
 

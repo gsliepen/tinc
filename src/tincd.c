@@ -54,6 +54,7 @@
 #include "utils.h"
 #include "xalloc.h"
 #include "version.h"
+#include "random.h"
 
 /* If nonzero, display usage information and exit. */
 static bool show_help = false;
@@ -487,6 +488,7 @@ int main(int argc, char **argv) {
 #endif
 
 	gettimeofday(&now, NULL);
+	random_init();
 	crypto_init();
 	prng_init();
 
@@ -619,7 +621,7 @@ end:
 
 	free(priority);
 
-	crypto_exit();
+	random_exit();
 
 	return status;
 }

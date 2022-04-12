@@ -30,6 +30,7 @@
 #include "sptps.h"
 #include "utils.h"
 #include "names.h"
+#include "random.h"
 
 #ifndef HAVE_WINDOWS
 #define closesocket(s) close(s)
@@ -314,7 +315,7 @@ static void print_listening_msg(int sock) {
 	fflush(stderr);
 }
 
-int main(int argc, char *argv[]) {
+static int run_test(int argc, char *argv[]) {
 	program_name = argv[0];
 	bool initiator = false;
 	bool datagram = false;
@@ -523,9 +524,6 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "Connected\n");
 	}
 
-	crypto_init();
-	prng_init();
-
 	FILE *fp = fopen(argv[1], "r");
 
 	if(!fp) {
@@ -709,12 +707,19 @@ int main(int argc, char *argv[]) {
 
 	free(mykey);
 	free(hiskey);
-
-	if(!stopped) {
-		return 1;
-	}
-
 	closesocket(sock);
 
-	return 0;
+	return !stopped;
+}
+
+int main(int argc, char *argv[]) {
+	random_init();
+	crypto_init();
+	prng_init();
+
+	int result = run_test(argc, argv);
+
+	random_exit();
+
+	return result;
 }

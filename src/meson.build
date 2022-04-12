@@ -106,6 +106,7 @@ src_lib_common = [
   'dropin.c',
   'keys.c',
   'list.c',
+  'logger.c',
   'names.c',
   'netutl.c',
   'script.c',
@@ -115,7 +116,6 @@ src_lib_common = [
   'utils.c',
   'version.c',
   'xoshiro.c',
-  'logger.c',
 ]
 
 src_tinc = [
@@ -162,6 +162,10 @@ cc_flags_tincd = cc_flags
 deps_common = []
 deps_tinc = []
 deps_tincd = [cc.find_library('m', required: false)]
+
+if os_name != 'windows'
+  src_lib_common += 'random.c'
+endif
 
 if os_name in ['linux', 'android']
   subdir('linux')
@@ -329,6 +333,10 @@ if opt_jumbograms
 endif
 
 subdir(opt_crypto)
+
+if opt_crypto != 'openssl'
+  src_lib_crypto += 'crypto.c'
+endif
 
 if opt_crypto != 'nolegacy'
   src_lib_crypto += ['cipher.c', 'digest.c']

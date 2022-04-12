@@ -18,7 +18,6 @@
 */
 
 #include "system.h"
-#include "crypto.h"
 #include "conf.h"
 #include "control.h"
 #include "control_common.h"
@@ -30,6 +29,7 @@
 #include "route.h"
 #include "utils.h"
 #include "xalloc.h"
+#include "random.h"
 
 char controlcookie[65];
 
