@@ -21,6 +21,8 @@
 
 #include "system.h"
 
+#include <assert.h>
+
 #include "cipher.h"
 #include "connection.h"
 #include "logger.h"
@@ -68,17 +70,16 @@ bool send_meta(connection_t *c, const void *buffer, size_t length) {
 #ifdef DISABLE_LEGACY
 		return false;
 #else
+		assert(c->legacy);
 
-		if(length > c->outbudget) {
+		if(!decrease_budget(&c->legacy->out, length)) {
 			logger(DEBUG_META, LOG_ERR, "Byte limit exceeded for encryption to %s (%s)", c->name, c->hostname);
 			return false;
-		} else {
-			c->outbudget -= length;
 		}
 
 		size_t outlen = length;
 
-		if(!cipher_encrypt(&c->outcipher, buffer, length, buffer_prepare(&c->outbuf, length), &outlen, false) || outlen != length) {
+		if(!cipher_encrypt(&c->legacy->out.cipher, buffer, length, buffer_prepare(&c->outbuf, length), &outlen, false) || outlen != length) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Error while encrypting metadata to %s (%s)",
 			       c->name, c->hostname);
 			return false;
@@ -248,17 +249,16 @@ bool receive_meta(connection_t *c) {
 #ifdef DISABLE_LEGACY
 			return false;
 #else
+			assert(c->legacy);
 
-			if((size_t)inlen > c->inbudget) {
+			if(!decrease_budget(&c->legacy->in, (size_t) inlen)) {
 				logger(DEBUG_META, LOG_ERR, "Byte limit exceeded for decryption from %s (%s)", c->name, c->hostname);
 				return false;
-			} else {
-				c->inbudget -= inlen;
 			}
 
 			size_t outlen = inlen;
 
-			if(!cipher_decrypt(&c->incipher, bufp, inlen, buffer_prepare(&c->inbuf, inlen), &outlen, false) || (size_t)inlen != outlen) {
+			if(!cipher_decrypt(&c->legacy->in.cipher, bufp, inlen, buffer_prepare(&c->inbuf, inlen), &outlen, false) || (size_t)inlen != outlen) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Error while decrypting metadata from %s (%s)",
 				       c->name, c->hostname);
 				return false;

@@ -788,9 +788,11 @@ static bool setup_myself(void) {
 		}
 	}
 
-	myself->connection->rsa = read_rsa_private_key(&config_tree, NULL);
+	rsa_t *rsa = read_rsa_private_key(&config_tree, NULL);
 
-	if(!myself->connection->rsa) {
+	if(rsa) {
+		myself->connection->legacy = new_legacy_ctx(rsa);
+	} else {
 		if(experimental) {
 			logger(DEBUG_ALWAYS, LOG_WARNING, "Support for legacy protocol disabled.");
 		} else {

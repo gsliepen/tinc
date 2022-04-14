@@ -60,6 +60,27 @@ typedef union connection_status_t {
 #include "net.h"
 #include "node.h"
 
+#ifndef DISABLE_LEGACY
+typedef struct legacy_crypto_t {
+	cipher_t cipher;
+	digest_t digest;
+	uint64_t budget;
+} legacy_crypto_t;
+
+bool init_crypto_by_nid(legacy_crypto_t *c, int cipher, int digest) ATTR_WARN_UNUSED;
+bool init_crypto_by_name(legacy_crypto_t *c, const char *cipher, const char *digest) ATTR_WARN_UNUSED;
+bool decrease_budget(legacy_crypto_t *c, size_t bytes) ATTR_WARN_UNUSED;
+
+typedef struct legacy_ctx_t {
+	rsa_t *rsa;                    /* his public RSA key or my private RSA key */
+	legacy_crypto_t in;            /* cipher/digest he will use to send data to us */
+	legacy_crypto_t out;           /* cipher/digest we will use to send data to him */
+} legacy_ctx_t;
+
+legacy_ctx_t *new_legacy_ctx(rsa_t *rsa) ATTR_MALLOC;
+void free_legacy_ctx(legacy_ctx_t *ctx);
+#endif
+
 typedef struct connection_t {
 	char *name;                     /* name he claims to have */
 	char *hostname;                 /* the hostname of its real ip */
@@ -79,13 +100,7 @@ typedef struct connection_t {
 	struct edge_t *edge;            /* edge associated with this connection */
 
 #ifndef DISABLE_LEGACY
-	rsa_t *rsa;                     /* his public RSA key */
-	cipher_t incipher;              /* Cipher he will use to send data to us */
-	cipher_t outcipher;             /* Cipher we will use to send data to him */
-	digest_t indigest;
-	digest_t outdigest;
-	uint64_t inbudget;
-	uint64_t outbudget;
+	legacy_ctx_t *legacy;
 #endif
 
 	ecdsa_t *ecdsa;                 /* his public ECDSA key */
