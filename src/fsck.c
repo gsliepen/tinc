@@ -541,9 +541,7 @@ static bool check_public_keys(splay_tree_t *config, const char *name, rsa_t *rsa
 
 	bool success = true;
 #ifndef DISABLE_LEGACY
-	rsa_t *rsa_pub = NULL;
-	read_rsa_public_key(&rsa_pub, config, name);
-
+	rsa_t *rsa_pub = read_rsa_public_key(config, name);
 	success = check_rsa_pubkey(rsa_priv, rsa_pub, host_file);
 	rsa_free(rsa_pub);
 #endif

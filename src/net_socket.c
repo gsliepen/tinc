@@ -647,10 +647,6 @@ begin:
 	c->last_ping_time = time(NULL);
 	c->status.connecting = true;
 	c->name = xstrdup(outgoing->node->name);
-#ifndef DISABLE_LEGACY
-	c->outcipher = myself->connection->outcipher;
-	c->outdigest = myself->connection->outdigest;
-#endif
 	c->outmaclength = myself->connection->outmaclength;
 	c->outcompression = myself->connection->outcompression;
 	c->last_ping_time = now.tv_sec;
@@ -760,10 +756,6 @@ void handle_new_meta_connection(void *data, int flags) {
 
 	c = new_connection();
 	c->name = xstrdup("<unknown>");
-#ifndef DISABLE_LEGACY
-	c->outcipher = myself->connection->outcipher;
-	c->outdigest = myself->connection->outdigest;
-#endif
 	c->outmaclength = myself->connection->outmaclength;
 	c->outcompression = myself->connection->outcompression;
 

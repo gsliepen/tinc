@@ -295,7 +295,7 @@ rsa_t *read_rsa_private_key(splay_tree_t *config_tree, char **keyfile) {
 	return key;
 }
 
-bool read_rsa_public_key(rsa_t **rsa, splay_tree_t *config_tree, const char *name) {
+rsa_t *read_rsa_public_key(splay_tree_t *config_tree, const char *name) {
 	FILE *fp;
 	char *fname;
 	char *n;
@@ -303,9 +303,9 @@ bool read_rsa_public_key(rsa_t **rsa, splay_tree_t *config_tree, const char *nam
 	/* First, check for simple PublicKey statement */
 
 	if(get_config_string(lookup_config(config_tree, "PublicKey"), &n)) {
-		*rsa = rsa_set_hex_public_key(n, "FFFF");
+		rsa_t *rsa = rsa_set_hex_public_key(n, "FFFF");
 		free(n);
-		return *rsa != NULL;
+		return rsa;
 	}
 
 	/* Else, check for PublicKeyFile statement and read it */
@@ -322,15 +322,15 @@ bool read_rsa_public_key(rsa_t **rsa, splay_tree_t *config_tree, const char *nam
 		return false;
 	}
 
-	*rsa = rsa_read_pem_public_key(fp);
+	rsa_t *rsa = rsa_read_pem_public_key(fp);
 	fclose(fp);
 
-	if(!*rsa) {
+	if(!rsa) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Reading RSA public key file `%s' failed: %s", fname, strerror(errno));
 	}
 
 	free(fname);
 
-	return *rsa != NULL;
+	return rsa;
 }
 #endif
