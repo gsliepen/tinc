@@ -1730,16 +1730,17 @@ static int cmd_config(int argc, char *argv[]) {
 		argv--, argc++;
 	}
 
-	int action = -2;
+	typedef enum { GET, DEL, SET, ADD } action_t;
+	action_t action = GET;
 
 	if(!strcasecmp(argv[1], "get")) {
 		argv++, argc--;
 	} else if(!strcasecmp(argv[1], "add")) {
-		argv++, argc--, action = 1;
+		argv++, argc--, action = ADD;
 	} else if(!strcasecmp(argv[1], "del")) {
-		argv++, argc--, action = -1;
+		argv++, argc--, action = DEL;
 	} else if(!strcasecmp(argv[1], "replace") || !strcasecmp(argv[1], "set") || !strcasecmp(argv[1], "change")) {
-		argv++, argc--, action = 0;
+		argv++, argc--, action = SET;
 	}
 
 	if(argc < 2) {
@@ -1785,13 +1786,13 @@ static int cmd_config(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(action >= 0 && !*value) {
+	if((action == SET || action == ADD) && !*value) {
 		fprintf(stderr, "No value for variable given.\n");
 		return 1;
 	}
 
-	if(action < -1 && *value) {
-		action = 0;
+	if(action == GET && *value) {
+		action = SET;
 	}
 
 	/* Some simple checks. */
@@ -1822,7 +1823,7 @@ static int cmd_config(int argc, char *argv[]) {
 
 		/* Discourage use of obsolete variables. */
 
-		if(variables[i].type & VAR_OBSOLETE && action >= 0) {
+		if(variables[i].type & VAR_OBSOLETE && (action == SET || action == ADD)) {
 			if(force) {
 				fprintf(stderr, "Warning: %s is an obsolete variable!\n", variable);
 			} else {
@@ -1833,7 +1834,7 @@ static int cmd_config(int argc, char *argv[]) {
 
 		/* Don't put server variables in host config files */
 
-		if(node && !(variables[i].type & VAR_HOST) && action >= 0) {
+		if(node && !(variables[i].type & VAR_HOST) && (action == SET || action == ADD)) {
 			if(force) {
 				fprintf(stderr, "Warning: %s is not a host configuration variable!\n", variable);
 			} else {
@@ -1855,10 +1856,10 @@ static int cmd_config(int argc, char *argv[]) {
 		/* Change "add" into "set" for variables that do not allow multiple occurrences.
 		   Turn on warnings when it seems variables might be removed unintentionally. */
 
-		if(action == 1 && !(variables[i].type & VAR_MULTIPLE)) {
+		if(action == ADD && !(variables[i].type & VAR_MULTIPLE)) {
 			warnonremove = true;
-			action = 0;
-		} else if(action == 0 && (variables[i].type & VAR_MULTIPLE)) {
+			action = SET;
+		} else if(action == SET && (variables[i].type & VAR_MULTIPLE)) {
 			warnonremove = true;
 		}
 
@@ -1876,7 +1877,7 @@ static int cmd_config(int argc, char *argv[]) {
 	}
 
 	if(!found) {
-		if(force || action < 0) {
+		if(force || action == GET || action == DEL) {
 			fprintf(stderr, "Warning: %s is not a known configuration variable!\n", variable);
 		} else {
 			fprintf(stderr, "%s: is not a known configuration variable! Use --force to use it anyway.\n", variable);
@@ -1917,7 +1918,7 @@ static int cmd_config(int argc, char *argv[]) {
 	char tmpfile[PATH_MAX];
 	FILE *tf = NULL;
 
-	if(action >= -1) {
+	if(action != GET) {
 		if((size_t)snprintf(tmpfile, sizeof(tmpfile), "%s.config.tmp", filename) >= sizeof(tmpfile)) {
 			fprintf(stderr, "Filename too long: %s.config.tmp\n", filename);
 			return 1;
@@ -1960,19 +1961,15 @@ static int cmd_config(int argc, char *argv[]) {
 
 		// Did it match?
 		if(!strcasecmp(buf2, variable)) {
-			// Get
-			if(action < -1) {
+			if(action == GET) {
 				found = true;
 				printf("%s\n", bvalue);
-				// Del
-			} else if(action == -1) {
+			} else if(action == DEL) {
 				if(!*value || !strcasecmp(bvalue, value)) {
 					removed = true;
 					continue;
 				}
-
-				// Set
-			} else if(action == 0) {
+			} else if(action == SET) {
 				// Warn if "set" was used for variables that can occur multiple times
 				if(warnonremove && strcasecmp(bvalue, value)) {
 					fprintf(stderr, "Warning: removing %s = %s\n", variable, bvalue);
@@ -1991,8 +1988,7 @@ static int cmd_config(int argc, char *argv[]) {
 
 				set = true;
 				continue;
-				// Add
-			} else if(action > 0) {
+			} else if(action == ADD) {
 				// Check if we've already seen this variable with the same value
 				if(!strcasecmp(bvalue, value)) {
 					found = true;
@@ -2000,7 +1996,7 @@ static int cmd_config(int argc, char *argv[]) {
 			}
 		}
 
-		if(action >= -1) {
+		if(action != GET) {
 			// Copy original line...
 			if(fputs(buf1, tf) < 0) {
 				fprintf(stderr, "Error writing to temporary file %s: %s\n", tmpfile, strerror(errno));
@@ -2029,14 +2025,14 @@ static int cmd_config(int argc, char *argv[]) {
 	}
 
 	// Add new variable if necessary.
-	if((action > 0 && !found) || (action == 0 && !set)) {
+	if((action == ADD && !found) || (action == SET && !set)) {
 		if(fprintf(tf, "%s = %s\n", variable, value) < 0) {
 			fprintf(stderr, "Error writing to temporary file %s: %s\n", tmpfile, strerror(errno));
 			return 1;
 		}
 	}
 
-	if(action < -1) {
+	if(action == GET) {
 		if(found) {
 			return 0;
 		} else {
@@ -2052,7 +2048,7 @@ static int cmd_config(int argc, char *argv[]) {
 	}
 
 	// Could we find what we had to remove?
-	if(action < 0 && !removed) {
+	if((action == GET || action == DEL) && !removed) {
 		remove(tmpfile);
 		fprintf(stderr, "No configuration variables deleted.\n");
 		return 1;
