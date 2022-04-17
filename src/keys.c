@@ -134,6 +134,7 @@ ecdsa_t *read_ecdsa_private_key(splay_tree_t *config_tree, char **keyfile) {
 	if(fstat(fileno(fp), &s)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not stat Ed25519 private key file `%s': %s'", fname, strerror(errno));
 		free(fname);
+		fclose(fp);
 		return false;
 	}
 
@@ -268,6 +269,7 @@ rsa_t *read_rsa_private_key(splay_tree_t *config_tree, char **keyfile) {
 	if(fstat(fileno(fp), &s)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not stat RSA private key file `%s': %s'", fname, strerror(errno));
 		free(fname);
+		fclose(fp);
 		return NULL;
 	}
 

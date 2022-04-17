@@ -144,6 +144,7 @@ static bool setup_device(void) {
 
 	logger(DEBUG_ALWAYS, LOG_INFO, "%s is a %s", device, device_info);
 
+	free(host);
 	return true;
 
 error:
