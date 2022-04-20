@@ -121,6 +121,7 @@ jobs:
 
       - name: Run tests with OpenSSL 3
         run: bash .ci/sanitizers/run.sh openssl3
+        if: always()
 
       - name: Sanitize tests with default settings
         run: bash .ci/sanitizers/run.sh default
@@ -128,6 +129,10 @@ jobs:
 
       - name: Sanitize tests without legacy protocol
         run: bash .ci/sanitizers/run.sh nolegacy
+        if: always()
+
+      - name: Run tests with libgcrypt
+        run: bash .ci/sanitizers/run.sh gcrypt
         if: always()
 
       - name: Upload test results

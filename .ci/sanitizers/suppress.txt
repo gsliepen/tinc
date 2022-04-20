@@ -1,0 +1,4 @@
+# known leak from one-time allocation
+# upstream refuses to fix such things: https://dev.gnupg.org/T4499
+leak:libgcrypt.so
+
