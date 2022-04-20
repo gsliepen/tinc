@@ -96,8 +96,8 @@ bool pem_encode(FILE *fp, const char *header, uint8_t *buf, size_t size) {
 	char b64[B64_SIZE(size)];
 	const size_t b64len = b64encode(b64, buf, size);
 
-	for(char *p = b64; p < b64 + b64len; p += 64) {
-		if(fprintf(fp, "%.64s\n", p) <= 0) {
+	for(size_t i = 0; i < b64len; i += 64) {
+		if(fprintf(fp, "%.64s\n", &b64[i]) <= 0) {
 			return false;
 		}
 	}

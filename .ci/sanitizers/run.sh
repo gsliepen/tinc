@@ -8,13 +8,14 @@ logs="$GITHUB_WORKSPACE/sanitizer"
 
 case "$SANITIZER" in
 undefined)
-  flags='-fsanitize=integer -fsanitize=nullability'
+  flags='-fsanitize=integer -fsanitize=nullability -fno-sanitize=unsigned-integer-overflow'
   export UBSAN_OPTIONS="log_path=$logs/ubsan:print_stacktrace=1"
   ;;
 
 address)
   flags='-fsanitize-address-use-after-scope -fsanitize=pointer-compare -fsanitize=pointer-subtract'
   export ASAN_OPTIONS="log_path=$logs/asan:detect_invalid_pointer_pairs=2:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1"
+  export LSAN_OPTIONS="suppressions=$dir/suppress.txt:print_suppressions=0"
   ;;
 
 thread)
