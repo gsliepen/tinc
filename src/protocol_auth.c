@@ -42,6 +42,7 @@
 #include "utils.h"
 #include "xalloc.h"
 #include "random.h"
+#include "compression.h"
 
 #include "ed25519/sha512.h"
 #include "keys.h"
@@ -608,7 +609,7 @@ bool send_metakey(connection_t *c) {
 	bool result = send_request(c, "%d %d %d %d %d %s", METAKEY,
 	                           cipher_get_nid(&c->legacy->out.cipher),
 	                           digest_get_nid(&c->legacy->out.digest), c->outmaclength,
-	                           c->outcompression, hexkey);
+	                           COMPRESS_NONE, hexkey);
 
 	c->status.encryptout = true;
 	return result;
