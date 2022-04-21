@@ -129,11 +129,14 @@ bool control_h(connection_t *c, const char *request) {
 		pcap = true;
 		return true;
 
-	case REQ_LOG:
-		sscanf(request, "%*d %*d %d", &c->outcompression);
+	case REQ_LOG: {
+		int level = 0;
+		sscanf(request, "%*d %*d %d", &level);
+		c->log_level = CLAMP(level, DEBUG_UNSET, DEBUG_SCARY_THINGS);
 		c->status.log = true;
 		logcontrol = true;
 		return true;
+	}
 
 	default:
 		return send_request(c, "%d %d", CONTROL, REQ_INVALID);

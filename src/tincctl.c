@@ -611,7 +611,7 @@ static void pcap(int fd, FILE *out, uint32_t snaplen) {
 	}
 }
 
-static void logcontrol(int fd, FILE *out, int level) {
+static void log_control(int fd, FILE *out, int level) {
 	sendline(fd, "%d %d %d", CONTROL, REQ_LOG, level);
 	char data[1024];
 	char line[32];
@@ -1523,7 +1523,7 @@ static int cmd_log(int argc, char *argv[]) {
 	signal(SIGINT, sigint_handler);
 #endif
 
-	logcontrol(fd, stdout, argc > 1 ? atoi(argv[1]) : -1);
+	log_control(fd, stdout, argc > 1 ? atoi(argv[1]) : DEBUG_UNSET);
 
 #ifdef SIGINT
 	signal(SIGINT, SIG_DFL);
