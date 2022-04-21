@@ -55,7 +55,7 @@ bool digest_open_by_name(digest_t *digest, const char *name, size_t maclength) {
 	return true;
 }
 
-bool digest_open_by_nid(digest_t *digest, int nid, size_t maclength) {
+bool digest_open_by_nid(digest_t *digest, nid_t nid, size_t maclength) {
 	const EVP_MD *evp_md = EVP_get_digestbynid(nid);
 
 	if(!evp_md) {
@@ -189,7 +189,7 @@ bool digest_verify(digest_t *digest, const void *indata, size_t inlen, const voi
 	return digest_create(digest, indata, inlen, outdata) && !memcmp(cmpdata, outdata, digest->maclength);
 }
 
-int digest_get_nid(const digest_t *digest) {
+nid_t digest_get_nid(const digest_t *digest) {
 	if(!digest || !digest->digest) {
 		return 0;
 	}

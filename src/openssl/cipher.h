@@ -22,9 +22,11 @@
 
 #include <openssl/evp.h>
 
-struct cipher {
+#include "../legacy.h"
+
+typedef struct cipher {
 	EVP_CIPHER_CTX *ctx;
 	const EVP_CIPHER *cipher;
-};
+} cipher_t;
 
 #endif

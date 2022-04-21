@@ -23,6 +23,8 @@
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 
+#include "../legacy.h"
+
 struct digest {
 	const EVP_MD *digest;
 #if OPENSSL_VERSION_MAJOR < 3

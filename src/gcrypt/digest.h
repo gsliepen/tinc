@@ -22,9 +22,13 @@
 
 #include <gcrypt.h>
 
+#include "../legacy.h"
+
+typedef enum gcry_md_algos md_algo_t;
+
 typedef struct digest {
-	enum gcry_md_algos algo;
-	int nid;
+	md_algo_t algo;
+	nid_t nid;
 	size_t maclength;
 	gcry_md_hd_t hmac;
 } digest_t;

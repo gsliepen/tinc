@@ -24,18 +24,21 @@
 #include "../logger.h"
 #include "../xalloc.h"
 
+typedef enum gcry_cipher_algos cipher_algo_t;
+typedef enum gcry_cipher_modes cipher_mode_t;
+
 static struct {
 	const char *name;
-	int algo;
-	int mode;
-	int nid;
+	cipher_algo_t algo;
+	cipher_mode_t mode;
+	nid_t nid;
 } ciphertable[] = {
 	{"none", GCRY_CIPHER_NONE, GCRY_CIPHER_MODE_NONE, 0},
 
-	{NULL, GCRY_CIPHER_BLOWFISH, GCRY_CIPHER_MODE_ECB, 92},
+	{NULL,       GCRY_CIPHER_BLOWFISH, GCRY_CIPHER_MODE_ECB, 92},
 	{"blowfish", GCRY_CIPHER_BLOWFISH, GCRY_CIPHER_MODE_CBC, 91},
-	{NULL, GCRY_CIPHER_BLOWFISH, GCRY_CIPHER_MODE_CFB, 93},
-	{NULL, GCRY_CIPHER_BLOWFISH, GCRY_CIPHER_MODE_OFB, 94},
+	{NULL,       GCRY_CIPHER_BLOWFISH, GCRY_CIPHER_MODE_CFB, 93},
+	{NULL,       GCRY_CIPHER_BLOWFISH, GCRY_CIPHER_MODE_OFB, 94},
 
 	{"aes-128-ecb", GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 418},
 	{"aes-128-cbc", GCRY_CIPHER_AES, GCRY_CIPHER_MODE_CBC, 419},
@@ -53,7 +56,7 @@ static struct {
 	{"aes-256-ofb", GCRY_CIPHER_AES256, GCRY_CIPHER_MODE_OFB, 428},
 };
 
-static bool nametocipher(const char *name, int *algo, int *mode) {
+static bool nametocipher(const char *name, cipher_algo_t *algo, cipher_mode_t *mode) {
 	for(size_t i = 0; i < sizeof(ciphertable) / sizeof(*ciphertable); i++) {
 		if(ciphertable[i].name && !strcasecmp(name, ciphertable[i].name)) {
 			*algo = ciphertable[i].algo;
@@ -65,7 +68,7 @@ static bool nametocipher(const char *name, int *algo, int *mode) {
 	return false;
 }
 
-static bool nidtocipher(int nid, int *algo, int *mode) {
+static bool nidtocipher(cipher_algo_t *algo, cipher_mode_t *mode, nid_t nid) {
 	for(size_t i = 0; i < sizeof(ciphertable) / sizeof(*ciphertable); i++) {
 		if(nid == ciphertable[i].nid) {
 			*algo = ciphertable[i].algo;
@@ -77,7 +80,7 @@ static bool nidtocipher(int nid, int *algo, int *mode) {
 	return false;
 }
 
-static bool ciphertonid(int algo, int mode, int *nid) {
+static bool ciphertonid(nid_t *nid, cipher_algo_t algo, cipher_mode_t mode) {
 	for(size_t i = 0; i < sizeof(ciphertable) / sizeof(*ciphertable); i++) {
 		if(algo == ciphertable[i].algo && mode == ciphertable[i].mode) {
 			*nid = ciphertable[i].nid;
@@ -88,10 +91,10 @@ static bool ciphertonid(int algo, int mode, int *nid) {
 	return false;
 }
 
-static bool cipher_open(cipher_t *cipher, int algo, int mode) {
+static bool cipher_open(cipher_t *cipher, cipher_algo_t algo, cipher_mode_t mode) {
 	gcry_error_t err;
 
-	if(!ciphertonid(algo, mode, &cipher->nid)) {
+	if(!ciphertonid(&cipher->nid, algo, mode)) {
 		logger(DEBUG_ALWAYS, LOG_DEBUG, "Cipher %d mode %d has no corresponding nid!", algo, mode);
 		return false;
 	}
@@ -110,7 +113,8 @@ static bool cipher_open(cipher_t *cipher, int algo, int mode) {
 }
 
 bool cipher_open_by_name(cipher_t *cipher, const char *name) {
-	int algo, mode;
+	cipher_algo_t algo;
+	cipher_mode_t mode;
 
 	if(!nametocipher(name, &algo, &mode)) {
 		logger(DEBUG_ALWAYS, LOG_DEBUG, "Unknown cipher name '%s'!", name);
@@ -120,10 +124,11 @@ bool cipher_open_by_name(cipher_t *cipher, const char *name) {
 	return cipher_open(cipher, algo, mode);
 }
 
-bool cipher_open_by_nid(cipher_t *cipher, int nid) {
-	int algo, mode;
+bool cipher_open_by_nid(cipher_t *cipher, nid_t nid) {
+	cipher_algo_t algo;
+	cipher_mode_t mode;
 
-	if(!nidtocipher(nid, &algo, &mode)) {
+	if(!nidtocipher(&algo, &mode, nid)) {
 		logger(DEBUG_ALWAYS, LOG_DEBUG, "Unknown cipher ID %d!", nid);
 		return false;
 	}
@@ -288,7 +293,7 @@ bool cipher_decrypt(cipher_t *cipher, const void *indata, size_t inlen, void *ou
 	return true;
 }
 
-int cipher_get_nid(const cipher_t *cipher) {
+nid_t cipher_get_nid(const cipher_t *cipher) {
 	if(!cipher || !cipher->nid) {
 		return 0;
 	}

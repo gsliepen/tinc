@@ -29,7 +29,7 @@
    We use SHA512 instead of MD5 and SHA1.
  */
 
-static bool prf_xor(int nid, const uint8_t *secret, size_t secretlen, uint8_t *seed, size_t seedlen, uint8_t *out, size_t outlen) {
+static bool prf_xor(nid_t nid, const uint8_t *secret, size_t secretlen, uint8_t *seed, size_t seedlen, uint8_t *out, size_t outlen) {
 	digest_t digest = {0};
 
 	if(!digest_open_by_nid(&digest, nid, DIGEST_ALGO_SIZE)) {
