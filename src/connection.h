@@ -67,7 +67,7 @@ typedef struct legacy_crypto_t {
 	uint64_t budget;
 } legacy_crypto_t;
 
-bool init_crypto_by_nid(legacy_crypto_t *c, int cipher, int digest) ATTR_WARN_UNUSED;
+bool init_crypto_by_nid(legacy_crypto_t *c, nid_t cipher, nid_t digest) ATTR_WARN_UNUSED;
 bool init_crypto_by_name(legacy_crypto_t *c, const char *cipher, const char *digest) ATTR_WARN_UNUSED;
 bool decrease_budget(legacy_crypto_t *c, size_t bytes) ATTR_WARN_UNUSED;
 

@@ -27,6 +27,7 @@
 #include "digest.h"
 #include "event.h"
 #include "subnet.h"
+#include "compression.h"
 
 typedef union node_status_t {
 	struct {
@@ -71,8 +72,8 @@ typedef struct node_t {
 	digest_t *outdigest;                    /* Digest for UDP packets */
 #endif
 
-	int incompression;                      /* Compressionlevel, 0 = no compression */
-	int outcompression;                     /* Compressionlevel, 0 = no compression */
+	compression_level_t incompression;      /* Compression level, 0 = no compression */
+	compression_level_t outcompression;     /* Compression level, 0 = no compression */
 
 	int distance;
 	struct node_t *nexthop;                 /* nearest node from us to him */

@@ -52,7 +52,7 @@ bool cipher_open_by_name(cipher_t *cipher, const char *name) {
 	return true;
 }
 
-bool cipher_open_by_nid(cipher_t *cipher, int nid) {
+bool cipher_open_by_nid(cipher_t *cipher, nid_t nid) {
 	const EVP_CIPHER *evp_cipher = EVP_get_cipherbynid(nid);
 
 	if(!evp_cipher) {
@@ -179,7 +179,7 @@ bool cipher_decrypt(cipher_t *cipher, const void *indata, size_t inlen, void *ou
 	                              EVP_DecryptInit_ex, EVP_DecryptUpdate, EVP_DecryptFinal_ex);
 }
 
-int cipher_get_nid(const cipher_t *cipher) {
+nid_t cipher_get_nid(const cipher_t *cipher) {
 	if(!cipher || !cipher->cipher) {
 		return 0;
 	}

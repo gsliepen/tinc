@@ -36,12 +36,10 @@
 #error Incorrect cryptographic library, please reconfigure.
 #endif
 
-typedef struct cipher cipher_t;
-
 extern cipher_t *cipher_alloc(void) ATTR_MALLOC;
 extern void cipher_free(cipher_t **cipher);
 extern bool cipher_open_by_name(cipher_t *cipher, const char *name);
-extern bool cipher_open_by_nid(cipher_t *cipher, int nid);
+extern bool cipher_open_by_nid(cipher_t *cipher, nid_t nid);
 extern void cipher_close(cipher_t *cipher);
 extern size_t cipher_keylength(const cipher_t *cipher);
 extern size_t cipher_blocksize(const cipher_t *cipher);
@@ -50,7 +48,7 @@ extern bool cipher_set_key(cipher_t *cipher, void *key, bool encrypt) ATTR_WARN_
 extern bool cipher_set_key_from_rsa(cipher_t *cipher, void *rsa, size_t len, bool encrypt) ATTR_WARN_UNUSED;
 extern bool cipher_encrypt(cipher_t *cipher, const void *indata, size_t inlen, void *outdata, size_t *outlen, bool oneshot) ATTR_WARN_UNUSED;
 extern bool cipher_decrypt(cipher_t *cipher, const void *indata, size_t inlen, void *outdata, size_t *outlen, bool oneshot) ATTR_WARN_UNUSED;
-extern int cipher_get_nid(const cipher_t *cipher);
+extern nid_t cipher_get_nid(const cipher_t *cipher);
 extern bool cipher_active(const cipher_t *cipher);
 
 #endif // DISABLE_LEGACY

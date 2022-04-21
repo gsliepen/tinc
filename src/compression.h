@@ -22,4 +22,6 @@ typedef enum compression_level_t {
 	COMPRESS_GUARD = INT_MAX, /* ensure that sizeof(compression_level_t) == sizeof(int) */
 } compression_level_t;
 
-#endif
+STATIC_ASSERT(sizeof(compression_level_t) == sizeof(int), "compression_level_t has invalid size");
+
+#endif // TINC_COMPRESSION_H

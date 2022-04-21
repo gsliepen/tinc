@@ -24,13 +24,15 @@
 
 #include <gcrypt.h>
 
-struct cipher {
+#include "../legacy.h"
+
+typedef struct cipher {
 	gcry_cipher_hd_t handle;
 	uint8_t *key;
-	int nid;
+	nid_t nid;
 	uint16_t keylen;
 	uint16_t blklen;
 	bool padding;
-};
+} cipher_t;
 
 #endif

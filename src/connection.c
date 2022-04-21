@@ -58,7 +58,7 @@ connection_t *new_connection(void) {
 }
 
 #ifndef DISABLE_LEGACY
-bool init_crypto_by_nid(legacy_crypto_t *c, int cipher, int digest) {
+bool init_crypto_by_nid(legacy_crypto_t *c, nid_t cipher, nid_t digest) {
 	if(!cipher_open_by_nid(&c->cipher, cipher)) {
 		return false;
 	}

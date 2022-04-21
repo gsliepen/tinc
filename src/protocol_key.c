@@ -33,6 +33,7 @@
 #include "utils.h"
 #include "compression.h"
 #include "random.h"
+#include "legacy.h"
 
 void send_key_changed(void) {
 #ifndef DISABLE_LEGACY

@@ -948,7 +948,11 @@ static bool setup_myself(void) {
 #endif
 
 	/* Compression */
-	if(get_config_int(lookup_config(&config_tree, "Compression"), &myself->incompression)) {
+	int incompression = 0;
+
+	if(get_config_int(lookup_config(&config_tree, "Compression"), &incompression)) {
+		myself->incompression = incompression;
+
 		switch(myself->incompression) {
 		case COMPRESS_LZ4:
 #ifdef HAVE_LZ4
