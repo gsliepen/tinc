@@ -21,6 +21,9 @@ link_tincd = { 'lib': lib_tincd, 'dep': deps_tincd }
 # }
 
 tests = {
+  'dropin': {
+    'code': 'test_dropin.c',
+  },
   'random': {
     'code': 'test_random.c',
   },

@@ -110,7 +110,7 @@ static void real_logger(debug_t level, int priority, const char *message) {
 
 			logcontrol = true;
 
-			if(level > (c->outcompression >= COMPRESS_NONE ? c->outcompression : debug_level)) {
+			if(level > (c->log_level != DEBUG_UNSET ? c->log_level : debug_level)) {
 				continue;
 			}
 

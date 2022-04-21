@@ -71,6 +71,8 @@ extern int gettimeofday(struct timeval *, void *);
 #define MAX(a,b) (((a)>(b))?(a):(b))
 #endif
 
+#define CLAMP(val, min, max) MIN((max), MAX((min), (val)))
+
 #ifdef _MSC_VER
 
 #define PATH_MAX MAX_PATH

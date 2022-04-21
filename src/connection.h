@@ -27,6 +27,7 @@
 #include "rsa.h"
 #include "list.h"
 #include "sptps.h"
+#include "logger.h"
 
 #define OPTION_INDIRECT         0x0001
 #define OPTION_TCPONLY          0x0002
@@ -59,6 +60,7 @@ typedef union connection_status_t {
 #include "edge.h"
 #include "net.h"
 #include "node.h"
+#include "compression.h"
 
 #ifndef DISABLE_LEGACY
 typedef struct legacy_crypto_t {
@@ -107,7 +109,11 @@ typedef struct connection_t {
 	sptps_t sptps;
 
 	int outmaclength;
-	int outcompression;             /* compression level from compression_level_t */
+
+	union {
+		compression_level_t outcompression;
+		debug_t log_level; // used for REQ_LOG
+	};
 
 	uint8_t *hischallenge;          /* The challenge we sent to him */
 	uint8_t *mychallenge;           /* The challenge we received */
