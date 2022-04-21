@@ -35,6 +35,7 @@
 #include "utils.h"
 #include "xalloc.h"
 #include "random.h"
+#include "pidfile.h"
 
 #include "ed25519/sha512.h"
 
@@ -80,8 +81,10 @@ static void scan_for_hostname(const char *filename, char **hostname, char **port
 		p[strcspn(p, "\t ")] = 0;
 
 		if(!*port && !strcasecmp(line, "Port")) {
+			free(*port);
 			*port = xstrdup(q);
 		} else if(!*hostname && !strcasecmp(line, "Address")) {
+			free(*hostname);
 			*hostname = xstrdup(q);
 
 			if(*p) {
@@ -98,7 +101,7 @@ static void scan_for_hostname(const char *filename, char **hostname, char **port
 	fclose(f);
 }
 
-static char *get_my_hostname(void) {
+static bool get_my_hostname(char **out_address, char **out_port) {
 	char *hostname = NULL;
 	char *port = NULL;
 	char *hostport = NULL;
@@ -114,6 +117,19 @@ static char *get_my_hostname(void) {
 
 	free(name);
 	name = NULL;
+
+	if(!port || (is_decimal(port) && atoi(port) == 0)) {
+		pidfile_t *pidfile = read_pidfile();
+
+		if(pidfile) {
+			free(port);
+			port = xstrdup(pidfile->port);
+			free(pidfile);
+		} else {
+			fprintf(stderr, "tincd is using a dynamic port and is not running. Please start tincd or set the Port option to a non-zero value.\n");
+			goto exit;
+		}
+	}
 
 	if(hostname) {
 		goto done;
@@ -186,7 +202,7 @@ static char *get_my_hostname(void) {
 		if(!hostname) {
 			fprintf(stderr, "Could not determine the external address or hostname. Please set Address manually.\n");
 			free(port);
-			return NULL;
+			return false;
 		}
 
 		goto save;
@@ -205,7 +221,7 @@ again:
 		fprintf(stderr, "Error while reading stdin: %s\n", strerror(errno));
 		free(hostname);
 		free(port);
-		return NULL;
+		return false;
 	}
 
 	if(!rstrip(line)) {
@@ -257,12 +273,25 @@ done:
 		}
 	}
 
+exit:
 	free(hostname);
+
+	if(hostport && port) {
+		*out_address = hostport;
+		*out_port = port;
+		return true;
+	}
+
+	free(hostport);
 	free(port);
-	return hostport;
+	return false;
 }
 
-static bool fcopy(FILE *out, const char *filename) {
+// Copy host configuration file, replacing Port with the value passed here. Host
+// configs may contain this clause: `Port = 0`, which means 'ask the operating
+// system to allocate any available port'. This obviously won't do for invitation
+// files, so replace it with an actual port we've obtained previously.
+static bool copy_config_replacing_port(FILE *out, const char *filename, const char *port) {
 	FILE *in = fopen(filename, "r");
 
 	if(!in) {
@@ -270,15 +299,31 @@ static bool fcopy(FILE *out, const char *filename) {
 		return false;
 	}
 
-	char buf[1024];
-	size_t len;
+	char line[1024];
 
-	while((len = fread(buf, 1, sizeof(buf), in))) {
-		fwrite(buf, len, 1, out);
+	while(fgets(line, sizeof(line), in)) {
+		const char *var_beg = line + strspn(line, "\t ");
+		const char *var_end = var_beg + strcspn(var_beg, "\t ");
+
+		// Check the name of the variable we've read. If it's Port, replace it with
+		// a port we'll use in invitation URL. Otherwise, just copy the line.
+		if(var_end > var_beg && !strncasecmp(var_beg, "Port", var_end - var_beg)) {
+			fprintf(out, "Port = %s\n", port);
+		} else {
+			fprintf(out, "%s", line);
+		}
 	}
 
 	fclose(in);
 	return true;
+}
+
+static bool append_host_config(FILE *f, const char *nodename, const char *port) {
+	char path[PATH_MAX];
+	snprintf(path, sizeof(path), "%s" SLASH "hosts" SLASH "%s", confbase, nodename);
+	bool success = copy_config_replacing_port(f, path, port);
+	fclose(f);
+	return success;
 }
 
 int cmd_invite(int argc, char *argv[]) {
@@ -487,7 +532,12 @@ int cmd_invite(int argc, char *argv[]) {
 	}
 
 	// Get the local address
-	char *address = get_my_hostname();
+	char *address = NULL;
+	char *port = NULL;
+
+	if(!get_my_hostname(&address, &port)) {
+		return 1;
+	}
 
 	// Fill in the details.
 	fprintf(f, "Name = %s\n", argv[1]);
@@ -522,10 +572,14 @@ int cmd_invite(int argc, char *argv[]) {
 	fprintf(f, "#---------------------------------------------------------------#\n");
 	fprintf(f, "Name = %s\n", myname);
 
-	char filename2[PATH_MAX];
-	snprintf(filename2, sizeof(filename2), "%s" SLASH "hosts" SLASH "%s", confbase, myname);
-	fcopy(f, filename2);
-	fclose(f);
+	bool appended = append_host_config(f, myname, port);
+	free(port);
+
+	if(!appended) {
+		fprintf(stderr, "Could not append my config to invitation file: %s.\n", strerror(errno));
+		free(address);
+		return 1;
+	}
 
 	// Create an URL from the local address, key hash and cookie
 	char *url;
@@ -671,11 +725,15 @@ static bool finalize_join(void) {
 	}
 
 	if(!netname) {
-		netname = xstrdup(grep(data, "NetName"));
+		const char *net = grep(data, "NetName");
 
-		if(netname && !check_netname(netname, true)) {
-			fprintf(stderr, "Unsafe NetName found in invitation!\n");
-			return false;
+		if(net) {
+			netname = xstrdup(net);
+
+			if(!check_netname(netname, true)) {
+				fprintf(stderr, "Unsafe NetName found in invitation!\n");
+				return false;
+			}
 		}
 	}
 

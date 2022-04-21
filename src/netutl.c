@@ -27,6 +27,30 @@
 
 bool hostnames = false;
 
+uint16_t service_to_port(const char *service) {
+	struct addrinfo *ai = str2addrinfo("localhost", service, SOCK_STREAM);
+
+	if(!ai || !ai->ai_addr) {
+		return 0;
+	}
+
+	sockaddr_t sa;
+	memcpy(&sa, ai->ai_addr, ai->ai_addrlen);
+	freeaddrinfo(ai);
+
+	switch(sa.sa.sa_family) {
+	case AF_INET:
+		return ntohs(sa.in.sin_port);
+
+	case AF_INET6:
+		return ntohs(sa.in6.sin6_port);
+
+	default:
+		logger(DEBUG_ALWAYS, LOG_WARNING, "Unknown address family %d for service %s.", sa.sa.sa_family, service);
+		return 0;
+	}
+}
+
 /*
   Turn a string into a struct addrinfo.
   Return NULL on failure.
@@ -274,5 +298,22 @@ void sockaddr_setport(sockaddr_t *sa, const char *port) {
 
 	default:
 		return;
+	}
+}
+
+uint16_t get_bound_port(int sockfd) {
+	sockaddr_t sa;
+	socklen_t salen = sizeof(sa);
+
+	if(getsockname(sockfd, (struct sockaddr *) &sa, &salen)) {
+		return 0;
+	}
+
+	if(sa.sa.sa_family == AF_INET) {
+		return ntohs(sa.in.sin_port);
+	} else  if(sa.sa.sa_family == AF_INET6) {
+		return ntohs(sa.in6.sin6_port);
+	} else {
+		return 0;
 	}
 }

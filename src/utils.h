@@ -30,6 +30,12 @@
 extern size_t hex2bin(const char *src, void *dst, size_t length);
 extern size_t bin2hex(const void *src, char *dst, size_t length);
 
+// Returns true if string represents a base-10 integer.
+extern bool is_decimal(const char *str);
+
+// The reverse of atoi().
+extern char *int_to_str(int num);
+
 extern size_t b64encode_tinc(const void *src, char *dst, size_t length);
 extern size_t b64encode_tinc_urlsafe(const void *src, char *dst, size_t length);
 extern size_t b64decode_tinc(const char *src, void *dst, size_t length);

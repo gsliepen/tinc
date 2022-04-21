@@ -50,7 +50,7 @@
 #include "upnp.h"
 #endif
 
-char *myport;
+ports_t myport;
 static io_t device_io;
 devops_t devops;
 bool device_standby = false;
@@ -535,11 +535,70 @@ bool setup_myself_reloadable(void) {
 	return true;
 }
 
+// Get the port that `from_fd` is listening on, and assign it to
+// `sa` if `sa` has a dynamically allocated (zero) port.
+static bool assign_static_port(sockaddr_t *sa, int from_fd) {
+	// We cannot get a port from a bad FD. Bail out.
+	if(from_fd <= 0) {
+		return false;
+	}
+
+	int port = get_bound_port(from_fd);
+
+	if(!port) {
+		return false;
+	}
+
+	// If the port is non-zero, don't reassign it as it's already static.
+	switch(sa->sa.sa_family) {
+	case AF_INET:
+		if(!sa->in.sin_port) {
+			sa->in.sin_port = htons(port);
+		}
+
+		return true;
+
+	case AF_INET6:
+		if(!sa->in6.sin6_port) {
+			sa->in6.sin6_port = htons(port);
+		}
+
+		return true;
+
+	default:
+		logger(DEBUG_ALWAYS, LOG_ERR, "Unknown address family 0x%x", sa->sa.sa_family);
+		return false;
+	}
+}
+
+typedef int (*bind_fn_t)(const sockaddr_t *);
+
+static int bind_reusing_port(const sockaddr_t *sa, int from_fd, bind_fn_t setup) {
+	sockaddr_t reuse_sa;
+	memcpy(&reuse_sa, sa, SALEN(sa->sa));
+
+	int fd = -1;
+
+	// Check if the address we've been passed here is using port 0.
+	// If it is, try to get an actual port from an already bound socket, and reuse it here.
+	if(assign_static_port(&reuse_sa, from_fd)) {
+		fd = setup(&reuse_sa);
+	}
+
+	// If we're binding to a hardcoded non-zero port, or no socket is listening yet,
+	// or binding failed, try the original address.
+	if(fd < 0) {
+		fd = setup(sa);
+	}
+
+	return fd;
+}
+
 /*
   Add listening sockets.
 */
 static bool add_listen_address(char *address, bool bindto) {
-	char *port = myport;
+	char *port = myport.tcp;
 
 	if(address) {
 		char *space = strchr(address, ' ');
@@ -597,30 +656,45 @@ static bool add_listen_address(char *address, bool bindto) {
 			return false;
 		}
 
-		int tcp_fd = setup_listen_socket((sockaddr_t *) aip->ai_addr);
+		const sockaddr_t *sa = (sockaddr_t *) aip->ai_addr;
+		int from_fd = listen_socket[0].tcp.fd;
+
+		// If we're binding to a dynamically allocated (zero) port, try to get the actual
+		// port of the first TCP socket, and use it for this one. If that succeeds, our
+		// tincd instance will use the same port for all addresses it listens on.
+		int tcp_fd = bind_reusing_port(sa, from_fd, setup_listen_socket);
 
 		if(tcp_fd < 0) {
 			continue;
 		}
 
-		int udp_fd = setup_vpn_in_socket((sockaddr_t *) aip->ai_addr);
+		// If we just successfully bound the first socket, use it for the UDP procedure below.
+		// Otherwise, keep using the socket we've obtained from listen_socket[0].
+		if(!from_fd) {
+			from_fd = tcp_fd;
+		}
+
+		int udp_fd = bind_reusing_port(sa, from_fd, setup_vpn_in_socket);
 
 		if(udp_fd < 0) {
 			closesocket(tcp_fd);
 			continue;
 		}
 
-		io_add(&listen_socket[listen_sockets].tcp, handle_new_meta_connection, &listen_socket[listen_sockets], tcp_fd, IO_READ);
-		io_add(&listen_socket[listen_sockets].udp, handle_incoming_vpn_data, &listen_socket[listen_sockets], udp_fd, IO_READ);
+		listen_socket_t *sock = &listen_socket[listen_sockets];
+		io_add(&sock->tcp, handle_new_meta_connection, sock, tcp_fd, IO_READ);
+		io_add(&sock->udp, handle_incoming_vpn_data, sock, udp_fd, IO_READ);
 
 		if(debug_level >= DEBUG_CONNECTIONS) {
-			char *hostname = sockaddr2hostname((sockaddr_t *) aip->ai_addr);
-			logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Listening on %s", hostname);
+			int tcp_port = get_bound_port(tcp_fd);
+			char *hostname = NULL;
+			sockaddr2str(sa, &hostname, NULL);
+			logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Listening on %s port %d", hostname, tcp_port);
 			free(hostname);
 		}
 
-		listen_socket[listen_sockets].bindto = bindto;
-		memcpy(&listen_socket[listen_sockets].sa, aip->ai_addr, aip->ai_addrlen);
+		sock->bindto = bindto;
+		memcpy(&sock->sa, aip->ai_addr, aip->ai_addrlen);
 		listen_sockets++;
 	}
 
@@ -656,7 +730,7 @@ void device_disable(void) {
   Configure node_t myself and set up the local sockets (listen only)
 */
 static bool setup_myself(void) {
-	char *name, *hostname, *type;
+	char *name, *type;
 	char *address = NULL;
 	bool port_specified = false;
 
@@ -672,11 +746,13 @@ static bool setup_myself(void) {
 	myself->connection->name = xstrdup(name);
 	read_host_config(&config_tree, name, true);
 
-	if(!get_config_string(lookup_config(&config_tree, "Port"), &myport)) {
-		myport = xstrdup("655");
+	if(!get_config_string(lookup_config(&config_tree, "Port"), &myport.tcp)) {
+		myport.tcp = xstrdup("655");
 	} else {
 		port_specified = true;
 	}
+
+	myport.udp = xstrdup(myport.tcp);
 
 	myself->connection->options = 0;
 	myself->connection->protocol_major = PROT_MAJOR;
@@ -726,19 +802,18 @@ static bool setup_myself(void) {
 #endif
 
 	/* Ensure myport is numeric */
+	if(!is_decimal(myport.tcp)) {
+		uint16_t port = service_to_port(myport.tcp);
 
-	if(!atoi(myport)) {
-		struct addrinfo *ai = str2addrinfo("localhost", myport, SOCK_DGRAM);
-		sockaddr_t sa;
-
-		if(!ai || !ai->ai_addr) {
+		if(!port) {
 			return false;
 		}
 
-		free(myport);
-		memcpy(&sa, ai->ai_addr, ai->ai_addrlen);
-		freeaddrinfo(ai);
-		sockaddr2str(&sa, NULL, &myport);
+		free(myport.tcp);
+		myport.tcp = int_to_str(port);
+
+		free(myport.udp);
+		myport.udp = xstrdup(myport.tcp);
 	}
 
 	/* Read in all the subnets specified in the host configuration file */
@@ -997,15 +1072,16 @@ static bool setup_myself(void) {
 		}
 
 		for(int i = 0; i < listen_sockets; i++) {
+			const int tcp_fd = i + 3;
 			salen = sizeof(sa);
 
-			if(getsockname(i + 3, &sa.sa, &salen) < 0) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "Could not get address of listen fd %d: %s", i + 3, sockstrerror(sockerrno));
+			if(getsockname(tcp_fd, &sa.sa, &salen) < 0) {
+				logger(DEBUG_ALWAYS, LOG_ERR, "Could not get address of listen fd %d: %s", tcp_fd, sockstrerror(sockerrno));
 				return false;
 			}
 
 #ifdef FD_CLOEXEC
-			fcntl(i + 3, F_SETFD, FD_CLOEXEC);
+			fcntl(tcp_fd, F_SETFD, FD_CLOEXEC);
 #endif
 
 			int udp_fd = setup_vpn_in_socket(&sa);
@@ -1014,11 +1090,11 @@ static bool setup_myself(void) {
 				return false;
 			}
 
-			io_add(&listen_socket[i].tcp, (io_cb_t)handle_new_meta_connection, &listen_socket[i], i + 3, IO_READ);
+			io_add(&listen_socket[i].tcp, (io_cb_t)handle_new_meta_connection, &listen_socket[i], tcp_fd, IO_READ);
 			io_add(&listen_socket[i].udp, (io_cb_t)handle_incoming_vpn_data, &listen_socket[i], udp_fd, IO_READ);
 
 			if(debug_level >= DEBUG_CONNECTIONS) {
-				hostname = sockaddr2hostname(&sa);
+				char *hostname = sockaddr2hostname(&sa);
 				logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Listening on %s", hostname);
 				free(hostname);
 			}
@@ -1060,21 +1136,19 @@ static bool setup_myself(void) {
 
 	/* If no Port option was specified, set myport to the port used by the first listening socket. */
 
-	if(!port_specified || atoi(myport) == 0) {
-		sockaddr_t sa;
-		socklen_t salen = sizeof(sa);
+	if(!port_specified || atoi(myport.tcp) == 0) {
+		listen_socket_t *sock = &listen_socket[0];
 
-		if(!getsockname(listen_socket[0].udp.fd, &sa.sa, &salen)) {
-			free(myport);
-			sockaddr2str(&sa, NULL, &myport);
+		uint16_t tcp = get_bound_port(sock->tcp.fd);
+		free(myport.tcp);
+		myport.tcp = int_to_str(tcp);
 
-			if(!myport) {
-				myport = xstrdup("655");
-			}
-		}
+		uint16_t udp = get_bound_port(sock->udp.fd);
+		free(myport.udp);
+		myport.udp = int_to_str(udp);
 	}
 
-	xasprintf(&myself->hostname, "MYSELF port %s", myport);
+	xasprintf(&myself->hostname, "MYSELF port %s", myport.tcp);
 	myself->connection->hostname = xstrdup(myself->hostname);
 
 	char *upnp = NULL;
@@ -1194,7 +1268,8 @@ void close_network_connections(void) {
 		device_disable();
 	}
 
-	free(myport);
+	free(myport.tcp);
+	free(myport.udp);
 
 	if(device_fd >= 0) {
 		io_del(&device_io);

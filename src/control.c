@@ -30,6 +30,7 @@
 #include "utils.h"
 #include "xalloc.h"
 #include "random.h"
+#include "pidfile.h"
 
 char controlcookie[65];
 
@@ -144,16 +145,6 @@ bool init_control(void) {
 	randomize(controlcookie, sizeof(controlcookie) / 2);
 	bin2hex(controlcookie, controlcookie, sizeof(controlcookie) / 2);
 
-	mode_t mask = umask(0);
-	umask(mask | 077);
-	FILE *f = fopen(pidfilename, "w");
-	umask(mask);
-
-	if(!f) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Cannot write control socket cookie file %s: %s", pidfilename, strerror(errno));
-		return false;
-	}
-
 	// Get the address and port of the first listening socket
 
 	char *localhost = NULL;
@@ -163,7 +154,7 @@ bool init_control(void) {
 	// Make sure we have a valid address, and map 0.0.0.0 and :: to 127.0.0.1 and ::1.
 
 	if(getsockname(listen_socket[0].tcp.fd, &sa.sa, &len)) {
-		xasprintf(&localhost, "127.0.0.1 port %s", myport);
+		xasprintf(&localhost, "127.0.0.1 port %s", myport.tcp);
 	} else {
 		if(sa.sa.sa_family == AF_INET) {
 			if(sa.in.sin_addr.s_addr == 0) {
@@ -180,10 +171,13 @@ bool init_control(void) {
 		localhost = sockaddr2hostname(&sa);
 	}
 
-	fprintf(f, "%d %s %s\n", (int)getpid(), controlcookie, localhost);
-
+	bool wrote = write_pidfile(controlcookie, localhost);
 	free(localhost);
-	fclose(f);
+
+	if(!wrote) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Cannot write control socket cookie file %s: %s", pidfilename, strerror(errno));
+		return false;
+	}
 
 #ifndef HAVE_WINDOWS
 	int unix_fd = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -211,6 +205,7 @@ bool init_control(void) {
 
 	unlink(unixsocketname);
 
+	mode_t mask = umask(0);
 	umask(mask | 077);
 	int result = bind(unix_fd, (struct sockaddr *)&sa_un, sizeof(sa_un));
 	umask(mask);

@@ -176,9 +176,20 @@ static bool bind_to_address(connection_t *c) {
 	return true;
 }
 
+static bool try_bind(int nfd, const sockaddr_t *sa, const char *type) {
+	if(!bind(nfd, &sa->sa, SALEN(sa->sa))) {
+		return true;
+	}
+
+	closesocket(nfd);
+	char *addrstr = sockaddr2hostname(sa);
+	logger(DEBUG_ALWAYS, LOG_ERR, "Can't bind to %s/%s: %s", addrstr, type, sockstrerror(sockerrno));
+	free(addrstr);
+	return false;
+}
+
 int setup_listen_socket(const sockaddr_t *sa) {
 	int nfd;
-	char *addrstr;
 	int option;
 	char *iface;
 
@@ -237,11 +248,7 @@ int setup_listen_socket(const sockaddr_t *sa) {
 #endif
 	}
 
-	if(bind(nfd, &sa->sa, SALEN(sa->sa))) {
-		closesocket(nfd);
-		addrstr = sockaddr2hostname(sa);
-		logger(DEBUG_ALWAYS, LOG_ERR, "Can't bind to %s/tcp: %s", addrstr, sockstrerror(sockerrno));
-		free(addrstr);
+	if(!try_bind(nfd, sa, "tcp")) {
 		return -1;
 	}
 
@@ -282,10 +289,8 @@ static void set_udp_buffer(int nfd, int type, const char *name, int size, bool w
 	}
 }
 
-
 int setup_vpn_in_socket(const sockaddr_t *sa) {
 	int nfd;
-	char *addrstr;
 	int option;
 
 	nfd = socket(sa->sa.sa_family, SOCK_DGRAM, IPPROTO_UDP);
@@ -386,11 +391,7 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 		return -1;
 	}
 
-	if(bind(nfd, &sa->sa, SALEN(sa->sa))) {
-		closesocket(nfd);
-		addrstr = sockaddr2hostname(sa);
-		logger(DEBUG_ALWAYS, LOG_ERR, "Can't bind to %s/udp: %s", addrstr, sockstrerror(sockerrno));
-		free(addrstr);
+	if(!try_bind(nfd, sa, "udp")) {
 		return -1;
 	}
 

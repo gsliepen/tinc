@@ -124,6 +124,11 @@ typedef struct outgoing_t {
 	timeout_t ev;
 } outgoing_t;
 
+typedef struct ports_t {
+	char *tcp;
+	char *udp;
+} ports_t;
+
 extern list_t outgoing_list;
 
 extern int maxoutbufsize;
@@ -151,7 +156,7 @@ extern bool udp_sndbuf_warnings;
 extern int max_connection_burst;
 extern int fwmark;
 extern bool do_prune;
-extern char *myport;
+extern ports_t myport;
 extern bool device_standby;
 extern bool autoconnect;
 extern bool disablebuggypeers;

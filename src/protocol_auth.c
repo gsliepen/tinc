@@ -894,7 +894,7 @@ bool send_ack(connection_t *c) {
 		get_config_int(lookup_config(&config_tree, "Weight"), &c->estimated_weight);
 	}
 
-	return send_request(c, "%d %s %d %x", ACK, myport, c->estimated_weight, (c->options & 0xffffff) | (experimental ? (PROT_MINOR << 24) : 0));
+	return send_request(c, "%d %s %d %x", ACK, myport.udp, c->estimated_weight, (c->options & 0xffffff) | (experimental ? (PROT_MINOR << 24) : 0));
 }
 
 static void send_everything(connection_t *c) {
@@ -1067,7 +1067,7 @@ bool ack_h(connection_t *c, const char *request) {
 	if(getsockname(c->socket, &local_sa.sa, &local_salen) < 0) {
 		logger(DEBUG_ALWAYS, LOG_WARNING, "Could not get local socket address for connection with %s", c->name);
 	} else {
-		sockaddr_setport(&local_sa, myport);
+		sockaddr_setport(&local_sa, myport.udp);
 		c->edge->local_address = local_sa;
 	}
 

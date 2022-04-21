@@ -8,15 +8,28 @@ from testlib.log import log
 from testlib.test import Test
 
 
+def run_port0_test(ctx: Test) -> None:
+    """Checks that tinc invite fails if called with Port 0 and tincd stopped."""
+    foo = ctx.node()
+    stdin = f"""
+        init {foo}
+        set Port 0
+        set Address localhost
+        set DeviceType dummy
+    """
+    foo.cmd(stdin=stdin)
+    _, err = foo.cmd("invite", "bar", code=1)
+    check.is_in("Please start tincd", err)
+
+
 def run_invite_test(ctx: Test, start_before_invite: bool) -> None:
     """Run tests. If start_before_invite is True,
     tincd is started *before* creating invitation, and vice versa.
     """
     foo, bar = ctx.node(), ctx.node()
-
     stdin = f"""
         init {foo}
-        set Port 0
+        set Port 12345
         set Address localhost
         set DeviceType dummy
         set Mode switch
@@ -25,6 +38,7 @@ def run_invite_test(ctx: Test, start_before_invite: bool) -> None:
     foo.cmd(stdin=stdin)
 
     if start_before_invite:
+        foo.cmd("set", "Port", "0")
         port = foo.start()
 
     log.info("create invitation")
@@ -33,8 +47,9 @@ def run_invite_test(ctx: Test, start_before_invite: bool) -> None:
     foo_invite = foo_invite.strip()
 
     if not start_before_invite:
+        foo.cmd("set", "Port", "0")
         port = foo.start()
-        foo_invite = foo_invite.replace(":0/", f":{port}/")
+        foo_invite = foo_invite.replace(":12345/", f":{port}/")
 
     log.info("join second node with %s", foo_invite)
     bar.cmd("join", foo_invite)
@@ -84,6 +99,9 @@ def run_invite_test(ctx: Test, start_before_invite: bool) -> None:
     check.nodes(foo, 2)
     check.nodes(bar, 2)
 
+
+with Test("fail with Port 0 and tincd not running") as context:
+    run_port0_test(context)
 
 with Test("offline mode") as context:
     run_invite_test(context, start_before_invite=False)

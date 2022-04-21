@@ -41,6 +41,7 @@
 #include "subnet.h"
 #include "keys.h"
 #include "random.h"
+#include "pidfile.h"
 
 #ifndef MSG_NOSIGNAL
 #define MSG_NOSIGNAL 0
@@ -725,9 +726,9 @@ bool connect_tincd(bool verbose) {
 		}
 	}
 
-	FILE *f = fopen(pidfilename, "r");
+	pidfile_t *pidfile = read_pidfile();
 
-	if(!f) {
+	if(!pidfile) {
 		if(verbose) {
 			fprintf(stderr, "Could not open pid file %s: %s\n", pidfilename, strerror(errno));
 		}
@@ -735,21 +736,11 @@ bool connect_tincd(bool verbose) {
 		return false;
 	}
 
-	char host[129];
-	char port[129];
-
-	if(fscanf(f, "%20d %1024s %128s port %128s", &pid, controlcookie, host, port) != 4) {
-		if(verbose) {
-			fprintf(stderr, "Could not parse pid file %s\n", pidfilename);
-		}
-
-		fclose(f);
-		return false;
-	}
-
-	fclose(f);
+	pid = pidfile->pid;
+	strcpy(controlcookie, pidfile->cookie);
 
 #ifndef HAVE_WINDOWS
+	free(pidfile);
 
 	if((pid == 0) || (kill(pid, 0) && (errno == ESRCH))) {
 		fprintf(stderr, "Could not find tincd running at pid %d\n", pid);
@@ -800,11 +791,12 @@ bool connect_tincd(bool verbose) {
 
 	struct addrinfo *res = NULL;
 
-	if(getaddrinfo(host, port, &hints, &res) || !res) {
+	if(getaddrinfo(pidfile->host, pidfile->port, &hints, &res) || !res) {
 		if(verbose) {
-			fprintf(stderr, "Cannot resolve %s port %s: %s\n", host, port, sockstrerror(sockerrno));
+			fprintf(stderr, "Cannot resolve %s port %s: %s\n", pidfile->host, pidfile->port, sockstrerror(sockerrno));
 		}
 
+		free(pidfile);
 		return false;
 	}
 
@@ -815,6 +807,7 @@ bool connect_tincd(bool verbose) {
 			fprintf(stderr, "Cannot create TCP socket: %s\n", sockstrerror(sockerrno));
 		}
 
+		free(pidfile);
 		return false;
 	}
 
@@ -828,14 +821,16 @@ bool connect_tincd(bool verbose) {
 
 	if(connect(fd, res->ai_addr, res->ai_addrlen) < 0) {
 		if(verbose) {
-			fprintf(stderr, "Cannot connect to %s port %s: %s\n", host, port, sockstrerror(sockerrno));
+			fprintf(stderr, "Cannot connect to %s port %s: %s\n", pidfile->host, pidfile->port, sockstrerror(sockerrno));
 		}
 
+		free(pidfile);
 		closesocket(fd);
 		fd = -1;
 		return false;
 	}
 
+	free(pidfile);
 	freeaddrinfo(res);
 #endif
 
@@ -1720,6 +1715,20 @@ const var_t variables[] = {
 	{NULL, 0}
 };
 
+// Request actual port from tincd
+static bool read_actual_port(void) {
+	pidfile_t *pidfile = read_pidfile();
+
+	if(pidfile) {
+		printf("%s\n", pidfile->port);
+		free(pidfile);
+		return true;
+	} else {
+		fprintf(stderr, "Could not get port from the pidfile.\n");
+		return false;
+	}
+}
+
 static int cmd_config(int argc, char *argv[]) {
 	if(argc < 2) {
 		fprintf(stderr, "Invalid number of arguments.\n");
@@ -1793,6 +1802,11 @@ static int cmd_config(int argc, char *argv[]) {
 
 	if(action == GET && *value) {
 		action = SET;
+	}
+
+	// If port is requested, try reading it from the pidfile and fall back to configs if that fails
+	if(action == GET && !strcasecmp(variable, "Port") && read_actual_port()) {
+		return 0;
 	}
 
 	/* Some simple checks. */

@@ -109,6 +109,7 @@ src_lib_common = [
   'logger.c',
   'names.c',
   'netutl.c',
+  'pidfile.c',
   'script.c',
   'splay_tree.c',
   'sptps.c',

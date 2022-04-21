@@ -229,9 +229,6 @@ class Tinc:
         if code is not None:
             check.equals(code, res)
 
-        # Check that port was not used by something else
-        check.not_in("Can't bind to ", err)
-
         return out if out else "", err if err else ""
 
     def tinc(self, *args: str) -> subp.Popen:

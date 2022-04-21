@@ -28,6 +28,9 @@ tests = {
     'code': 'test_random_noinit.c',
     'fail': true,
   },
+  'netutl': {
+    'code': 'test_netutl.c',
+  },
   'net': {
     'code': 'test_net.c',
     'mock': ['execute_script', 'environment_init', 'environment_exit'],
@@ -37,6 +40,9 @@ tests = {
   },
   'protocol': {
     'code': 'test_protocol.c',
+  },
+  'utils': {
+    'code': 'test_utils.c',
   },
   'splay_tree': {
     'code': 'test_splay_tree.c',

@@ -119,6 +119,24 @@ size_t b64decode_tinc(const char *src, void *dst, size_t length) {
 	}
 }
 
+bool is_decimal(const char *str) {
+	if(!str) {
+		return false;
+	}
+
+	errno = 0;
+	char *badchar = NULL;
+	strtol(str, &badchar, 10);
+	return !errno && badchar != str && !*badchar;
+}
+
+// itoa() conflicts with a similarly named function under MinGW.
+char *int_to_str(int num) {
+	char *str = NULL;
+	xasprintf(&str, "%d", num);
+	return str;
+}
+
 static size_t b64encode_tinc_internal(const void *src, char *dst, size_t length, const char *alphabet) {
 	uint32_t triplet;
 	const unsigned char *usrc = (unsigned char *)src;
