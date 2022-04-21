@@ -927,8 +927,6 @@ static bool setup_myself(void) {
 		myself->incompression = COMPRESS_NONE;
 	}
 
-	myself->connection->outcompression = COMPRESS_NONE;
-
 	/* Done */
 
 	myself->nexthop = myself;
