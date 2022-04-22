@@ -73,8 +73,11 @@ endif
 check_functions = [
   'asprintf',
   'daemon',
+  'explicit_bzero',
+  'explicit_memset',
   'fchmod',
   'gettimeofday',
+  'memset_s',
   'mlockall',
   'putenv',
   'strsignal',

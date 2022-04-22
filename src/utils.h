@@ -26,6 +26,7 @@
 #include "crypto.h"
 
 #define B64_SIZE(len) ((len) * 4 / 3 + 5)
+#define HEX_SIZE(len) ((len) * 2 + 1)
 
 extern size_t hex2bin(const char *src, void *dst, size_t length);
 extern size_t bin2hex(const void *src, char *dst, size_t length);

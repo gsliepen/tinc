@@ -314,6 +314,7 @@ static bool copy_config_replacing_port(FILE *out, const char *filename, const ch
 		}
 	}
 
+	memzero(line, sizeof(line));
 	fclose(in);
 	return true;
 }
@@ -521,6 +522,7 @@ int cmd_invite(int argc, char *argv[]) {
 	int ifd = open(filename, O_RDWR | O_CREAT | O_EXCL, 0600);
 
 	if(!ifd) {
+		memzero(cookie, sizeof(cookie));
 		fprintf(stderr, "Could not create invitation file %s: %s\n", filename, strerror(errno));
 		return 1;
 	}
@@ -536,8 +538,16 @@ int cmd_invite(int argc, char *argv[]) {
 	char *port = NULL;
 
 	if(!get_my_hostname(&address, &port)) {
+		memzero(cookie, sizeof(cookie));
 		return 1;
 	}
+
+	// Create an URL from the local address, key hash and cookie
+	char *url;
+	xasprintf(&url, "%s/%s%s", address, hash, cookie);
+
+	memzero(cookie, sizeof(cookie));
+	free(address);
 
 	// Fill in the details.
 	fprintf(f, "Name = %s\n", argv[1]);
@@ -577,13 +587,9 @@ int cmd_invite(int argc, char *argv[]) {
 
 	if(!appended) {
 		fprintf(stderr, "Could not append my config to invitation file: %s.\n", strerror(errno));
-		free(address);
+		free_string(url);
 		return 1;
 	}
-
-	// Create an URL from the local address, key hash and cookie
-	char *url;
-	xasprintf(&url, "%s/%s%s", address, hash, cookie);
 
 	// Call the inviation-created script
 	environment_t env;
@@ -595,8 +601,7 @@ int cmd_invite(int argc, char *argv[]) {
 	environment_exit(&env);
 
 	puts(url);
-	free(url);
-	free(address);
+	free_string(url);
 
 	return 0;
 }
@@ -972,9 +977,9 @@ make_names:
 		return false;
 	}
 
-	char *b64key = ecdsa_get_base64_public_key(key);
+	char *b64_pubkey = ecdsa_get_base64_public_key(key);
 
-	if(!b64key) {
+	if(!b64_pubkey) {
 		return false;
 	}
 
@@ -994,10 +999,10 @@ make_names:
 
 	fclose(f);
 
-	fprintf(fh, "Ed25519PublicKey = %s\n", b64key);
+	fprintf(fh, "Ed25519PublicKey = %s\n", b64_pubkey);
 
-	sptps_send_record(&sptps, 1, b64key, strlen(b64key));
-	free(b64key);
+	sptps_send_record(&sptps, 1, b64_pubkey, strlen(b64_pubkey));
+	free(b64_pubkey);
 	ecdsa_free(key);
 
 #ifndef DISABLE_LEGACY
@@ -1299,13 +1304,13 @@ int cmd_join(int argc, char *argv[]) {
 		return 1;
 	}
 
-	char *b64key = ecdsa_get_base64_public_key(key);
+	char *b64_pubkey = ecdsa_get_base64_public_key(key);
 
 	// Connect to the tinc daemon mentioned in the URL.
 	struct addrinfo *ai = str2addrinfo(address, port, SOCK_STREAM);
 
 	if(!ai) {
-		free(b64key);
+		free(b64_pubkey);
 		ecdsa_free(key);
 		return 1;
 	}
@@ -1320,7 +1325,7 @@ next:
 
 		if(!aip) {
 			freeaddrinfo(ai);
-			free(b64key);
+			free(b64_pubkey);
 			ecdsa_free(key);
 			return 1;
 		}
@@ -1346,13 +1351,13 @@ next:
 	fprintf(stderr, "Connected to %s port %s...\n", address, port);
 
 	// Tell him we have an invitation, and give him our throw-away key.
-	ssize_t len = snprintf(line, sizeof(line), "0 ?%s %d.%d\n", b64key, PROT_MAJOR, PROT_MINOR);
+	ssize_t len = snprintf(line, sizeof(line), "0 ?%s %d.%d\n", b64_pubkey, PROT_MAJOR, PROT_MINOR);
 
 	if(len <= 0 || (size_t)len >= sizeof(line)) {
 		abort();
 	}
 
-	if(!sendline(sock, "0 ?%s %d.%d", b64key, PROT_MAJOR, 1)) {
+	if(!sendline(sock, "0 ?%s %d.%d", b64_pubkey, PROT_MAJOR, 1)) {
 		fprintf(stderr, "Error sending request to %s port %s: %s\n", address, port, strerror(errno));
 		closesocket(sock);
 		goto next;
@@ -1371,8 +1376,8 @@ next:
 	ai = NULL;
 	aip = NULL;
 
-	free(b64key);
-	b64key = NULL;
+	free(b64_pubkey);
+	b64_pubkey = NULL;
 
 	// Check if the hash of the key he gave us matches the hash in the URL.
 	char *fingerprint = line + 2;

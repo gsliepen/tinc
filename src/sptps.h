@@ -47,6 +47,26 @@ typedef enum sptps_state_t {
 	SPTPS_ACK = 4,           // Waiting for an ACKnowledgement record
 } sptps_state_t;
 
+PACKED(struct sptps_kex_t {
+	uint8_t version;
+	uint8_t nonce[ECDH_SIZE];
+	uint8_t pubkey[ECDH_SIZE];
+});
+
+typedef struct sptps_kex_t sptps_kex_t;
+
+STATIC_ASSERT(sizeof(sptps_kex_t) == 65, "sptps_kex_t has invalid size");
+
+typedef union sptps_key_t {
+	struct {
+		uint8_t key0[CHACHA_POLY1305_KEYLEN];
+		uint8_t key1[CHACHA_POLY1305_KEYLEN];
+	};
+	uint8_t both[CHACHA_POLY1305_KEYLEN * 2];
+} sptps_key_t;
+
+STATIC_ASSERT(sizeof(sptps_key_t) == 128, "sptps_key_t has invalid size");
+
 typedef struct sptps {
 	bool initiator;
 	bool datagram;
@@ -72,9 +92,9 @@ typedef struct sptps {
 	ecdsa_t *hiskey;
 	ecdh_t *ecdh;
 
-	uint8_t *mykex;
-	uint8_t *hiskex;
-	uint8_t *key;
+	sptps_kex_t *mykex;
+	sptps_kex_t *hiskex;
+	sptps_key_t *key;
 	uint8_t *label;
 	size_t labellen;
 

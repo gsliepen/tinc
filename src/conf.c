@@ -98,7 +98,7 @@ config_t *new_config(void) {
 
 void free_config(config_t *cfg) {
 	free(cfg->variable);
-	free(cfg->value);
+	free_string(cfg->value);
 	free(cfg->file);
 	free(cfg);
 }

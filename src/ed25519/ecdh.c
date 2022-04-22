@@ -36,16 +36,17 @@ ecdh_t *ecdh_generate_public(void *pubkey) {
 	uint8_t seed[32];
 	randomize(seed, sizeof(seed));
 	ed25519_create_keypair(pubkey, ecdh->private, seed);
+	memzero(seed, sizeof(seed));
 
 	return ecdh;
 }
 
 bool ecdh_compute_shared(ecdh_t *ecdh, const void *pubkey, void *shared) {
 	ed25519_key_exchange(shared, pubkey, ecdh->private);
-	free(ecdh);
+	ecdh_free(ecdh);
 	return true;
 }
 
 void ecdh_free(ecdh_t *ecdh) {
-	free(ecdh);
+	xzfree(ecdh, sizeof(ecdh_t));
 }

@@ -40,6 +40,7 @@ ecdsa_t *ecdsa_generate(void) {
 	uint8_t seed[32];
 	randomize(seed, sizeof(seed));
 	ed25519_create_keypair(ecdsa->public, ecdsa->private, seed);
+	memzero(seed, sizeof(seed));
 
 	return ecdsa;
 }
@@ -59,6 +60,8 @@ static bool write_pem(FILE *fp, const char *type, void *vbuf, size_t size) {
 		buf += todo;
 		size -= todo;
 	}
+
+	memzero(base64, sizeof(base64));
 
 	fprintf(fp, "-----END %s-----\n", type);
 	return !ferror(fp);

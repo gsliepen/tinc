@@ -543,14 +543,14 @@ static int run_test(int argc, char *argv[]) {
 
 	if(!fp) {
 		fprintf(stderr, "Could not open %s: %s\n", argv[2], strerror(errno));
-		free(mykey);
+		ecdsa_free(mykey);
 		return 1;
 	}
 
 	ecdsa_t *hiskey = NULL;
 
 	if(!(hiskey = ecdsa_read_pem_public_key(fp))) {
-		free(mykey);
+		ecdsa_free(mykey);
 		return 1;
 	}
 
@@ -563,8 +563,8 @@ static int run_test(int argc, char *argv[]) {
 	sptps_t s;
 
 	if(!sptps_start(&s, &sock, initiator, datagram, mykey, hiskey, "sptps_test", 10, send_data, receive_record)) {
-		free(mykey);
-		free(hiskey);
+		ecdsa_free(mykey);
+		ecdsa_free(hiskey);
 		return 1;
 	}
 
@@ -575,8 +575,8 @@ static int run_test(int argc, char *argv[]) {
 
 		if(in < 0) {
 			fprintf(stderr, "Could not init stdin reader thread\n");
-			free(mykey);
-			free(hiskey);
+			ecdsa_free(mykey);
+			ecdsa_free(hiskey);
 			return 1;
 		}
 	}
@@ -603,8 +603,8 @@ static int run_test(int argc, char *argv[]) {
 		FD_SET(sock, &fds);
 
 		if(select(max_fd + 1, &fds, NULL, NULL, NULL) <= 0) {
-			free(mykey);
-			free(hiskey);
+			ecdsa_free(mykey);
+			ecdsa_free(hiskey);
 			return 1;
 		}
 
@@ -617,8 +617,8 @@ static int run_test(int argc, char *argv[]) {
 
 			if(len < 0) {
 				fprintf(stderr, "Could not read from stdin: %s\n", strerror(errno));
-				free(mykey);
-				free(hiskey);
+				ecdsa_free(mykey);
+				ecdsa_free(hiskey);
 				return 1;
 			}
 
@@ -649,8 +649,8 @@ static int run_test(int argc, char *argv[]) {
 					sptps_send_record(&s, 0, buf, len);
 				}
 			} else if(!sptps_send_record(&s, buf[0] == '!' ? 1 : 0, buf, (len == 1 && buf[0] == '\n') ? 0 : buf[0] == '*' ? sizeof(buf) : (size_t)len)) {
-				free(mykey);
-				free(hiskey);
+				ecdsa_free(mykey);
+				ecdsa_free(hiskey);
 				return 1;
 			}
 		}
@@ -660,8 +660,8 @@ static int run_test(int argc, char *argv[]) {
 
 			if(len < 0) {
 				fprintf(stderr, "Could not read from socket: %s\n", sockstrerror(sockerrno));
-				free(mykey);
-				free(hiskey);
+				ecdsa_free(mykey);
+				ecdsa_free(hiskey);
 				return 1;
 			}
 
@@ -691,8 +691,8 @@ static int run_test(int argc, char *argv[]) {
 
 				if(!done) {
 					if(!datagram) {
-						free(mykey);
-						free(hiskey);
+						ecdsa_free(mykey);
+						ecdsa_free(hiskey);
 						return 1;
 					}
 				}
@@ -705,8 +705,8 @@ static int run_test(int argc, char *argv[]) {
 
 	bool stopped = sptps_stop(&s);
 
-	free(mykey);
-	free(hiskey);
+	ecdsa_free(mykey);
+	ecdsa_free(hiskey);
 	closesocket(sock);
 
 	return !stopped;
