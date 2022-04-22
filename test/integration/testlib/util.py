@@ -7,6 +7,7 @@ import random
 import string
 import socket
 import typing as T
+import tempfile
 from pathlib import Path
 
 from . import check
@@ -30,6 +31,14 @@ def random_port() -> int:
             return port
         except OSError as ex:
             log.debug("could not bind to random port %d", port, exc_info=ex)
+
+
+def temp_file(content: str) -> str:
+    """Create a temporary file and write text content into it."""
+    file = tempfile.mktemp()
+    with open(file, "w", encoding="utf-8") as f:
+        f.write(content)
+    return file
 
 
 def remove_file(path: T.Union[str, Path]) -> bool:

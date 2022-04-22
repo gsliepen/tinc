@@ -7,6 +7,7 @@ tests = [
   'invite.py',
   'invite_tinc_up.py',
   'proxy.py',
+  'sandbox.py',
   'scripts.py',
   'security.py',
   'splice.py',

@@ -31,6 +31,7 @@
 #include "script.h"
 #include "subnet.h"
 #include "xalloc.h"
+#include "sandbox.h"
 
 /* lists type of subnet */
 uint32_t hash_seed;
@@ -321,6 +322,10 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address) {
 }
 
 void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
+	if(!sandbox_can(START_PROCESSES, RIGHT_NOW)) {
+		return;
+	}
+
 	char netstr[MAXNETSTR];
 	char *address, *port;
 	char empty[] = "";

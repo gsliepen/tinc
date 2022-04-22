@@ -9,6 +9,7 @@ from testlib import check
 from testlib.log import log
 from testlib.proc import Tinc, Script
 from testlib.test import Test
+from testlib.feature import SANDBOX_LEVEL
 
 TIMEOUT = 2
 
@@ -97,6 +98,7 @@ def init(ctx: Test) -> Tinc:
         set PingTimeout {TIMEOUT}
         set AutoConnect no
         set Subnet 10.96.96.1
+        set Sandbox {SANDBOX_LEVEL}
     """
     foo.cmd(stdin=stdin)
 

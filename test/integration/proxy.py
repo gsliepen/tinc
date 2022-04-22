@@ -4,7 +4,7 @@
 
 import os
 import re
-import tempfile
+import time
 import typing as T
 import multiprocessing.connection as mp
 import logging
@@ -14,11 +14,12 @@ import struct
 
 from threading import Thread
 from socketserver import ThreadingMixIn, TCPServer, StreamRequestHandler
-from testlib import check, cmd, path
+from testlib import check, cmd, path, util
 from testlib.proc import Tinc, Script
 from testlib.test import Test
 from testlib.util import random_string
 from testlib.log import log
+from testlib.feature import HAVE_SANDBOX
 
 USERNAME = random_string(8)
 PASSWORD = random_string(8)
@@ -382,12 +383,7 @@ import multiprocessing.connection as mp
 with mp.Client(("127.0.0.1", {port}), family="AF_INET") as client:
     client.send({{ **os.environ }})
 """
-
-    file = tempfile.mktemp()
-    with open(file, "w", encoding="utf-8") as f:
-        f.write(code)
-
-    return file
+    return util.temp_file(code)
 
 
 def test_proxy(ctx: Test, handler: T.Type[ProxyServer], user="", passw="") -> None:
@@ -395,7 +391,10 @@ def test_proxy(ctx: Test, handler: T.Type[ProxyServer], user="", passw="") -> No
 
     foo, bar = init(ctx)
 
-    bar.add_script(foo.script_up)
+    if HAVE_SANDBOX:
+        for node in foo, bar:
+            node.cmd("set", "Sandbox", "high")
+
     bar.add_script(Script.TINC_UP)
     bar.start()
 
@@ -409,8 +408,11 @@ def test_proxy(ctx: Test, handler: T.Type[ProxyServer], user="", passw="") -> No
         worker.start()
 
         foo.cmd("set", "Proxy", handler.name, f"127.0.0.1 {port} {user} {passw}")
+
+        foo.add_script(Script.TINC_UP)
         foo.cmd("start")
-        bar[foo.script_up].wait()
+        foo[Script.TINC_UP].wait()
+        time.sleep(1)
 
         foo.cmd("stop")
         bar.cmd("stop")
@@ -436,7 +438,7 @@ def test_proxy_exec(ctx: Test) -> None:
         port = int(listener.address[1])
         proxy = create_exec_proxy(port)
 
-        foo.cmd("set", "Proxy", "exec", f"{path.PYTHON_PATH} {path.PYTHON_CMD} {proxy}")
+        foo.cmd("set", "Proxy", "exec", f"{path.PYTHON_INTERPRETER} {proxy}")
         foo.cmd("start")
 
         with listener.accept() as conn:

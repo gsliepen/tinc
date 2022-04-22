@@ -24,6 +24,7 @@ SPTPS_TEST_PATH = str(env["SPTPS_TEST_PATH"])
 SPTPS_KEYPAIR_PATH = str(env["SPTPS_KEYPAIR_PATH"])
 
 PYTHON_CMD = "runpython" if "meson.exe" in PYTHON_PATH.lower() else ""
+PYTHON_INTERPRETER = f"{PYTHON_PATH} {PYTHON_CMD}".rstrip()
 
 
 def _check() -> bool:

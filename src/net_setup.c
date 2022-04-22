@@ -45,6 +45,7 @@
 #include "utils.h"
 #include "xalloc.h"
 #include "keys.h"
+#include "sandbox.h"
 
 #ifdef HAVE_MINIUPNPC
 #include "upnp.h"
@@ -230,11 +231,25 @@ char *get_name(void) {
 	return returned_name;
 }
 
-bool setup_myself_reloadable(void) {
-	free(scriptinterpreter);
-	scriptinterpreter = NULL;
+static void read_interpreter(void) {
+	char *interpreter = NULL;
+	get_config_string(lookup_config(&config_tree, "ScriptsInterpreter"), &interpreter);
 
-	get_config_string(lookup_config(&config_tree, "ScriptsInterpreter"), &scriptinterpreter);
+	if(!interpreter || (sandbox_can(START_PROCESSES, AFTER_SANDBOX) && sandbox_can(USE_NEW_PATHS, AFTER_SANDBOX))) {
+		free(scriptinterpreter);
+		scriptinterpreter = interpreter;
+		return;
+	}
+
+	if(!string_eq(interpreter, scriptinterpreter)) {
+		logger(DEBUG_ALWAYS, LOG_NOTICE, "Not changing ScriptsInterpreter because of sandbox.");
+	}
+
+	free(interpreter);
+}
+
+bool setup_myself_reloadable(void) {
+	read_interpreter();
 
 	free(scriptextension);
 
@@ -264,7 +279,12 @@ bool setup_myself_reloadable(void) {
 		} else if(!strcasecmp(proxy, "http")) {
 			proxytype = PROXY_HTTP;
 		} else if(!strcasecmp(proxy, "exec")) {
-			proxytype = PROXY_EXEC;
+			if(sandbox_can(START_PROCESSES, AFTER_SANDBOX)) {
+				proxytype = PROXY_EXEC;
+			} else {
+				logger(DEBUG_ALWAYS, LOG_ERR, "Cannot use exec proxies with current sandbox level.");
+				return false;
+			}
 		} else {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Unknown proxy type %s!", proxy);
 			free_string(proxy);
@@ -293,6 +313,10 @@ bool setup_myself_reloadable(void) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Argument expected for proxy type exec!");
 				free_string(proxy);
 				return false;
+			}
+
+			if(!sandbox_can(USE_NEW_PATHS, AFTER_SANDBOX)) {
+				logger(DEBUG_ALWAYS, LOG_NOTICE, "Changed exec proxy may fail to work because of sandbox.");
 			}
 
 			proxyhost = xstrdup(space);
@@ -1022,7 +1046,7 @@ static bool setup_myself(void) {
 	devops = os_devops;
 
 	if(get_config_string(lookup_config(&config_tree, "DeviceType"), &type)) {
-		if(!strcasecmp(type, "dummy")) {
+		if(!strcasecmp(type, DEVICE_DUMMY)) {
 			devops = dummy_devops;
 		} else if(!strcasecmp(type, "raw_socket")) {
 			devops = raw_socket_devops;

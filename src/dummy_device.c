@@ -27,8 +27,8 @@
 static const char *device_info = "dummy device";
 
 static bool setup_device(void) {
-	device = xstrdup("dummy");
-	iface = xstrdup("dummy");
+	device = xstrdup(DEVICE_DUMMY);
+	iface = xstrdup(DEVICE_DUMMY);
 	logger(DEBUG_ALWAYS, LOG_INFO, "%s (%s) is a %s", device, iface, device_info);
 	return true;
 }

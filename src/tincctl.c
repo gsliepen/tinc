@@ -41,6 +41,7 @@
 #include "subnet.h"
 #include "keys.h"
 #include "random.h"
+#include "sandbox.h"
 #include "pidfile.h"
 #include "console.h"
 
@@ -119,6 +120,9 @@ static void version(void) {
 #endif
 #ifndef DISABLE_LEGACY
 	        " legacy_protocol"
+#endif
+#ifdef HAVE_SANDBOX
+	        " sandbox"
 #endif
 	        "\n\n"
 	        "Copyright (C) 1998-2018 Ivo Timmermans, Guus Sliepen and others.\n"
@@ -1695,6 +1699,7 @@ const var_t variables[] = {
 	{"ProcessPriority", VAR_SERVER},
 	{"Proxy", VAR_SERVER},
 	{"ReplayWindow", VAR_SERVER | VAR_SAFE},
+	{"Sandbox", VAR_SERVER},
 	{"ScriptsExtension", VAR_SERVER},
 	{"ScriptsInterpreter", VAR_SERVER},
 	{"StrictSubnets", VAR_SERVER | VAR_SAFE},
@@ -3349,6 +3354,9 @@ int main(int argc, char *argv[]) {
 	random_init();
 	crypto_init();
 	prng_init();
+
+	sandbox_set_level(SANDBOX_NORMAL);
+	sandbox_enter();
 
 	int result = run_command(argc, argv);
 

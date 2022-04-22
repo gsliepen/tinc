@@ -89,3 +89,8 @@ option('jumbograms',
        value: false,
        description: 'support for jumbograms (packets up to 9000 bytes)')
 
+option('sandbox',
+       type: 'feature',
+       value: 'auto',
+       description: 'use sandboxing on platforms that support it')
+

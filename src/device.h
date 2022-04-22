@@ -27,6 +27,8 @@ extern int device_fd;
 extern char *device;
 extern char *iface;
 
+#define DEVICE_DUMMY "dummy"
+
 typedef struct devops_t {
 	bool (*setup)(void);
 	void (*close)(void);

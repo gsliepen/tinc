@@ -19,6 +19,9 @@ static int teardown(void **state) {
 	free(proxypass);
 	proxypass = NULL;
 
+	free(proxyhost);
+	proxyhost = NULL;
+
 	return 0;
 }
 

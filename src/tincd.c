@@ -55,6 +55,7 @@
 #include "xalloc.h"
 #include "version.h"
 #include "random.h"
+#include "sandbox.h"
 
 /* If nonzero, display usage information and exit. */
 static bool show_help = false;
@@ -322,6 +323,44 @@ exit_fail:
 	return false;
 }
 
+static bool read_sandbox_level(void) {
+	sandbox_level_t level;
+	char *value = NULL;
+
+	if(get_config_string(lookup_config(&config_tree, "Sandbox"), &value)) {
+		if(!strcasecmp("off", value)) {
+			level = SANDBOX_NONE;
+		} else if(!strcasecmp("normal", value)) {
+			level = SANDBOX_NORMAL;
+		} else if(!strcasecmp("high", value)) {
+			level = SANDBOX_HIGH;
+		} else {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Bad sandbox value %s!", value);
+			free(value);
+			return false;
+		}
+
+		free(value);
+	} else {
+#ifdef HAVE_SANDBOX
+		level = SANDBOX_NORMAL;
+#else
+		level = SANDBOX_NONE;
+#endif
+	}
+
+#ifndef HAVE_SANDBOX
+
+	if(level > SANDBOX_NONE) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Sandbox is used but is not supported on this platform");
+		return false;
+	}
+
+#endif
+	sandbox_set_level(level);
+	return true;
+}
+
 static bool drop_privs(void) {
 #ifndef HAVE_WINDOWS
 	uid_t uid = 0;
@@ -373,7 +412,8 @@ static bool drop_privs(void) {
 		}
 
 #endif
-	return true;
+
+	return sandbox_enter();
 }
 
 #ifdef HAVE_WINDOWS
@@ -447,6 +487,9 @@ int main(int argc, char **argv) {
 #endif
 #ifdef HAVE_MINIUPNPC
 		        " miniupnpc"
+#endif
+#ifdef HAVE_SANDBOX
+		        " sandbox"
 #endif
 #ifdef ENABLE_UML
 		        " uml"
@@ -527,6 +570,10 @@ int main(int argc, char **argv) {
 	prng_init();
 
 	if(!read_server_config(&config_tree)) {
+		return 1;
+	}
+
+	if(!read_sandbox_level()) {
 		return 1;
 	}
 

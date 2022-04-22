@@ -5,7 +5,7 @@
 import os
 import typing as T
 
-from testlib import check
+from testlib import check, path
 from testlib.log import log
 from testlib.proc import Tinc, Script, ScriptType, TincScript
 from testlib.test import Test
@@ -226,5 +226,26 @@ def run_tests(ctx: Test) -> None:
     test_stop_server(server, client)
 
 
+def run_script_interpreter_test(ctx: Test) -> None:
+    """Check that tincd scripts run with a custom script interpreter."""
+    foo = ctx.node()
+    stdin = f"""
+        init {foo}
+        set Port 0
+        set DeviceType dummy
+        set ScriptsInterpreter {path.PYTHON_PATH}
+    """
+    foo_up = foo.add_script(Script.TINC_UP)
+    foo.cmd(stdin=stdin)
+
+    foo.cmd("start")
+    foo_up.wait()
+    foo.cmd("stop")
+
+
 with Test("scripts test") as context:
     run_tests(context)
+
+if os.name != "nt":
+    with Test("works with ScriptInterpreter") as context:
+        run_script_interpreter_test(context)

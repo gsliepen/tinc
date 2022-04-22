@@ -13,6 +13,10 @@ check_functions += [
 
 src_tincd += files('device.c')
 
+if os_name == 'openbsd'
+  subdir('openbsd')
+endif
+
 if os_name == 'darwin'
   dep_tunemu = dependency('tunemu', required: opt_tunemu, static: static)
   dep_pcap = dependency('pcap', required: opt_tunemu, static: static)

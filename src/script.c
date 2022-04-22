@@ -26,6 +26,7 @@
 #include "names.h"
 #include "script.h"
 #include "xalloc.h"
+#include "sandbox.h"
 
 #ifdef HAVE_PUTENV
 static void unputenv(const char *p) {
@@ -141,6 +142,10 @@ void environment_exit(environment_t *env) {
 }
 
 bool execute_script(const char *name, environment_t *env) {
+	if(!sandbox_can(START_PROCESSES, RIGHT_NOW)) {
+		return false;
+	}
+
 	char scriptname[PATH_MAX];
 	char *command;
 

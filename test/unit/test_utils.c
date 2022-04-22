@@ -105,6 +105,19 @@ static int setup_path_unix(void **state) {
 	return 0;
 }
 
+static void test_string_eq(void **state) {
+	(void)state;
+
+	assert_true(string_eq(NULL, NULL));
+	assert_true(string_eq("", ""));
+	assert_true(string_eq("\tfoo 123", "\tfoo 123"));
+
+	assert_false(string_eq(NULL, ""));
+	assert_false(string_eq("", NULL));
+	assert_false(string_eq("foo", "FOO"));
+	assert_false(string_eq("foo", " foo"));
+}
+
 int main(void) {
 	const struct CMUnitTest tests[] = {
 		cmocka_unit_test_setup(test_unix_absolute_path_on_absolute_returns_it, setup_path_unix),
@@ -117,6 +130,7 @@ int main(void) {
 		cmocka_unit_test(test_is_decimal_pass_simple),
 		cmocka_unit_test(test_is_decimal_pass_signs),
 		cmocka_unit_test(test_is_decimal_pass_whitespace_prefix),
+		cmocka_unit_test(test_string_eq),
 	};
 
 #ifdef HAVE_WINDOWS

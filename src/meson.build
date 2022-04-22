@@ -368,6 +368,11 @@ endif
 
 subdir('include')
 
+have_sandbox = cdata.has('HAVE_SANDBOX')
+if not have_sandbox
+  src_lib_common += 'sandbox.c'
+endif
+
 lib_crypto = static_library(
   'tinc_crypto',
   sources: src_lib_crypto,

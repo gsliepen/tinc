@@ -10,6 +10,7 @@ from testlib import check, cmd, path
 from testlib.log import log
 from testlib.proc import Tinc, Script
 from testlib.test import Test
+from testlib.feature import SANDBOX_LEVEL
 
 
 def init(ctx: Test, *options: str) -> T.Tuple[Tinc, Tinc]:
@@ -26,6 +27,7 @@ def init(ctx: Test, *options: str) -> T.Tuple[Tinc, Tinc]:
         set Address localhost
         set AutoConnect no
         set Subnet 10.96.96.1
+        set Sandbox {SANDBOX_LEVEL}
         {custom}
     """
     foo.cmd(stdin=stdin)
@@ -37,6 +39,7 @@ def init(ctx: Test, *options: str) -> T.Tuple[Tinc, Tinc]:
         set DeviceType dummy
         set AutoConnect no
         set Subnet 10.96.96.2
+        set Sandbox {SANDBOX_LEVEL}
         {custom}
     """
     bar.cmd(stdin=stdin)

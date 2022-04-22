@@ -50,6 +50,7 @@ class Feature(Enum):
     OPENSSL = "openssl"
     READLINE = "readline"
     TUNEMU = "tunemu"
+    SANDBOX = "sandbox"
     UML = "uml"
     VDE = "vde"
 

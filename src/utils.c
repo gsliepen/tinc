@@ -373,3 +373,7 @@ FILE *fopenmask(const char *filename, const char *mode, mode_t perms) {
 	return f;
 }
 
+bool string_eq(const char *first, const char *second) {
+	return !first == !second &&
+	       !(first && second && strcmp(first, second));
+}

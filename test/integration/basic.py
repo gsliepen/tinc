@@ -4,6 +4,7 @@
 
 from testlib.test import Test
 from testlib.proc import Tinc
+from testlib.feature import SANDBOX_LEVEL
 from testlib.log import log
 from testlib.script import Script
 from testlib import check
@@ -18,6 +19,7 @@ def init(ctx: Test) -> Tinc:
         set Address localhost
         set Port 0
         set DeviceType dummy
+        set Sandbox {SANDBOX_LEVEL}
     """
     node.cmd(stdin=stdin)
     return node

@@ -11,6 +11,7 @@ from testlib import check, util, path
 from testlib.log import log
 from testlib.proc import Tinc, Script
 from testlib.test import Test
+from testlib.feature import SANDBOX_LEVEL
 
 tinc_flags = (
     (0, ("get", "name")),
@@ -59,6 +60,7 @@ def init(ctx: Test) -> Tinc:
         set Port 0
         set Address localhost
         set DeviceType dummy
+        set Sandbox {SANDBOX_LEVEL}
     """
     tinc.cmd(stdin=stdin)
     tinc.add_script(Script.TINC_UP)

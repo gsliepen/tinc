@@ -40,6 +40,9 @@ class Notification:
         if _MONOTONIC_IS_SYSTEMWIDE:
             self.update_time()
 
+    def __str__(self) -> str:
+        return f"{self.test}/{self.node}/{self.script}"
+
     def update_time(self) -> None:
         """Update creation time if it was not assigned previously."""
         if self.created_at is None:
