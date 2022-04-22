@@ -106,7 +106,7 @@ static bool cipher_open(cipher_t *cipher, cipher_algo_t algo, cipher_mode_t mode
 
 	cipher->keylen = gcry_cipher_get_algo_keylen(algo);
 	cipher->blklen = gcry_cipher_get_algo_blklen(algo);
-	cipher->key = xmalloc(cipher->keylen + cipher->blklen);
+	cipher->key = xmalloc(cipher_keylength(cipher));
 	cipher->padding = mode == GCRY_CIPHER_MODE_ECB || mode == GCRY_CIPHER_MODE_CBC;
 
 	return true;
@@ -137,13 +137,15 @@ bool cipher_open_by_nid(cipher_t *cipher, nid_t nid) {
 }
 
 void cipher_close(cipher_t *cipher) {
-	if(cipher->handle) {
-		gcry_cipher_close(cipher->handle);
-		cipher->handle = NULL;
+	if(!cipher) {
+		return;
 	}
 
-	free(cipher->key);
+	if(cipher->handle) {
+		gcry_cipher_close(cipher->handle);
+	}
 
+	xzfree(cipher->key, cipher_keylength(cipher));
 	memset(cipher, 0, sizeof(*cipher));
 }
 
@@ -184,7 +186,7 @@ size_t cipher_blocksize(const cipher_t *cipher) {
 bool cipher_set_key(cipher_t *cipher, void *key, bool encrypt) {
 	(void)encrypt;
 
-	memcpy(cipher->key, key, cipher->keylen + cipher->blklen);
+	memcpy(cipher->key, key, cipher_keylength(cipher));
 
 	gcry_cipher_setkey(cipher->handle, cipher->key, cipher->keylen);
 	gcry_cipher_setiv(cipher->handle, cipher->key + cipher->keylen, cipher->blklen);

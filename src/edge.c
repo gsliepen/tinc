@@ -71,10 +71,12 @@ edge_t *new_edge(void) {
 }
 
 void free_edge(edge_t *e) {
-	sockaddrfree(&e->address);
-	sockaddrfree(&e->local_address);
+	if(e) {
+		sockaddrfree(&e->address);
+		sockaddrfree(&e->local_address);
 
-	free(e);
+		free(e);
+	}
 }
 
 void edge_add(edge_t *e) {

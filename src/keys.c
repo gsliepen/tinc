@@ -227,13 +227,13 @@ rsa_t *read_rsa_private_key(splay_tree_t *config_tree, char **keyfile) {
 	if(get_config_string(rsa_priv_conf, &d)) {
 		if(!get_config_string(lookup_config(config_tree, "PublicKey"), &n)) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "PrivateKey used but no PublicKey found!");
-			free(d);
+			free_string(d);
 			return NULL;
 		}
 
 		key = rsa_set_hex_private_key(n, "FFFF", d);
 		free(n);
-		free(d);
+		free_string(d);
 
 		if(key && keyfile && rsa_priv_conf->file) {
 			*keyfile = xstrdup(rsa_priv_conf->file);

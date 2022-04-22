@@ -111,6 +111,10 @@ bool digest_open_by_nid(digest_t *digest, nid_t nid, size_t maclength) {
 }
 
 void digest_close(digest_t *digest) {
+	if(!digest) {
+		return;
+	}
+
 	if(digest->hmac) {
 		gcry_md_close(digest->hmac);
 	}

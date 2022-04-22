@@ -26,6 +26,7 @@
 #include "pem.h"
 #include "../rsagen.h"
 #include "../xalloc.h"
+#include "../utils.h"
 
 // ASN.1 tags.
 typedef enum {
@@ -240,7 +241,9 @@ bool rsa_write_pem_private_key(rsa_t *rsa, FILE *fp) {
 	gcry_mpi_release(params[dq]);
 	gcry_mpi_release(params[u]);
 
-	return pem_encode(fp, "RSA PRIVATE KEY", derbuf, derlen);
+	bool success = pem_encode(fp, "RSA PRIVATE KEY", derbuf, derlen);
+	memzero(derbuf, sizeof(derbuf));
+	return success;
 }
 
 static gcry_mpi_t find_mpi(const gcry_sexp_t rsa, const char *token) {

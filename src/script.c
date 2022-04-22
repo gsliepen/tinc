@@ -134,7 +134,7 @@ void environment_init(environment_t *env) {
 
 void environment_exit(environment_t *env) {
 	for(int i = 0; i < env->n; i++) {
-		free(env->entries[i]);
+		free_string(env->entries[i]);
 	}
 
 	free(env->entries);

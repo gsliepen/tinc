@@ -33,7 +33,7 @@
 #include "utils.h"
 #include "compression.h"
 #include "random.h"
-#include "legacy.h"
+#include "xalloc.h"
 
 void send_key_changed(void) {
 #ifndef DISABLE_LEGACY
@@ -341,7 +341,8 @@ bool send_ans_key(node_t *to) {
 	return false;
 #else
 	size_t keylen = myself->incipher ? cipher_keylength(myself->incipher) : 1;
-	char *key = alloca(keylen * 2 + 1);
+	size_t keyhexlen = HEX_SIZE(keylen);
+	char *key = alloca(keyhexlen);
 
 	randomize(key, keylen);
 
@@ -388,12 +389,16 @@ bool send_ans_key(node_t *to) {
 
 	to->status.validkey_in = true;
 
-	return send_request(to->nexthop->connection, "%d %s %s %s %d %d %lu %d", ANS_KEY,
-	                    myself->name, to->name, key,
-	                    cipher_get_nid(to->incipher),
-	                    digest_get_nid(to->indigest),
-	                    (unsigned long)digest_length(to->indigest),
-	                    to->incompression);
+	bool sent = send_request(to->nexthop->connection, "%d %s %s %s %d %d %lu %d", ANS_KEY,
+	                         myself->name, to->name, key,
+	                         cipher_get_nid(to->incipher),
+	                         digest_get_nid(to->indigest),
+	                         (unsigned long)digest_length(to->indigest),
+	                         to->incompression);
+
+	memzero(key, keyhexlen);
+
+	return sent;
 #endif
 }
 

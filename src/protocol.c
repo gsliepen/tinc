@@ -80,8 +80,10 @@ static int past_request_compare(const past_request_t *a, const past_request_t *b
 }
 
 static void free_past_request(past_request_t *r) {
-	free((char *)r->request);
-	free(r);
+	if(r) {
+		free((char *)r->request);
+		free(r);
+	}
 }
 
 static splay_tree_t past_request_tree = {

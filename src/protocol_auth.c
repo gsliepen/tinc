@@ -554,9 +554,10 @@ bool send_metakey(connection_t *c) {
 	}
 
 	const size_t len = rsa_size(ctx->rsa);
+	const size_t hexkeylen = HEX_SIZE(len);
 	char *key = alloca(len);
 	char *enckey = alloca(len);
-	char *hexkey = alloca(2 * len + 1);
+	char *hexkey = alloca(hexkeylen);
 
 	/* Create a random key */
 
@@ -576,12 +577,14 @@ bool send_metakey(connection_t *c) {
 
 	if(!cipher_set_key_from_rsa(&ctx->out.cipher, key, len, true)) {
 		free_legacy_ctx(ctx);
+		memzero(key, len);
 		return false;
 	}
 
 	if(debug_level >= DEBUG_SCARY_THINGS) {
 		bin2hex(key, hexkey, len);
 		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Generated random meta key (unencrypted): %s", hexkey);
+		memzero(hexkey, hexkeylen);
 	}
 
 	/* Encrypt the random data
@@ -591,7 +594,10 @@ bool send_metakey(connection_t *c) {
 	   with a length equal to that of the modulus of the RSA key.
 	 */
 
-	if(!rsa_public_encrypt(ctx->rsa, key, len, enckey)) {
+	bool encrypted = rsa_public_encrypt(ctx->rsa, key, len, enckey);
+	memzero(key, len);
+
+	if(!encrypted) {
 		free_legacy_ctx(ctx);
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error during encryption of meta key for %s (%s)", c->name, c->hostname);
 		return false;
@@ -631,6 +637,11 @@ bool metakey_h(connection_t *c, const char *request) {
 		return false;
 	}
 
+	if(!cipher || !digest) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Possible intruder %s (%s): cipher %d, digest %d", c->name, c->hostname, cipher, digest);
+		return false;
+	}
+
 	/* Convert the challenge from hexadecimal back to binary */
 
 	size_t inlen = hex2bin(hexkey, enckey, len);
@@ -652,25 +663,25 @@ bool metakey_h(connection_t *c, const char *request) {
 	if(debug_level >= DEBUG_SCARY_THINGS) {
 		bin2hex(key, hexkey, len);
 		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Received random meta key (unencrypted): %s", hexkey);
+		// Hopefully the user knew what he was doing leaking session keys into logs. We'll do the right thing here anyway.
+		memzero(hexkey, HEX_SIZE(len));
 	}
 
 	/* Check and lookup cipher and digest algorithms */
 
-	if(!cipher || !digest) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Possible intruder %s (%s): cipher %d, digest %d", c->name, c->hostname, cipher, digest);
-		return false;
-	}
-
 	if(!init_crypto_by_nid(&c->legacy->in, cipher, digest)) {
+		memzero(key, len);
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error during initialisation of cipher or digest from %s (%s)", c->name, c->hostname);
 		return false;
 	}
 
-	if(!cipher_set_key_from_rsa(&c->legacy->in.cipher, key, len, false)) {
+	bool key_set = cipher_set_key_from_rsa(&c->legacy->in.cipher, key, len, false);
+	memzero(key, len);
+
+	if(!key_set) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error setting RSA key for %s (%s)", c->name, c->hostname);
 		return false;
 	}
-
 
 	c->status.decryptin = true;
 

@@ -113,7 +113,7 @@ exit:
 	if(!rsa)
 #endif
 	{
-		BN_free(bn_d);
+		BN_clear_free(bn_d);
 		BN_free(bn_e);
 		BN_free(bn_n);
 	}

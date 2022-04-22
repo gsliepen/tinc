@@ -267,7 +267,7 @@ bool setup_myself_reloadable(void) {
 			proxytype = PROXY_EXEC;
 		} else {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Unknown proxy type %s!", proxy);
-			free(proxy);
+			free_string(proxy);
 			return false;
 		}
 
@@ -277,10 +277,10 @@ bool setup_myself_reloadable(void) {
 		free(proxyport);
 		proxyport = NULL;
 
-		free(proxyuser);
+		free_string(proxyuser);
 		proxyuser = NULL;
 
-		free(proxypass);
+		free_string(proxypass);
 		proxypass = NULL;
 
 		switch(proxytype) {
@@ -291,7 +291,7 @@ bool setup_myself_reloadable(void) {
 		case PROXY_EXEC:
 			if(!space || !*space) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Argument expected for proxy type exec!");
-				free(proxy);
+				free_string(proxy);
 				return false;
 			}
 
@@ -312,7 +312,7 @@ bool setup_myself_reloadable(void) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Host and port argument expected for proxy!");
 				proxyport = NULL;
 				proxyhost = NULL;
-				free(proxy);
+				free_string(proxy);
 				return false;
 			}
 
@@ -338,7 +338,7 @@ bool setup_myself_reloadable(void) {
 			break;
 		}
 
-		free(proxy);
+		free_string(proxy);
 	}
 
 	bool choice;

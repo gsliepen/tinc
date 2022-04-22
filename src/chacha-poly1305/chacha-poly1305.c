@@ -10,16 +10,14 @@ struct chacha_poly1305_ctx {
 };
 
 chacha_poly1305_ctx_t *chacha_poly1305_init(void) {
-	chacha_poly1305_ctx_t *ctx = xzalloc(sizeof(*ctx));
-	return ctx;
+	return xzalloc(sizeof(chacha_poly1305_ctx_t));
 }
 
 void chacha_poly1305_exit(chacha_poly1305_ctx_t *ctx) {
-	free(ctx);
+	xzfree(ctx, sizeof(chacha_poly1305_ctx_t));
 }
 
-bool chacha_poly1305_set_key(chacha_poly1305_ctx_t *ctx, const void *vkey) {
-	const uint8_t *key = vkey;
+bool chacha_poly1305_set_key(chacha_poly1305_ctx_t *ctx, const uint8_t *key) {
 	chacha_keysetup(&ctx->main_ctx, key, 256);
 	chacha_keysetup(&ctx->header_ctx, key + 32, 256);
 	return true;

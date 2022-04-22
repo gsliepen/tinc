@@ -89,6 +89,10 @@ node_t *new_node(void) {
 }
 
 void free_node(node_t *n) {
+	if(!n) {
+		return;
+	}
+
 	splay_empty_tree(&n->subnet_tree);
 	splay_empty_tree(&n->edge_tree);
 

@@ -47,6 +47,13 @@ tests = {
   'utils': {
     'code': 'test_utils.c',
   },
+  'xalloc': {
+    'code': 'test_xalloc.c',
+  },
+  'memzero_null': {
+    'code': 'test_memzero_null.c',
+    'fail': true,
+  },
   'splay_tree': {
     'code': 'test_splay_tree.c',
     'link': link_tinc,
