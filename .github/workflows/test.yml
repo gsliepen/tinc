@@ -42,6 +42,7 @@ jobs:
 
       - name: Run tests with libgcrypt
         run: sudo -u build CI=1 HOST=${{ matrix.arch }} sh .ci/test/run.sh gcrypt
+        if: always()
 
       - name: Upload test results
         uses: actions/upload-artifact@v2
@@ -123,6 +124,7 @@ jobs:
 
       - name: Sanitize tests with default settings
         run: bash .ci/sanitizers/run.sh default
+        if: always()
 
       - name: Sanitize tests without legacy protocol
         run: bash .ci/sanitizers/run.sh nolegacy
@@ -174,6 +176,7 @@ jobs:
 
       - name: Run tests with default settings
         run: sudo -u build CI=1 sh .ci/test/run.sh default
+        if: always()
 
       - name: Run tests without legacy protocol
         run: sudo -u build CI=1 sh .ci/test/run.sh nolegacy
@@ -181,6 +184,7 @@ jobs:
 
       - name: Run tests with libgcrypt
         run: sudo -u build CI=1 sh .ci/test/run.sh gcrypt
+        if: always()
 
       - name: Upload test results
         uses: actions/upload-artifact@v2
@@ -259,6 +263,7 @@ jobs:
 
       - name: Run tests with libgcrypt
         run: sh .ci/test/run.sh gcrypt
+        if: always()
 
       - name: Upload test results
         uses: actions/upload-artifact@v2
@@ -322,6 +327,7 @@ jobs:
       - name: Run tests with libgcrypt
         shell: msys2 {0}
         run: sh .ci/test/run.sh gcrypt
+        if: always()
 
       - name: Upload test results
         uses: actions/upload-artifact@v2
