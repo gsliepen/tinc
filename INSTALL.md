@@ -50,19 +50,28 @@ in order to _run_ the compiled binaries.
 [meson-release]: https://github.com/mesonbuild/meson/releases
 [meson-vs]: https://mesonbuild.com/Using-with-Visual-Studio.html
 
-# Building
+# Building from source
 
 ## Native
 
-Have a look at the available configuration options in `meson_options.txt`, or run:
+### Setup
+
+Tinc's functionality can vary greatly depending on how you configure it.
+Have a look at the available options in [`meson_options.txt`](meson_options.txt), or run:
 
     $ meson configure
 
-The project can be built as any other meson project:
+First you need to create a build directory. If you want the default experience, run:
 
-    $ meson setup build -Dprefix=/usr/local -Dbuildtype=release
+    $ meson setup builddir
 
-This creates a build directory (named `build`) with build type set to `release`
+or with configuration options (your shell can probably autocomplete them on `Tab`, try it):
+
+    $ meson setup builddir -Dprefix=/usr/local -Dbuildtype=release
+
+(For autotools users: this is a rough equivalent of `autoreconf -fsi && ./configure --prefix=/usr/local --with-foobar`).
+
+This creates a build directory (named `builddir`) with build type set to `release`
 (which enables compiler optimizations) and path prefix set to `/usr/local`.
 
 Pass any additional options in the same way. Typically, this is not needed: tinc will
@@ -71,28 +80,44 @@ autodetect available libraries and adjust its functionality accordingly.
 If you'd like to reconfigure the project after running `setup`, you can either remove
 the build directory and start anew, or use:
 
-    $ meson configure build -Dlzo=disabled -Dlz4=enabled
+    $ meson configure builddir -Dlzo=disabled -Dlz4=enabled
+
+### Compile
 
 You then need to build the project:
 
-    $ ninja -C build
+    $ meson compile -C builddir
+
+(For autotools users: this is an equivalent of `make -j$(nproc)`).
+
+### Test
 
 You might want to run the test suite to ensure tinc is working correctly:
 
-    $ ninja -C build test
+    $ meson test -C builddir
+
+(For autotools users: this is an equivalent of `make -j$(nproc) test`).
+
+### Install
 
 To install tinc to your system, run:
 
-    # ninja -C build install
+    $ meson install -C builddir
+
+(For autotools users: this is an equivalent of `make install`).
 
 Please be aware that this is not the best method of installing software
 because it will not be tracked by your operating system's package manager. You
 should use packages provided by your operating system, or build your own
 (this is a large and complicated topic which is out of the scope of this document).
 
+### Uninstall
+
 To uninstall tinc, run:
 
-    # ninja -C build uninstall
+    # ninja -C builddir uninstall
+
+(For autotools users: this is an equivalent of `make uninstall`).
 
 ## Cross-compilation
 
@@ -137,7 +162,7 @@ Install cross-compilation toolchain:
 
 tinc will use its own vendored libraries, so you don't need to install or build anything manually.
 
-Prepare the [cross file][cross] to let meson know you're building binaries for a different opearting system.
+Prepare the [cross file][cross] to let meson know you're building binaries for a different operating system.
 Take a look at the [file](.ci/cross/windows/amd64) used by CI for an example, or refer to examples provided
 by the meson project: [x86][mingw32], [x86_64][mingw64].
 

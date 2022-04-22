@@ -1,7 +1,8 @@
 # tinc
 
-This is the README file for tinc version 1.1pre18. Installation
-instructions may be found in the INSTALL file.
+This is the README file for tinc version 1.1pre18. Installation instructions may be found in the [INSTALL](INSTALL.md) file.
+
+## Copyright
 
 tinc is Copyright © 1998-2021 Ivo Timmermans, Guus Sliepen <guus@tinc-vpn.org>, and others.
 
@@ -11,10 +12,6 @@ This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or (at
 your option) any later version. See the file COPYING for more details.
-
-## Building
-
-A detailed instruction on how to build tinc from source is available in [INSTALL.md](INSTALL.md).
 
 ## Nightly builds
 
