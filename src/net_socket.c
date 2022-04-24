@@ -456,8 +456,11 @@ static void do_outgoing_pipe(connection_t *c, const char *command) {
 	sockaddr2str(&c->address, &host, &port);
 	setenv("REMOTEADDRESS", host, true);
 	setenv("REMOTEPORT", port, true);
-	setenv("NODE", c->name, true);
 	setenv("NAME", myself->name, true);
+
+	if(c->name) {
+		setenv("NODE", c->name, true);
+	}
 
 	if(netname) {
 		setenv("NETNAME", netname, true);

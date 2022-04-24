@@ -116,8 +116,8 @@ typedef struct connection_t {
 	struct buffer_t inbuf;
 	struct buffer_t outbuf;
 	io_t io;                        /* input/output event on this metadata connection */
-	int tcplen;                     /* length of incoming TCPpacket */
-	int sptpslen;                   /* length of incoming SPTPS packet */
+	uint32_t tcplen;                /* length of incoming TCPpacket */
+	uint32_t sptpslen;              /* length of incoming SPTPS packet */
 	int allow_request;              /* defined if there's only one request possible */
 
 	time_t last_ping_time;          /* last time we saw some activity from the other end or pinged them */

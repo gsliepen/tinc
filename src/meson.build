@@ -156,6 +156,7 @@ src_tincd = [
   'protocol_key.c',
   'protocol_misc.c',
   'protocol_subnet.c',
+  'proxy.c',
   'raw_socket_device.c',
   'route.c',
   'subnet.c',

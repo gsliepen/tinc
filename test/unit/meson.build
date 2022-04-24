@@ -44,6 +44,9 @@ tests = {
   'protocol': {
     'code': 'test_protocol.c',
   },
+  'proxy': {
+    'code': 'test_proxy.c',
+  },
   'utils': {
     'code': 'test_utils.c',
   },

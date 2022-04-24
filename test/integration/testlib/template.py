@@ -9,7 +9,6 @@ from .notification import notifications
 
 
 _CMD_VARS = os.linesep.join([f"set {var}={val}" for var, val in path.env.items()])
-_CMD_PY = "runpython" if "meson.exe" in path.PYTHON_PATH.lower() else ""
 
 
 def _read_template(tpl_name: str, maps: T.Dict[str, T.Any]) -> str:
@@ -40,7 +39,7 @@ def make_script(node: str, script: str, source: str) -> str:
 def make_cmd_wrap(script: str) -> str:
     """Create a .cmd wrapper for tincd script. Only makes sense on Windows."""
     maps = {
-        "PYTHON_CMD": _CMD_PY,
+        "PYTHON_CMD": path.PYTHON_CMD,
         "PYTHON_PATH": path.PYTHON_PATH,
         "SCRIPT_PATH": script,
         "VARIABLES": _CMD_VARS,

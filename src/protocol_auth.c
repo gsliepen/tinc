@@ -43,6 +43,7 @@
 #include "xalloc.h"
 #include "random.h"
 #include "compression.h"
+#include "proxy.h"
 
 #include "ed25519/sha512.h"
 #include "keys.h"
@@ -66,84 +67,12 @@ static bool send_proxyrequest(connection_t *c) {
 		return true;
 	}
 
-	case PROXY_SOCKS4: {
-		if(c->address.sa.sa_family != AF_INET) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Cannot connect to an IPv6 host through a SOCKS 4 proxy!");
-			return false;
-		}
-
-		const size_t s4reqlen = 9 + (proxyuser ? strlen(proxyuser) : 0);
-		uint8_t *s4req = alloca(s4reqlen);
-		s4req[0] = 4;
-		s4req[1] = 1;
-		memcpy(s4req + 2, &c->address.in.sin_port, 2);
-		memcpy(s4req + 4, &c->address.in.sin_addr, 4);
-
-		if(proxyuser) {
-			memcpy(s4req + 8, proxyuser, strlen(proxyuser));
-		}
-
-		s4req[s4reqlen - 1] = 0;
-		c->tcplen = 8;
-		return send_meta(c, s4req, s4reqlen);
-	}
-
+	case PROXY_SOCKS4:
 	case PROXY_SOCKS5: {
-		size_t len = 3 + 6 + (c->address.sa.sa_family == AF_INET ? 4 : 16);
-		c->tcplen = 2;
-
-		if(proxypass) {
-			len += 3 + strlen(proxyuser) + strlen(proxypass);
-		}
-
-		uint8_t *s5req = alloca(len);
-
-		size_t i = 0;
-		s5req[i++] = 5;
-		s5req[i++] = 1;
-
-		if(proxypass) {
-			s5req[i++] = 2;
-			s5req[i++] = 1;
-			s5req[i++] = strlen(proxyuser);
-			memcpy(s5req + i, proxyuser, strlen(proxyuser));
-			i += strlen(proxyuser);
-			s5req[i++] = strlen(proxypass);
-			memcpy(s5req + i, proxypass, strlen(proxypass));
-			i += strlen(proxypass);
-			c->tcplen += 2;
-		} else {
-			s5req[i++] = 0;
-		}
-
-		s5req[i++] = 5;
-		s5req[i++] = 1;
-		s5req[i++] = 0;
-
-		if(c->address.sa.sa_family == AF_INET) {
-			s5req[i++] = 1;
-			memcpy(s5req + i, &c->address.in.sin_addr, 4);
-			i += 4;
-			memcpy(s5req + i, &c->address.in.sin_port, 2);
-			i += 2;
-			c->tcplen += 10;
-		} else if(c->address.sa.sa_family == AF_INET6) {
-			s5req[i++] = 3;
-			memcpy(s5req + i, &c->address.in6.sin6_addr, 16);
-			i += 16;
-			memcpy(s5req + i, &c->address.in6.sin6_port, 2);
-			i += 2;
-			c->tcplen += 22;
-		} else {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Address family %x not supported for SOCKS 5 proxies!", c->address.sa.sa_family);
-			return false;
-		}
-
-		if(i > len) {
-			abort();
-		}
-
-		return send_meta(c, s5req, len);
+		size_t reqlen = socks_req_len(proxytype, &c->address);
+		uint8_t *req = alloca(reqlen);
+		c->tcplen = create_socks_req(proxytype, req, &c->address);
+		return c->tcplen ? send_meta(c, req, reqlen) : false;
 	}
 
 	case PROXY_SOCKS4A:

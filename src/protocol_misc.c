@@ -104,7 +104,7 @@ bool send_tcppacket(connection_t *c, const vpn_packet_t *packet) {
 bool tcppacket_h(connection_t *c, const char *request) {
 	short int len;
 
-	if(sscanf(request, "%*d %hd", &len) != 1) {
+	if(sscanf(request, "%*d %hd", &len) != 1 || len < 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "PACKET", c->name,
 		       c->hostname);
 		return false;
@@ -136,7 +136,7 @@ bool send_sptps_tcppacket(connection_t *c, const void *packet, size_t len) {
 bool sptps_tcppacket_h(connection_t *c, const char *request) {
 	short int len;
 
-	if(sscanf(request, "%*d %hd", &len) != 1) {
+	if(sscanf(request, "%*d %hd", &len) != 1 || len < 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "SPTPS_PACKET", c->name,
 		       c->hostname);
 		return false;

@@ -20,6 +20,12 @@ def true(value: T.Any) -> None:
         raise ValueError(f'expected "{value}" to be truthy', value)
 
 
+def port(value: int) -> None:
+    """Check that value resembles a port."""
+    if not isinstance(value, int) or value < 1 or value > 65535:
+        raise ValueError(f'expected "{value}" to be be a port')
+
+
 def equals(expected: Val, actual: Val) -> None:
     """Check that the two values are equal."""
     if expected != actual:
@@ -30,6 +36,12 @@ def has_prefix(text: T.AnyStr, prefix: T.AnyStr) -> None:
     """Check that text has prefix."""
     if not text.startswith(prefix):
         raise ValueError(f"expected {text!r} to start with {prefix!r}")
+
+
+def greater(value: Num, than: Num) -> None:
+    """Check that value is greater than the other value."""
+    if value <= than:
+        raise ValueError(f"value {value} must be greater than {than}")
 
 
 def in_range(value: Num, gte: Num, lte: Num) -> None:

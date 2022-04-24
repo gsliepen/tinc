@@ -30,6 +30,7 @@
 #include "net.h"
 #include "protocol.h"
 #include "utils.h"
+#include "proxy.h"
 
 #ifndef MIN
 static ssize_t MIN(ssize_t x, ssize_t y) {
@@ -279,33 +280,8 @@ bool receive_meta(connection_t *c) {
 				}
 
 				if(!c->node) {
-					if(c->outgoing && proxytype == PROXY_SOCKS4 && c->allow_request == ID) {
-						if(tcpbuffer[0] == 0 && tcpbuffer[1] == 0x5a) {
-							logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Proxy request granted");
-						} else {
-							logger(DEBUG_CONNECTIONS, LOG_ERR, "Proxy request rejected");
-							return false;
-						}
-					} else if(c->outgoing && proxytype == PROXY_SOCKS5 && c->allow_request == ID) {
-						if(tcpbuffer[0] != 5) {
-							logger(DEBUG_CONNECTIONS, LOG_ERR, "Invalid response from proxy server");
-							return false;
-						}
-
-						if(tcpbuffer[1] == (char)0xff) {
-							logger(DEBUG_CONNECTIONS, LOG_ERR, "Proxy request rejected: unsuitable authentication method");
-							return false;
-						}
-
-						if(tcpbuffer[2] != 5) {
-							logger(DEBUG_CONNECTIONS, LOG_ERR, "Invalid response from proxy server");
-							return false;
-						}
-
-						if(tcpbuffer[3] == 0) {
-							logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Proxy request granted");
-						} else {
-							logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Proxy request rejected");
+					if(c->outgoing && c->allow_request == ID && (proxytype == PROXY_SOCKS4 || proxytype == PROXY_SOCKS5)) {
+						if(!check_socks_resp(proxytype, tcpbuffer, c->tcplen)) {
 							return false;
 						}
 					} else {
