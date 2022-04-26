@@ -118,17 +118,39 @@ static bool receive_record(void *handle, uint8_t type, const void *data, uint16_
 	return true;
 }
 
+typedef enum option_t {
+	OPT_BAD_OPTION    = '?',
+	OPT_LONG_OPTION   =  0,
+
+	// Short options
+	OPT_DATAGRAM      = 'd',
+	OPT_QUIT_ON_EOF   = 'q',
+	OPT_READONLY      = 'r',
+	OPT_WRITEONLY     = 'w',
+	OPT_PACKET_LOSS   = 'L',
+	OPT_REPLAY_WINDOW = 'W',
+	OPT_SPECIAL_CHAR  = 's',
+	OPT_TUN           = 't',
+	OPT_VERBOSE       = 'v',
+	OPT_IPV4          = '4',
+	OPT_IPV6          = '6',
+
+	// Long options
+	OPT_HELP          = 255,
+} option_t;
+
 static struct option const long_options[] = {
-	{"datagram", no_argument, NULL, 'd'},
-	{"quit", no_argument, NULL, 'q'},
-	{"readonly", no_argument, NULL, 'r'},
-	{"writeonly", no_argument, NULL, 'w'},
-	{"packet-loss", required_argument, NULL, 'L'},
-	{"replay-window", required_argument, NULL, 'W'},
-	{"special", no_argument, NULL, 's'},
-	{"verbose", required_argument, NULL, 'v'},
-	{"help", no_argument, NULL, 1},
-	{NULL, 0, NULL, 0}
+	{"datagram",      no_argument,       NULL, OPT_DATAGRAM},
+	{"quit",          no_argument,       NULL, OPT_QUIT_ON_EOF},
+	{"readonly",      no_argument,       NULL, OPT_READONLY},
+	{"writeonly",     no_argument,       NULL, OPT_WRITEONLY},
+	{"packet-loss",   required_argument, NULL, OPT_PACKET_LOSS},
+	{"replay-window", required_argument, NULL, OPT_REPLAY_WINDOW},
+	{"special",       no_argument,       NULL, OPT_SPECIAL_CHAR},
+	{"tun",           no_argument,       NULL, OPT_TUN},
+	{"verbose",       required_argument, NULL, OPT_VERBOSE},
+	{"help",          no_argument,       NULL, OPT_HELP},
+	{NULL,            0,                 NULL, 0}
 };
 
 static void usage(void) {
@@ -328,23 +350,27 @@ static int run_test(int argc, char *argv[]) {
 	bool quit = false;
 
 	while((r = getopt_long(argc, argv, "dqrstwL:W:v46", long_options, &option_index)) != EOF) {
-		switch(r) {
-		case 0:   /* long option */
+		switch((option_t) r) {
+		case OPT_LONG_OPTION:
 			break;
 
-		case 'd': /* datagram mode */
+		case OPT_BAD_OPTION:
+			usage();
+			return 1;
+
+		case OPT_DATAGRAM:
 			datagram = true;
 			break;
 
-		case 'q': /* close connection on EOF from stdin */
+		case OPT_QUIT_ON_EOF:
 			quit = true;
 			break;
 
-		case 'r': /* read only */
+		case OPT_READONLY:
 			readonly = true;
 			break;
 
-		case 't': /* read only */
+		case OPT_TUN:
 #ifdef HAVE_LINUX
 			tun = true;
 #else
@@ -354,39 +380,35 @@ static int run_test(int argc, char *argv[]) {
 #endif
 			break;
 
-		case 'w': /* write only */
+		case OPT_WRITEONLY:
 			writeonly = true;
 			break;
 
-		case 'L': /* packet loss rate */
+		case OPT_PACKET_LOSS:
 			packetloss = atoi(optarg);
 			break;
 
-		case 'W': /* replay window size */
+		case OPT_REPLAY_WINDOW:
 			sptps_replaywin = atoi(optarg);
 			break;
 
-		case 'v': /* be verbose */
+		case OPT_VERBOSE:
 			verbose = true;
 			break;
 
-		case 's': /* special character handling */
+		case OPT_SPECIAL_CHAR:
 			special = true;
 			break;
 
-		case '?': /* wrong options */
-			usage();
-			return 1;
-
-		case '4': /* IPv4 */
+		case OPT_IPV4:
 			addressfamily = AF_INET;
 			break;
 
-		case '6': /* IPv6 */
+		case OPT_IPV6:
 			addressfamily = AF_INET6;
 			break;
 
-		case 1: /* help */
+		case OPT_HELP:
 			usage();
 			return 0;
 

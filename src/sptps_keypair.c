@@ -45,9 +45,16 @@ static void usage(void) {
 	fprintf(stderr, "Report bugs to tinc@tinc-vpn.org.\n");
 }
 
+typedef enum option_t {
+	OPT_BAD_OPTION  = '?',
+	OPT_LONG_OPTION =  0,
+
+	OPT_HELP        = 255,
+} option_t;
+
 static struct option const long_options[] = {
-	{"help", no_argument, NULL, 1},
-	{NULL, 0, NULL, 0}
+	{"help", no_argument, NULL, OPT_HELP},
+	{NULL,   0,           NULL, 0}
 };
 
 static int generate_keypair(char *argv[]) {
@@ -96,15 +103,15 @@ int main(int argc, char *argv[]) {
 	int option_index = 0;
 
 	while((r = getopt_long(argc, argv, "", long_options, &option_index)) != EOF) {
-		switch(r) {
-		case 0:   /* long option */
+		switch((option_t) r) {
+		case OPT_LONG_OPTION:
 			break;
 
-		case '?': /* wrong options */
+		case OPT_BAD_OPTION:
 			usage();
 			return 1;
 
-		case 1: /* help */
+		case OPT_HELP:
 			usage();
 			return 0;
 

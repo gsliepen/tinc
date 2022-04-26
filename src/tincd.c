@@ -79,22 +79,45 @@ char **g_argv;                  /* a copy of the cmdline arguments */
 
 static int status = 1;
 
+typedef enum option_t {
+	OPT_BAD_OPTION  = '?',
+	OPT_LONG_OPTION =  0,
+
+	// Short options
+	OPT_CONFIG_FILE = 'c',
+	OPT_NETNAME     = 'n',
+	OPT_NO_DETACH   = 'D',
+	OPT_DEBUG       = 'd',
+	OPT_MLOCK       = 'L',
+	OPT_CHROOT      = 'R',
+	OPT_CHANGE_USER = 'U',
+	OPT_SYSLOG      = 's',
+	OPT_OPTION      = 'o',
+
+	// Long options
+	OPT_HELP        = 255,
+	OPT_VERSION,
+	OPT_NO_SECURITY,
+	OPT_LOGFILE,
+	OPT_PIDFILE,
+} option_t;
+
 static struct option const long_options[] = {
-	{"config", required_argument, NULL, 'c'},
-	{"net", required_argument, NULL, 'n'},
-	{"help", no_argument, NULL, 1},
-	{"version", no_argument, NULL, 2},
-	{"no-detach", no_argument, NULL, 'D'},
-	{"debug", optional_argument, NULL, 'd'},
-	{"bypass-security", no_argument, NULL, 3},
-	{"mlock", no_argument, NULL, 'L'},
-	{"chroot", no_argument, NULL, 'R'},
-	{"user", required_argument, NULL, 'U'},
-	{"logfile", optional_argument, NULL, 4},
-	{"syslog", no_argument, NULL, 's'},
-	{"pidfile", required_argument, NULL, 5},
-	{"option", required_argument, NULL, 'o'},
-	{NULL, 0, NULL, 0}
+	{"config",          required_argument, NULL, OPT_CONFIG_FILE},
+	{"net",             required_argument, NULL, OPT_NETNAME},
+	{"no-detach",       no_argument,       NULL, OPT_NO_DETACH},
+	{"debug",           optional_argument, NULL, OPT_DEBUG},
+	{"mlock",           no_argument,       NULL, OPT_MLOCK},
+	{"chroot",          no_argument,       NULL, OPT_CHROOT},
+	{"user",            required_argument, NULL, OPT_CHANGE_USER},
+	{"syslog",          no_argument,       NULL, OPT_SYSLOG},
+	{"option",          required_argument, NULL, OPT_OPTION},
+	{"help",            no_argument,       NULL, OPT_HELP},
+	{"version",         no_argument,       NULL, OPT_VERSION},
+	{"bypass-security", no_argument,       NULL, OPT_NO_SECURITY},
+	{"logfile",         optional_argument, NULL, OPT_LOGFILE},
+	{"pidfile",         required_argument, NULL, OPT_PIDFILE},
+	{NULL,              0,                 NULL, 0},
 };
 
 #ifdef HAVE_WINDOWS
@@ -142,20 +165,24 @@ static bool parse_options(int argc, char **argv) {
 	int lineno = 0;
 
 	while((r = getopt_long(argc, argv, "c:DLd::n:so:RU:", long_options, &option_index)) != EOF) {
-		switch(r) {
-		case 0:   /* long option */
+		switch((option_t) r) {
+		case OPT_LONG_OPTION:
 			break;
 
-		case 'c': /* config file */
+		case OPT_BAD_OPTION:
+			usage(true);
+			goto exit_fail;
+
+		case OPT_CONFIG_FILE:
 			free(confbase);
 			confbase = xstrdup(optarg);
 			break;
 
-		case 'D': /* no detach */
+		case OPT_NO_DETACH:
 			do_detach = false;
 			break;
 
-		case 'L': /* no detach */
+		case OPT_MLOCK: /* lock tincd into RAM */
 #ifndef HAVE_MLOCKALL
 			logger(DEBUG_ALWAYS, LOG_ERR, "The %s option is not supported on this platform.", argv[optind - 1]);
 			goto exit_fail;
@@ -164,7 +191,7 @@ static bool parse_options(int argc, char **argv) {
 			break;
 #endif
 
-		case 'd': /* increase debug level */
+		case OPT_DEBUG: /* increase debug level */
 			if(!optarg && optind < argc && *argv[optind] != '-') {
 				optarg = argv[optind++];
 			}
@@ -177,17 +204,17 @@ static bool parse_options(int argc, char **argv) {
 
 			break;
 
-		case 'n': /* net name given */
+		case OPT_NETNAME:
 			free(netname);
 			netname = xstrdup(optarg);
 			break;
 
-		case 's': /* syslog */
+		case OPT_SYSLOG:
 			use_logfile = false;
 			use_syslog = true;
 			break;
 
-		case 'o': /* option */
+		case OPT_OPTION:
 			cfg = parse_config_line(optarg, NULL, ++lineno);
 
 			if(!cfg) {
@@ -199,34 +226,34 @@ static bool parse_options(int argc, char **argv) {
 
 #ifdef HAVE_WINDOWS
 
-		case 'R':
-		case 'U':
+		case OPT_CHANGE_USER:
+		case OPT_CHROOT:
 			logger(DEBUG_ALWAYS, LOG_ERR, "The %s option is not supported on this platform.", argv[optind - 1]);
 			goto exit_fail;
 #else
 
-		case 'R': /* chroot to NETNAME dir */
+		case OPT_CHROOT:
 			do_chroot = true;
 			break;
 
-		case 'U': /* setuid to USER */
+		case OPT_CHANGE_USER:
 			switchuser = optarg;
 			break;
 #endif
 
-		case 1:   /* show help */
+		case OPT_HELP:
 			show_help = true;
 			break;
 
-		case 2:   /* show version */
+		case OPT_VERSION:
 			show_version = true;
 			break;
 
-		case 3:   /* bypass security */
+		case OPT_NO_SECURITY:
 			bypass_security = true;
 			break;
 
-		case 4:   /* write log entries to a file */
+		case OPT_LOGFILE:
 			use_syslog = false;
 			use_logfile = true;
 
@@ -241,14 +268,10 @@ static bool parse_options(int argc, char **argv) {
 
 			break;
 
-		case 5:   /* open control socket here */
+		case OPT_PIDFILE:
 			free(pidfilename);
 			pidfilename = xstrdup(optarg);
 			break;
-
-		case '?': /* wrong options */
-			usage(true);
-			goto exit_fail;
 
 		default:
 			break;
