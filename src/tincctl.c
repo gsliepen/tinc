@@ -79,15 +79,31 @@ char *device = NULL;
 char *iface = NULL;
 int debug_level = -1;
 
+typedef enum option_t {
+	OPT_BAD_OPTION  = '?',
+	OPT_LONG_OPTION =  0,
+
+	// Short options
+	OPT_BATCH       = 'b',
+	OPT_CONFIG_FILE = 'c',
+	OPT_NETNAME     = 'n',
+
+	// Long options
+	OPT_HELP        = 255,
+	OPT_VERSION,
+	OPT_PIDFILE,
+	OPT_FORCE,
+} option_t;
+
 static struct option const long_options[] = {
-	{"batch", no_argument, NULL, 'b'},
-	{"config", required_argument, NULL, 'c'},
-	{"net", required_argument, NULL, 'n'},
-	{"help", no_argument, NULL, 1},
-	{"version", no_argument, NULL, 2},
-	{"pidfile", required_argument, NULL, 3},
-	{"force", no_argument, NULL, 4},
-	{NULL, 0, NULL, 0}
+	{"batch",   no_argument,       NULL, OPT_BATCH},
+	{"config",  required_argument, NULL, OPT_CONFIG_FILE},
+	{"net",     required_argument, NULL, OPT_NETNAME},
+	{"help",    no_argument,       NULL, OPT_HELP},
+	{"version", no_argument,       NULL, OPT_VERSION},
+	{"pidfile", required_argument, NULL, OPT_PIDFILE},
+	{"force",   no_argument,       NULL, OPT_FORCE},
+	{NULL,      0,                 NULL, 0},
 };
 
 static void version(void) {
@@ -188,46 +204,46 @@ static bool parse_options(int argc, char **argv) {
 	int option_index = 0;
 
 	while((r = getopt_long(argc, argv, "+bc:n:", long_options, &option_index)) != EOF) {
-		switch(r) {
-		case 0:   /* long option */
+		switch((option_t) r) {
+		case OPT_LONG_OPTION:
 			break;
 
-		case 'b':
+		case OPT_BAD_OPTION:
+			usage(true);
+			free_names();
+			return false;
+
+		case OPT_BATCH:
 			tty = false;
 			break;
 
-		case 'c': /* config file */
+		case OPT_CONFIG_FILE:
 			free(confbase);
 			confbase = xstrdup(optarg);
 			confbasegiven = true;
 			break;
 
-		case 'n': /* net name given */
+		case OPT_NETNAME:
 			free(netname);
 			netname = xstrdup(optarg);
 			break;
 
-		case 1:   /* show help */
+		case OPT_HELP:
 			show_help = true;
 			break;
 
-		case 2:   /* show version */
+		case OPT_VERSION:
 			show_version = true;
 			break;
 
-		case 3:   /* open control socket here */
+		case OPT_PIDFILE:
 			free(pidfilename);
 			pidfilename = xstrdup(optarg);
 			break;
 
-		case 4:   /* force */
+		case OPT_FORCE:
 			force = true;
 			break;
-
-		case '?': /* wrong options */
-			usage(true);
-			free_names();
-			return false;
 
 		default:
 			break;
