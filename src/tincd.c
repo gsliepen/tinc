@@ -458,7 +458,9 @@ int main(int argc, char **argv) {
 	char *umbstr = getenv("TINC_UMBILICAL");
 
 	if(umbstr) {
-		umbilical = atoi(umbstr);
+		int colorize = 0;
+		sscanf(umbstr, "%d %d", &umbilical, &colorize);
+		umbilical_colorize = colorize;
 
 		if(fcntl(umbilical, F_GETFL) < 0) {
 			umbilical = 0;

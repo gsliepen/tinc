@@ -42,6 +42,7 @@
 #include "keys.h"
 #include "random.h"
 #include "pidfile.h"
+#include "console.h"
 
 #ifndef MSG_NOSIGNAL
 #define MSG_NOSIGNAL 0
@@ -612,8 +613,9 @@ static void pcap(int fd, FILE *out, uint32_t snaplen) {
 	}
 }
 
-static void log_control(int fd, FILE *out, int level) {
-	sendline(fd, "%d %d %d", CONTROL, REQ_LOG, level);
+static void log_control(int fd, FILE *out, int level, bool use_color) {
+	sendline(fd, "%d %d %d %d", CONTROL, REQ_LOG, level, use_color);
+
 	char data[1024];
 	char line[32];
 
@@ -955,7 +957,7 @@ static int cmd_start(int argc, char *argv[]) {
 	if(!pid) {
 		close(pfd[0]);
 		char buf[100];
-		snprintf(buf, sizeof(buf), "%d", pfd[1]);
+		snprintf(buf, sizeof(buf), "%d %d", pfd[1], use_ansi_escapes(stderr));
 		setenv("TINC_UMBILICAL", buf, true);
 		exit(execvp(c, nargv));
 	} else {
@@ -1518,7 +1520,8 @@ static int cmd_log(int argc, char *argv[]) {
 	signal(SIGINT, sigint_handler);
 #endif
 
-	log_control(fd, stdout, argc > 1 ? atoi(argv[1]) : DEBUG_UNSET);
+	bool use_color = use_ansi_escapes(stdout);
+	log_control(fd, stdout, argc > 1 ? atoi(argv[1]) : DEBUG_UNSET, use_color);
 
 #ifdef SIGINT
 	signal(SIGINT, SIG_DFL);

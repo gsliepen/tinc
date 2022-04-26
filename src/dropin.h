@@ -78,6 +78,8 @@ extern int gettimeofday(struct timeval *, void *);
 #define PATH_MAX MAX_PATH
 #define strcasecmp _stricmp
 #define strncasecmp _strnicmp
+#define isatty _isatty
+#define fileno _fileno
 #define close CloseHandle
 #define __const const
 

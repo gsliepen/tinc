@@ -73,6 +73,7 @@ enum {
 extern debug_t debug_level;
 extern bool logcontrol;
 extern int umbilical;
+extern bool umbilical_colorize;
 extern void openlogger(const char *ident, logmode_t mode);
 extern void reopenlogger(void);
 extern void logger(debug_t level, int priority, const char *format, ...) ATTR_FORMAT(printf, 3, 4);

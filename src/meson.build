@@ -106,6 +106,7 @@ subdir('chacha-poly1305')
 
 src_lib_common = [
   'conf.c',
+  'console.c',
   'dropin.c',
   'keys.c',
   'list.c',

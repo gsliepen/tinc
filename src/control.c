@@ -131,10 +131,11 @@ bool control_h(connection_t *c, const char *request) {
 		return true;
 
 	case REQ_LOG: {
-		int level = 0;
-		sscanf(request, "%*d %*d %d", &level);
+		int level = 0, colorize = 0;
+		sscanf(request, "%*d %*d %d %d", &level, &colorize);
 		c->log_level = CLAMP(level, DEBUG_UNSET, DEBUG_SCARY_THINGS);
 		c->status.log = true;
+		c->status.log_color = colorize;
 		logcontrol = true;
 		return true;
 	}

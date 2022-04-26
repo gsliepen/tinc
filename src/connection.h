@@ -49,6 +49,7 @@ typedef union connection_status_t {
 		bool control: 1;                /* 1 if this is a control connection */
 		bool pcap: 1;                   /* 1 if this is a control connection requesting packet capture */
 		bool log: 1;                    /* 1 if this is a control connection requesting log dump */
+		bool log_color: 1;              /* 1 if this connection supports ANSI escape codes */
 		bool invitation: 1;             /* 1 if this is an invitation */
 		bool invitation_used: 1;        /* 1 if the invitation has been consumed */
 		bool tarpit: 1;                 /* 1 if the connection should be added to the tarpit */
