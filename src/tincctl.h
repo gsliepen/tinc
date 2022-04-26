@@ -47,11 +47,10 @@ typedef struct {
 extern const var_t variables[];
 
 extern size_t rstrip(char *value);
-extern char *get_my_name(bool verbose);
+extern char *get_my_name(bool verbose) ATTR_MALLOC;
 extern bool connect_tincd(bool verbose);
 extern bool sendline(int fd, const char *format, ...);
 extern bool recvline(int fd, char *line, size_t len);
 extern int check_port(const char *name);
-extern ecdsa_t *get_pubkey(FILE *f);
 
 #endif

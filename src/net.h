@@ -199,7 +199,7 @@ extern void send_packet(struct node_t *n, vpn_packet_t *packet);
 extern void receive_tcppacket(struct connection_t *c, const char *buffer, size_t length);
 extern bool receive_tcppacket_sptps(struct connection_t *c, const char *buffer, size_t length);
 extern void broadcast_packet(const struct node_t *n, vpn_packet_t *packet);
-extern char *get_name(void);
+extern char *get_name(void) ATTR_MALLOC;
 extern void device_enable(void);
 extern void device_disable(void);
 extern bool setup_myself_reloadable(void);

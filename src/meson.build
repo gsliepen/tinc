@@ -19,6 +19,15 @@ foreach attr : ['malloc', 'nonnull', 'warn_unused_result', 'packed', 'format']
 endforeach
 
 if cc.compiles('''
+    #include <stdlib.h>
+    extern void *make() __attribute__((malloc(free)));
+    int main(void) { return 0; }
+''')
+  cdata.set('HAVE_ATTR_MALLOC_WITH_ARG', 1,
+            description: 'support for __attribute__((malloc(deallocator)))')
+endif
+
+if cc.compiles('''
     _Static_assert(1, "ok");
     int main(void) { return 0; }
 ''')

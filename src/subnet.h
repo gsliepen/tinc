@@ -65,8 +65,8 @@ typedef struct subnet_t {
 extern splay_tree_t subnet_tree;
 
 extern int subnet_compare(const struct subnet_t *a, const struct subnet_t *b);
-extern subnet_t *new_subnet(void) ATTR_MALLOC;
 extern void free_subnet(subnet_t *subnet);
+extern subnet_t *new_subnet(void) ATTR_MALLOC ATTR_DEALLOCATOR(free_subnet);
 extern void init_subnets(void);
 extern void exit_subnets(void);
 extern void init_subnet_tree(splay_tree_t *tree);

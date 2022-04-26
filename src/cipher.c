@@ -28,11 +28,10 @@ cipher_t *cipher_alloc(void) {
 	return xzalloc(sizeof(cipher_t));
 }
 
-void cipher_free(cipher_t **cipher) {
-	if(cipher && *cipher) {
-		cipher_close(*cipher);
-		free(*cipher);
-		*cipher = NULL;
+void cipher_free(cipher_t *cipher) {
+	if(cipher) {
+		cipher_close(cipher);
+		free(cipher);
 	}
 }
 

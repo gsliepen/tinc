@@ -903,7 +903,8 @@ static bool setup_myself(void) {
 
 		if(!cipher_open_by_name(myself->incipher, cipher)) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Unrecognized cipher type!");
-			cipher_free(&myself->incipher);
+			cipher_free(myself->incipher);
+			myself->incipher = NULL;
 			free(cipher);
 			return false;
 		}
@@ -938,7 +939,8 @@ static bool setup_myself(void) {
 
 		if(!digest_open_by_name(myself->indigest, digest, maclength)) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Unrecognized digest type!");
-			digest_free(&myself->indigest);
+			digest_free(myself->indigest);
+			myself->indigest = NULL;
 			free(digest);
 			return false;
 		}

@@ -5,8 +5,8 @@
 
 typedef struct chacha_poly1305_ctx chacha_poly1305_ctx_t;
 
-extern chacha_poly1305_ctx_t *chacha_poly1305_init(void);
 extern void chacha_poly1305_exit(chacha_poly1305_ctx_t *);
+extern chacha_poly1305_ctx_t *chacha_poly1305_init(void) ATTR_DEALLOCATOR(chacha_poly1305_exit);
 extern bool chacha_poly1305_set_key(chacha_poly1305_ctx_t *ctx, const uint8_t *key);
 
 extern bool chacha_poly1305_encrypt(chacha_poly1305_ctx_t *ctx, uint64_t seqnr, const void *indata, size_t inlen, void *outdata, size_t *outlen);

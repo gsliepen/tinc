@@ -162,11 +162,7 @@ ecdsa_t *read_ecdsa_private_key(splay_tree_t *config_tree, char **keyfile) {
 	return key;
 }
 
-bool read_ecdsa_public_key(ecdsa_t **ecdsa, splay_tree_t **config_tree, const char *name) {
-	if(ecdsa_active(*ecdsa)) {
-		return true;
-	}
-
+ecdsa_t *read_ecdsa_public_key(splay_tree_t **config_tree, const char *name) {
 	FILE *fp;
 	char *fname;
 	char *p;
@@ -175,16 +171,16 @@ bool read_ecdsa_public_key(ecdsa_t **ecdsa, splay_tree_t **config_tree, const ch
 		*config_tree = create_configuration();
 
 		if(!read_host_config(*config_tree, name, true)) {
-			return false;
+			return NULL;
 		}
 	}
 
 	/* First, check for simple Ed25519PublicKey statement */
 
 	if(get_config_string(lookup_config(*config_tree, "Ed25519PublicKey"), &p)) {
-		*ecdsa = ecdsa_set_base64_public_key(p);
+		ecdsa_t *ecdsa = ecdsa_set_base64_public_key(p);
 		free(p);
-		return *ecdsa != NULL;
+		return ecdsa;
 	}
 
 	/* Else, check for Ed25519PublicKeyFile statement and read it */
@@ -199,19 +195,19 @@ bool read_ecdsa_public_key(ecdsa_t **ecdsa, splay_tree_t **config_tree, const ch
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error reading Ed25519 public key file `%s': %s",
 		       fname, strerror(errno));
 		free(fname);
-		return false;
+		return NULL;
 	}
 
-	*ecdsa = ecdsa_read_pem_public_key(fp);
+	ecdsa_t *ecdsa = ecdsa_read_pem_public_key(fp);
 
-	if(!*ecdsa && errno != ENOENT) {
+	if(!ecdsa && errno != ENOENT) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Parsing Ed25519 public key file `%s' failed.", fname);
 	}
 
 	fclose(fp);
 	free(fname);
 
-	return *ecdsa != NULL;
+	return ecdsa;
 }
 
 #ifndef DISABLE_LEGACY
@@ -321,7 +317,7 @@ rsa_t *read_rsa_public_key(splay_tree_t *config_tree, const char *name) {
 	if(!fp) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error reading RSA public key file `%s': %s", fname, strerror(errno));
 		free(fname);
-		return false;
+		return NULL;
 	}
 
 	rsa_t *rsa = rsa_read_pem_public_key(fp);

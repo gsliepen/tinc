@@ -26,8 +26,8 @@ extern int daemon(int, int);
 #endif
 
 #ifndef HAVE_ASPRINTF
-extern int asprintf(char **, const char *, ...);
-extern int vasprintf(char **, const char *, va_list ap);
+extern int asprintf(char **, const char *, ...) ATTR_FORMAT(printf, 2, 3);
+extern int vasprintf(char **, const char *, va_list ap) ATTR_FORMAT(printf, 2, 0);
 #endif
 
 #ifndef HAVE_GETTIMEOFDAY

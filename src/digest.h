@@ -39,8 +39,8 @@ typedef struct digest digest_t;
 
 extern bool digest_open_by_name(digest_t *digest, const char *name, size_t maclength);
 extern bool digest_open_by_nid(digest_t *digest, nid_t nid, size_t maclength);
-extern digest_t *digest_alloc(void) ATTR_MALLOC;
-extern void digest_free(digest_t **digest);
+extern void digest_free(digest_t *digest);
+extern digest_t *digest_alloc(void) ATTR_MALLOC ATTR_DEALLOCATOR(digest_free);
 extern void digest_close(digest_t *digest);
 extern bool digest_create(digest_t *digest, const void *indata, size_t inlen, void *outdata) ATTR_WARN_UNUSED;
 extern bool digest_verify(digest_t *digest, const void *indata, size_t inlen, const void *digestdata) ATTR_WARN_UNUSED;

@@ -87,9 +87,8 @@ void init_configuration(splay_tree_t *tree) {
 	tree->delete = (splay_action_t) free_config;
 }
 
-void exit_configuration(splay_tree_t **config_tree) {
-	splay_delete_tree(*config_tree);
-	*config_tree = NULL;
+void exit_configuration(splay_tree_t *config_tree) {
+	splay_delete_tree(config_tree);
 }
 
 config_t *new_config(void) {

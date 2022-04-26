@@ -80,6 +80,7 @@ static pcap_t *pcap = NULL;
 static size_t data_buffer_length = 0;
 static uint8_t *data_buffer = NULL;
 
+static void tun_error(char *format, ...) ATTR_FORMAT(printf, 1, 2);
 static void tun_error(char *format, ...) {
 	va_list vl;
 	va_start(vl, format);

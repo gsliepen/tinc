@@ -28,11 +28,10 @@ digest_t *digest_alloc(void) {
 	return xzalloc(sizeof(digest_t));
 }
 
-void digest_free(digest_t **digest) {
-	if(digest && *digest) {
-		digest_close(*digest);
-		free(*digest);
-		*digest = NULL;
+void digest_free(digest_t *digest) {
+	if(digest) {
+		digest_close(digest);
+		free(digest);
 	}
 }
 

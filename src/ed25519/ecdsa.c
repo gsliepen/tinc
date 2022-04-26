@@ -32,6 +32,11 @@ typedef struct {
 #include "../utils.h"
 #include "../xalloc.h"
 
+static ecdsa_t *ecdsa_new(void) ATTR_MALLOC ATTR_DEALLOCATOR(ecdsa_free);
+static ecdsa_t *ecdsa_new(void) {
+	return xzalloc(sizeof(ecdsa_t));
+}
+
 // Get and set ECDSA keys
 //
 ecdsa_t *ecdsa_set_base64_public_key(const char *p) {
@@ -42,7 +47,7 @@ ecdsa_t *ecdsa_set_base64_public_key(const char *p) {
 		return 0;
 	}
 
-	ecdsa_t *ecdsa = xzalloc(sizeof(*ecdsa));
+	ecdsa_t *ecdsa = ecdsa_new();
 	len = b64decode_tinc(p, ecdsa->public, len);
 
 	if(len != 32) {
@@ -123,7 +128,7 @@ exit:
 }
 
 ecdsa_t *ecdsa_read_pem_public_key(FILE *fp) {
-	ecdsa_t *ecdsa = xzalloc(sizeof(*ecdsa));
+	ecdsa_t *ecdsa = ecdsa_new();
 
 	if(read_pem(fp, "ED25519 PUBLIC KEY", ecdsa->public, sizeof(ecdsa->public))) {
 		return ecdsa;
@@ -134,7 +139,7 @@ ecdsa_t *ecdsa_read_pem_public_key(FILE *fp) {
 }
 
 ecdsa_t *ecdsa_read_pem_private_key(FILE *fp) {
-	ecdsa_t *ecdsa = xmalloc(sizeof(*ecdsa));
+	ecdsa_t *ecdsa = ecdsa_new();
 
 	if(read_pem(fp, "ED25519 PRIVATE KEY", ecdsa->private, sizeof(*ecdsa))) {
 		return ecdsa;

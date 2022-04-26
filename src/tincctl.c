@@ -1623,7 +1623,8 @@ char *get_my_name(bool verbose) {
 	return NULL;
 }
 
-ecdsa_t *get_pubkey(FILE *f) {
+static ecdsa_t *get_pubkey(FILE *f) ATTR_MALLOC ATTR_DEALLOCATOR(ecdsa_free);
+static ecdsa_t *get_pubkey(FILE *f) {
 	char buf[4096];
 	char *value;
 

@@ -94,7 +94,7 @@ bool send_id(connection_t *c) {
 	int minor = 0;
 
 	if(experimental) {
-		if(c->outgoing && !read_ecdsa_public_key(&c->ecdsa, &c->config_tree, c->name)) {
+		if(c->outgoing && !ecdsa_active(c->ecdsa) && !(c->ecdsa = read_ecdsa_public_key(&c->config_tree, c->name))) {
 			minor = 1;
 		} else {
 			minor = myself->connection->protocol_minor;
@@ -399,8 +399,8 @@ bool id_h(connection_t *c, const char *request) {
 			return false;
 		}
 
-		if(experimental) {
-			read_ecdsa_public_key(&c->ecdsa, &c->config_tree, c->name);
+		if(experimental && !ecdsa_active(c->ecdsa)) {
+			c->ecdsa = read_ecdsa_public_key(&c->config_tree, c->name);
 		}
 
 		/* Ignore failures if no key known yet */
@@ -880,7 +880,7 @@ static bool upgrade_h(connection_t *c, const char *request) {
 		return false;
 	}
 
-	if(ecdsa_active(c->ecdsa) || read_ecdsa_public_key(&c->ecdsa, &c->config_tree, c->name)) {
+	if(ecdsa_active(c->ecdsa) || (c->ecdsa = read_ecdsa_public_key(&c->config_tree, c->name))) {
 		char *knownkey = ecdsa_get_base64_public_key(c->ecdsa);
 		bool different = strcmp(knownkey, pubkey);
 		free(knownkey);

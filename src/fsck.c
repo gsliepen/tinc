@@ -536,8 +536,7 @@ static bool check_public_keys(splay_tree_t *config, const char *name, rsa_t *rsa
 		fprintf(stderr, "WARNING: cannot read %s\n", host_file);
 	}
 
-	ecdsa_t *ec_pub = NULL;
-	read_ecdsa_public_key(&ec_pub, &config, name);
+	ecdsa_t *ec_pub = read_ecdsa_public_key(&config, name);
 
 	bool success = true;
 #ifndef DISABLE_LEGACY

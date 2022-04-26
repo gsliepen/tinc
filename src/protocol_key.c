@@ -346,8 +346,11 @@ bool send_ans_key(node_t *to) {
 
 	randomize(key, keylen);
 
-	cipher_free(&to->incipher);
-	digest_free(&to->indigest);
+	cipher_free(to->incipher);
+	to->incipher = NULL;
+
+	digest_free(to->indigest);
+	to->indigest = NULL;
 
 	if(myself->incipher) {
 		to->incipher = cipher_alloc();
@@ -470,8 +473,11 @@ bool ans_key_h(connection_t *c, const char *request) {
 
 #ifndef DISABLE_LEGACY
 	/* Don't use key material until every check has passed. */
-	cipher_free(&from->outcipher);
-	digest_free(&from->outdigest);
+	cipher_free(from->outcipher);
+	from->outcipher = NULL;
+
+	digest_free(from->outdigest);
+	from->outdigest = NULL;
 #endif
 
 	if(!from->status.sptps) {
@@ -570,7 +576,8 @@ bool ans_key_h(connection_t *c, const char *request) {
 		from->outcipher = cipher_alloc();
 
 		if(!cipher_open_by_nid(from->outcipher, cipher)) {
-			cipher_free(&from->outcipher);
+			cipher_free(from->outcipher);
+			from->outcipher = NULL;
 			logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses unknown cipher!", from->name, from->hostname);
 			return false;
 		}
@@ -582,7 +589,8 @@ bool ans_key_h(connection_t *c, const char *request) {
 		from->outdigest = digest_alloc();
 
 		if(!digest_open_by_nid(from->outdigest, digest, maclength)) {
-			digest_free(&from->outdigest);
+			digest_free(from->outdigest);
+			from->outdigest = NULL;
 			logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses unknown digest!", from->name, from->hostname);
 			return false;
 		}

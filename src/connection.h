@@ -79,7 +79,7 @@ typedef struct legacy_ctx_t {
 	legacy_crypto_t out;           /* cipher/digest we will use to send data to him */
 } legacy_ctx_t;
 
-legacy_ctx_t *new_legacy_ctx(rsa_t *rsa) ATTR_MALLOC;
+legacy_ctx_t *new_legacy_ctx(rsa_t *rsa);
 void free_legacy_ctx(legacy_ctx_t *ctx);
 #endif
 
@@ -131,8 +131,8 @@ extern connection_t *everyone;
 
 extern void init_connections(void);
 extern void exit_connections(void);
-extern connection_t *new_connection(void) ATTR_MALLOC;
 extern void free_connection(connection_t *c);
+extern connection_t *new_connection(void) ATTR_MALLOC ATTR_DEALLOCATOR(free_connection);
 extern void connection_add(connection_t *c);
 extern void connection_del(connection_t *c);
 extern bool dump_connections(struct connection_t *c);

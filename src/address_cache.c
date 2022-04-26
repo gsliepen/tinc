@@ -213,7 +213,9 @@ const sockaddr_t *get_recent_address(address_cache_t *cache) {
 	}
 
 	// We're all out of addresses.
-	exit_configuration(&cache->config_tree);
+	exit_configuration(cache->config_tree);
+	cache->config_tree = NULL;
+
 	return false;
 }
 
@@ -255,7 +257,8 @@ void reset_address_cache(address_cache_t *cache, const sockaddr_t *sa) {
 	}
 
 	if(cache->config_tree) {
-		exit_configuration(&cache->config_tree);
+		exit_configuration(cache->config_tree);
+		cache->config_tree = NULL;
 	}
 
 	if(cache->ai) {
@@ -271,7 +274,8 @@ void reset_address_cache(address_cache_t *cache, const sockaddr_t *sa) {
 
 void close_address_cache(address_cache_t *cache) {
 	if(cache->config_tree) {
-		exit_configuration(&cache->config_tree);
+		exit_configuration(cache->config_tree);
+		cache->config_tree = NULL;
 	}
 
 	if(cache->ai) {

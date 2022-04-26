@@ -29,8 +29,8 @@
 typedef struct ecdh ecdh_t;
 #endif
 
-extern ecdh_t *ecdh_generate_public(void *pubkey) ATTR_MALLOC;
-extern bool ecdh_compute_shared(ecdh_t *ecdh, const void *pubkey, void *shared) ATTR_WARN_UNUSED;
 extern void ecdh_free(ecdh_t *ecdh);
+extern ecdh_t *ecdh_generate_public(void *pubkey) ATTR_MALLOC ATTR_DEALLOCATOR(ecdh_free);
+extern bool ecdh_compute_shared(ecdh_t *ecdh, const void *pubkey, void *shared) ATTR_WARN_UNUSED;
 
 #endif

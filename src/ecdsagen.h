@@ -22,7 +22,7 @@
 
 #include "ecdsa.h"
 
-extern ecdsa_t *ecdsa_generate(void) ATTR_MALLOC;
+extern ecdsa_t *ecdsa_generate(void) ATTR_MALLOC ATTR_DEALLOCATOR(ecdsa_free);
 extern bool ecdsa_write_pem_public_key(ecdsa_t *ecdsa, FILE *fp) ATTR_WARN_UNUSED;
 extern bool ecdsa_write_pem_private_key(ecdsa_t *ecdsa, FILE *fp) ATTR_WARN_UNUSED;
 

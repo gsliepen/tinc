@@ -43,8 +43,8 @@ typedef struct address_cache_t {
 void add_recent_address(address_cache_t *cache, const sockaddr_t *sa);
 const sockaddr_t *get_recent_address(address_cache_t *cache);
 
-address_cache_t *open_address_cache(struct node_t *node);
-void reset_address_cache(address_cache_t *cache, const sockaddr_t *sa);
 void close_address_cache(address_cache_t *cache);
+address_cache_t *open_address_cache(node_t *node) ATTR_DEALLOCATOR(close_address_cache);
+void reset_address_cache(address_cache_t *cache, const sockaddr_t *sa);
 
 #endif
