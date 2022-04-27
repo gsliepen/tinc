@@ -22,17 +22,12 @@
 #include <gcrypt.h>
 #include <assert.h>
 
+#include "asn1.h"
 #include "rsa.h"
 #include "pem.h"
 #include "../rsagen.h"
 #include "../xalloc.h"
 #include "../utils.h"
-
-// ASN.1 tags.
-typedef enum {
-	TAG_INTEGER = 2,
-	TAG_SEQUENCE = 16,
-} asn1_tag_t;
 
 static size_t der_tag_len(size_t n) {
 	if(n < 128) {

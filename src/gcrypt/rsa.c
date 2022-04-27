@@ -23,6 +23,7 @@
 
 #include "pem.h"
 
+#include "asn1.h"
 #include "rsa.h"
 #include "../logger.h"
 #include "../rsa.h"
@@ -84,20 +85,11 @@ static size_t ber_read_len(unsigned char **p, size_t *buflen) {
 	}
 }
 
-
-static bool ber_read_sequence(unsigned char **p, size_t *buflen, size_t *result) {
+static bool ber_skip_sequence(unsigned char **p, size_t *buflen) {
 	int tag = ber_read_id(p, buflen);
-	size_t len = ber_read_len(p, buflen);
 
-	if(tag == 0x10) {
-		if(result) {
-			*result = len;
-		}
-
-		return true;
-	} else {
-		return false;
-	}
+	return tag == TAG_SEQUENCE &&
+	       ber_read_len(p, buflen) > 0;
 }
 
 static bool ber_read_mpi(unsigned char **p, size_t *buflen, gcry_mpi_t *mpi) {
@@ -172,7 +164,7 @@ rsa_t *rsa_read_pem_public_key(FILE *fp) {
 
 	rsa_t *rsa = xzalloc(sizeof(rsa_t));
 
-	if(!ber_read_sequence(&derp, &derlen, NULL)
+	if(!ber_skip_sequence(&derp, &derlen)
 	                || !ber_read_mpi(&derp, &derlen, &rsa->n)
 	                || !ber_read_mpi(&derp, &derlen, &rsa->e)
 	                || derlen) {
@@ -195,7 +187,7 @@ rsa_t *rsa_read_pem_private_key(FILE *fp) {
 
 	rsa_t *rsa = xzalloc(sizeof(rsa_t));
 
-	if(!ber_read_sequence(&derp, &derlen, NULL)
+	if(!ber_skip_sequence(&derp, &derlen)
 	                || !ber_read_mpi(&derp, &derlen, NULL)
 	                || !ber_read_mpi(&derp, &derlen, &rsa->n)
 	                || !ber_read_mpi(&derp, &derlen, &rsa->e)
