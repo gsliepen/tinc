@@ -64,6 +64,7 @@ again:
 	goto again;
 }
 
+static void print_tinc_cmd(const char *format, ...) ATTR_FORMAT(printf, 1, 2);
 static void print_tinc_cmd(const char *format, ...) {
 	if(confbasegiven) {
 		fprintf(stderr, "%s -c %s ", exe_name, confbase);

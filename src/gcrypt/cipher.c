@@ -208,7 +208,7 @@ bool cipher_set_key_from_rsa(cipher_t *cipher, void *key, size_t len, bool encry
 
 bool cipher_encrypt(cipher_t *cipher, const void *indata, size_t inlen, void *outdata, size_t *outlen, bool oneshot) {
 	gcry_error_t err;
-	uint8_t pad[cipher->blklen];
+	uint8_t *pad = alloca(cipher->blklen);
 
 	if(cipher->padding) {
 		if(!oneshot) {

@@ -22,11 +22,16 @@
 
 #include <gcrypt.h>
 
+#include "../rsa.h"
+#include "../xalloc.h"
+
 #define TINC_RSA_INTERNAL
 typedef struct rsa {
 	gcry_mpi_t n;
 	gcry_mpi_t e;
 	gcry_mpi_t d;
 } rsa_t;
+
+extern rsa_t *rsa_new(void) ATTR_MALLOC ATTR_DEALLOCATOR(rsa_free);
 
 #endif

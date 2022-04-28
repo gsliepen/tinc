@@ -1643,6 +1643,7 @@ void broadcast_packet(const node_t *from, vpn_packet_t *packet) {
 
 		break;
 
+	case BMODE_NONE:
 	default:
 		break;
 	}

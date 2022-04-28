@@ -111,8 +111,12 @@ static bool ber_read_mpi(unsigned char **p, size_t *buflen, gcry_mpi_t *mpi) {
 	return mpi ? !err : true;
 }
 
+rsa_t *rsa_new(void) {
+	return xzalloc(sizeof(rsa_t));
+}
+
 rsa_t *rsa_set_hex_public_key(const char *n, const char *e) {
-	rsa_t *rsa = xzalloc(sizeof(rsa_t));
+	rsa_t *rsa = rsa_new();
 
 	gcry_error_t err = gcry_mpi_scan(&rsa->n, GCRYMPI_FMT_HEX, n, 0, NULL);
 
@@ -130,7 +134,7 @@ rsa_t *rsa_set_hex_public_key(const char *n, const char *e) {
 }
 
 rsa_t *rsa_set_hex_private_key(const char *n, const char *e, const char *d) {
-	rsa_t *rsa = xzalloc(sizeof(rsa_t));
+	rsa_t *rsa = rsa_new();
 
 	gcry_error_t err = gcry_mpi_scan(&rsa->n, GCRYMPI_FMT_HEX, n, 0, NULL);
 
@@ -162,7 +166,7 @@ rsa_t *rsa_read_pem_public_key(FILE *fp) {
 		return NULL;
 	}
 
-	rsa_t *rsa = xzalloc(sizeof(rsa_t));
+	rsa_t *rsa = rsa_new();
 
 	if(!ber_skip_sequence(&derp, &derlen)
 	                || !ber_read_mpi(&derp, &derlen, &rsa->n)
@@ -185,7 +189,7 @@ rsa_t *rsa_read_pem_private_key(FILE *fp) {
 		return NULL;
 	}
 
-	rsa_t *rsa = xzalloc(sizeof(rsa_t));
+	rsa_t *rsa = rsa_new();
 
 	if(!ber_skip_sequence(&derp, &derlen)
 	                || !ber_read_mpi(&derp, &derlen, NULL)

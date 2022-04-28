@@ -50,6 +50,34 @@ endif
 cc_flags = [cc_defs]
 ld_flags = []
 
+if cc_name != 'msvc'
+  cc_flags += [
+    '-Qunused-arguments',
+    '-Wbad-function-cast',
+    '-Wduplicated-branches',
+    '-Wduplicated-cond',
+    '-Wformat-overflow=2',
+    '-Wformat-truncation=1', # 2 prints too much noise
+    '-Wformat=2',
+    '-Wlogical-op',
+    '-Wmissing-declarations',
+    '-Wmissing-noreturn',
+    '-Wmissing-prototypes',
+    '-Wno-embedded-directive',
+    '-Wold-style-definition',
+    '-Wredundant-decls',
+    '-Wreturn-type',
+    '-Wstrict-prototypes',
+    '-Wswitch-enum',
+    '-Wtrampolines', # may require executable stack which is disabled
+    '-Wvla', # VLAs are not supported by MSVC
+    '-Wwrite-strings',
+    '-fdiagnostics-show-option',
+    '-fno-strict-overflow',
+    '-fstrict-aliasing',
+  ]
+endif
+
 if opt_static.auto()
   static = os_name == 'windows'
 else
@@ -74,26 +102,15 @@ if opt_harden
   else
     cc_flags += [
       '-D_FORTIFY_SOURCE=2',
-      '-fwrapv',
-      '-fno-strict-overflow',
-      '-Wreturn-type',
-      '-Wold-style-definition',
-      '-Wmissing-declarations',
-      '-Wmissing-prototypes',
-      '-Wstrict-prototypes',
-      '-Wredundant-decls',
-      '-Wbad-function-cast',
-      '-Wwrite-strings',
-      '-fdiagnostics-show-option',
-      '-fstrict-aliasing',
-      '-Wmissing-noreturn',
+      '-fcf-protection=full',
+      '-fstack-protector-strong',
     ]
-    if cc_name == 'clang'
-      cc_flags += '-Qunused-arguments'
-    endif
-    ld_flags += ['-Wl,-z,relro', '-Wl,-z,now']
+    ld_flags += ['-Wl,-z,relro', '-Wl,-z,now', '-Wl,-z,noexecstack']
     if os_name == 'windows'
       ld_flags += ['-Wl,--dynamicbase', '-Wl,--nxcompat']
+    else
+      # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90458
+      cc_flags += '-fstack-clash-protection'
     endif
   endif
 endif

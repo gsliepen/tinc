@@ -154,7 +154,7 @@ static struct option const long_options[] = {
 };
 
 static void usage(void) {
-	static const char *message =
+	fprintf(stderr,
 	        "Usage: %s [options] my_ed25519_key_file his_ed25519_key_file [host] port\n"
 	        "\n"
 	        "Valid options are:\n"
@@ -172,9 +172,8 @@ static void usage(void) {
 	        "  -4                      Use IPv4.\n"
 	        "  -6                      Use IPv6.\n"
 	        "\n"
-	        "Report bugs to tinc@tinc-vpn.org.\n";
-
-	fprintf(stderr, message, program_name);
+	        "Report bugs to tinc@tinc-vpn.org.\n",
+	        program_name);
 }
 
 #ifdef HAVE_WINDOWS

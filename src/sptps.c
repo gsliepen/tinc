@@ -68,6 +68,7 @@ void sptps_log_stderr(sptps_t *s, int s_errno, const char *format, va_list ap) {
 void (*sptps_log)(sptps_t *s, int s_errno, const char *format, va_list ap) = sptps_log_stderr;
 
 // Log an error message.
+static bool error(sptps_t *s, int s_errno, const char *format, ...) ATTR_FORMAT(printf, 3, 4);
 static bool error(sptps_t *s, int s_errno, const char *format, ...) {
 	(void)s;
 	(void)s_errno;
@@ -83,6 +84,7 @@ static bool error(sptps_t *s, int s_errno, const char *format, ...) {
 	return false;
 }
 
+static void warning(sptps_t *s, const char *format, ...) ATTR_FORMAT(printf, 2, 3);
 static void warning(sptps_t *s, const char *format, ...) {
 	va_list ap;
 	va_start(ap, format);
@@ -640,7 +642,7 @@ size_t sptps_receive_data(sptps_t *s, const void *vdata, size_t len) {
 		s->inbuf = realloc(s->inbuf, s->reclen + 19UL);
 
 		if(!s->inbuf) {
-			return error(s, errno, strerror(errno));
+			return error(s, errno, "%s", strerror(errno));
 		}
 
 		// Exit early if we have no more data to process.
@@ -718,7 +720,7 @@ bool sptps_start(sptps_t *s, void *handle, bool initiator, bool datagram, ecdsa_
 		s->late = malloc(s->replaywin);
 
 		if(!s->late) {
-			return error(s, errno, strerror(errno));
+			return error(s, errno, "%s", strerror(errno));
 		}
 
 		memset(s->late, 0, s->replaywin);
@@ -727,14 +729,14 @@ bool sptps_start(sptps_t *s, void *handle, bool initiator, bool datagram, ecdsa_
 	s->label = malloc(labellen);
 
 	if(!s->label) {
-		return error(s, errno, strerror(errno));
+		return error(s, errno, "%s", strerror(errno));
 	}
 
 	if(!datagram) {
 		s->inbuf = malloc(7);
 
 		if(!s->inbuf) {
-			return error(s, errno, strerror(errno));
+			return error(s, errno, "%s", strerror(errno));
 		}
 
 		s->buflen = 0;

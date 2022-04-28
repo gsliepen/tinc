@@ -105,6 +105,7 @@ void ifconfig_address(FILE *out, const char *value) {
 		ipv6 = address;
 		break;
 
+	case SUBNET_MAC:
 	default:
 		return;
 	}
@@ -208,6 +209,7 @@ void ifconfig_route(FILE *out, const char *value) {
 			fprintf(out, "ip route add %s via %s dev \"$INTERFACE\" onlink\n", subnet_str, gateway_str);
 			break;
 
+		case SUBNET_MAC:
 		default:
 			return;
 		}
@@ -221,6 +223,7 @@ void ifconfig_route(FILE *out, const char *value) {
 			fprintf(out, "ip route add %s dev \"$INTERFACE\"\n", subnet_str);
 			break;
 
+		case SUBNET_MAC:
 		default:
 			return;
 		}
@@ -238,6 +241,7 @@ void ifconfig_route(FILE *out, const char *value) {
 			fprintf(out, "netsh interface ipv6 add route %s \"%%INTERFACE%%\" %s\n", subnet_str, gateway_str);
 			break;
 
+		case SUBNET_MAC:
 		default:
 			return;
 		}
@@ -251,6 +255,7 @@ void ifconfig_route(FILE *out, const char *value) {
 			fprintf(out, "netsh interface ipv6 add route %s \"%%INTERFACE%%\"\n", subnet_str);
 			break;
 
+		case SUBNET_MAC:
 		default:
 			return;
 		}
@@ -278,6 +283,7 @@ void ifconfig_route(FILE *out, const char *value) {
 			net2str(gateway_str, sizeof(gateway_str), &ipv6);
 			break;
 
+		case SUBNET_MAC:
 		default:
 			return;
 		}
@@ -298,6 +304,7 @@ void ifconfig_route(FILE *out, const char *value) {
 		fprintf(out, "route add -inet6 %s %s\n", subnet_str, gateway_str);
 		break;
 
+	case SUBNET_MAC:
 	default:
 		return;
 	}

@@ -239,6 +239,7 @@ void logger(debug_t level, int priority, const char *format, ...) {
 	real_logger(level, priority, message);
 }
 
+static void sptps_logger(sptps_t *s, int s_errno, const char *format, va_list ap) ATTR_FORMAT(printf, 3, 0);
 static void sptps_logger(sptps_t *s, int s_errno, const char *format, va_list ap) {
 	(void)s_errno;
 	char message[1024];

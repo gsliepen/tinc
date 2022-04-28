@@ -149,7 +149,7 @@ bool digest_create(digest_t *digest, const void *indata, size_t inlen, void *out
 
 		memcpy(outdata, tmpdata, digest->maclength);
 	} else {
-		char tmpdata[len];
+		char *tmpdata = alloca(len);
 		gcry_md_hash_buffer(digest->algo, tmpdata, indata, inlen);
 		memcpy(outdata, tmpdata, digest->maclength);
 	}
@@ -159,7 +159,7 @@ bool digest_create(digest_t *digest, const void *indata, size_t inlen, void *out
 
 bool digest_verify(digest_t *digest, const void *indata, size_t inlen, const void *cmpdata) {
 	size_t len = digest->maclength;
-	uint8_t outdata[len];
+	uint8_t *outdata = alloca(len);
 
 	return digest_create(digest, indata, inlen, outdata) && !memcmp(cmpdata, outdata, len);
 }

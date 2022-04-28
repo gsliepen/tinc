@@ -108,7 +108,7 @@ static struct option const long_options[] = {
 };
 
 static void version(void) {
-	static const char *message =
+	fprintf(stdout,
 	        "%s version %s (built %s %s, protocol %d.%d)\n"
 	        "Features:"
 #ifdef HAVE_READLINE
@@ -126,16 +126,15 @@ static void version(void) {
 	        "\n"
 	        "tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 	        "and you are welcome to redistribute it under certain conditions;\n"
-	        "see the file COPYING for details.\n";
-
-	printf(message, PACKAGE, BUILD_VERSION, BUILD_DATE, BUILD_TIME, PROT_MAJOR, PROT_MINOR);
+	        "see the file COPYING for details.\n",
+	        PACKAGE, BUILD_VERSION, BUILD_DATE, BUILD_TIME, PROT_MAJOR, PROT_MINOR);
 }
 
 static void usage(bool status) {
 	if(status) {
 		fprintf(stderr, "Try `%s --help\' for more information.\n", program_name);
 	} else {
-		static const char *message =
+		fprintf(stdout,
 		        "Usage: %s [options] command\n"
 		        "\n"
 		        "Valid options are:\n"
@@ -194,9 +193,8 @@ static void usage(bool status) {
 		        "  sign [FILE]                Generate a signed version of a file.\n"
 		        "  verify NODE [FILE]         Verify that a file was signed by the given NODE.\n"
 		        "\n"
-		        "Report bugs to tinc@tinc-vpn.org.\n";
-
-		printf(message, program_name);
+		        "Report bugs to tinc@tinc-vpn.org.\n",
+		        program_name);
 	}
 }
 

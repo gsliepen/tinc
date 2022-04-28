@@ -297,7 +297,7 @@ rsa_t *rsa_generate(size_t bits, unsigned long exponent) {
 		return NULL;
 	}
 
-	rsa_t *rsa = xzalloc(sizeof(*rsa));
+	rsa_t *rsa = rsa_new();
 
 	rsa->n = find_mpi(s_rsa, "n");
 	rsa->e = find_mpi(s_rsa, "e");

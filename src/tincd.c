@@ -130,7 +130,7 @@ static void usage(bool status) {
 		fprintf(stderr, "Try `%s --help\' for more information.\n",
 		        program_name);
 	else {
-		static const char *message =
+		fprintf(stdout,
 		        "Usage: %s [option]...\n"
 		        "\n"
 		        "  -c, --config=DIR              Read configuration options from DIR.\n"
@@ -152,9 +152,8 @@ static void usage(bool status) {
 		        "      --help                    Display this help and exit.\n"
 		        "      --version                 Output version information and exit.\n"
 		        "\n"
-		        "Report bugs to tinc@tinc-vpn.org.\n";
-
-		printf(message, program_name);
+		        "Report bugs to tinc@tinc-vpn.org.\n",
+		        program_name);
 	}
 }
 
@@ -419,7 +418,7 @@ int main(int argc, char **argv) {
 	}
 
 	if(show_version) {
-		static const char *message =
+		fprintf(stdout,
 		        "%s version %s (built %s %s, protocol %d.%d)\n"
 		        "Features:"
 #ifdef HAVE_OPENSSL
@@ -461,9 +460,8 @@ int main(int argc, char **argv) {
 		        "\n"
 		        "tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 		        "and you are welcome to redistribute it under certain conditions;\n"
-		        "see the file COPYING for details.\n";
-
-		printf(message, PACKAGE, BUILD_VERSION, BUILD_DATE, BUILD_TIME, PROT_MAJOR, PROT_MINOR);
+		        "see the file COPYING for details.\n",
+		        PACKAGE, BUILD_VERSION, BUILD_DATE, BUILD_TIME, PROT_MAJOR, PROT_MINOR);
 		return 0;
 	}
 

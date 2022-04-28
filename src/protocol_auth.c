@@ -82,6 +82,7 @@ static bool send_proxyrequest(connection_t *c) {
 	case PROXY_EXEC:
 		return true;
 
+	case PROXY_NONE:
 	default:
 		logger(DEBUG_ALWAYS, LOG_ERR, "Unknown proxy type");
 		return false;
