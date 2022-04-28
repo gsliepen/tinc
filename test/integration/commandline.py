@@ -2,7 +2,12 @@
 
 """Test supported and unsupported commandline flags."""
 
-from testlib import check, util
+import os
+import signal
+import subprocess as subp
+import time
+
+from testlib import check, util, path
 from testlib.log import log
 from testlib.proc import Tinc, Script
 from testlib.test import Test
@@ -83,3 +88,66 @@ with Test("commandline flags") as context:
 
     for code, flags in tinc_flags:
         node.cmd(*flags, code=code)
+
+
+def test_relative_path(ctx: Test, chroot: bool) -> None:
+    """Test tincd with relative paths."""
+
+    foo = init(ctx)
+
+    conf_dir = os.path.realpath(foo.sub("."))
+    dirname = os.path.dirname(conf_dir)
+    basename = os.path.basename(conf_dir)
+    log.info("using confdir %s, dirname %s, basename %s", conf_dir, dirname, basename)
+
+    args = [
+        path.TINCD_PATH,
+        "-D",
+        "-c",
+        basename,
+        "--pidfile",
+        "pid",
+        "--logfile",
+        ".//./log",
+    ]
+
+    if chroot:
+        args.append("-R")
+
+    pidfile = os.path.join(dirname, "pid")
+    util.remove_file(pidfile)
+
+    logfile = os.path.join(dirname, "log")
+    util.remove_file(logfile)
+
+    with subp.Popen(args, stderr=subp.STDOUT, cwd=dirname) as tincd:
+        foo[Script.TINC_UP].wait(10)
+
+        log.info("pidfile and logfile must exist at expected paths")
+        check.file_exists(pidfile)
+        check.file_exists(logfile)
+
+        # chrooted tincd won't be able to reopen its log since in this
+        # test we put the log outside tinc's configuration directory.
+        if os.name != "nt" and not chroot:
+            log.info("test log file rotation")
+            time.sleep(1)
+            util.remove_file(logfile)
+            os.kill(tincd.pid, signal.SIGHUP)
+            time.sleep(1)
+
+            log.info("pidfile and logfile must still exist")
+            check.file_exists(pidfile)
+            check.file_exists(logfile)
+
+        log.info("stopping tinc through '%s'", pidfile)
+        foo.cmd("--pidfile", pidfile, "stop")
+        check.equals(0, tincd.wait())
+
+
+with Test("relative path to tincd dir") as context:
+    test_relative_path(context, chroot=False)
+
+if os.name != "nt" and not os.getuid():
+    with Test("relative path to tincd dir (chroot)") as context:
+        test_relative_path(context, chroot=True)

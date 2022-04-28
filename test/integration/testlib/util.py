@@ -7,6 +7,7 @@ import random
 import string
 import socket
 import typing as T
+from pathlib import Path
 
 from . import check
 from .log import log
@@ -29,6 +30,15 @@ def random_port() -> int:
             return port
         except OSError as ex:
             log.debug("could not bind to random port %d", port, exc_info=ex)
+
+
+def remove_file(path: T.Union[str, Path]) -> bool:
+    """Try to remove file without failing if it does not exist."""
+    try:
+        os.remove(path)
+        return True
+    except FileNotFoundError:
+        return False
 
 
 def random_string(k: int) -> str:

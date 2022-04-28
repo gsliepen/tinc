@@ -1,6 +1,8 @@
 """Simple assertions which print the expected and received values on failure."""
 
+import os.path
 import typing as T
+from pathlib import Path
 
 from .log import log
 
@@ -86,3 +88,9 @@ def files_eq(path0: str, path1: str) -> None:
 
     if content0 != content1:
         raise ValueError(f"expected files {path0} and {path1} to match")
+
+
+def file_exists(path: T.Union[str, Path]) -> None:
+    """Check that file or directory exists."""
+    if not os.path.exists(path):
+        raise ValueError("expected path '{path}' to exist")

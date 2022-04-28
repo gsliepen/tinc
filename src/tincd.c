@@ -158,6 +158,17 @@ static void usage(bool status) {
 	}
 }
 
+// Try to resolve path to absolute, return a copy of the argument if this fails.
+static char *get_path_arg(char *arg) {
+	char *result = absolute_path(arg);
+
+	if(!result) {
+		result = xstrdup(arg);
+	}
+
+	return result;
+}
+
 static bool parse_options(int argc, char **argv) {
 	config_t *cfg;
 	int r;
@@ -175,7 +186,7 @@ static bool parse_options(int argc, char **argv) {
 
 		case OPT_CONFIG_FILE:
 			free(confbase);
-			confbase = xstrdup(optarg);
+			confbase = get_path_arg(optarg);
 			break;
 
 		case OPT_NO_DETACH:
@@ -263,14 +274,14 @@ static bool parse_options(int argc, char **argv) {
 
 			if(optarg) {
 				free(logfilename);
-				logfilename = xstrdup(optarg);
+				logfilename = get_path_arg(optarg);
 			}
 
 			break;
 
 		case OPT_PIDFILE:
 			free(pidfilename);
-			pidfilename = xstrdup(optarg);
+			pidfilename = get_path_arg(optarg);
 			break;
 
 		default:
