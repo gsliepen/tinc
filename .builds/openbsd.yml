@@ -1,27 +1,19 @@
 image: openbsd/7.0
 
 packages:
-  - meson
-  - pkgconf
-  - lzo2
-  - lz4
-  - miniupnpc
-  - readline
-  - texinfo
   - cmocka
+  - libgcrypt
+  - lz4
+  - lzo2
+  - meson
+  - miniupnpc
+  - pkgconf
+  - texinfo
 
 sources:
   - https://github.com/gsliepen/tinc
 
 tasks:
-  - configure: |
-      cd tinc
-      meson setup build -Dminiupnpc=auto
-
-  - build: |
-      cd tinc
-      ninja -C build
-
-  - test: |
-      cd tinc
-      meson test -C build --verbose
+  - openssl: sh tinc/.ci/bsd/run.sh openssl
+  - nolegacy: sh tinc/.ci/bsd/run.sh nolegacy
+  - gcrypt: sh tinc/.ci/bsd/run.sh gcrypt

@@ -278,6 +278,9 @@ else
   if not dep_readline.found()
     dep_readline = cc.find_library('readline', required: opt_readline, static: static)
   endif
+  if not dep_readline.found()
+    dep_readline = cc.find_library('libedit', required: opt_readline, static: static)
+  endif
   if dep_readline.found() and \
      cc.has_header('readline/readline.h', dependencies: dep_readline) and \
      cc.has_header('readline/history.h', dependencies: dep_readline)

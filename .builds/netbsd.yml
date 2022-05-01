@@ -1,28 +1,22 @@
 image: netbsd/9.x
 
 packages:
-  - meson
-  - pkgconf
-  - openssl
-  - lzo
-  - lz4
-  - miniupnpc
-  - readline
-  - gtexinfo
   - cmocka
+  - gtexinfo
+  - libgcrypt
+  - lz4
+  - lzo
+  - meson
+  - miniupnpc
+  - pkgconf
 
 sources:
   - https://github.com/gsliepen/tinc
 
+environment:
+  PKG_CONFIG_PATH: /usr/pkg/lib/pkgconfig
+
 tasks:
-  - configure: |
-      cd tinc
-      meson setup build -Dpkg_config_path=/usr/pkg/lib/pkgconfig -Dminiupnpc=auto
-
-  - build: |
-      cd tinc
-      ninja -C build
-
-  - test: |
-      cd tinc
-      meson test -C build --verbose
+  - openssl: sh tinc/.ci/bsd/run.sh openssl
+  - nolegacy: sh tinc/.ci/bsd/run.sh nolegacy
+  - gcrypt: sh tinc/.ci/bsd/run.sh gcrypt

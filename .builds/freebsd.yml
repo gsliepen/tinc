@@ -1,32 +1,22 @@
 image: freebsd/13.x
 
 packages:
-  - coreutils
+  - cmocka
+  - libgcrypt
+  - liblz4
+  - lzo2
   - meson
   - pkgconf
-  - openssl
-  - lzo2
-  - liblz4
-  - ncurses
-  - miniupnpc
-  - readline
   - texinfo
   - vde2
-  - libgcrypt
-  - cmocka
 
 sources:
   - https://github.com/gsliepen/tinc
 
+environment:
+  PKG_CONFIG_PATH: /usr/local/libdata/pkgconfig
+
 tasks:
-  - configure: |
-      cd tinc
-      meson setup build -Dpkg_config_path=/usr/local/lib/pkgconfig
-
-  - build: |
-      cd tinc
-      ninja -C build
-
-  - test: |
-      cd tinc
-      meson test -C build --verbose
+  - openssl: sh tinc/.ci/bsd/run.sh openssl
+  - nolegacy: sh tinc/.ci/bsd/run.sh nolegacy
+  - gcrypt: sh tinc/.ci/bsd/run.sh gcrypt
