@@ -2,12 +2,12 @@
 
 #include "random.h"
 
-#ifndef HAVE_GETRANDOM
+#ifndef HAVE_GETENTROPY
 static int random_fd = -1;
 #endif
 
 void random_init(void) {
-#ifndef HAVE_GETRANDOM
+#ifndef HAVE_GETENTROPY
 	random_fd = open("/dev/urandom", O_RDONLY);
 
 	if(random_fd < 0) {
@@ -23,7 +23,7 @@ void random_init(void) {
 }
 
 void random_exit(void) {
-#ifndef HAVE_GETRANDOM
+#ifndef HAVE_GETENTROPY
 	close(random_fd);
 #endif
 }
@@ -32,8 +32,9 @@ void randomize(void *vout, size_t outlen) {
 	uint8_t *out = vout;
 
 	while(outlen) {
-#ifdef HAVE_GETRANDOM
-		ssize_t len = getrandom(out, outlen, 0);
+#ifdef HAVE_GETENTROPY
+		int reqlen = (int) MIN(256, outlen);
+		int len = !getentropy(out, reqlen) ? reqlen : -1;
 #else
 		ssize_t len = read(random_fd, out, outlen);
 #endif

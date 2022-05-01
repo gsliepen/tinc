@@ -2,7 +2,7 @@
 
 #include "unittest.h"
 
-#ifdef HAVE_GETRANDOM
+#ifdef HAVE_GETENTROPY
 int main(void) {
 	return 1;
 }
@@ -14,4 +14,4 @@ int main(void) {
 	randomize(buf, sizeof(buf));
 	return 0;
 }
-#endif // HAVE_GETRANDOM
+#endif // HAVE_GETENTROPY
