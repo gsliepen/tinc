@@ -1,5 +1,6 @@
 src_lib_crypto = files(
   'cipher.c',
+  'crypto.c',
   'digest.c',
   'pem.c',
   'prf.c',

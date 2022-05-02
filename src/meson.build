@@ -358,10 +358,6 @@ endif
 
 subdir(opt_crypto)
 
-if opt_crypto != 'openssl'
-  src_lib_crypto += 'crypto.c'
-endif
-
 if opt_crypto != 'nolegacy'
   src_lib_crypto += ['cipher.c', 'digest.c']
 endif

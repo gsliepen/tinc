@@ -17,7 +17,7 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include "crypto.h"
+#include "../crypto.h"
 
 // No-op for those cryptographic libraries that
 // do not require any additional initialization.
