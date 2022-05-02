@@ -174,6 +174,7 @@ src_tincd = [
   'subnet.c',
 ]
 
+cc_flags_tinc = cc_flags
 cc_flags_tincd = cc_flags
 
 deps_common = []
@@ -269,6 +270,9 @@ if not opt_curses.disabled()
   if dep_curses.found()
     cdata.set('HAVE_CURSES', 1)
     deps_tinc += dep_curses
+    if static
+      cc_flags_tinc += '-DNCURSES_STATIC'
+    endif
   endif
 endif
 
@@ -392,6 +396,7 @@ lib_tinc = static_library(
   sources: src_tinc,
   dependencies: deps_tinc,
   link_with: lib_common,
+  c_args: cc_flags_tinc,
   implicit_include_directories: false,
   include_directories: inc_conf,
   build_by_default: false,
