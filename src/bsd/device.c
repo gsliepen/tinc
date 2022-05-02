@@ -28,7 +28,7 @@
 #include "../xalloc.h"
 
 #ifdef ENABLE_TUNEMU
-#include "tunemu.h"
+#include "darwin/tunemu.h"
 #endif
 
 #ifdef HAVE_NET_IF_UTUN_H

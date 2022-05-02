@@ -13,7 +13,7 @@ Linux)
   ;;
 
 FreeBSD)
-  paths="$paths src/linux src/bsd/tunemu.c"
+  paths="$paths src/linux src/bsd/darwin src/bsd/openbsd"
   ;;
 
 Darwin)

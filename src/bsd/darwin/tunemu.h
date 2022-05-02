@@ -20,7 +20,7 @@
 #ifndef TUNEMU_H
 #define TUNEMU_H
 
-#include "../system.h"
+#include "../../system.h"
 
 typedef char tunemu_device[7];
 
