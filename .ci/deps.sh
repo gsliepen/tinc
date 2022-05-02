@@ -10,7 +10,8 @@ deps_linux_alpine() {
 
   apk add \
     git binutils ninja pkgconf gcc linux-headers shadow sudo libgcrypt-dev texinfo gzip \
-    openssl-dev zlib-dev lzo-dev ncurses-dev readline-dev musl-dev lz4-dev vde2-dev cmocka-dev
+    openssl-dev zlib-dev lzo-dev ncurses-dev readline-dev musl-dev lz4-dev vde2-dev cmocka-dev \
+    libseccomp-dev
 
   if [ -z "$SKIP_MESON" ]; then
     apk add meson
@@ -49,6 +50,7 @@ deps_linux_debian_linux() {
   if [ -n "$HOST" ]; then
     apt-get install -y crossbuild-essential-"$HOST" qemu-user
   else
+    apt-get install -y libseccomp-dev
     linux_openssl3
   fi
 }
@@ -99,7 +101,8 @@ deps_linux_rhel() {
 
   yum install -y \
     git binutils make ninja-build pkgconf gcc sudo texinfo-tex systemd perl-IPC-Cmd \
-    lzo-devel zlib-devel lz4-devel ncurses-devel readline-devel libgcrypt-devel "$@"
+    lzo-devel zlib-devel lz4-devel ncurses-devel readline-devel libgcrypt-devel libseccomp-devel \
+    "$@"
 
   if [ -z "$SKIP_MESON" ]; then
     yum install -y meson
