@@ -53,7 +53,6 @@ ld_flags = []
 
 if cc_name != 'msvc'
   cc_flags += [
-    '-Qunused-arguments',
     '-Wbad-function-cast',
     '-Wduplicated-branches',
     '-Wduplicated-cond',
