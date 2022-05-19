@@ -2189,6 +2189,49 @@ int check_port(const char *name) {
 	return 0;
 }
 
+static bool makedir(const char *path, mode_t mode) {
+	if(mkdir(path, mode) && errno != EEXIST) {
+		fprintf(stderr, "Could not create directory %s: %s\n", path, strerror(errno));
+		return false;
+	}
+
+	return true;
+}
+
+bool makedirs(tincd_dir_t dirs) {
+	if(dirs & DIR_CONFBASE && !makedir(confbase, 0777)) {
+		return false;
+	}
+
+	if(dirs & DIR_CONFDIR && !confbase_given && !makedir(confdir, 0755)) {
+		return false;
+	}
+
+	if(dirs & DIR_HOSTS && !makedir(hosts_dir, 0777)) {
+		return false;
+	}
+
+	char path[PATH_MAX];
+
+	if(dirs & DIR_INVITATIONS) {
+		snprintf(path, sizeof(path), "%s" SLASH "invitations", confbase);
+
+		if(!makedir(path, 0700)) {
+			return false;
+		}
+	}
+
+	if(dirs & DIR_CACHE) {
+		snprintf(path, sizeof(path), "%s" SLASH "%s", confbase, "cache");
+
+		if(!makedir(path, 0755)) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
 static int cmd_init(int argc, char *argv[]) {
 	if(!access(tinc_conf, F_OK)) {
 		fprintf(stderr, "Configuration file %s already exists!\n", tinc_conf);
@@ -2234,19 +2277,8 @@ static int cmd_init(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(!confbase_given && mkdir(confdir, 0755) && errno != EEXIST) {
-		fprintf(stderr, "Could not create directory %s: %s\n", confdir, strerror(errno));
-		return 1;
-	}
-
-	if(mkdir(confbase, 0777) && errno != EEXIST) {
-		fprintf(stderr, "Could not create directory %s: %s\n", confbase, strerror(errno));
-		return 1;
-	}
-
-	if(mkdir(hosts_dir, 0777) && errno != EEXIST) {
-		fprintf(stderr, "Could not create directory %s: %s\n", hosts_dir, strerror(errno));
-		return 1;
+	if(!makedirs(DIR_HOSTS | DIR_CONFBASE | DIR_CONFDIR | DIR_CACHE)) {
+		return false;
 	}
 
 	FILE *f = fopen(tinc_conf, "w");

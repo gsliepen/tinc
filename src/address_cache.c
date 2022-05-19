@@ -25,7 +25,7 @@
 #include "netutl.h"
 #include "xalloc.h"
 
-static const unsigned int NOT_CACHED = -1;
+static const unsigned int NOT_CACHED = UINT_MAX;
 
 // Find edges pointing to this node, and use them to build a list of unique, known addresses.
 static struct addrinfo *get_known_addresses(node_t *n) {
@@ -89,6 +89,8 @@ void add_recent_address(address_cache_t *cache, const sockaddr_t *sa) {
 	if(pos == 0) {
 		return;
 	}
+
+	logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Caching recent address for %s", cache->node->name);
 
 	// Shift everything, move/add the address to the first slot
 	if(pos == NOT_CACHED) {
@@ -216,7 +218,7 @@ const sockaddr_t *get_recent_address(address_cache_t *cache) {
 	exit_configuration(cache->config_tree);
 	cache->config_tree = NULL;
 
-	return false;
+	return NULL;
 }
 
 address_cache_t *open_address_cache(node_t *node) {
@@ -251,11 +253,7 @@ address_cache_t *open_address_cache(node_t *node) {
 	return cache;
 }
 
-void reset_address_cache(address_cache_t *cache, const sockaddr_t *sa) {
-	if(sa) {
-		add_recent_address(cache, sa);
-	}
-
+void reset_address_cache(address_cache_t *cache) {
 	if(cache->config_tree) {
 		exit_configuration(cache->config_tree);
 		cache->config_tree = NULL;

@@ -68,7 +68,8 @@ bool pong_h(connection_t *c, const char *request) {
 
 	if(c->outgoing && c->outgoing->timeout) {
 		c->outgoing->timeout = 0;
-		reset_address_cache(c->outgoing->node->address_cache, &c->address);
+		reset_address_cache(c->node->address_cache);
+		add_recent_address(c->node->address_cache, &c->address);
 	}
 
 	return true;

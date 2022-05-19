@@ -78,18 +78,18 @@ def test_invite_errors(foo: Tinc) -> None:
     check.is_in("already exists", err)
 
     if os.name != "nt":
+        log.info("bad permissions on invitations are fixed")
         invites = foo.sub("invitations")
         os.chmod(invites, 0)
-        _, err = foo.cmd("invite", "foobar", code=1)
-        check.is_in("Could not read directory", err)
-        os.chmod(invites, 0o750)
+        out, _ = foo.cmd("invite", "foobar")
+        check.has_prefix(out, "localhost:")
 
-        log.info("block creating invitations directory")
-        shutil.rmtree(foo.sub("invitations"))
+        log.info("invitations directory is created with bad permissions on parent")
+        shutil.rmtree(invites)
         os.chmod(foo.work_dir, 0o500)
-        _, err = foo.cmd("invite", "foobar", code=1)
-        check.is_in("Could not create directory", err)
-        os.chmod(foo.work_dir, 0o750)
+        out, _ = foo.cmd("invite", "foobar")
+        check.has_prefix(out, "localhost:")
+        check.true(os.access(invites, os.W_OK))
 
         log.info("fully block access to configuration directory")
         work_dir = foo.sub("test_no_access")
@@ -122,11 +122,12 @@ def test_join_errors(foo: Tinc) -> None:
     check.is_in("Could not connect to", err)
 
     if os.name != "nt":
-        log.info("test working without access to configuration directory")
+        log.info("bad permissions on configuration directory are fixed")
         work_dir = foo.sub("wd_access_test")
         os.mkdir(work_dir, mode=400)
         _, err = foo.cmd("-c", work_dir, "join", FAKE_INVITE, code=1)
-        check.is_in("No permission to write", err)
+        check.is_in("Could not connect to", err)
+        check.true(os.access(work_dir, mode=os.W_OK))
 
 
 with Test("run invite success tests") as context:

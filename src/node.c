@@ -71,7 +71,7 @@ void exit_nodes(void) {
 	splay_empty_tree(&node_tree);
 }
 
-node_t *new_node(void) {
+node_t *new_node(const char *name) {
 	node_t *n = xzalloc(sizeof(*n));
 
 	if(replaywin) {
@@ -84,6 +84,7 @@ node_t *new_node(void) {
 	n->mtu = MTU;
 	n->maxmtu = MTU;
 	n->udp_ping_rtt = -1;
+	n->name = xstrdup(name);
 
 	return n;
 }

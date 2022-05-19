@@ -44,6 +44,7 @@
 #include "random.h"
 #include "compression.h"
 #include "proxy.h"
+#include "address_cache.h"
 
 #include "ed25519/sha512.h"
 #include "keys.h"
@@ -138,6 +139,22 @@ static bool finalize_invitation(connection_t *c, const char *data, uint16_t len)
 	fclose(f);
 
 	logger(DEBUG_CONNECTIONS, LOG_INFO, "Key successfully received from %s (%s)", c->name, c->hostname);
+
+	if(!c->node) {
+		c->node = lookup_node(c->name);
+	}
+
+	if(!c->node) {
+		c->node = new_node(c->name);
+		c->node->connection = c;
+		node_add(c->node);
+	}
+
+	if(!c->node->address_cache) {
+		c->node->address_cache = open_address_cache(c->node);
+	}
+
+	add_recent_address(c->node->address_cache, &c->address);
 
 	// Call invitation-accepted script
 	environment_t env;
@@ -936,8 +953,7 @@ bool ack_h(connection_t *c, const char *request) {
 	n = lookup_node(c->name);
 
 	if(!n) {
-		n = new_node();
-		n->name = xstrdup(c->name);
+		n = new_node(c->name);
 		node_add(n);
 	} else {
 		if(n->connection) {

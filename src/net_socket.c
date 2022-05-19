@@ -671,22 +671,18 @@ void setup_outgoing_connection(outgoing_t *outgoing, bool verbose) {
 		n->address_cache = open_address_cache(n);
 	}
 
-	if(n->connection) {
-		logger(DEBUG_CONNECTIONS, LOG_INFO, "Already connected to %s", n->name);
-
-		if(!n->connection->outgoing) {
-			n->connection->outgoing = outgoing;
-			return;
-		} else {
-			goto remove;
-		}
+	if(!n->connection) {
+		do_outgoing_connection(outgoing);
+		return;
 	}
 
-	do_outgoing_connection(outgoing);
-	return;
+	logger(DEBUG_CONNECTIONS, LOG_INFO, "Already connected to %s", n->name);
 
-remove:
-	list_delete(&outgoing_list, outgoing);
+	if(n->connection->outgoing) {
+		list_delete(&outgoing_list, outgoing);
+	} else {
+		n->connection->outgoing = outgoing;
+	}
 }
 
 static bool check_tarpit(const sockaddr_t *sa, int fd) {
@@ -864,8 +860,7 @@ void try_outgoing_connections(void) {
 			node_t *n = lookup_node(name);
 
 			if(!n) {
-				n = new_node();
-				n->name = xstrdup(name);
+				n = new_node(name);
 				node_add(n);
 			}
 

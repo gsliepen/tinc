@@ -104,6 +104,12 @@ def files_eq(path0: str, path1: str) -> None:
 
 
 def file_exists(path: T.Union[str, Path]) -> None:
-    """Check that file or directory exists."""
-    if not os.path.exists(path):
-        raise ValueError("expected path '{path}' to exist")
+    """Check that file exists."""
+    if not os.path.isfile(path):
+        raise ValueError(f"expected file '{path}' to exist")
+
+
+def dir_exists(path: T.Union[str, Path]) -> None:
+    """Check that directory exists."""
+    if not os.path.isdir(path):
+        raise ValueError(f"expected directory '{path}' to exist")

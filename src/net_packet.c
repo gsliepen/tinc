@@ -200,7 +200,10 @@ static void udp_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 			n->address_cache = open_address_cache(n);
 		}
 
-		reset_address_cache(n->address_cache, &n->address);
+		if(n->connection && n->connection->edge) {
+			reset_address_cache(n->address_cache);
+			add_recent_address(n->address_cache, &n->connection->edge->address);
+		}
 	}
 
 	// Reset the UDP ping timer.

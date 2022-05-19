@@ -29,7 +29,6 @@
 #include "protocol.h"
 #include "subnet.h"
 #include "utils.h"
-#include "xalloc.h"
 
 bool send_add_subnet(connection_t *c, const subnet_t *subnet) {
 	char netstr[MAXNETSTR];
@@ -85,8 +84,7 @@ bool add_subnet_h(connection_t *c, const char *request) {
 	}
 
 	if(!owner) {
-		owner = new_node();
-		owner->name = xstrdup(name);
+		owner = new_node(name);
 		node_add(owner);
 	}
 

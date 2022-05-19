@@ -79,7 +79,7 @@ def dump_pending_invitation(foo: Tinc, bar: Tinc) -> None:
     check.equals(node, bar.name)
 
 
-def run_unconnected_tests(foo: Tinc) -> None:
+def run_unconnected_tests(foo: Tinc, bar: Tinc) -> None:
     """Run online tests with unconnected nodes."""
 
     log.info("dump invalid type")
@@ -109,11 +109,16 @@ def run_unconnected_tests(foo: Tinc) -> None:
     check.lines(out, 1)
     check.is_in("<control>", out)
 
-    log.info("dump unconnected nodes")
-    for arg in (("nodes",), ("reachable", "nodes")):
-        out, _ = foo.cmd("dump", *arg)
-        check.lines(out, 1)
-        check.is_in(f"{foo} id ", out)
+    log.info("%s knows about %s", foo, bar)
+    out, _ = foo.cmd("dump", "nodes")
+    check.lines(out, 2)
+    check.is_in(f"{foo} id ", out)
+    check.is_in(f"{bar} id ", out)
+
+    log.info("%s can only reach itself", foo)
+    out, _ = foo.cmd("dump", "reachable", "nodes")
+    check.lines(out, 1)
+    check.is_in(f"{foo} id ", out)
 
 
 def run_connected_tests(foo: Tinc, bar: Tinc) -> None:
@@ -180,7 +185,7 @@ def run_tests(ctx: Test) -> None:
     for sub in SUBNETS_BAR:
         bar.cmd("add", "Subnet", sub)
 
-    run_unconnected_tests(foo)
+    run_unconnected_tests(foo, bar)
 
     log.info("start %s", bar)
     foo.add_script(bar.script_up)

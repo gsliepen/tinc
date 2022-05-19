@@ -384,12 +384,11 @@ int cmd_invite(int argc, char *argv[]) {
 		}
 	}
 
-	snprintf(filename, sizeof(filename), "%s" SLASH "invitations", confbase);
-
-	if(mkdir(filename, 0700) && errno != EEXIST) {
-		fprintf(stderr, "Could not create directory %s: %s\n", filename, strerror(errno));
-		return 1;
+	if(!makedirs(DIR_INVITATIONS)) {
+		return false;
 	}
+
+	snprintf(filename, sizeof(filename), "%s" SLASH "invitations", confbase);
 
 	// Count the number of valid invitations, clean up old ones
 	DIR *dir = opendir(filename);
@@ -779,13 +778,7 @@ make_names:
 		goto make_names;
 	}
 
-	if(mkdir(confbase, 0777) && errno != EEXIST) {
-		fprintf(stderr, "Could not create directory %s: %s\n", confbase, strerror(errno));
-		return false;
-	}
-
-	if(mkdir(hosts_dir, 0777) && errno != EEXIST) {
-		fprintf(stderr, "Could not create directory %s: %s\n", hosts_dir, strerror(errno));
+	if(!makedirs(DIR_HOSTS | DIR_CONFBASE | DIR_CACHE)) {
 		return false;
 	}
 
@@ -1213,14 +1206,8 @@ int cmd_join(int argc, char *argv[]) {
 	}
 
 	// Make sure confbase exists and is accessible.
-	if(!confbase_given && mkdir(confdir, 0755) && errno != EEXIST) {
-		fprintf(stderr, "Could not create directory %s: %s\n", confdir, strerror(errno));
-		return 1;
-	}
-
-	if(mkdir(confbase, 0777) && errno != EEXIST) {
-		fprintf(stderr, "Could not create directory %s: %s\n", confbase, strerror(errno));
-		return 1;
+	if(!makedirs(DIR_CONFDIR | DIR_CONFBASE)) {
+		return false;
 	}
 
 	if(access(confbase, R_OK | W_OK | X_OK)) {

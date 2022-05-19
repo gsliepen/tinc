@@ -111,14 +111,12 @@ bool add_edge_h(connection_t *c, const char *request) {
 	}
 
 	if(!from) {
-		from = new_node();
-		from->name = xstrdup(from_name);
+		from = new_node(from_name);
 		node_add(from);
 	}
 
 	if(!to) {
-		to = new_node();
-		to->name = xstrdup(to_name);
+		to = new_node(to_name);
 		node_add(to);
 	}
 

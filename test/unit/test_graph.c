@@ -20,8 +20,7 @@ static void connect_nodes(node_t *from, node_t *to, int weight) {
 }
 
 static node_t *make_node(const char *name) {
-	node_t *node = new_node();
-	node->name = xstrdup(name);
+	node_t *node = new_node(name);
 	node->status.reachable = true;
 	node_add(node);
 	return node;
@@ -77,8 +76,7 @@ static void test_sssp_bfs(void **state) {
 
 static int setup(void **state) {
 	(void)state;
-	myself = new_node();
-	myself->name = xstrdup("myself");
+	myself = new_node("myself");
 	return 0;
 }
 

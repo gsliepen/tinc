@@ -55,6 +55,7 @@
 #include "script.h"
 #include "subnet.h"
 #include "xalloc.h"
+#include "address_cache.h"
 
 /* Implementation of Kruskal's algorithm.
    Running time: O(EN)
@@ -226,6 +227,14 @@ static void check_reachability(void) {
 
 				if(n != myself) {
 					became_reachable_count++;
+
+					if(n->connection && n->connection->outgoing) {
+						if(!n->address_cache) {
+							n->address_cache = open_address_cache(n);
+						}
+
+						add_recent_address(n->address_cache, &n->connection->address);
+					}
 				}
 			} else {
 				logger(DEBUG_TRAFFIC, LOG_DEBUG, "Node %s (%s) became unreachable",

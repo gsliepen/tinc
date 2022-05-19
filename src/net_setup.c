@@ -184,8 +184,7 @@ void load_all_nodes(void) {
 		read_host_config(&config, ent->d_name, true);
 
 		if(!n) {
-			n = new_node();
-			n->name = xstrdup(ent->d_name);
+			n = new_node(ent->d_name);
 			node_add(n);
 		}
 
@@ -764,10 +763,9 @@ static bool setup_myself(void) {
 	}
 
 	myname = xstrdup(name);
-	myself = new_node();
+	myself = new_node(name);
 	myself->connection = new_connection();
-	myself->name = name;
-	myself->connection->name = xstrdup(name);
+	myself->connection->name = name;
 	read_host_config(&config_tree, name, true);
 
 	if(!get_config_string(lookup_config(&config_tree, "Port"), &myport.tcp)) {
