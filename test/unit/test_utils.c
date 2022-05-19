@@ -1,49 +1,6 @@
 #include "unittest.h"
 #include "../../src/utils.h"
 
-#define FAKE_PATH "nonexistentreallyfakepath"
-
-typedef struct {
-	const char *arg;
-	const char *want;
-} testcase_t;
-
-static void test_unix_absolute_path_on_absolute_returns_it(void **state) {
-	(void)state;
-
-	const char *paths[] = {"/", "/foo", "/foo/./../bar"};
-
-	for(size_t i = 0; i < sizeof(paths) / sizeof(*paths); ++i) {
-		char *got = absolute_path(paths[i]);
-		assert_ptr_not_equal(paths[i], got);
-		assert_string_equal(paths[i], got);
-		free(got);
-	}
-}
-
-static void test_unix_absolute_path_on_empty_returns_null(void **state) {
-	(void)state;
-	assert_null(absolute_path(NULL));
-	assert_null(absolute_path("\0"));
-}
-
-static void test_unix_absolute_path_relative(void **state) {
-	(void)state;
-
-	testcase_t cases[] = {
-		{".", "/"},
-		{"foo", "/foo"},
-		{"./"FAKE_PATH, "/./"FAKE_PATH},
-		{"../foo/./../"FAKE_PATH, "/../foo/./../"FAKE_PATH},
-	};
-
-	for(size_t i = 0; i < sizeof(cases) / sizeof(*cases); ++i) {
-		char *got = absolute_path(cases[i].arg);
-		assert_string_equal(cases[i].want, got);
-		free(got);
-	}
-}
-
 static void test_int_to_str(const char *ref, int num) {
 	char *result = int_to_str(num);
 	assert_string_equal(ref, result);
@@ -99,12 +56,6 @@ static void test_is_decimal_pass_whitespace_prefix(void **state) {
 	assert_true(is_decimal(" \r\n\t 777"));
 }
 
-static int setup_path_unix(void **state) {
-	(void)state;
-	assert_int_equal(0, chdir("/"));
-	return 0;
-}
-
 static void test_string_eq(void **state) {
 	(void)state;
 
@@ -120,9 +71,6 @@ static void test_string_eq(void **state) {
 
 int main(void) {
 	const struct CMUnitTest tests[] = {
-		cmocka_unit_test_setup(test_unix_absolute_path_on_absolute_returns_it, setup_path_unix),
-		cmocka_unit_test_setup(test_unix_absolute_path_on_empty_returns_null, setup_path_unix),
-		cmocka_unit_test_setup(test_unix_absolute_path_relative, setup_path_unix),
 		cmocka_unit_test(test_int_to_str_return_expected),
 		cmocka_unit_test(test_is_decimal_fail_empty),
 		cmocka_unit_test(test_is_decimal_fail_hex),

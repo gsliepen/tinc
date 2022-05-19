@@ -5,7 +5,7 @@
 #include "names.h"
 #include "xalloc.h"
 #include "ecdsa.h"
-#include "utils.h"
+#include "fs.h"
 
 bool disable_old_keys(const char *filename, const char *what) {
 	char tmpfile[PATH_MAX] = "";

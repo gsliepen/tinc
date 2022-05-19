@@ -36,6 +36,7 @@
 #include "xalloc.h"
 #include "random.h"
 #include "pidfile.h"
+#include "fs.h"
 
 #include "ed25519/sha512.h"
 

@@ -44,6 +44,7 @@
 #include "sandbox.h"
 #include "pidfile.h"
 #include "console.h"
+#include "fs.h"
 
 #ifndef MSG_NOSIGNAL
 #define MSG_NOSIGNAL 0
@@ -2187,49 +2188,6 @@ int check_port(const char *name) {
 
 	fprintf(stderr, "Please change tinc's Port manually.\n");
 	return 0;
-}
-
-static bool makedir(const char *path, mode_t mode) {
-	if(mkdir(path, mode) && errno != EEXIST) {
-		fprintf(stderr, "Could not create directory %s: %s\n", path, strerror(errno));
-		return false;
-	}
-
-	return true;
-}
-
-bool makedirs(tincd_dir_t dirs) {
-	if(dirs & DIR_CONFBASE && !makedir(confbase, 0777)) {
-		return false;
-	}
-
-	if(dirs & DIR_CONFDIR && !confbase_given && !makedir(confdir, 0755)) {
-		return false;
-	}
-
-	if(dirs & DIR_HOSTS && !makedir(hosts_dir, 0777)) {
-		return false;
-	}
-
-	char path[PATH_MAX];
-
-	if(dirs & DIR_INVITATIONS) {
-		snprintf(path, sizeof(path), "%s" SLASH "invitations", confbase);
-
-		if(!makedir(path, 0700)) {
-			return false;
-		}
-	}
-
-	if(dirs & DIR_CACHE) {
-		snprintf(path, sizeof(path), "%s" SLASH "%s", confbase, "cache");
-
-		if(!makedir(path, 0755)) {
-			return false;
-		}
-	}
-
-	return true;
 }
 
 static int cmd_init(int argc, char *argv[]) {

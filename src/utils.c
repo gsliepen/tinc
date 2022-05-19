@@ -18,8 +18,6 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include <assert.h>
-
 #include "logger.h"
 #include "system.h"
 #include "utils.h"
@@ -79,57 +77,6 @@ size_t bin2hex(const void *vsrc, char *dst, size_t length) {
 
 	dst[length * 2] = 0;
 	return length * 2;
-}
-
-char *absolute_path(const char *path) {
-#ifdef HAVE_WINDOWS
-	// Works for nonexistent paths
-	return _fullpath(NULL, path, 0);
-#else
-
-	if(!path || !*path) {
-		return NULL;
-	}
-
-	// If an absolute path was passed, return its copy
-	if(*path == '/') {
-		return xstrdup(path);
-	}
-
-	// Try using realpath. If it fails for any reason
-	// other than that the file was not found, bail out.
-	char *abs = realpath(path, NULL);
-
-	if(abs || errno != ENOENT) {
-		return abs;
-	}
-
-	// Since the file does not exist, we're forced to use a fallback.
-	// Get current working directory and concatenate it with the argument.
-	char cwd[PATH_MAX];
-
-	if(!getcwd(cwd, sizeof(cwd))) {
-		return NULL;
-	}
-
-	// Remove trailing slash if present since we'll be adding our own
-	size_t cwdlen = strlen(cwd);
-
-	if(cwdlen && cwd[cwdlen - 1] == '/') {
-		cwd[cwdlen - 1] = '\0';
-	}
-
-	// We don't do any normalization because it's complicated, and the payoff is small.
-	// If user passed something like '.././../foo' — that's their choice; fopen works either way.
-	xasprintf(&abs, "%s/%s", cwd, path);
-
-	if(strlen(abs) >= PATH_MAX) {
-		free(abs);
-		abs = NULL;
-	}
-
-	return abs;
-#endif
 }
 
 size_t b64decode_tinc(const char *src, void *dst, size_t length) {
@@ -345,32 +292,6 @@ char *replace_name(const char *name) {
 	}
 
 	return ret_name;
-}
-
-/* Open a file with the desired permissions, minus the umask.
-   Also, if we want to create an executable file, we call fchmod()
-   to set the executable bits. */
-
-FILE *fopenmask(const char *filename, const char *mode, mode_t perms) {
-	mode_t mask = umask(0);
-	perms &= ~mask;
-	umask(~perms & 0777);
-	FILE *f = fopen(filename, mode);
-
-	if(!f) {
-		fprintf(stderr, "Could not open %s: %s\n", filename, strerror(errno));
-		return NULL;
-	}
-
-#ifdef HAVE_FCHMOD
-
-	if(perms & 0444) {
-		fchmod(fileno(f), perms);
-	}
-
-#endif
-	umask(mask);
-	return f;
 }
 
 bool string_eq(const char *first, const char *second) {

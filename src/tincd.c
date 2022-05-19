@@ -57,6 +57,7 @@
 #include "random.h"
 #include "sandbox.h"
 #include "watchdog.h"
+#include "fs.h"
 
 /* If nonzero, display usage information and exit. */
 static bool show_help = false;
@@ -415,7 +416,9 @@ static bool drop_privs(void) {
 			return false;
 		}
 
-#endif
+#endif // HAVE_WINDOWS
+
+	makedirs(DIR_CACHE | DIR_HOSTS | DIR_INVITATIONS);
 
 	return sandbox_enter();
 }

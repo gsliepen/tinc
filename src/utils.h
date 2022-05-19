@@ -74,10 +74,6 @@ extern bool check_id(const char *id);
 extern bool check_netname(const char *netname, bool strict);
 char *replace_name(const char *name) ATTR_MALLOC;
 
-char *absolute_path(const char *path) ATTR_MALLOC;
-
-extern FILE *fopenmask(const char *filename, const char *mode, mode_t perms) ATTR_DEALLOCATOR(fclose);
-
 // NULL-safe wrapper around strcmp().
 extern bool string_eq(const char *first, const char *second);
 

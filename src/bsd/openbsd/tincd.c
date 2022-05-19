@@ -21,12 +21,6 @@ static bool chrooted(void) {
 	return !(confbase && *confbase);
 }
 
-static void create_conf_subdir(const char *name, mode_t mode) {
-	char path[PATH_MAX];
-	snprintf(path, sizeof(path), "%s/%s", confbase, name);
-	mkdir(path, mode);
-}
-
 static void open_conf_subdir(const char *name, const char *privs) {
 	char path[PATH_MAX];
 	snprintf(path, sizeof(path), "%s/%s", confbase, name);
@@ -36,13 +30,6 @@ static void open_conf_subdir(const char *name, const char *privs) {
 static void open_common_paths(bool can_exec) {
 	// Dummy device uses a fake path, skip it
 	const char *dev = strcasecmp(device, DEVICE_DUMMY) ? device : NULL;
-
-	// These calls must be done before the first unveil() for two reasons:
-	//   1. the first unveil() blocks access to all other paths.
-	//   2. unveil() remembers the exact directory and won't allow access if it's (re)created.
-	create_conf_subdir("cache", 0777);
-	create_conf_subdir("hosts", 0777);
-	create_conf_subdir("invitations", 0700);
 
 	const unveil_path_t paths[] = {
 		{"/dev/random",  "r"},

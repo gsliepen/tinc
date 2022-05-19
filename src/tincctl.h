@@ -44,14 +44,6 @@ typedef struct {
 	int type;
 } var_t;
 
-typedef enum {
-	DIR_CACHE       = 1 << 0,
-	DIR_CONFBASE    = 1 << 1,
-	DIR_CONFDIR     = 1 << 2,
-	DIR_HOSTS       = 1 << 3,
-	DIR_INVITATIONS = 1 << 4,
-} tincd_dir_t;
-
 extern const var_t variables[];
 
 extern size_t rstrip(char *value);
@@ -60,6 +52,5 @@ extern bool connect_tincd(bool verbose);
 extern bool sendline(int fd, const char *format, ...) ATTR_FORMAT(printf, 2, 3);
 extern bool recvline(int fd, char *line, size_t len);
 extern int check_port(const char *name);
-extern bool makedirs(tincd_dir_t dirs);
 
 #endif

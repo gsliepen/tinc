@@ -53,6 +53,9 @@ tests = {
   'utils': {
     'code': 'test_utils.c',
   },
+  'fs': {
+    'code': 'test_fs.c',
+  },
   'xalloc': {
     'code': 'test_xalloc.c',
   },

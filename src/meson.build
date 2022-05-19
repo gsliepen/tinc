@@ -119,6 +119,7 @@ src_lib_common = [
   'conf.c',
   'console.c',
   'dropin.c',
+  'fs.c',
   'keys.c',
   'list.c',
   'logger.c',
