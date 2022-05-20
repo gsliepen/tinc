@@ -671,17 +671,10 @@ void setup_outgoing_connection(outgoing_t *outgoing, bool verbose) {
 		n->address_cache = open_address_cache(n);
 	}
 
-	if(!n->connection) {
-		do_outgoing_connection(outgoing);
-		return;
-	}
-
-	logger(DEBUG_CONNECTIONS, LOG_INFO, "Already connected to %s", n->name);
-
-	if(n->connection->outgoing) {
-		list_delete(&outgoing_list, outgoing);
+	if(n->connection) {
+		logger(DEBUG_CONNECTIONS, LOG_INFO, "Already connected to %s", n->name);
 	} else {
-		n->connection->outgoing = outgoing;
+		do_outgoing_connection(outgoing);
 	}
 }
 
