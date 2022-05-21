@@ -79,7 +79,8 @@ deps_linux_rhel() {
 
     if type dnf; then
       dnf install -y 'dnf-command(config-manager)'
-      dnf config-manager --enable powertools
+      dnf config-manager --enable powertools || true
+      dnf config-manager --enable crb || true
     fi
   fi
 
@@ -140,9 +141,16 @@ deps_linux() {
     deps_linux_debian "$@"
     ;;
 
-  centos | almalinux | fedora)
+  fedora)
     deps_linux_rhel "$@"
-    linux_openssl3
+    ;;
+
+  centos | almalinux)
+    deps_linux_rhel "$@"
+
+    if [ "${PLATFORM_ID:-}" != platform:el9 ]; then
+      linux_openssl3
+    fi
     ;;
 
   *) exit 1 ;;

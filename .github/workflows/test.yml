@@ -150,8 +150,10 @@ jobs:
       matrix:
         os:
           - alpine
+          - alpine:edge
           - centos:7 # aka RHEL 7
           - almalinux:8 # aka RHEL 8
+          - almalinux:9 # aka RHEL 9
           - fedora
           - debian:buster
           - debian:bullseye
