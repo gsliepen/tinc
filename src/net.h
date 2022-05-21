@@ -28,7 +28,7 @@
 #include "digest.h"
 #include "event.h"
 
-#define EPOLL_MAX_EVENTS_PER_LOOP 32
+#define MAX_EVENTS_PER_LOOP 32
 
 #ifdef ENABLE_JUMBOGRAMS
 #define MTU 9018        /* 9000 bytes payload + 14 bytes ethernet header + 4 bytes VLAN tag */

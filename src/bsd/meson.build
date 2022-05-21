@@ -6,6 +6,11 @@ check_headers += [
   'net/tun/if_tun.h',
 ]
 
+# macOS apparently doesn't support kqueue with TAP devices
+if os_name != 'darwin'
+  check_headers += 'sys/event.h'
+endif
+
 check_functions += [
   'devname',
   'fdevname',
