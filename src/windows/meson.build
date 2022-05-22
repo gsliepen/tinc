@@ -15,5 +15,9 @@ foreach libname : win_common_libs
 endforeach
 
 src_lib_common += files('random.c')
-src_tincd += files('device.c')
+
+src_tincd += files(
+  'device.c',
+  'event.c',
+)
 

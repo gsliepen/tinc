@@ -174,6 +174,12 @@ src_tincd = [
   'subnet.c',
 ]
 
+src_event_select = files('event_select.c')
+
+if os_name != 'windows'
+  src_tincd += 'signal.c'
+endif
+
 cc_flags_tinc = cc_flags
 cc_flags_tincd = cc_flags
 

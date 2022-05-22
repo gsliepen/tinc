@@ -56,6 +56,9 @@ typedef struct signal_t {
 
 extern struct timeval now;
 
+extern splay_tree_t io_tree;
+extern splay_tree_t timeout_tree;
+
 extern void io_add(io_t *io, io_cb_t cb, void *data, int fd, int flags);
 #ifdef HAVE_WINDOWS
 extern void io_add_event(io_t *io, io_cb_t cb, void *data, WSAEVENT event);
@@ -66,6 +69,7 @@ extern void io_set(io_t *io, int flags);
 extern void timeout_add(timeout_t *timeout, timeout_cb_t cb, void *data, const struct timeval *tv);
 extern void timeout_del(timeout_t *timeout);
 extern void timeout_set(timeout_t *timeout, const struct timeval *tv);
+extern struct timeval *timeout_execute(struct timeval *diff);
 
 extern void signal_add(signal_t *sig, signal_cb_t cb, void *data, int signum);
 extern void signal_del(signal_t *sig);

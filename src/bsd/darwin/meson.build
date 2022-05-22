@@ -7,3 +7,6 @@ if dep_tunemu.found() and dep_pcap.found()
   cdata.set('ENABLE_TUNEMU', 1)
 endif
 
+# macOS apparently doesn't support kqueue with TAP devices
+src_tincd += src_event_select
+

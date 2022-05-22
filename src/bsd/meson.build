@@ -6,17 +6,16 @@ check_headers += [
   'net/tun/if_tun.h',
 ]
 
-# macOS apparently doesn't support kqueue with TAP devices
-if os_name != 'darwin'
-  check_headers += 'sys/event.h'
-endif
-
 check_functions += [
   'devname',
   'fdevname',
 ]
 
 src_tincd += files('device.c')
+
+if os_name != 'darwin'
+  src_tincd += files('event.c')
+endif
 
 if os_name in ['openbsd', 'darwin']
   subdir(os_name)
