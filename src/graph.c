@@ -115,11 +115,13 @@ static void mst_kruskal(void) {
 	}
 }
 
+// Not putting it into header, the outside world doesn't need to know about it.
+extern void sssp_bfs(void);
+
 /* Implementation of a simple breadth-first search algorithm.
    Running time: O(E)
 */
-
-static void sssp_bfs(void) {
+void sssp_bfs(void) {
 	list_t *todo_list = list_alloc(NULL);
 
 	/* Clear visited status on nodes */
@@ -181,7 +183,7 @@ static void sssp_bfs(void) {
 
 			// Only update nexthop if it doesn't increase the path length
 
-			if(!e->to->status.visited || (e->to->distance == n->distance + 1 && e->weight >= e->to->prevedge->weight)) {
+			if(!e->to->status.visited || (e->to->distance == n->distance + 1 && e->weight < e->to->prevedge->weight)) {
 				e->to->nexthop = (n->nexthop == myself) ? e->to : n->nexthop;
 			}
 

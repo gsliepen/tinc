@@ -31,6 +31,9 @@ tests = {
     'code': 'test_random_noinit.c',
     'fail': true,
   },
+  'graph': {
+    'code': 'test_graph.c',
+  },
   'netutl': {
     'code': 'test_netutl.c',
   },
