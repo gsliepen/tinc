@@ -61,7 +61,8 @@ jobs:
       - name: Install tools
         run: |
           sudo apt-get install -y astyle clang-tidy-$CLANG
-          sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-$CLANG 100
+          sudo update-alternatives --install /usr/bin/clang-tidy     clang-tidy     /usr/bin/clang-tidy-$CLANG     100
+          sudo update-alternatives --install /usr/bin/run-clang-tidy run-clang-tidy /usr/bin/run-clang-tidy-$CLANG 100
           curl -OL "https://github.com/koalaman/shellcheck/releases/download/v$SHELLCHECK/shellcheck-v${SHELLCHECK}.linux.x86_64.tar.xz"
           tar -C ~ --strip-components=1 --wildcards -xf ./shellcheck-*.tar.xz 'shellcheck-*/shellcheck'
           curl -o ~/shfmt -L "https://github.com/mvdan/sh/releases/download/v$SHFMT/shfmt_v${SHFMT}_linux_amd64"
@@ -83,20 +84,16 @@ jobs:
           PATH=$PATH:$HOME ./lint.py
         if: always()
 
-      - name: Run clang-tidy
-        run: sh .ci/tidy/run.sh
+      - name: Check warnings (clang)
+        run: bash .ci/warn/run.sh
+        env:
+          CC: clang-12
         if: always()
 
       - name: Check warnings (gcc)
         run: bash .ci/warn/run.sh
         env:
           CC: gcc-10
-        if: always()
-
-      - name: Check warnings (clang)
-        run: bash .ci/warn/run.sh
-        env:
-          CC: clang-12
         if: always()
 
   sanitizer:
