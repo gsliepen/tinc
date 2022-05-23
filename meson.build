@@ -165,3 +165,11 @@ run_target('lint', command: [
   python,
   '@SOURCE_ROOT@/lint.py',
 ])
+
+if meson_version.version_compare('>=0.53')
+  summary({
+    'prefix': prefix,
+    'sandbox': cdata.has('HAVE_SANDBOX'),
+    'watchdog': cdata.has('HAVE_WATCHDOG'),
+  }, bool_yn: true, section: 'System')
+endif

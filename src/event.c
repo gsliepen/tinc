@@ -245,7 +245,7 @@ void io_del(io_t *io) {
 	io->cb = NULL;
 }
 
-void timeout_add(timeout_t *timeout, timeout_cb_t cb, void *data, struct timeval *tv) {
+void timeout_add(timeout_t *timeout, timeout_cb_t cb, void *data, const struct timeval *tv) {
 	timeout->cb = cb;
 	timeout->data = data;
 	timeout->node.data = timeout;
@@ -253,7 +253,7 @@ void timeout_add(timeout_t *timeout, timeout_cb_t cb, void *data, struct timeval
 	timeout_set(timeout, tv);
 }
 
-void timeout_set(timeout_t *timeout, struct timeval *tv) {
+void timeout_set(timeout_t *timeout, const struct timeval *tv) {
 	if(timerisset(&timeout->tv)) {
 		splay_unlink_node(&timeout_tree, &timeout->node);
 	}

@@ -35,6 +35,7 @@
 #include "protocol.h"
 #include "subnet.h"
 #include "utils.h"
+#include "watchdog.h"
 
 int contradicting_add_edge = 0;
 int contradicting_del_edge = 0;
@@ -195,6 +196,9 @@ static void timeout_handler(void *data) {
 	         by default
 	*/
 	if(sleep_time > 2 * udp_discovery_timeout) {
+#ifdef HAVE_WATCHDOG
+		watchdog_ping();
+#endif
 		logger(DEBUG_ALWAYS, LOG_ERR, "Awaking from dead after %ld seconds of sleep", sleep_time);
 		/*
 		        Do not send any packets to tinc after we wake up.

@@ -56,6 +56,7 @@
 #include "version.h"
 #include "random.h"
 #include "sandbox.h"
+#include "watchdog.h"
 
 /* If nonzero, display usage information and exit. */
 static bool show_help = false;
@@ -694,7 +695,15 @@ int main2(int argc, char **argv) {
 
 	try_outgoing_connections();
 
+#ifdef HAVE_WATCHDOG
+	watchdog_start();
+#endif
+
 	status = main_loop();
+
+#ifdef HAVE_WATCHDOG
+	watchdog_stop();
+#endif
 
 	/* Shutdown properly. */
 

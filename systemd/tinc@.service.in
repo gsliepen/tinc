@@ -7,7 +7,7 @@ PartOf=tinc.service
 ReloadPropagatedFrom=tinc.service
 
 [Service]
-Type=simple
+Type=notify
 WorkingDirectory=@sysconfdir@/tinc/%i
 ExecStart=@sbindir@/tincd -n %i -D
 ExecReload=@sbindir@/tinc -n %i reload
@@ -15,6 +15,7 @@ KillMode=mixed
 Restart=on-failure
 RestartSec=5
 TimeoutStopSec=5
+WatchdogSec=10
 
 [Install]
 WantedBy=tinc.service
