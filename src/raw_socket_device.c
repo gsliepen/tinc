@@ -34,8 +34,8 @@
 static const char *device_info = "raw_socket";
 
 static bool setup_device(void) {
-	struct ifreq ifr;
-	struct sockaddr_ll sa;
+	struct ifreq ifr = {0};
+	struct sockaddr_ll sa = {0};
 
 	if(!get_config_string(lookup_config(&config_tree, "Interface"), &iface)) {
 		iface = xstrdup("eth0");
@@ -51,8 +51,6 @@ static bool setup_device(void) {
 		return false;
 	}
 
-	memset(&ifr, 0, sizeof(ifr));
-
 #ifdef FD_CLOEXEC
 	fcntl(device_fd, F_SETFD, FD_CLOEXEC);
 #endif
@@ -67,7 +65,6 @@ static bool setup_device(void) {
 		return false;
 	}
 
-	memset(&sa, '0', sizeof(sa));
 	sa.sll_family = AF_PACKET;
 	sa.sll_protocol = htons(ETH_P_ALL);
 	sa.sll_ifindex = ifr.ifr_ifindex;

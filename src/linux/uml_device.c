@@ -196,8 +196,6 @@ static void close_device(void) {
 }
 
 static bool read_packet(vpn_packet_t *packet) {
-	ssize_t inlen;
-
 	switch(state) {
 	case 0: {
 		struct sockaddr sa;
@@ -229,7 +227,7 @@ static bool read_packet(vpn_packet_t *packet) {
 	}
 
 	case 1: {
-		if((inlen = read(request_fd, &request, sizeof(request))) != sizeof(request)) {
+		if(read(request_fd, &request, sizeof(request)) != sizeof(request)) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading request from %s %s: %s", device_info,
 			       device, strerror(errno));
 			event_exit();
@@ -264,7 +262,9 @@ static bool read_packet(vpn_packet_t *packet) {
 	}
 
 	case 2: {
-		if((inlen = read(data_fd, DATA(packet), MTU)) <= 0) {
+		ssize_t inlen = read(data_fd, DATA(packet), MTU);
+
+		if(inlen <= 0) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
 			       device, strerror(errno));
 			event_exit();

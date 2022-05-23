@@ -1,3 +1,3 @@
-Checks: '-*,bugprone-narrowing-conversions'
-HeaderFilterRegex: '.*'
-WarningsAsErrors: '*'
+Checks: "-*,performance-*,modernize-*,misc-*,-misc-no-recursion,bugprone-*,-bugprone-macro-parentheses,-bugprone-easily-swappable-parameters,-bugprone-reserved-identifier,-bugprone-suspicious-string-compare,-bugprone-implicit-widening-of-multiplication-result,-bugprone-not-null-terminated-result,-bugprone-branch-clone,-bugprone-sizeof-expression,clang-analyzer-*,-clang-analyzer-security.insecureAPI.*,-clang-analyzer-core.UndefinedBinaryOperatorResult"
+HeaderFilterRegex: ".*"
+WarningsAsErrors: "*"

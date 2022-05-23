@@ -185,6 +185,7 @@ static bool parse_options(int argc, char **argv) {
 			goto exit_fail;
 
 		case OPT_CONFIG_FILE:
+			assert(optarg);
 			free(confbase);
 			confbase = get_path_arg(optarg);
 			break;
@@ -216,6 +217,7 @@ static bool parse_options(int argc, char **argv) {
 			break;
 
 		case OPT_NETNAME:
+			assert(optarg);
 			free(netname);
 			netname = xstrdup(optarg);
 			break;
@@ -280,6 +282,7 @@ static bool parse_options(int argc, char **argv) {
 			break;
 
 		case OPT_PIDFILE:
+			assert(optarg);
 			free(pidfilename);
 			pidfilename = get_path_arg(optarg);
 			break;

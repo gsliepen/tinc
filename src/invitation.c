@@ -673,7 +673,7 @@ static char *get_value(const char *data, const char *var) {
 }
 
 static char *grep(const char *data, const char *var) {
-	static char value[1024];
+	char value[1024];
 
 	const char *p = data;
 	size_t varlen = strlen(var);
@@ -713,7 +713,7 @@ static char *grep(const char *data, const char *var) {
 
 	memcpy(value, p, e - p);
 	value[e - p] = 0;
-	return value;
+	return xstrdup(value);
 }
 
 static bool finalize_join(void) {
@@ -730,10 +730,10 @@ static bool finalize_join(void) {
 	}
 
 	if(!netname) {
-		const char *net = grep(data, "NetName");
+		char *net = grep(data, "NetName");
 
 		if(net) {
-			netname = xstrdup(net);
+			netname = net;
 
 			if(!check_netname(netname, true)) {
 				fprintf(stderr, "Unsafe NetName found in invitation!\n");

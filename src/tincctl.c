@@ -1519,7 +1519,10 @@ static int cmd_pcap(int argc, char *argv[]) {
 static void sigint_handler(int sig) {
 	(void)sig;
 
-	fprintf(stderr, "\n");
+	if(write(2, "\n", 1) < 0) {
+		// nothing we can do
+	}
+
 	shutdown(fd, SHUT_RDWR);
 }
 #endif
@@ -1931,16 +1934,18 @@ static int cmd_config(int argc, char *argv[]) {
 	char filename[PATH_MAX];
 
 	if(node) {
-		if((size_t)snprintf(filename, sizeof(filename), "%s" SLASH "%s", hosts_dir, node) >= sizeof(filename)) {
-			fprintf(stderr, "Filename too long: %s" SLASH "%s\n", hosts_dir, node);
-			free(node);
-			return 1;
-		}
+		size_t wrote = (size_t)snprintf(filename, sizeof(filename), "%s" SLASH "%s", hosts_dir, node);
 
 		if(node != line) {
 			free(node);
 			node = NULL;
 		}
+
+		if(wrote >= sizeof(filename)) {
+			fprintf(stderr, "Filename too long: %s" SLASH "%s\n", hosts_dir, node);
+			return 1;
+		}
+
 	} else {
 		snprintf(filename, sizeof(filename), "%s", tinc_conf);
 	}

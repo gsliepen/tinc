@@ -142,6 +142,11 @@ static void check_conffile(const char *nodename, bool server) {
 		++total_vars;
 	}
 
+	if(!total_vars) {
+		splay_empty_tree(&config);
+		return;
+	}
+
 	const size_t countlen = total_vars * sizeof(int);
 	int *count = alloca(countlen);
 	memset(count, 0, countlen);
