@@ -52,6 +52,13 @@ def in_range(value: Num, gte: Num, lte: Num) -> None:
         raise ValueError(f"value {value} must be between {gte} and {lte}")
 
 
+def lines(text: T.AnyStr, num: int) -> None:
+    """Check that text splits into `num` lines."""
+    rows = text.splitlines()
+    if len(rows) != num:
+        raise ValueError(f"expected {num} lines, got {len(rows)}: {rows}")
+
+
 def is_in(needle: Val, *haystacks: T.Container[Val]) -> None:
     """Check that at least one haystack includes needle."""
     for haystack in haystacks:
