@@ -24,7 +24,7 @@ run_tests() {
     sudo pkill -KILL -x "$name" || true
   done
 
-  sudo chown -R "${USER:-$(whoami)}" .
+  sudo chown -R "${USER:-$(whoami)}" . || true
 
   mkdir -p sanitizer /tmp/logs
 
