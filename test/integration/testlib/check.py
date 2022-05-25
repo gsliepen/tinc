@@ -10,6 +10,12 @@ Val = T.TypeVar("Val")
 Num = T.TypeVar("Num", int, float)
 
 
+def blank(value: T.AnyStr) -> None:
+    """Check that value is an empty or blank string."""
+    if not isinstance(value, str) or value.strip():
+        raise ValueError(f'expected "{value!r}" to be a blank string')
+
+
 def false(value: T.Any) -> None:
     """Check that value is falsy."""
     if value:

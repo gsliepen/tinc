@@ -2,6 +2,7 @@ tests = [
   'basic.py',
   'cmd_dump.py',
   'cmd_fsck.py',
+  'cmd_misc.py',
   'cmd_net.py',
   'cmd_sign_verify.py',
   'commandline.py',
