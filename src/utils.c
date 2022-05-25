@@ -138,7 +138,7 @@ size_t b64decode_tinc(const char *src, void *dst, size_t length) {
 	unsigned char *udst = (unsigned char *)dst;
 
 	for(i = 0; i < length && src[i]; i++) {
-		triplet |= base64_decode[src[i] & 0xff] << (6 * (i & 3));
+		triplet |= (uint32_t)(base64_decode[src[i] & 0xff] << (6 * (i & 3)));
 
 		if((i & 3) == 3) {
 			if(triplet & 0xff000000U) {
