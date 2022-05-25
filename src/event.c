@@ -60,11 +60,14 @@ static int timeout_compare(const timeout_t *a, const timeout_t *b) {
 		return 1;
 	}
 
-	if(a < b) {
+	uintptr_t ap = (uintptr_t)a;
+	uintptr_t bp = (uintptr_t)b;
+
+	if(ap < bp) {
 		return -1;
 	}
 
-	if(a > b) {
+	if(ap > bp) {
 		return 1;
 	}
 
