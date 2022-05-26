@@ -150,6 +150,11 @@ class Tinc:
         return os.path.join(self._work_dir, *paths)
 
     @property
+    def work_dir(self):
+        """Node's working directory."""
+        return self._work_dir
+
+    @property
     def script_up(self) -> str:
         """Name of the hosts/XXX-up script for this node."""
         return f"hosts/{self.name}-up"

@@ -333,6 +333,11 @@ int cmd_invite(int argc, char *argv[]) {
 		return 1;
 	}
 
+	if(argc > 2) {
+		fprintf(stderr, "Too many arguments!\n");
+		return 1;
+	}
+
 	// Check validity of the new node's name
 	if(!check_id(argv[1])) {
 		fprintf(stderr, "Invalid name for node.\n");
@@ -1243,7 +1248,7 @@ int cmd_join(int argc, char *argv[]) {
 
 		if(!fgets(line, sizeof(line), stdin)) {
 			fprintf(stderr, "Error while reading stdin: %s\n", strerror(errno));
-			return false;
+			return 1;
 		}
 
 		invitation = line;

@@ -2,6 +2,7 @@ tests = [
   'basic.py',
   'cmd_dump.py',
   'cmd_fsck.py',
+  'cmd_join.py',
   'cmd_keys.py',
   'cmd_misc.py',
   'cmd_net.py',
