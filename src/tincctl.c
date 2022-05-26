@@ -2545,7 +2545,7 @@ static int cmd_export_all(int argc, char *argv[]) {
 		if(first) {
 			first = false;
 		} else {
-			printf("#---------------------------------------------------------------#\n");
+			printf("\n#---------------------------------------------------------------#\n");
 		}
 
 		result |= export(ent->d_name, stdout);
