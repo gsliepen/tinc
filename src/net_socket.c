@@ -689,32 +689,12 @@ remove:
 	list_delete(&outgoing_list, outgoing);
 }
 
-/*
-  accept a new tcp connect and create a
-  new connection
-*/
-void handle_new_meta_connection(void *data, int flags) {
-	(void)flags;
-	listen_socket_t *l = data;
-	connection_t *c;
-	sockaddr_t sa;
-	int fd;
-	socklen_t len = sizeof(sa);
-
-	fd = accept(l->tcp.fd, &sa.sa, &len);
-
-	if(fd < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Accepting a new connection failed: %s", sockstrerror(sockerrno));
-		return;
-	}
-
-	sockaddrunmap(&sa);
-
+static bool check_tarpit(const sockaddr_t *sa, int fd) {
 	// Check if we get many connections from the same host
 
 	static sockaddr_t prev_sa;
 
-	if(!sockaddrcmp_noport(&sa, &prev_sa)) {
+	if(!sockaddrcmp_noport(sa, &prev_sa)) {
 		static time_t samehost_burst;
 		static time_t samehost_burst_time;
 
@@ -729,7 +709,7 @@ void handle_new_meta_connection(void *data, int flags) {
 
 		if(samehost_burst > max_connection_burst) {
 			tarpit(fd);
-			return;
+			return true;
 		}
 	}
 
@@ -752,6 +732,34 @@ void handle_new_meta_connection(void *data, int flags) {
 	if(connection_burst >= max_connection_burst) {
 		connection_burst = max_connection_burst;
 		tarpit(fd);
+		return true;
+	}
+
+	return false;
+}
+
+/*
+  accept a new tcp connect and create a
+  new connection
+*/
+void handle_new_meta_connection(void *data, int flags) {
+	(void)flags;
+	listen_socket_t *l = data;
+	connection_t *c;
+	sockaddr_t sa;
+	int fd;
+	socklen_t len = sizeof(sa);
+
+	fd = accept(l->tcp.fd, &sa.sa, &len);
+
+	if(fd < 0) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Accepting a new connection failed: %s", sockstrerror(sockerrno));
+		return;
+	}
+
+	sockaddrunmap(&sa);
+
+	if(!is_local_connection(&sa) && check_tarpit(&sa, fd)) {
 		return;
 	}
 

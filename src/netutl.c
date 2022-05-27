@@ -301,6 +301,23 @@ void sockaddr_setport(sockaddr_t *sa, const char *port) {
 	}
 }
 
+bool is_local_connection(const sockaddr_t *sa) {
+	switch(sa->sa.sa_family) {
+	case AF_INET:
+		// 127.0.0.0/8
+		return ntohl(sa->in.sin_addr.s_addr) >> 24 == 127;
+
+	case AF_INET6:
+		return IN6_IS_ADDR_LOOPBACK(&sa->in6.sin6_addr);
+
+	case AF_UNIX:
+		return true;
+
+	default:
+		return false;
+	}
+}
+
 uint16_t get_bound_port(int sockfd) {
 	sockaddr_t sa;
 	socklen_t salen = sizeof(sa);

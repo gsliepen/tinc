@@ -38,5 +38,6 @@ extern void sockaddrfree(sockaddr_t *sa);
 extern void sockaddrcpy(sockaddr_t *dest, const sockaddr_t *src);
 extern void sockaddr_setport(sockaddr_t *sa, const char *port);
 extern uint16_t get_bound_port(int sockfd);
+extern bool is_local_connection(const sockaddr_t *sa);
 
 #endif
