@@ -1,6 +1,7 @@
 tests = [
   'basic.py',
-  'command_fsck.py',
+  'cmd_fsck.py',
+  'cmd_sign_verify.py',
   'commandline.py',
   'executables.py',
   'import_export.py',
