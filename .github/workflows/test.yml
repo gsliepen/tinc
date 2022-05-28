@@ -55,6 +55,24 @@ jobs:
           path: /tmp/logs/tests.*.tar.gz
         if: always()
 
+  muon:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    container:
+      image: debian:bullseye-slim
+      env:
+        CI: 1
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v1
+
+      - name: Install dependencies
+        run: SKIP_OPENSSL3=1 SKIP_MESON=1 .ci/deps.sh libpkgconf-dev
+
+      - name: Compatibility with muon
+        run: ./.ci/muon/run.sh
+
   analysis:
     runs-on: ubuntu-22.04
     timeout-minutes: 30

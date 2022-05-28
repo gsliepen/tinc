@@ -2,12 +2,19 @@
 
 set -eu
 
+SKIP_OPENSSL3="${SKIP_OPENSSL3:-}"
+SKIP_MESON="${SKIP_MESON:-}"
+
 deps_linux_alpine() {
   apk upgrade
 
   apk add \
-    git binutils meson pkgconf gcc linux-headers shadow sudo libgcrypt-dev texinfo gzip \
+    git binutils ninja pkgconf gcc linux-headers shadow sudo libgcrypt-dev texinfo gzip \
     openssl-dev zlib-dev lzo-dev ncurses-dev readline-dev musl-dev lz4-dev vde2-dev cmocka-dev
+
+  if [ -z "$SKIP_MESON" ]; then
+    apk add meson
+  fi
 }
 
 deps_linux_debian_mingw() {
@@ -51,13 +58,17 @@ deps_linux_debian() {
 
   apt-get update
   apt-get upgrade -y
-  apt-get install -y git pkgconf sudo texinfo
+  apt-get install -y git pkgconf sudo texinfo ninja-build
 
   HOST=${HOST:-}
   if [ "$HOST" = mingw ]; then
     deps_linux_debian_mingw "$@"
   else
     deps_linux_debian_linux "$@"
+  fi
+
+  if [ -n "$SKIP_MESON" ]; then
+    return
   fi
 
   . /etc/os-release
@@ -87,8 +98,12 @@ deps_linux_rhel() {
   fi
 
   yum install -y \
-    git binutils make meson pkgconf gcc sudo texinfo-tex systemd perl-IPC-Cmd \
+    git binutils make ninja-build pkgconf gcc sudo texinfo-tex systemd perl-IPC-Cmd \
     lzo-devel zlib-devel lz4-devel ncurses-devel readline-devel libgcrypt-devel "$@"
+
+  if [ -z "$SKIP_MESON" ]; then
+    yum install -y meson
+  fi
 
   if yum info openssl11-devel; then
     yum install -y openssl11-devel
@@ -102,7 +117,7 @@ deps_linux_rhel() {
 }
 
 linux_openssl3() {
-  if [ -n "${SKIP_OPENSSL3:-}" ]; then
+  if [ -n "$SKIP_OPENSSL3" ]; then
     echo >&2 "skipping openssl3 installation in this job"
     return
   fi
@@ -158,7 +173,11 @@ deps_linux() {
 }
 
 deps_macos() {
-  brew install lzo lz4 miniupnpc libgcrypt openssl meson "$@"
+  brew install lzo lz4 miniupnpc libgcrypt openssl "$@"
+
+  if [ -z "$SKIP_MESON" ]; then
+    brew install meson
+  fi
 }
 
 case "$(uname -s)" in
