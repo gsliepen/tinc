@@ -2,26 +2,30 @@
 
 ## Required
 
-Before you can start compiling tinc from a fresh git clone, you have
-to install the very latest versions of the following packages:
+Before you can start compiling tinc from a fresh git clone, you have to install
+the very latest versions of the following packages:
 
 - `meson` or `muon` (read below)
 - `ninja` or `samurai`
 - `pkgconf` or `pkg-config`
-- `GCC` or `Clang` (any version with C11 support, although older versions might work)
-- `OpenSSL`\* (1.1.0+) or `LibreSSL` or `libgcrypt` (not needed if legacy protocol is disabled)
+- `GCC` or `Clang` (any version with C11 support, although older versions might
+  work)
+- `OpenSSL`\* (1.1.0+) or `LibreSSL` or `libgcrypt` (not needed if legacy
+  protocol is disabled)
 
 ### No Python?
 
-If you're on a constrained system that doesn't have (or cannot run) Python, you can try building tinc with [muon][muon],
-which is a pure C reimplementation of the same idea.
-Please note that `meson` is considered to be the main way of building tinc, and `muon` is supported on a best-effort basis.
+If you're on a constrained system that doesn't have (or cannot run) Python, you
+can try building tinc with [muon][muon], which is a pure C reimplementation of
+the same idea. Please note that `meson` is considered to be the main way of
+building tinc, and `muon` is supported on a best-effort basis.
 
 [muon]: https://git.sr.ht/~lattis/muon
 
 ## Optional
 
-Plus a few optional dependencies. Support for them will be enabled if they're present:
+Plus a few optional dependencies. Support for them will be enabled if they're
+present:
 
 - `ncurses` or `PDCurses`
 - `readline`
@@ -29,14 +33,16 @@ Plus a few optional dependencies. Support for them will be enabled if they're pr
 - `LZO`\*
 - `LZ4`\*
 
-If packages marked by `*` are not available, tinc will fall back to its own vendored copies.
-This behavior can be disabled by setting the appropriate meson option to `disabled`.
+If packages marked by `*` are not available, tinc will fall back to its own
+vendored copies. This behavior can be disabled by setting the appropriate meson
+option to `disabled`.
 
 To build `info` documentation you'll also need these packages:
 
 - `texinfo` or `makeinfo`
 
-You might also need some additional command-line utilities to be able to run the integration test suite:
+You might also need some additional command-line utilities to be able to run the
+integration test suite:
 
 - `diffutils`
 - `procps`
@@ -47,15 +53,15 @@ Please consult your operating system's documentation for more details.
 
 ## Windows
 
-You can build tinc using either the native [Windows SDK][sdk-ms] (which comes with Visual Studio),
-or with the Unix-like [msys2 environment][sdk-msys2]. Install either one of them, plus
-the latest version of [meson][meson-release].
+You can build tinc using either the native [Windows SDK][sdk-ms] (which comes
+with Visual Studio), or with the Unix-like [msys2 environment][sdk-msys2].
+Install either one of them, plus the latest version of [meson][meson-release].
 
-If you prefer the native SDK, you might want to work on tinc (or build it) under Visual Studio.
-To do so, follow [these instructions][meson-vs].
+If you prefer the native SDK, you might want to work on tinc (or build it) under
+Visual Studio. To do so, follow [these instructions][meson-vs].
 
-By default, tinc produces a static Windows build, so you don't need to install anything
-in order to _run_ the compiled binaries.
+By default, tinc produces a static Windows build, so you don't need to install
+anything in order to _run_ the compiled binaries.
 
 [sdk-ms]: https://visualstudio.com/
 [sdk-msys2]: https://msys2.org/
@@ -68,37 +74,52 @@ in order to _run_ the compiled binaries.
 
 ### Setup
 
-Tinc's functionality can vary greatly depending on how you configure it.
-Have a look at the available options in [`meson_options.txt`](meson_options.txt), or run:
+Tinc's functionality can vary greatly depending on how you configure it. Have a
+look at the available options in [`meson_options.txt`](meson_options.txt), or
+run:
 
-    $ meson configure
+```sh
+meson configure
+```
 
-First you need to create a build directory. If you want the default experience, run:
+First you need to create a build directory. If you want the default experience,
+run:
 
-    $ meson setup builddir
+```sh
+meson setup builddir
+```
 
-or with configuration options (your shell can probably autocomplete them on `Tab`, try it):
+or with configuration options (your shell can probably autocomplete them on
+`Tab`, try it):
 
-    $ meson setup builddir -Dprefix=/usr/local -Dbuildtype=release
+```sh
+meson setup builddir -Dprefix=/usr/local -Dbuildtype=release
+```
 
-(For autotools users: this is a rough equivalent of `autoreconf -fsi && ./configure --prefix=/usr/local --with-foobar`).
+(For autotools users: this is a rough equivalent of
+`autoreconf -fsi && ./configure --prefix=/usr/local --with-foobar`).
 
-This creates a build directory (named `builddir`) with build type set to `release`
-(which enables compiler optimizations) and path prefix set to `/usr/local`.
+This creates a build directory (named `builddir`) with build type set to
+`release` (which enables compiler optimizations) and path prefix set to
+`/usr/local`.
 
-Pass any additional options in the same way. Typically, this is not needed: tinc will
-autodetect available libraries and adjust its functionality accordingly.
+Pass any additional options in the same way. Typically, this is not needed: tinc
+will autodetect available libraries and adjust its functionality accordingly.
 
-If you'd like to reconfigure the project after running `setup`, you can either remove
-the build directory and start anew, or use:
+If you'd like to reconfigure the project after running `setup`, you can either
+remove the build directory and start anew, or use:
 
-    $ meson configure builddir -Dlzo=disabled -Dlz4=enabled
+```sh
+meson configure builddir -Dlzo=disabled -Dlz4=enabled
+```
 
 ### Compile
 
 You then need to build the project:
 
-    $ meson compile -C builddir
+```sh
+meson compile -C builddir
+```
 
 (For autotools users: this is an equivalent of `make -j$(nproc)`).
 
@@ -106,7 +127,9 @@ You then need to build the project:
 
 You might want to run the test suite to ensure tinc is working correctly:
 
-    $ meson test -C builddir
+```sh
+meson test -C builddir
+```
 
 (For autotools users: this is an equivalent of `make -j$(nproc) test`).
 
@@ -114,20 +137,24 @@ You might want to run the test suite to ensure tinc is working correctly:
 
 To install tinc to your system, run:
 
-    $ meson install -C builddir
+```sh
+meson install -C builddir
+```
 
 (For autotools users: this is an equivalent of `make install`).
 
-Please be aware that this is not the best method of installing software
-because it will not be tracked by your operating system's package manager. You
-should use packages provided by your operating system, or build your own
-(this is a large and complicated topic which is out of the scope of this document).
+Please be aware that this is not the best method of installing software because
+it will not be tracked by your operating system's package manager. You should
+use packages provided by your operating system, or build your own (this is a
+large and complicated topic which is out of the scope of this document).
 
 ### Uninstall
 
 To uninstall tinc, run:
 
-    # ninja -C builddir uninstall
+```sh
+ninja -C builddir uninstall
+```
 
 (For autotools users: this is an equivalent of `make uninstall`).
 
@@ -135,34 +162,44 @@ To uninstall tinc, run:
 
 ### Linux to Linux
 
-Cross-compilation is easy to do on Debian or its derivatives.
-Set `$HOST` to your target architecture and install the cross-compilation toolchain and `-dev` versions of all libraries you'd like to link:
+Cross-compilation is easy to do on Debian or its derivatives. Set `$HOST` to
+your target architecture and install the cross-compilation toolchain and `-dev`
+versions of all libraries you'd like to link:
 
-    $ HOST=armhf
-    $ dpkg --add-architecture $HOST
-    $ apt update
-    $ apt install -y crossbuild-essential-$HOST zlib1g-dev:$HOST …
+```sh
+HOST=armhf
+dpkg --add-architecture $HOST
+apt update
+apt install -y crossbuild-essential-$HOST zlib1g-dev:$HOST …
+```
 
 If you'd like to run tests on emulated hardware, install `qemu-user`:
 
-    $ apt install -y qemu-user
-    $ update-binfmts --enable
+```sh
+apt install -y qemu-user
+update-binfmts --enable
+```
 
-Set two environment variables: the C compiler, and pkg-config, and then proceed as usual:
+Set two environment variables: the C compiler, and pkg-config, and then proceed
+as usual:
 
-    $ export CC=arm-linux-gnueabihf-gcc
-    $ export PKG_CONFIG=arm-linux-gnueabihf-pkg-config
-    $ meson setup build --cross-file /dev/null
+```sh
+export CC=arm-linux-gnueabihf-gcc
+export PKG_CONFIG=arm-linux-gnueabihf-pkg-config
+meson setup build --cross-file /dev/null
+```
 
-or put the names into a [cross file][cross] and pass it to meson:
+Or put the names into a [cross file][cross] and pass it to meson:
 
-    $ cat >cross-armhf <<EOF
-    [binaries]
-    c = 'arm-linux-gnueabihf-gcc'
-    pkgconfig = 'arm-linux-gnueabihf-pkg-config'
-    EOF
+```sh
+cat >cross-armhf <<EOF
+[binaries]
+c = 'arm-linux-gnueabihf-gcc'
+pkgconfig = 'arm-linux-gnueabihf-pkg-config'
+EOF
 
-    $ meson setup build --cross-file cross-armhf
+meson setup build --cross-file cross-armhf
+```
 
 [cross]: https://mesonbuild.com/Cross-compilation.html
 
@@ -170,20 +207,26 @@ or put the names into a [cross file][cross] and pass it to meson:
 
 Install cross-compilation toolchain:
 
-    $ apt install -y mingw-w64 mingw-w64-tools
+```sh
+apt install -y mingw-w64 mingw-w64-tools
+```
 
-tinc will use its own vendored libraries, so you don't need to install or build anything manually.
+tinc will use its own vendored libraries, so you don't need to install or build
+anything manually.
 
-Prepare the [cross file][cross] to let meson know you're building binaries for a different operating system.
-Take a look at the [file](.ci/cross/windows/amd64) used by CI for an example, or refer to examples provided
-by the meson project: [x86][mingw32], [x86_64][mingw64].
+Prepare the [cross file][cross] to let meson know you're building binaries for a
+different operating system. Take a look at the [file](.ci/cross/windows/amd64)
+used by CI for an example, or refer to examples provided by the meson project:
+[x86][mingw32],[x86_64][mingw64].
 
-Then build as usual. Because Windows binaries are built with static linkage by default,
-you might want to enable link-time optimization. It is much slower than building without LTO,
-but produces binaries that are 80%+ smaller:
+Then build as usual. Because Windows binaries are built with static linkage by
+default, you might want to enable link-time optimization. It is much slower than
+building without LTO, but produces binaries that are 80%+ smaller:
 
-    $ meson setup build -Dbuildtype=release -Db_lto=true --cross-file cross-windows
-    $ ninja -C build
+```sh
+meson setup build -Dbuildtype=release -Db_lto=true --cross-file cross-windows
+ninja -C build
+```
 
 [mingw64]: https://github.com/mesonbuild/meson/blob/master/cross/linux-mingw-w64-64bit.txt
 [mingw32]: https://github.com/mesonbuild/meson/blob/master/cross/linux-mingw-w64-32bit.txt
@@ -209,14 +252,16 @@ c = 'aarch64-linux-android24-clang'
 
 Then build as usual:
 
-    $ export ANDROID_NDK_ROOT=/tmp/ndk/android-ndk-r24
-    $ export PATH=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH
-    $ meson setup android-aarch64 -Dcrypto=nolegacy --cross-file android
-    $ ninja -C android-aarch64
+```sh
+export ANDROID_NDK_ROOT=/tmp/ndk/android-ndk-r24
+export PATH=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH
+meson setup android-aarch64 -Dcrypto=nolegacy --cross-file android
+ninja -C android-aarch64
+```
 
 ### macOS to iOS
 
-The same instructions should work for iOS.
-Refer to this [cross file][ios] for an example.
+The same instructions should work for iOS. Refer to this [cross file][ios] for
+an example.
 
 [ios]: https://github.com/mesonbuild/meson/blob/master/cross/iphone.txt

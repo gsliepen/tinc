@@ -23,7 +23,7 @@ contacted about a potential vulnerability, we will do the following:
 
 Currently we support the 1.0.x and 1.1.x branches of tinc.
 
-| Version | Supported  |
-| ------- | ---------- |
-| 1.1.x   | yes        |
-| 1.0.x   | yes        |
+| Version | Supported |
+|---------|-----------|
+| 1.1.x   | yes       |
+| 1.0.x   | yes       |
