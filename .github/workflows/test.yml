@@ -1,5 +1,9 @@
 name: Test
 
+concurrency:
+  group: test-${{ github.head_ref }}
+  cancel-in-progress: true
+
 on:
   push:
   pull_request:
@@ -9,7 +13,7 @@ on:
 
 jobs:
   cross:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -51,12 +55,21 @@ jobs:
           path: /tmp/logs/tests.*.tar.gz
         if: always()
 
-  static-analysis:
-    runs-on: ubuntu-latest
+  analysis:
+    runs-on: ubuntu-22.04
     timeout-minutes: 30
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v1
+      - name: Checkout tinc
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: sudo SKIP_OPENSSL3=1 .ci/deps.sh autoconf automake iperf3
+
+      - name: Compatibility with older versions of tinc
+        run: sudo ./.ci/compat/run.sh
+        if: always()
 
       - name: Install tools
         run: |
@@ -72,11 +85,9 @@ jobs:
           pip3 install black pylint mypy
         env:
           CLANG: 11
-          SHELLCHECK: 0.7.2
-          SHFMT: 3.3.0
-
-      - name: Install deps
-        run: sudo SKIP_OPENSSL3=1 sh .ci/deps.sh
+          SHELLCHECK: 0.8.0
+          SHFMT: 3.5.0
+        if: always()
 
       - name: Lint/typecheck/check formatting on C/shell/Python code
         run: |
@@ -93,11 +104,23 @@ jobs:
       - name: Check warnings (gcc)
         run: bash .ci/warn/run.sh
         env:
-          CC: gcc-10
+          CC: gcc-11
+        if: always()
+
+      - name: Archive test results
+        run: sudo tar -caf tests.tar.gz /usr/local/etc
+        continue-on-error: true
+        if: always()
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v2
+        with:
+          name: tests_compat
+          path: tests.tar.gz
         if: always()
 
   sanitizer:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -114,7 +137,9 @@ jobs:
         uses: actions/checkout@v1
 
       - name: Install deps
-        run: sudo sh .ci/deps.sh
+        run: |
+          sudo sh .ci/deps.sh
+          sudo pip3 install --upgrade cryptography
 
       - name: Run tests with OpenSSL 3
         run: bash .ci/sanitizers/run.sh openssl3
@@ -140,7 +165,7 @@ jobs:
         if: always()
 
   linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -213,7 +238,7 @@ jobs:
 
   pkg-publish:
     if: always() && (github.ref == 'refs/heads/1.1' || startsWith(github.ref, 'refs/tags/release-'))
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     continue-on-error: true
     needs:
       - linux
@@ -248,7 +273,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
 
   macos:
-    runs-on: macos-latest
+    runs-on: macos-12
     timeout-minutes: 20
 
     steps:

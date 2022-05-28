@@ -74,6 +74,8 @@ deps_linux_debian() {
 }
 
 deps_linux_rhel() {
+  yum upgrade -y
+
   if [ "$ID" != fedora ]; then
     yum install -y epel-release
 
@@ -83,8 +85,6 @@ deps_linux_rhel() {
       dnf config-manager --enable crb || true
     fi
   fi
-
-  yum upgrade -y
 
   yum install -y \
     git binutils make meson pkgconf gcc sudo texinfo-tex systemd perl-IPC-Cmd \
