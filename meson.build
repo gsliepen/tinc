@@ -1,5 +1,5 @@
 project('tinc', 'c',
-  version: run_command([find_program('python3'), 'version.py', 'short'], check: true).stdout(),
+  version: '1.1pre18',
   license: 'GPL-2.0-or-later',
   meson_version: '>=0.51',
   default_options: [
@@ -36,11 +36,15 @@ os_name = host_machine.system()
 cpu_family = host_machine.cpu_family()
 cc_name = cc.get_id()
 
-python = find_program('python3')
-if meson_version.version_compare('>=0.55')
-  python_path = python.full_path()
+python = find_program('python3', required: false)
+if python.found()
+  if meson_version.version_compare('>=0.55')
+    python_path = python.full_path()
+  else
+    python_path = python.path()
+  endif
 else
-  python_path = python.path()
+  python_path = ''
 endif
 
 cc_defs = ['-D_GNU_SOURCE']
@@ -155,16 +159,18 @@ if os_name == 'linux' and not opt_systemd.disabled()
   subdir('systemd')
 endif
 
-run_target('reformat', command: [
-  python,
-  '@SOURCE_ROOT@/lint.py',
-  '--fix',
-])
+if python.found()
+  run_target('reformat', command: [
+    python,
+    '@SOURCE_ROOT@/lint.py',
+    '--fix',
+  ])
 
-run_target('lint', command: [
-  python,
-  '@SOURCE_ROOT@/lint.py',
-])
+  run_target('lint', command: [
+    python,
+    '@SOURCE_ROOT@/lint.py',
+  ])
+endif
 
 if meson_version.version_compare('>=0.53')
   summary({

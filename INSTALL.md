@@ -1,13 +1,25 @@
 # Dependencies
 
+## Required
+
 Before you can start compiling tinc from a fresh git clone, you have
 to install the very latest versions of the following packages:
 
-- `meson`
-- `ninja`
+- `meson` or `muon` (read below)
+- `ninja` or `samurai`
 - `pkgconf` or `pkg-config`
 - `GCC` or `Clang` (any version with C11 support, although older versions might work)
 - `OpenSSL`\* (1.1.0+) or `LibreSSL` or `libgcrypt` (not needed if legacy protocol is disabled)
+
+### No Python?
+
+If you're on a constrained system that doesn't have (or cannot run) Python, you can try building tinc with [muon][muon],
+which is a pure C reimplementation of the same idea.
+Please note that `meson` is considered to be the main way of building tinc, and `muon` is supported on a best-effort basis.
+
+[muon]: https://git.sr.ht/~lattis/muon
+
+## Optional
 
 Plus a few optional dependencies. Support for them will be enabled if they're present:
 
