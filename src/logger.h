@@ -71,6 +71,7 @@ enum {
 #include <stdbool.h>
 
 extern debug_t debug_level;
+extern logmode_t logmode;
 extern bool logcontrol;
 extern int umbilical;
 extern bool umbilical_colorize;

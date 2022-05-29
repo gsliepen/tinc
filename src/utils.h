@@ -77,4 +77,6 @@ char *replace_name(const char *name) ATTR_MALLOC;
 // NULL-safe wrapper around strcmp().
 extern bool string_eq(const char *first, const char *second);
 
+int strtailcmp(const char *str, const char *tail) ATTR_NONNULL;
+
 #endif

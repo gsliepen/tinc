@@ -11,7 +11,7 @@ cdata.set_quoted('SBINDIR', dir_sbin)
 
 cdata.set('HAVE_' + os_name.to_upper(), 1)
 
-foreach attr : ['malloc', 'nonnull', 'warn_unused_result', 'packed', 'format']
+foreach attr : ['malloc', 'nonnull', 'warn_unused_result', 'packed', 'format', 'noreturn']
   if cc.has_function_attribute(attr)
     cdata.set('HAVE_ATTR_' + attr.to_upper(), 1,
               description: '__attribute__((__@0@__))'.format(attr))

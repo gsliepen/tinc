@@ -230,31 +230,32 @@ char *get_name(void) {
 	return returned_name;
 }
 
-static void read_interpreter(void) {
+static void read_script_conf(char **target, const char *name, const char *fallback) {
 	char *interpreter = NULL;
-	get_config_string(lookup_config(&config_tree, "ScriptsInterpreter"), &interpreter);
+	get_config_string(lookup_config(&config_tree, name), &interpreter);
 
-	if(!interpreter || (sandbox_can(START_PROCESSES, AFTER_SANDBOX) && sandbox_can(USE_NEW_PATHS, AFTER_SANDBOX))) {
-		free(scriptinterpreter);
-		scriptinterpreter = interpreter;
+	if(!interpreter || !sandbox_active()) {
+		free(*target);
+		*target = interpreter
+		          ? interpreter
+		          : (fallback ? xstrdup(fallback) : NULL);
 		return;
 	}
 
-	if(!string_eq(interpreter, scriptinterpreter)) {
+	if(!string_eq(interpreter, *target)) {
 		logger(DEBUG_ALWAYS, LOG_NOTICE, "Not changing ScriptsInterpreter because of sandbox.");
 	}
 
 	free(interpreter);
 }
 
+void setup_script_config(void) {
+	read_script_conf(&scriptinterpreter, "ScriptsInterpreter", NULL);
+	read_script_conf(&scriptextension, "ScriptsExtension", "");
+}
+
 bool setup_myself_reloadable(void) {
-	read_interpreter();
-
-	free(scriptextension);
-
-	if(!get_config_string(lookup_config(&config_tree, "ScriptsExtension"), &scriptextension)) {
-		scriptextension = xstrdup("");
-	}
+	setup_script_config();
 
 	char *proxy = NULL;
 
@@ -282,6 +283,7 @@ bool setup_myself_reloadable(void) {
 				proxytype = PROXY_EXEC;
 			} else {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Cannot use exec proxies with current sandbox level.");
+				free_string(proxy);
 				return false;
 			}
 		} else {
