@@ -39,6 +39,7 @@ linters = (
     ["pylint", "."],
     ["mypy", "--exclude", "build", "."],
     ["shellcheck", "-x", *glob(".ci/**/*.sh", recursive=True)],
+    ["markflow", "--line-length", "80", "--check" if DRY else "--verbose", ".", ".ci"],
 )
 
 failed: bool = False

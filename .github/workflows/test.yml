@@ -100,7 +100,7 @@ jobs:
           chmod 755 ~/shfmt ~/shellcheck
           python3 -m venv /tmp/venv
           . /tmp/venv/bin/activate
-          pip3 install black pylint mypy
+          pip3 install black pylint mypy markflow
         env:
           CLANG: 11
           SHELLCHECK: 0.8.0
