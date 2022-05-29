@@ -31,7 +31,7 @@
 #include "console.h"
 
 debug_t debug_level = DEBUG_NOTHING;
-static logmode_t logmode = LOGMODE_STDERR;
+logmode_t logmode = LOGMODE_STDERR;
 static pid_t logpid;
 static FILE *logfile = NULL;
 #ifdef HAVE_WINDOWS
@@ -272,6 +272,12 @@ static void sptps_logger(sptps_t *s, int s_errno, const char *format, va_list ap
 void openlogger(const char *ident, logmode_t mode) {
 	logident = ident;
 	logmode = mode;
+
+	// Let sandboxing code close access to one more unneeded path
+	if(mode != LOGMODE_FILE) {
+		free(logfilename);
+		logfilename = NULL;
+	}
 
 	switch(mode) {
 	case LOGMODE_STDERR:

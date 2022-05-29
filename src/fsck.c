@@ -108,17 +108,6 @@ static void print_new_keys_cmd(key_type_t key_type, const char *message) {
 	}
 }
 
-static int strtailcmp(const char *str, const char *tail) {
-	size_t slen = strlen(str);
-	size_t tlen = strlen(tail);
-
-	if(tlen > slen) {
-		return -1;
-	}
-
-	return memcmp(str + slen - tlen, tail, tlen);
-}
-
 static void check_conffile(const char *nodename, bool server) {
 	splay_tree_t config;
 	init_configuration(&config);

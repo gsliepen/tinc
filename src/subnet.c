@@ -322,7 +322,7 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address) {
 }
 
 void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
-	if(!sandbox_can(START_PROCESSES, RIGHT_NOW)) {
+	if(!sandbox_can(RUN_SCRIPTS, RIGHT_NOW)) {
 		return;
 	}
 

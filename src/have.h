@@ -81,6 +81,12 @@
 #define ATTR_NONNULL
 #endif
 
+#ifdef HAVE_ATTR_NORETURN
+#define ATTR_NORETURN __attribute__((__noreturn__))
+#else
+#define ATTR_NORETURN
+#endif
+
 #ifdef HAVE_ATTR_WARN_UNUSED_RESULT
 #define ATTR_WARN_UNUSED __attribute__((__warn_unused_result__))
 #else

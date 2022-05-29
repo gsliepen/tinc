@@ -37,7 +37,7 @@ bool makedirs(tinc_dir_t dirs) {
 	}
 
 	if(dirs & DIR_INVITATIONS) {
-		snprintf(path, sizeof(path), "%s" SLASH "invitations", confbase);
+		conf_subdir(path, DIR_INVITATIONS);
 
 		if(!makedir(path, 0700)) {
 			return false;
@@ -45,7 +45,7 @@ bool makedirs(tinc_dir_t dirs) {
 	}
 
 	if(dirs & DIR_CACHE) {
-		snprintf(path, sizeof(path), "%s" SLASH "cache", confbase);
+		conf_subdir(path, DIR_CACHE);
 
 		if(!makedir(path, 0755)) {
 			return false;
@@ -53,7 +53,7 @@ bool makedirs(tinc_dir_t dirs) {
 	}
 
 	if(dirs & DIR_HOSTS) {
-		snprintf(path, sizeof(path), "%s" SLASH "hosts", confbase);
+		conf_subdir(path, DIR_HOSTS);
 
 		if(!makedir(path, 0755)) {
 			return false;
@@ -139,4 +139,33 @@ char *absolute_path(const char *path) {
 
 	return abs;
 #endif
+}
+
+bool chrooted(void) {
+	return !(confbase && *confbase);
+}
+
+void conf_subdir(char buf[PATH_MAX], tinc_dir_t dir) {
+	const char *name = NULL;
+
+	switch(dir) {
+	case DIR_CACHE:
+		name = "cache";
+		break;
+
+	case DIR_HOSTS:
+		name = "hosts";
+		break;
+
+	case DIR_INVITATIONS:
+		name = "invitations";
+		break;
+
+	case DIR_CONFBASE:
+	case DIR_CONFDIR:
+	default:
+		abort();
+	}
+
+	snprintf(buf, PATH_MAX, "%s" SLASH "%s", confbase, name);
 }

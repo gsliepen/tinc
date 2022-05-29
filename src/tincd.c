@@ -56,6 +56,7 @@
 #include "version.h"
 #include "random.h"
 #include "sandbox.h"
+#include "script.h"
 #include "watchdog.h"
 #include "fs.h"
 
@@ -366,34 +367,47 @@ static bool read_sandbox_level(void) {
 	return true;
 }
 
+#ifndef HAVE_WINDOWS
+static uid_t get_user_id(const char *username, uid_t *uid) {
+	*uid = 0;
+
+	if(!username) {
+		return true;
+	}
+
+	const struct passwd *pw = getpwnam(username);
+
+	if(!pw) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Unknown user %s", username);
+		return false;
+	}
+
+	*uid = pw->pw_uid;
+
+	// The second parameter to initgroups on macOS requires int,
+	// but __gid_t is unsigned int. There's not much we can do here.
+	if(initgroups(username, pw->pw_gid) != 0 || // NOLINT(bugprone-narrowing-conversions)
+	                setgid(pw->pw_gid) != 0) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "System call `initgroups' failed: %s", strerror(errno));
+		return false;
+	}
+
+#ifndef __ANDROID__
+// Not supported in android NDK
+	endgrent();
+	endpwent();
+#endif
+
+	return true;
+}
+#endif // HAVE_WINDOWS
+
 static bool drop_privs(void) {
 #ifndef HAVE_WINDOWS
 	uid_t uid = 0;
 
-	if(switchuser) {
-		struct passwd *pw = getpwnam(switchuser);
-
-		if(!pw) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "unknown user `%s'", switchuser);
-			return false;
-		}
-
-		uid = pw->pw_uid;
-
-		// The second parameter to initgroups on macOS requires int,
-		// but __gid_t is unsigned int. There's not much we can do here.
-		if(initgroups(switchuser, pw->pw_gid) != 0 || // NOLINT(bugprone-narrowing-conversions)
-		                setgid(pw->pw_gid) != 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s",
-			       "initgroups", strerror(errno));
-			return false;
-		}
-
-#ifndef __ANDROID__
-// Not supported in android NDK
-		endgrent();
-		endpwent();
-#endif
+	if(!get_user_id(switchuser, &uid)) {
+		return false;
 	}
 
 	if(do_chroot) {
@@ -409,12 +423,11 @@ static bool drop_privs(void) {
 		confbase = xstrdup("");
 	}
 
-	if(switchuser)
-		if(setuid(uid) != 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s",
-			       "setuid", strerror(errno));
-			return false;
-		}
+	if(uid && setuid(uid) != 0) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s",
+		       "setuid", strerror(errno));
+		return false;
+	}
 
 #endif // HAVE_WINDOWS
 
@@ -456,6 +469,56 @@ static void cleanup(void) {
 	list_empty_list(&cmdline_conf);
 	free_names();
 }
+
+#ifdef HAVE_SANDBOX
+static bool start_script_worker(void) {
+	uid_t uid = 0;
+
+	if(!get_user_id(switchuser, &uid)) {
+		return false;
+	}
+
+	int fds[2];
+
+	if(socketpair(AF_UNIX, SOCK_SEQPACKET, 0, fds)) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not create socket pair: %s", strerror(errno));
+		return false;
+	}
+
+	pid_t pid = fork();
+
+	if(pid < 0) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not create script worker: %s", strerror(errno));
+		return false;
+	}
+
+	if(pid > 0) {
+		set_script_worker(pid, fds[0]);
+		close(fds[1]);
+		return true;
+	}
+
+	// Use a different logging identifier
+	if(logmode == LOGMODE_FILE || logmode == LOGMODE_SYSLOG) {
+		closelogger();
+
+		// Not a good idea to log from multiple processes to the same file
+		logmode = LOGMODE_SYSLOG;
+
+		char *oldname = identname;
+		xasprintf(&identname, "%s.scripts", oldname);
+		free(oldname);
+		openlogger(identname, logmode);
+	}
+
+	// Close unused inherited FDs
+	close(STDIN_FILENO);
+	close(umbilical);
+	close(fds[0]);
+
+	run_script_worker(uid, fds[1]);
+}
+#endif
 
 int main(int argc, char **argv) {
 	program_name = argv[0];
@@ -634,6 +697,18 @@ int main2(int argc, char **argv) {
 	if(!detach()) {
 		return 1;
 	}
+
+#ifdef HAVE_SANDBOX
+
+	if(sandbox_enabled() && sandbox_can(RUN_SCRIPTS, AFTER_SANDBOX)) {
+		setup_script_config();
+
+		if(!start_script_worker()) {
+			return 1;
+		}
+	}
+
+#endif
 
 #ifdef HAVE_MLOCKALL
 

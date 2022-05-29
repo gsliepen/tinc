@@ -298,3 +298,14 @@ bool string_eq(const char *first, const char *second) {
 	return !first == !second &&
 	       !(first && second && strcmp(first, second));
 }
+
+int strtailcmp(const char *str, const char *tail) {
+	size_t slen = strlen(str);
+	size_t tlen = strlen(tail);
+
+	if(tlen > slen) {
+		return -1;
+	}
+
+	return memcmp(str + slen - tlen, tail, tlen);
+}

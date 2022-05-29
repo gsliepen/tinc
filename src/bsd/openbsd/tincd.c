@@ -1,75 +1,50 @@
 #include "../../system.h"
 
-#include <libgen.h>
 #include <assert.h>
 
 #include "sandbox.h"
 #include "../../device.h"
 #include "../../logger.h"
 #include "../../names.h"
-#include "../../net.h"
+#include "../../fs.h"
 #include "../../sandbox.h"
-#include "../../script.h"
-#include "../../xalloc.h"
-#include "../../proxy.h"
 
 static sandbox_level_t current_level = SANDBOX_NONE;
 static bool can_use_new_paths = true;
 static bool entered = false;
 
-static bool chrooted(void) {
-	return !(confbase && *confbase);
-}
-
-static void open_conf_subdir(const char *name, const char *privs) {
+static void open_conf_subdir(tinc_dir_t dir, const char *privs) {
 	char path[PATH_MAX];
-	snprintf(path, sizeof(path), "%s/%s", confbase, name);
+	conf_subdir(path, dir);
 	allow_path(path, privs);
 }
 
-static void open_common_paths(bool can_exec) {
+static void open_common_paths(void) {
 	// Dummy device uses a fake path, skip it
 	const char *dev = strcasecmp(device, DEVICE_DUMMY) ? device : NULL;
 
 	const unveil_path_t paths[] = {
-		{"/dev/random",  "r"},
-		{"/dev/urandom", "r"},
-		{confbase,       can_exec ? "rx" : "r"},
-		{dev,            "rw"},
-		{logfilename,    "rwc"},
-		{pidfilename,    "rwc"},
-		{unixsocketname, "rwc"},
-		{NULL,           NULL},
+		{"/dev/random",      "r"},
+		{"/dev/urandom",     "r"},
+		{"/etc/resolv.conf", "r"},
+		{"/etc/hosts",       "r"},
+		{confbase,           "r"},
+		{dev,                "rw"},
+		{logfilename,        "rwc"},
+		{pidfilename,        "rwc"},
+		{unixsocketname,     "rwc"},
+		{NULL,               NULL},
 	};
 	allow_paths(paths);
 
-	open_conf_subdir("cache", "rwc");
-	open_conf_subdir("hosts", can_exec ? "rwxc" : "rwc");
-	open_conf_subdir("invitations", "rwc");
+	open_conf_subdir(DIR_CACHE, "rwc");
+	open_conf_subdir(DIR_HOSTS, "rwc");
+	open_conf_subdir(DIR_INVITATIONS, "rwc");
 }
 
-static void open_exec_paths(void) {
-	// proxyhost was checked previously. If we're here, proxyhost
-	// contains the path to the executable, and nothing else.
-	const char *proxy_exec = proxytype == PROXY_EXEC ? proxyhost : NULL;
-
-	const unveil_path_t bin_paths[] = {
-		{"/bin",            "rx"},
-		{"/sbin",           "rx"},
-		{"/usr/bin",        "rx"},
-		{"/usr/sbin",       "rx"},
-		{"/usr/local/bin",  "rx"},
-		{"/usr/local/sbin", "rx"},
-		{scriptinterpreter, "rx"},
-		{proxy_exec,        "rx"},
-		{NULL,              NULL},
-	};
-	allow_paths(bin_paths);
-}
-
-static bool sandbox_privs(bool can_exec) {
+static bool sandbox_privs(void) {
 	// no mcast since multicasting should be set up by now
-	char promises[512] =
+	const char *promises =
 	        "stdio"  // General I/O, both disk and network
 	        " rpath" // Read files and directories
 	        " wpath" // Write files and directories
@@ -77,39 +52,24 @@ static bool sandbox_privs(bool can_exec) {
 	        " dns"   // Resolve domain names
 	        " inet"  // Make network connections
 	        " unix"; // Control socket connections from tinc CLI
-
-	if(can_exec) {
-		// fork() and execve() for scripts and exec proxies
-		const char *exec = " proc exec";
-		size_t n = strlcat(promises, exec, sizeof(promises));
-		assert(n < sizeof(promises));
-	}
-
-	return restrict_privs(promises, can_exec ? PROMISES_ALL : PROMISES_NONE);
+	return restrict_privs(promises, PROMISES_NONE);
 }
 
-static void sandbox_paths(bool can_exec) {
+static void sandbox_paths(void) {
 	if(chrooted()) {
 		logger(DEBUG_ALWAYS, LOG_DEBUG, "chroot is used. Disabling path sandbox.");
-		return;
-	}
-
-	open_common_paths(can_exec);
-	can_use_new_paths = false;
-
-	if(can_exec) {
-		if(proxytype == PROXY_EXEC && !access(proxyhost, X_OK)) {
-			logger(DEBUG_ALWAYS, LOG_WARNING, "Looks like a shell expression was used for exec proxy. Using weak path sandbox.");
-			allow_path("/", "rx");
-		} else {
-			open_exec_paths();
-		}
+	} else {
+		open_common_paths();
+		can_use_new_paths = false;
 	}
 }
 
 static bool sandbox_can_after_enter(sandbox_action_t action) {
 	switch(action) {
 	case START_PROCESSES:
+		return current_level == SANDBOX_NONE;
+
+	case RUN_SCRIPTS:
 		return current_level < SANDBOX_HIGH;
 
 	case USE_NEW_PATHS:
@@ -128,6 +88,14 @@ bool sandbox_can(sandbox_action_t action, sandbox_time_t when) {
 	}
 }
 
+bool sandbox_enabled(void) {
+	return current_level > SANDBOX_NONE;
+}
+
+bool sandbox_active(void) {
+	return sandbox_enabled() && entered;
+}
+
 void sandbox_set_level(sandbox_level_t level) {
 	assert(!entered);
 	current_level = level;
@@ -142,11 +110,9 @@ bool sandbox_enter() {
 		return true;
 	}
 
-	bool can_exec = sandbox_can_after_enter(START_PROCESSES);
+	sandbox_paths();
 
-	sandbox_paths(can_exec);
-
-	if(sandbox_privs(can_exec)) {
+	if(sandbox_privs()) {
 		logger(DEBUG_ALWAYS, LOG_DEBUG, "Entered sandbox at level %d", current_level);
 		return true;
 	}

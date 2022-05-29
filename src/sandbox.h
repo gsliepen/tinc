@@ -11,6 +11,7 @@ typedef enum sandbox_level_t {
 
 typedef enum sandbox_action_t {
 	START_PROCESSES, // Start child processes
+	RUN_SCRIPTS,     // Use tincd scripts
 	USE_NEW_PATHS,   // Access to filesystem paths that were not known at the start of the process
 } sandbox_action_t;
 
@@ -18,6 +19,12 @@ typedef enum sandbox_time_t {
 	AFTER_SANDBOX, // Check if the action can be performed after entering sandbox
 	RIGHT_NOW,     // Check if the action can be performed right now
 } sandbox_time_t;
+
+// true if sandbox is enabled (but not necessarily activated).
+extern bool sandbox_enabled(void);
+
+// true if sandbox is enabled and activated.
+extern bool sandbox_active(void);
 
 // Check if the current process has enough privileges to perform the action
 extern bool sandbox_can(sandbox_action_t action, sandbox_time_t when);

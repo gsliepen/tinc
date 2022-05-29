@@ -14,6 +14,15 @@ void sandbox_set_level(sandbox_level_t level) {
 	(void)level;
 }
 
+bool sandbox_enabled(void) {
+	return false;
+}
+
+bool sandbox_active(void) {
+	return false;
+}
+
 bool sandbox_enter(void) {
+	// No initialization needed, always return success
 	return true;
 }

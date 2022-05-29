@@ -33,7 +33,11 @@ extern int environment_add(environment_t *env, const char *format, ...) ATTR_FOR
 extern void environment_update(environment_t *env, int pos, const char *format, ...) ATTR_FORMAT(printf, 3, 4);
 extern void environment_init(environment_t *env);
 extern void environment_exit(environment_t *env);
-
 extern bool execute_script(const char *name, environment_t *env);
+
+#ifdef HAVE_SANDBOX
+extern void set_script_worker(pid_t pid, int sock);
+extern void run_script_worker(uid_t uid, int sock) ATTR_NORETURN;
+#endif
 
 #endif

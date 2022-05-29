@@ -424,6 +424,8 @@ def test_proxy(ctx: Test, handler: T.Type[ProxyServer], user="", passw="") -> No
 def test_proxy_exec(ctx: Test) -> None:
     """Test that exec proxies work as expected."""
     foo, bar = init(ctx)
+    for node in foo, bar:
+        node.cmd("set", "Sandbox", "off")
 
     log.info("exec proxy without arguments fails")
     foo.cmd("set", "Proxy", "exec")

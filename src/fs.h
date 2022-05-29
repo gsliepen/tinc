@@ -20,4 +20,10 @@ extern FILE *fopenmask(const char *filename, const char *mode, mode_t perms) ATT
 // Get absolute path to a possibly nonexistent file or directory
 extern char *absolute_path(const char *path) ATTR_MALLOC;
 
+// true if tincd is running in a chroot
+extern bool chrooted(void);
+
+// Write path to the configuration subdirectory
+extern void conf_subdir(char buf[PATH_MAX], tinc_dir_t dir);
+
 #endif // TINC_FS_H
