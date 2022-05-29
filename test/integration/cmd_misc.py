@@ -149,8 +149,8 @@ def test_log(foo: Tinc) -> None:
     log.info("test correct call")
     log_client = foo.tinc("log")
     foo.cmd("reload")
-    time.sleep(1)
     foo.cmd("stop")
+    time.sleep(1)
 
     out, _ = log_client.communicate()
     check.true(out)

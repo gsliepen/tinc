@@ -7,6 +7,7 @@ import os
 
 from testlib import check, util
 from testlib.log import log
+from testlib.const import RUN_ACCESS_CHECKS
 from testlib.feature import Feature
 from testlib.proc import Tinc
 from testlib.test import Test
@@ -99,7 +100,7 @@ def test_rsa(foo: Tinc) -> None:
     key = util.read_text(rsa_priv)
     check.has_prefix(key, "-----BEGIN RSA PRIVATE KEY-----")
 
-    if os.name != "nt":
+    if RUN_ACCESS_CHECKS:
         log.info("remove access to private key")
         os.chmod(rsa_priv, 0)
         _, err = foo.cmd("generate-rsa-keys", "1024", code=1)
@@ -136,7 +137,7 @@ def test_eddsa(foo: Tinc) -> None:
     check.has_prefix(util.read_text(ec_priv), "-----BEGIN ED25519 PRIVATE KEY-----")
     check.has_prefix(util.read_text(ec_pub), "Ed25519PublicKey")
 
-    if os.name != "nt":
+    if RUN_ACCESS_CHECKS:
         log.info("remove access to EC private key file")
         os.chmod(ec_priv, 0)
         _, err = foo.cmd("generate-ed25519-keys", code=1)

@@ -113,7 +113,7 @@ static void test_makedir(tinc_dir_t dir, bool exists) {
 	}
 
 	// Deny write access and make sure makedirs() detects that
-	if(*container) {
+	if(getuid() && *container) {
 		assert_int_equal(0, chmod(tmp, 0));
 		assert_false(makedirs(dir));
 		assert_int_equal(0, chmod(tmp, 0755));

@@ -7,6 +7,7 @@ import shutil
 
 from testlib import check, util
 from testlib.log import log
+from testlib.const import RUN_ACCESS_CHECKS
 from testlib.proc import Tinc
 from testlib.test import Test
 
@@ -77,7 +78,7 @@ def test_invite_errors(foo: Tinc) -> None:
     _, err = foo.cmd("invite", foo.name, code=1)
     check.is_in("already exists", err)
 
-    if os.name != "nt":
+    if RUN_ACCESS_CHECKS:
         log.info("bad permissions on invitations are fixed")
         invites = foo.sub("invitations")
         os.chmod(invites, 0)
@@ -121,7 +122,7 @@ def test_join_errors(foo: Tinc) -> None:
     _, err = foo.cmd("-c", work_dir, "join", FAKE_INVITE, code=1)
     check.is_in("Could not connect to", err)
 
-    if os.name != "nt":
+    if RUN_ACCESS_CHECKS:
         log.info("bad permissions on configuration directory are fixed")
         work_dir = foo.sub("wd_access_test")
         os.mkdir(work_dir, mode=400)

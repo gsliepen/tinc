@@ -6,6 +6,7 @@ import os
 
 from testlib import check, cmd, util
 from testlib.log import log
+from testlib.const import RUN_ACCESS_CHECKS
 from testlib.proc import Tinc
 from testlib.test import Test
 
@@ -73,7 +74,7 @@ def test_import(foo: Tinc) -> None:
     _, err = foo.cmd("import", stdin="Name = node0", code=1)
     check.is_in("node0 already exists", err)
 
-    if os.name != "nt":
+    if RUN_ACCESS_CHECKS:
         log.info("import to inaccessible hosts subdirectory")
         os.chmod(foo.sub("hosts"), 0)
         _, err = foo.cmd("import", stdin="Name = vinny", code=1)
@@ -153,7 +154,7 @@ def test_export_all(foo: Tinc) -> None:
         log.info("unexpected number of separators: %s", lines)
         assert False
 
-    if os.name != "nt":
+    if RUN_ACCESS_CHECKS:
         os.chmod(foo.sub("hosts"), 0)
         _, err = foo.cmd("export-all", code=1)
         check.is_in("Could not open host configuration", err)
@@ -168,7 +169,7 @@ with Test("test 'export' command") as context:
 with Test("test 'exchange' command") as context:
     test_exchange(init(context))
 
-if os.name != "nt":
+if RUN_ACCESS_CHECKS:
     with Test("test 'exchange-all' command") as context:
         test_exchange_all(init(context))
 

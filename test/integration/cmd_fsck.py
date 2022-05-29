@@ -7,14 +7,14 @@ import sys
 import typing as T
 
 from testlib import check
+from testlib.const import RUN_ACCESS_CHECKS
 from testlib.log import log
 from testlib.proc import Tinc, Feature
 from testlib.util import read_text, read_lines, write_lines, append_line, write_text
 
-run_legacy_checks = Feature.LEGACY_PROTOCOL in Tinc().features
-run_access_checks = os.name != "nt" and os.geteuid() != 0
-run_executability_checks = os.name != "nt"
-run_permission_checks = run_executability_checks
+RUN_LEGACY_CHECKS = Feature.LEGACY_PROTOCOL in Tinc().features
+RUN_EXECUTABILITY_CHECKS = os.name != "nt"
+RUN_PERMISSION_CHECKS = RUN_EXECUTABILITY_CHECKS
 
 # Sample RSA key pair (old format). Uses e = 0xFFFF.
 RSA_N = """
@@ -132,24 +132,24 @@ def test_private_keys(keyfile: str) -> None:
     keyfile_path = context.node.sub(keyfile)
     os.truncate(keyfile_path, 0)
 
-    if run_legacy_checks:
+    if RUN_LEGACY_CHECKS:
         context.expect_msg("no private key is known", code=0)
     else:
         context.expect_msg("No Ed25519 private key found")
 
-    if run_access_checks:
+    if RUN_ACCESS_CHECKS:
         context = test(f"fail on inaccessible {keyfile}")
         keyfile_path = context.node.sub(keyfile)
         os.chmod(keyfile_path, 0)
-        context.expect_msg("Error reading", code=0 if run_legacy_checks else 1)
+        context.expect_msg("Error reading", code=0 if RUN_LEGACY_CHECKS else 1)
 
-    if run_permission_checks:
+    if RUN_PERMISSION_CHECKS:
         context = test(f"warn about unsafe permissions on {keyfile}")
         keyfile_path = context.node.sub(keyfile)
         os.chmod(keyfile_path, 0o666)
         context.expect_msg("unsafe file permissions", code=0)
 
-    if run_legacy_checks:
+    if RUN_LEGACY_CHECKS:
         context = test(f"pass on missing {keyfile} when the other key is present")
         keyfile_path = context.node.sub(keyfile)
         os.remove(keyfile_path)
@@ -211,7 +211,7 @@ ctx.node.cmd("fsck")
 
 ctx = test("fail when all private keys are missing")
 os.remove(ctx.ec_priv)
-if run_legacy_checks:
+if RUN_LEGACY_CHECKS:
     os.remove(ctx.rsa_priv)
     ctx.expect_msg("Neither RSA or Ed25519 private")
 else:
@@ -262,7 +262,7 @@ test_ec_public_key_file_var(ctx, "tinc.conf")
 ctx = test("test EC public key in hosts/")
 test_ec_public_key_file_var(ctx, "hosts", ctx.node.name)
 
-if run_access_checks:
+if RUN_ACCESS_CHECKS:
     ctx = test("fail on inaccessible tinc.conf")
     os.chmod(ctx.conf, 0)
     ctx.expect_msg("not running tinc as root")
@@ -271,7 +271,7 @@ if run_access_checks:
     os.chmod(ctx.host, 0)
     ctx.expect_msg("Cannot open config file")
 
-if run_executability_checks:
+if RUN_EXECUTABILITY_CHECKS:
     ctx = test("non-executable tinc-up MUST be fixed by tinc --force")
     os.chmod(ctx.tinc_up, 0o644)
     ctx.expect_msg("cannot read and execute", force=True, code=0)
@@ -298,7 +298,7 @@ if run_executability_checks:
 ###############################################################################
 # Legacy protocol
 ###############################################################################
-if not run_legacy_checks:
+if not RUN_LEGACY_CHECKS:
     log.info("skipping legacy protocol tests")
     sys.exit(0)
 
@@ -369,7 +369,7 @@ remove_pem(ctx.host)
 ctx.expect_msg("No (usable) public RSA key found", force=True, code=0)
 ctx.node.cmd("fsck")
 
-if run_permission_checks:
+if RUN_PERMISSION_CHECKS:
     ctx = test("warn about unsafe permissions on tinc.conf with PrivateKey")
     os.remove(ctx.rsa_priv)
     append_line(ctx.conf, f"PrivateKey = {RSA_D}")
