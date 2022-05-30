@@ -674,6 +674,7 @@ static bool add_listen_address(char *address, bool bindto) {
 		}
 
 		if(listen_sockets >= MAXSOCKETS) {
+			listen_sockets = MAXSOCKETS;
 			logger(DEBUG_ALWAYS, LOG_ERR, "Too many listening sockets");
 			freeaddrinfo(ai);
 			return false;
@@ -1095,6 +1096,7 @@ static bool setup_myself(void) {
 #endif
 
 		if(listen_sockets > MAXSOCKETS) {
+			listen_sockets = MAXSOCKETS;
 			logger(DEBUG_ALWAYS, LOG_ERR, "Too many listening sockets");
 			return false;
 		}
