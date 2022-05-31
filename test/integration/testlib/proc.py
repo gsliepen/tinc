@@ -2,6 +2,7 @@
 
 import os
 import random
+import tempfile
 import typing as T
 import subprocess as subp
 from enum import Enum
@@ -15,6 +16,9 @@ from .util import random_string, random_port
 
 # Does the OS support all addresses in 127.0.0.0/8 without additional configuration?
 _FULL_LOCALHOST_SUBNET = system() in ("Linux", "Windows")
+
+# Path to the system temporary directory.
+_TEMPDIR = tempfile.gettempdir()
 
 
 def _make_wd(name: str) -> str:
@@ -63,6 +67,7 @@ class Tinc:
     name: str
     address: str
     _work_dir: str
+    _pid_file: str
     _port: T.Optional[int]
     _scripts: T.Dict[str, TincScript]
     _procs: T.List[subp.Popen]
@@ -71,6 +76,8 @@ class Tinc:
         self.name = name if name else random_string(10)
         self.address = addr if addr else _rand_localhost()
         self._work_dir = _make_wd(self.name)
+        os.makedirs(self._work_dir, exist_ok=True)
+        self._pid_file = os.path.join(_TEMPDIR, f"tinc_{self.name}")
         self._port = None
         self._scripts = {}
         self._procs = []
@@ -80,12 +87,16 @@ class Tinc:
         self._port = random_port()
         return self._port
 
+    @property
+    def pid_file(self) -> str:
+        """Get the path to the pid file."""
+        return self._pid_file
+
     def read_port(self) -> int:
         """Read port used by tincd from its pidfile and update the _port field."""
-        pidfile = self.sub("pid")
-        log.debug("reading pidfile at %s", pidfile)
+        log.debug("reading pidfile at %s", self.pid_file)
 
-        with open(pidfile, "r", encoding="utf-8") as f:
+        with open(self.pid_file, "r", encoding="utf-8") as f:
             content = f.read()
         log.debug("found data %s", content)
 
@@ -140,9 +151,9 @@ class Tinc:
             "--net",
             self.name,
             "--config",
-            self._work_dir,
+            self.work_dir,
             "--pidfile",
-            self.sub("pid"),
+            self.pid_file,
         ]
 
     def sub(self, *paths: str) -> str:
