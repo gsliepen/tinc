@@ -125,6 +125,14 @@ jobs:
           CC: gcc-11
         if: always()
 
+      - name: Check that very long paths work
+        run: |
+          meson setup "$WD"
+          meson test -C "$WD" --verbose
+        env:
+          WD: /tmp/tinc_testing_directory_with_a_very_long_path_which_goes_over_the_108_char_limit_on_unix_socket_file_paths
+        if: always()
+
       - name: Archive test results
         run: sudo tar -caf tests.tar.gz /usr/local/etc
         continue-on-error: true
