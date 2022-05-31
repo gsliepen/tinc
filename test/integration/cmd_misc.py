@@ -121,7 +121,7 @@ def test_pid(foo: Tinc) -> None:
     check.is_in("Too many arguments", err)
 
     log.info("test pid without arguments")
-    pidfile = util.read_text(foo.sub("pid"))
+    pidfile = util.read_text(foo.pid_file)
     pid, _ = pidfile.split(maxsplit=1)
 
     out, _ = foo.cmd("pid")
