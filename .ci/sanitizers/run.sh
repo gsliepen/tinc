@@ -33,7 +33,7 @@ export CC='clang-12'
 export CPPFLAGS='-DDEBUG'
 export CFLAGS="-O0 -g -fsanitize=$SANITIZER -fno-omit-frame-pointer -fno-common -fsanitize-blacklist=$dir/ignore.txt $flags"
 
-bash .ci/test/run.sh "$@"
+sudo bash .ci/test/run.sh "$@"
 
 # Check that the sanitizer has not created any log files.
 # If it has, fail the job to notify the developer.

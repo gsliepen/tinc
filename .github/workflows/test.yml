@@ -164,7 +164,7 @@ jobs:
 
       - name: Install deps
         run: |
-          sudo sh .ci/deps.sh
+          sudo sh .ci/deps.sh iputils-arping
           sudo pip3 install --upgrade cryptography
 
       - name: Run tests with OpenSSL 3

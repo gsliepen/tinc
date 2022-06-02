@@ -44,6 +44,7 @@ deps_linux_debian_linux() {
     libminiupnpc-dev:"$HOST" \
     libvdeplug-dev:"$HOST" \
     libcmocka-dev:"$HOST" \
+    libsystemd-dev:"$HOST" \
     "$@"
 
   if [ -n "$HOST" ]; then
@@ -99,7 +100,7 @@ deps_linux_rhel() {
 
   yum install -y \
     git binutils make ninja-build pkgconf gcc sudo texinfo-tex systemd perl-IPC-Cmd \
-    lzo-devel zlib-devel lz4-devel ncurses-devel readline-devel libgcrypt-devel "$@"
+    lzo-devel zlib-devel lz4-devel ncurses-devel readline-devel libgcrypt-devel systemd-devel "$@"
 
   if [ -z "$SKIP_MESON" ]; then
     yum install -y meson
