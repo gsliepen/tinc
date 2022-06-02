@@ -1086,11 +1086,13 @@ static bool setup_myself(void) {
 
 	/* Open sockets */
 
-	if(!do_detach && getenv("LISTEN_FDS")) {
+	const char *listen_fds = getenv("LISTEN_FDS");
+
+	if(!do_detach && listen_fds) {
 		sockaddr_t sa;
 		socklen_t salen;
 
-		listen_sockets = atoi(getenv("LISTEN_FDS"));
+		listen_sockets = atoi(listen_fds);
 #ifdef HAVE_UNSETENV
 		unsetenv("LISTEN_FDS");
 #endif

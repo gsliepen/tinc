@@ -563,7 +563,9 @@ int main(int argc, char **argv) {
 
 	g_argv = argv;
 
-	if(getenv("LISTEN_PID") && atoi(getenv("LISTEN_PID")) == getpid()) {
+	const char *listen_pid = getenv("LISTEN_PID");
+
+	if(listen_pid && atoi(listen_pid) == getpid()) {
 		do_detach = false;
 	}
 
