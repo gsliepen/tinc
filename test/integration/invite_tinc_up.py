@@ -38,17 +38,8 @@ Route = 1.2.3.4 {BAD_IPV4}
 
 def init(ctx: Test) -> T.Tuple[Tinc, Tinc]:
     """Initialize new test nodes."""
-    foo, bar = ctx.node(), ctx.node()
-
-    stdin = f"""
-        init {foo}
-        set Port 0
-        set DeviceType dummy
-        set Address localhost
-    """
-    foo.cmd(stdin=stdin)
+    foo, bar = ctx.node(init=True), ctx.node()
     foo.start()
-
     return foo, bar
 
 

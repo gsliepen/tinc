@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 
 """Test miscellaneous commands."""
-
-import time
+import os
 import typing as T
 
-from testlib import check, cmd, util
+from testlib import check, cmd
 from testlib.log import log
 from testlib.proc import Tinc, Script
 from testlib.test import Test
@@ -13,25 +12,11 @@ from testlib.test import Test
 SUBNETS_BAR = ("10.20.30.40", "fe80::")
 
 
-def init(ctx: Test) -> Tinc:
-    """Initialize a node."""
-
-    node = ctx.node()
-    stdin = f"""
-        init {node}
-        set Port 0
-        set Address localhost
-        set DeviceType dummy
-    """
-    node.cmd(stdin=stdin)
-    return node
-
-
 def configure_nodes(ctx: Test) -> T.Tuple[Tinc, Tinc]:
     """Create and configure nodes."""
 
     log.info("initialize nodes")
-    foo, bar = init(ctx), init(ctx)
+    foo, bar = ctx.node(init=True), ctx.node(init=True)
 
     log.info("configure and start nodes")
     foo.cmd("add", "Subnet", "1.2.3.4")
@@ -121,11 +106,8 @@ def test_pid(foo: Tinc) -> None:
     check.is_in("Too many arguments", err)
 
     log.info("test pid without arguments")
-    pidfile = util.read_text(foo.pid_file)
-    pid, _ = pidfile.split(maxsplit=1)
-
     out, _ = foo.cmd("pid")
-    check.equals(pid, out.strip())
+    check.equals(foo.pid, int(out.strip()))
 
 
 def test_debug(foo: Tinc) -> None:
@@ -148,9 +130,12 @@ def test_log(foo: Tinc) -> None:
 
     log.info("test correct call")
     log_client = foo.tinc("log")
+    foo.cmd("set", "LogLevel", "10")
     foo.cmd("reload")
+
+    foo.add_script(Script.TINC_DOWN)
     foo.cmd("stop")
-    time.sleep(1)
+    foo[Script.TINC_DOWN].wait()
 
     out, _ = log_client.communicate()
     check.true(out)
@@ -209,7 +194,13 @@ def run_tests(ctx: Test) -> None:
     test_pid(foo)
     test_debug(foo)
     test_log(foo)
-    test_restart(foo)
+
+    # Too unstable on Windows because of how it works with services (impossible to
+    # start the service if it has been marked for deletion, but not yet deleted).
+    # Since lots of things can prevent service removal (like opened task manager or
+    # services.msc) the `restart` command is inherently unreliable.
+    if os.name != "nt":
+        test_restart(foo)
 
 
 with Test("run tests") as context:

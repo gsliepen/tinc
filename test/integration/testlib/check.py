@@ -22,6 +22,18 @@ def false(value: T.Any) -> None:
         raise ValueError(f'expected "{value}" to be falsy')
 
 
+def success(value: int) -> None:
+    """Check that value represents a successful exit code."""
+    if not isinstance(value, int) or value != 0:
+        raise ValueError(f'expected "{value}" to be 0', value)
+
+
+def failure(value: int) -> None:
+    """Check that value represents an unsuccessful exit code."""
+    if not isinstance(value, int) or value == 0:
+        raise ValueError(f'expected "{value}" to NOT be 0', value)
+
+
 def true(value: T.Any) -> None:
     """Check that value is truthy."""
     if not value:
@@ -80,11 +92,31 @@ def not_in(needle: Val, *haystacks: T.Container[Val]) -> None:
             raise ValueError(f'expected all "{haystacks}" NOT to include "{needle}"')
 
 
+def _read_content(path: T.Union[str, os.PathLike], search: T.AnyStr) -> T.AnyStr:
+    """Read text or binary content, depending on the type of search argument."""
+    if isinstance(search, str):
+        mode, enc = "r", "utf-8"
+    else:
+        mode, enc = "rb", None
+    with open(path, mode=mode, encoding=enc) as f:
+        return f.read()
+
+
+def in_file(path: T.Union[str, os.PathLike], text: T.AnyStr) -> None:
+    """Check that file contains a string."""
+    is_in(text, _read_content(path, text))
+
+
+def not_in_file(path: T.Union[str, os.PathLike], text: T.AnyStr) -> None:
+    """Check that file does not contain a string."""
+    not_in(text, _read_content(path, text))
+
+
 def nodes(node, want_nodes: int) -> None:
     """Check that node can reach exactly N nodes (including itself)."""
     log.debug("want %d reachable nodes from tinc %s", want_nodes, node)
     stdout, _ = node.cmd("dump", "reachable", "nodes")
-    equals(want_nodes, len(stdout.splitlines()))
+    lines(stdout, want_nodes)
 
 
 def files_eq(path0: str, path1: str) -> None:

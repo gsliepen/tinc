@@ -14,17 +14,8 @@ from testlib.test import Test
 
 def init(ctx: Test) -> T.Tuple[Tinc, Tinc]:
     """Create test node."""
-    foo, bar = ctx.node(), ctx.node()
-
-    stdin = f"""
-        init {foo}
-        set Port 0
-        set Address localhost
-        set DeviceType dummy
-        set AutoConnect no
-    """
-    foo.cmd(stdin=stdin)
-
+    bar = ctx.node()
+    foo = ctx.node(init="set AutoConnect no")
     return foo, bar
 
 

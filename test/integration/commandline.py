@@ -18,15 +18,7 @@ from testlib.feature import SANDBOX_LEVEL
 
 def init(ctx: Test) -> Tinc:
     """Initialize new test nodes."""
-    tinc = ctx.node()
-    stdin = f"""
-        init {tinc}
-        set Port 0
-        set Address localhost
-        set DeviceType dummy
-        set Sandbox {SANDBOX_LEVEL}
-    """
-    tinc.cmd(stdin=stdin)
+    tinc = ctx.node(init=f"set Sandbox {SANDBOX_LEVEL}")
     tinc.add_script(Script.TINC_UP)
     return tinc
 
@@ -146,7 +138,7 @@ def test_relative_path(ctx: Test, chroot: bool) -> None:
 
         log.info("stopping tinc through '%s'", pidfile)
         foo.cmd("--pidfile", pidfile, "stop")
-        check.equals(0, tincd.wait())
+        check.success(tincd.wait())
 
     # Leave behind as debugging aid if there's an exception
     shutil.rmtree(shortcut)

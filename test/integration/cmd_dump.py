@@ -31,20 +31,6 @@ ONLINE_REQUESTS = (
 )
 
 
-def init(ctx: Test) -> Tinc:
-    """Initialize a node."""
-
-    node = ctx.node()
-    stdin = f"""
-        init {node}
-        set Port 0
-        set Address localhost
-        set DeviceType dummy
-    """
-    node.cmd(stdin=stdin)
-    return node
-
-
 def try_dot(src: str) -> None:
     """Try passing graph source through the dot binary, if it's present."""
     try:
@@ -159,8 +145,7 @@ def run_connected_tests(foo: Tinc, bar: Tinc) -> None:
 def run_tests(ctx: Test) -> None:
     """Run all tests."""
 
-    foo = init(ctx)
-    bar = ctx.node()
+    foo, bar = ctx.node(init=True), ctx.node()
 
     log.info("set %s subnets", foo)
     for sub in SUBNETS_FOO:

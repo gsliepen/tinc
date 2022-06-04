@@ -27,17 +27,7 @@ LONG_NAME = MAX_PATH * "x"
 
 def init(ctx: Test) -> Tinc:
     """Initialize a node."""
-
-    node = ctx.node()
-    stdin = f"""
-        init {node}
-        set Port 0
-        set Address localhost
-        set DeviceType dummy
-        set AutoConnect no
-    """
-    node.cmd(stdin=stdin)
-    return node
+    return ctx.node(init="set AutoConnect no")
 
 
 def test_import(foo: Tinc) -> None:

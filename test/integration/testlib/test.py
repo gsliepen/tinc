@@ -21,10 +21,21 @@ class Test:
         self._nodes = []
         self.name = name
 
-    def node(self, addr: str = "") -> Tinc:
+    def node(self, addr: str = "", init: T.Union[str, bool] = "") -> Tinc:
         """Create a Tinc instance and remember it for termination on exit."""
         node = Tinc(addr=addr)
         self._nodes.append(node)
+        if init:
+            if isinstance(init, bool):
+                init = ""
+            stdin = f"""
+                init {node}
+                set Port 0
+                set Address localhost
+                set DeviceType dummy
+                {init}
+            """
+            node.cmd(stdin=stdin)
         return node
 
     def __str__(self) -> str:

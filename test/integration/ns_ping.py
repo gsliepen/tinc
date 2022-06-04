@@ -2,13 +2,13 @@
 
 """Create two network namespaces and run ping between them."""
 
-import subprocess as subp
 import typing as T
 
 from testlib import external as ext, util, template, cmd
 from testlib.log import log
 from testlib.proc import Tinc, Script
 from testlib.test import Test
+from testlib.external import ping
 
 util.require_root()
 util.require_command("ip", "netns", "list")
@@ -57,17 +57,6 @@ def init(ctx: Test) -> T.Tuple[Tinc, Tinc]:
     return foo, bar
 
 
-def ping(namespace: str, ip_addr: str) -> int:
-    """Send pings between two network namespaces."""
-    log.info("pinging node from netns %s at %s", namespace, ip_addr)
-    proc = subp.run(
-        ["ip", "netns", "exec", namespace, "ping", "-W1", "-c1", ip_addr], check=False
-    )
-
-    log.info("ping finished with code %d", proc.returncode)
-    return proc.returncode
-
-
 with Test("ns-ping") as context:
     foo_node, bar_node = init(context)
     bar_node.cmd("start")
@@ -76,7 +65,7 @@ with Test("ns-ping") as context:
     bar_node[Script.TINC_UP].wait()
 
     log.info("ping must not work when there is no connection")
-    assert ping(foo_node.name, IP_BAR)
+    assert not ping(IP_BAR, foo_node.name)
 
     log.info("add script foo/host-up")
     bar_node.add_script(foo_node.script_up)
@@ -88,4 +77,4 @@ with Test("ns-ping") as context:
     bar_node[foo_node.script_up].wait()
 
     log.info("ping must work after connection is up")
-    assert not ping(foo_node.name, IP_BAR)
+    assert ping(IP_BAR, foo_node.name)

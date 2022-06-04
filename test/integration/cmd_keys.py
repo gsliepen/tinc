@@ -13,20 +13,6 @@ from testlib.proc import Tinc
 from testlib.test import Test
 
 
-def init(ctx: Test) -> Tinc:
-    """Initialize a node."""
-
-    node = ctx.node()
-    stdin = f"""
-        init {node}
-        set Port 0
-        set Address localhost
-        set DeviceType dummy
-    """
-    node.cmd(stdin=stdin)
-    return node
-
-
 TEST_DATA = b"foo bar baz"
 
 
@@ -156,4 +142,4 @@ def run_tests(foo: Tinc) -> None:
 
 
 with Test("run tests") as context:
-    run_tests(init(context))
+    run_tests(context.node(init=True))

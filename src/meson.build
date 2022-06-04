@@ -212,6 +212,7 @@ endforeach
 
 if cdata.has('HAVE_SYS_UN_H')
   src_tincd += 'fd_device.c'
+  cdata.set('HAVE_FD_DEVICE', 1)
 endif
 
 confdata = configuration_data()

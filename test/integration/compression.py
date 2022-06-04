@@ -136,7 +136,7 @@ def test_valid_level(foo: Tinc, bar: Tinc) -> None:
             recv = receiver.stdout.read()
             log.info('received %d bytes: "%s"', len(recv), recv)
 
-    check.equals(0, receiver.wait())
+    check.success(receiver.wait())
     check.equals(CONTENT, recv.rstrip())
 
 
@@ -144,7 +144,7 @@ def test_bogus_level(node: Tinc) -> None:
     """Test that unsupported compression level fails to start."""
     tincd = node.tincd()
     _, stderr = tincd.communicate()
-    check.equals(1, tincd.returncode)
+    check.failure(tincd.returncode)
     check.is_in("Bogus compression level", stderr)
 
 

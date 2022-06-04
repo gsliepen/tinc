@@ -16,5 +16,5 @@ for exe in (
     cmd = [exe, "--help"]
     log.info('testing command "%s"', cmd)
     res = run(cmd, stdout=PIPE, stderr=PIPE, encoding="utf-8", timeout=10, check=False)
-    check.equals(0, res.returncode)
+    check.success(res.returncode)
     check.is_in("Usage:", res.stdout, res.stderr)

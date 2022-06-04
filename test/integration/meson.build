@@ -1,6 +1,7 @@
 tests = [
   'address_cache.py',
   'basic.py',
+  'bind_port.py',
   'cmd_dump.py',
   'cmd_fsck.py',
   'cmd_import.py',
@@ -10,10 +11,13 @@ tests = [
   'cmd_net.py',
   'cmd_sign_verify.py',
   'commandline.py',
+  'device.py',
+  'device_multicast.py',
   'executables.py',
   'import_export.py',
   'invite.py',
   'invite_tinc_up.py',
+  'net.py',
   'proxy.py',
   'sandbox.py',
   'scripts.py',
@@ -32,9 +36,19 @@ endif
 
 if os_name == 'linux'
   tests += [
-    'ns_ping.py',
+    'bind_address.py',
     'compression.py',
+    'device_raw_socket.py',
+    'device_tap.py',
+    'ns_ping.py',
   ]
+  if not opt_systemd.disabled()
+    tests += 'systemd.py'
+  endif
+endif
+
+if cdata.has('HAVE_FD_DEVICE')
+  tests += 'device_fd.py'
 endif
 
 exe_splice = executable(

@@ -14,20 +14,6 @@ from testlib.test import Test
 FAKE_INVITE = "localhost:65535/pVOZMJGm3MqTvTu0UnhMGb2cfuqygiu79MdnERnGYdga5v8C"
 
 
-def init(ctx: Test) -> Tinc:
-    """Initialize a node."""
-
-    node = ctx.node()
-    stdin = f"""
-        init {node}
-        set Port 0
-        set Address localhost
-        set DeviceType dummy
-    """
-    node.cmd(stdin=stdin)
-    return node
-
-
 def test_invite(foo: Tinc) -> None:
     """Test successful 'invite'."""
 
@@ -132,10 +118,10 @@ def test_join_errors(foo: Tinc) -> None:
 
 
 with Test("run invite success tests") as context:
-    test_invite(init(context))
+    test_invite(context.node(init=True))
 
 with Test("run invite error tests") as context:
-    test_invite_errors(init(context))
+    test_invite_errors(context.node(init=True))
 
 with Test("run join tests") as context:
-    test_join_errors(init(context))
+    test_join_errors(context.node(init=True))

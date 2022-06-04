@@ -79,9 +79,13 @@ def require_command(*args: str) -> None:
     """Check that command args runs with exit code 0.
     Exit with code 77 otherwise.
     """
-    if subp.run(args, check=False).returncode:
-        log.info('this test requires command "%s" to work', " ".join(args))
-        sys.exit(EXIT_SKIP)
+    try:
+        if subp.run(args, check=False).returncode == 0:
+            return
+    except FileNotFoundError:
+        pass
+    log.info('this test requires command "%s" to work', " ".join(args))
+    sys.exit(EXIT_SKIP)
 
 
 def require_path(path: str) -> None:

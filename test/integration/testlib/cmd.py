@@ -13,6 +13,21 @@ ExchangeIO = T.Tuple[
 ]
 
 
+def connect(node0: Tinc, node1: Tinc) -> ExchangeIO:
+    """Exchange configuration between nodes and start
+    them in such an order that `Port 0` works on both sides.
+    """
+    node0.add_script(node1.script_up)
+    node0.start()
+    result = exchange(node0, node1)
+    node1.add_script(node0.script_up)
+    node1.cmd("add", "ConnectTo", node0.name)
+    node1.start()
+    node0[node1.script_up].wait()
+    node1[node0.script_up].wait()
+    return result
+
+
 def exchange(node0: Tinc, node1: Tinc, export_all: bool = False) -> ExchangeIO:
     """Run `export(-all) | exchange | import` between the passed nodes.
     `export-all` is used if export_all is set to True.

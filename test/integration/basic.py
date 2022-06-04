@@ -12,16 +12,8 @@ from testlib import check
 
 def init(ctx: Test) -> Tinc:
     """Initialize new test nodes."""
-    node = ctx.node()
+    node = ctx.node(init=f"set Sandbox {SANDBOX_LEVEL}")
     node.add_script(Script.TINC_UP)
-    stdin = f"""
-        init {node}
-        set Address localhost
-        set Port 0
-        set DeviceType dummy
-        set Sandbox {SANDBOX_LEVEL}
-    """
-    node.cmd(stdin=stdin)
     return node
 
 
@@ -40,7 +32,7 @@ def test(ctx: Test, *flags: str) -> None:
     node.cmd("stop")
 
     log.info("checking tincd exit code")
-    check.equals(0, tincd.wait())
+    check.success(tincd.wait())
 
 
 with Test("foreground mode") as context:

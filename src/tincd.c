@@ -504,6 +504,9 @@ int main(int argc, char **argv) {
 #ifdef ENABLE_VDE
 		        " vde"
 #endif
+#ifdef HAVE_WATCHDOG
+		        " watchdog"
+#endif
 		        "\n\n"
 		        "Copyright (C) 1998-2021 Ivo Timmermans, Guus Sliepen and others.\n"
 		        "See the AUTHORS file for a complete list.\n"
