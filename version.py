@@ -20,5 +20,5 @@ cmd = [
 ]
 
 result = subp.run(cmd, stdout=subp.PIPE, encoding="utf-8", check=True)
-version = result.stdout.strip().removeprefix("release-")
+version = result.stdout.strip().replace("release-", "", 1)
 print(version)
