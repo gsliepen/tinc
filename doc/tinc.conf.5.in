@@ -384,7 +384,7 @@ This only has effect when
 .Va Mode
 is set to
 .Qq switch .
-.It Va MaxConnectionBurst Li = Ar count Pq 100
+.It Va MaxConnectionBurst Li = Ar count Pq 10
 This option controls how many connections tinc accepts in quick succession.
 If there are more connections than the given number in a short time interval,
 tinc will reduce the number of accepted connections to only one per second,

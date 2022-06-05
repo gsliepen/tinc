@@ -1153,7 +1153,7 @@ This option controls the amount of time MAC addresses are kept before they are r
 This only has effect when Mode is set to @samp{switch}.
 
 @cindex MaxConnectionBurst
-@item MaxConnectionBurst = <@var{count}> (100)
+@item MaxConnectionBurst = <@var{count}> (10)
 This option controls how many connections tinc accepts in quick succession.
 If there are more connections than the given number in a short time interval,
 tinc will reduce the number of accepted connections to only one per second,
