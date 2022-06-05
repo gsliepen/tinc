@@ -1196,6 +1196,21 @@ static bool invitation_receive(void *handle, uint8_t type, const void *msg, uint
 	return true;
 }
 
+bool wait_socket_recv(int fd) {
+	fd_set fds;
+	FD_ZERO(&fds);
+	FD_SET(fd, &fds);
+
+	struct timeval tv = {.tv_sec = 5};
+
+	if(select(fd + 1, &fds, NULL, NULL, &tv) != 1) {
+		fprintf(stderr, "Timed out waiting for the server to reply.\n");
+		return false;
+	}
+
+	return true;
+}
+
 int cmd_join(int argc, char *argv[]) {
 	free(data);
 	data = NULL;
@@ -1320,6 +1335,7 @@ next:
 			freeaddrinfo(ai);
 			free(b64_pubkey);
 			ecdsa_free(key);
+			fprintf(stderr, "Could not connect to inviter. Please make sure the URL you entered is valid.\n");
 			return 1;
 		}
 	}
@@ -1383,7 +1399,7 @@ next:
 	}
 
 	if(memcmp(hishash, hash, 18)) {
-		fprintf(stderr, "Peer has an invalid key!\n%s\n", line + 2);
+		fprintf(stderr, "Peer has an invalid key. Please make sure you're using the correct URL.\n%s\n", line + 2);
 		ecdsa_free(key);
 		return 1;
 
@@ -1409,7 +1425,7 @@ next:
 		goto exit;
 	}
 
-	while((len = recv(sock, line, sizeof(line), 0))) {
+	while(wait_socket_recv(sock) && (len = recv(sock, line, sizeof(line), 0))) {
 		if(len < 0) {
 			if(sockwouldblock(sockerrno)) {
 				continue;
@@ -1452,7 +1468,7 @@ exit:
 	closesocket(sock);
 
 	if(!success) {
-		fprintf(stderr, "Invitation cancelled.\n");
+		fprintf(stderr, "Invitation cancelled. Please try again and contact the inviter for assistance if this error persists.\n");
 		return 1;
 	}
 

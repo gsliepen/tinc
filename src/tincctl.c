@@ -495,6 +495,10 @@ bool recvline(int fd, char *line, size_t len) {
 	}
 
 	while(!(newline = memchr(buffer, '\n', blen))) {
+		if(!wait_socket_recv(fd)) {
+			return false;
+		}
+
 		ssize_t nrecv = recv(fd, buffer + blen, sizeof(buffer) - blen, 0);
 
 		if(nrecv == -1 && sockerrno == EINTR) {

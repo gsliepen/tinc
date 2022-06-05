@@ -23,4 +23,8 @@
 int cmd_invite(int argc, char *argv[]);
 int cmd_join(int argc, char *argv[]);
 
+// Wait until data can be read from socket, or a timeout occurs.
+// true if socket is ready, false on timeout.
+bool wait_socket_recv(int fd);
+
 #endif
