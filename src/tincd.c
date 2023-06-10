@@ -57,6 +57,7 @@
 #include "random.h"
 #include "sandbox.h"
 #include "watchdog.h"
+#include "address_cache.h"
 #include "fs.h"
 
 /* If nonzero, display usage information and exit. */
@@ -580,6 +581,8 @@ int main(int argc, char **argv) {
 	random_init();
 	crypto_init();
 	prng_init();
+
+	resolve_init();
 
 	if(!read_server_config(&config_tree)) {
 		return 1;

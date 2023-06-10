@@ -19,6 +19,8 @@
 
 #include "system.h"
 
+#include <pthread.h>
+
 #include "address_cache.h"
 #include "conf.h"
 #include "hash.h"
@@ -27,13 +29,17 @@
 #include "xalloc.h"
 
 static const unsigned int NOT_CACHED = UINT_MAX;
-#define RESOLVE_CACHE_SIZE 0x1000
-
+#define resolving_SIZE 0x10
 typedef struct addrinfo_key_t {
-	const char *address;
-	const char *service;
+	char *address;
+	char *service;
 	int socktype;
 } addrinfo_key_t;
+
+static inline bool hash_cmp_addrinfo_key_t(const addrinfo_key_t *a, const addrinfo_key_t *b, size_t size) {
+	return a->socktype != b->socktype || strcmp(a->address, b->address) != 0 || strcmp(a->service, b->service) != 0;
+}
+
 
 typedef struct addrinfo_result_t {
 	addrinfo_key_t key;
@@ -65,16 +71,16 @@ static uint32_t hash_function_addrinfo_key_t(const addrinfo_key_t* key) {
     return hash;
 }
 
-hash_define(addrinfo_key_t, RESOLVE_CACHE_SIZE)
-hash_new(addrinfo_key_t, resolve_cache);
+hash_define(addrinfo_key_t, resolving_SIZE)
+hash_new(addrinfo_key_t, resolving);
 
-void *getaddrinfo_thread(void *arg) {
+static void *getaddrinfo_thread(void *arg) {
     struct addrinfo_result_t *result = (struct addrinfo_result_t *)arg;
     
     struct addrinfo *ai, hint = {0};
     int err;
     
-    hint.ai_family = AF_UNSPEC;
+	hint.ai_family = addressfamily;
     hint.ai_socktype = result->key.socktype;
     
 #if HAVE_DECL_RES_INIT
@@ -86,6 +92,10 @@ void *getaddrinfo_thread(void *arg) {
     result->ai = ai;
     
     return result;
+}
+
+void resolve_init(void){
+	hash_clear(addrinfo_key_t, &resolving);
 }
 
 /*
@@ -105,19 +115,23 @@ struct addrinfo *resolve_str2addrinfo(const char *address, const char *service, 
 	key.socktype = socktype;
 
 	// check if we already have it
-	r = hash_search(addrinfo_key_t, &resolve_cache, &key);
+	r = hash_search(addrinfo_key_t, &resolving, &key);
 	if(r != NULL) {
 		if(r->ai || r->error){
+			// just wait for the thread to finish
+			pthread_join(r->tid, &r);
+
+			// check if we got an error
 			if(r->error) {
 				logger(DEBUG_ALWAYS, LOG_WARNING, "Error looking up %s port %s: %s", address, service, r->error == EAI_SYSTEM ? strerror(errno) : gai_strerror(r->error));
 				freeaddrinfo(r->ai);
 			}
-			hash_delete(addrinfo_key_t, &resolve_cache, &key);
+
+			hash_delete(addrinfo_key_t, &resolving, &key);
 			ai = r->ai;
 			goto free;
-		} else {
-			return NULL;
 		}
+		return NULL;
 	}
 
 	// the job
@@ -143,13 +157,13 @@ struct addrinfo *resolve_str2addrinfo(const char *address, const char *service, 
     timeout.tv_nsec = 20000000;
 	join_result = pthread_timedjoin_np(r->tid, (void **)&r, &timeout);
 
-	if (join_result == ETIMEDOUT) {
-		hash_insert(addrinfo_key_t, &resolve_cache, &key, r);
+	if (join_result == ETIMEDOUT || join_result == EBUSY) {
+		hash_insert(addrinfo_key_t, &resolving, &key, r);
 		return NULL;
     }
 	
 	if (join_result != 0) {
-        freeaddrinfo(result->ai);
+        freeaddrinfo(r->ai);
 		goto free;
     }
     
@@ -158,8 +172,8 @@ struct addrinfo *resolve_str2addrinfo(const char *address, const char *service, 
         freeaddrinfo(r->ai);
 		goto free;
     }
-    
-   ai = r->ai;
+	
+	ai = r->ai;
 free:
 	free(r->key.address);
 	free(r->key.service);
@@ -257,6 +271,8 @@ void add_recent_address(address_cache_t *cache, const sockaddr_t *sa) {
 }
 
 const sockaddr_t *get_recent_address(address_cache_t *cache) {
+	struct addrinfo *aip;
+
 	// Check if there is an address in our cache of recently seen addresses
 	if(cache->tried < cache->data.used) {
 		return &cache->data.address[cache->tried++];
@@ -310,11 +326,13 @@ const sockaddr_t *get_recent_address(address_cache_t *cache) {
 			}
 		}
 
-		if(cache->ai) {
+		aip = resolve_str2addrinfo(address, port, SOCK_STREAM);
+
+		if(aip != NULL) {
 			free_known_addresses(cache->ai);
 		}
 
-		cache->aip = cache->ai = resolve_str2addrinfo(address, port, SOCK_STREAM);
+		cache->aip = cache->ai = aip;
 
 		if(cache->ai) {
 			struct addrinfo *ai = NULL;
