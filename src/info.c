@@ -26,7 +26,7 @@
 #include "tincctl.h"
 #include "utils.h"
 
-void logger(int level, int priority, const char *format, ...) {
+void logger(debug_t level, int priority, const char *format, ...) {
 	(void)level;
 	(void)priority;
 	va_list ap;

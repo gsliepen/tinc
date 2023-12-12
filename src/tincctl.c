@@ -80,7 +80,7 @@ char *scriptextension = defaultextension;
 static char *prompt;
 char *device = NULL;
 char *iface = NULL;
-int debug_level = -1;
+debug_t debug_level = -1;
 
 typedef enum option_t {
 	OPT_BAD_OPTION  = '?',
