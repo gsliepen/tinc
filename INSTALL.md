@@ -49,7 +49,14 @@ integration test suite:
 - `socat`
 - `netcat`
 
-Please consult your operating system's documentation for more details.
+
+## Linux
+
+Depending on the distribution, one of the following commands can be used to install all dependencies:
+- Arch Linux: `sudo pacman --needed --sync base-devel meson ninja pkg-config openssl ncurses readline zlib lzo lz4 texinfo diffutils procps socat openbsd-netcat`
+- Debian: `sudo apt install meson ninja-build pkg-config build-essential libssl-dev libncurses-dev libreadline-dev zlib1g-dev liblzo2-dev liblz4-dev texinfo diffutils procps socat netcat-openbsd`
+- Alpine Linux: `doas apk add meson ninja pkgconf build-base linux-headers openssl-dev ncurses-dev readline-dev zlib-dev lzo-dev lz4-dev texinfo diffutils procps-ng socat netcat-openbsd`
+- Fedora: `sudo dnf install meson ninja-build pkgconf-pkg-config @development-tools openssl-devel ncurses-devel readline-devel zlib-devel lzo-devel lz4-devel texinfo diffutils procps-ng socat netcat`
 
 ## Windows
 
