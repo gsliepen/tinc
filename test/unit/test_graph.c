@@ -26,6 +26,54 @@ static node_t *make_node(const char *name) {
 	return node;
 }
 
+static void test_sssp_bfs_2(void **state) {
+	(void)state;
+
+	node_t *mars = make_node("mars");
+	node_t *saturn = make_node("saturn");
+	node_t *neptune = make_node("neptune");
+
+	//          1000            500
+	// myself ---------- mars ------------- neptune
+	//      \                              /
+	//       ------- saturn --------------
+	//          50               501
+
+	// Upper route
+	connect_nodes(myself, mars, 1000);
+	connect_nodes(mars, neptune, 500);
+
+	// Lower route
+	connect_nodes(myself, saturn, 50);
+	connect_nodes(saturn, neptune, 501);
+
+	sssp_bfs();
+
+	assert_true(mars->status.visited);
+	assert_true(saturn->status.visited);
+	assert_true(neptune->status.visited);
+
+	assert_false(mars->status.indirect);
+	assert_false(saturn->status.indirect);
+	assert_false(neptune->status.indirect);
+
+	assert_int_equal(1, mars->distance);
+	assert_int_equal(1, saturn->distance);
+	assert_int_equal(2, neptune->distance);
+
+	assert_ptr_equal(mars, mars->nexthop);
+	assert_ptr_equal(saturn, saturn->nexthop);
+	assert_ptr_equal(saturn, neptune->nexthop);
+
+	assert_ptr_equal(lookup_edge(myself, mars), mars->prevedge);
+	assert_ptr_equal(lookup_edge(myself, saturn), saturn->prevedge);
+	assert_ptr_equal(lookup_edge(saturn, neptune), neptune->prevedge);
+
+	assert_ptr_equal(mars, mars->via);
+	assert_ptr_equal(saturn, saturn->via);
+	assert_ptr_equal(neptune, neptune->via);
+}
+
 static void test_sssp_bfs(void **state) {
 	(void)state;
 
@@ -91,6 +139,7 @@ static int teardown(void **state) {
 int main(void) {
 	const struct CMUnitTest tests[] = {
 		cmocka_unit_test_setup_teardown(test_sssp_bfs, setup, teardown),
+		cmocka_unit_test_setup_teardown(test_sssp_bfs_2, setup, teardown)
 	};
 	return cmocka_run_group_tests(tests, NULL, NULL);
 }
