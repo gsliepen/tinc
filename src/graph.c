@@ -141,6 +141,7 @@ void sssp_bfs(void) {
 	myself->prevedge = NULL;
 	myself->via = myself;
 	myself->distance = 0;
+	myself->weighted_distance = 0;
 	list_insert_head(todo_list, myself);
 
 	/* Loop while todo_list is filled */
@@ -178,14 +179,15 @@ void sssp_bfs(void) {
 
 			if(e->to->status.visited
 			                && (!e->to->status.indirect || indirect)
-			                && (e->to->distance != n->distance + 1 || e->weight >= e->to->prevedge->weight)) {
+			                && (e->to->distance != n->distance + 1 || e->to->weighted_distance <= n->weighted_distance + e->weight)) {
 				continue;
 			}
 
 			// Only update nexthop if it doesn't increase the path length
 
-			if(!e->to->status.visited || (e->to->distance == n->distance + 1 && e->weight < e->to->prevedge->weight)) {
+			if(!e->to->status.visited || (e->to->distance == n->distance + 1 && e->to->weighted_distance > n->weighted_distance + e->weight)) {
 				e->to->nexthop = (n->nexthop == myself) ? e->to : n->nexthop;
+				e->to->weighted_distance = n->weighted_distance + e->weight;
 			}
 
 			e->to->status.visited = true;

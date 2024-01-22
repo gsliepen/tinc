@@ -76,6 +76,7 @@ typedef struct node_t {
 	compression_level_t outcompression;     /* Compression level, 0 = no compression */
 
 	int distance;
+	int weighted_distance;
 	struct node_t *nexthop;                 /* nearest node from us to him */
 	struct edge_t *prevedge;                /* nearest node from him to us */
 	struct node_t *via;                     /* next hop for UDP packets */
