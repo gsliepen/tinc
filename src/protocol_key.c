@@ -128,7 +128,20 @@ bool send_req_key(node_t *to) {
 		to->status.waitingforkey = true;
 		to->last_req_key = now.tv_sec;
 		to->incompression = myself->incompression;
-		return sptps_start(&to->sptps, to, true, true, myself->connection->ecdsa, to->ecdsa, label, labellen, send_initial_sptps_data, receive_sptps_record);
+
+		sptps_params_t params = {
+			.handle = to,
+			.initiator = true,
+			.datagram = true,
+			.mykey = myself->connection->ecdsa,
+			.hiskey = to->ecdsa,
+			.label = label,
+			.labellen = sizeof(label),
+			.send_data = send_initial_sptps_data,
+			.receive_record = receive_sptps_record,
+		};
+
+		return sptps_start(&to->sptps, &params);
 	}
 
 	return send_request(to->nexthop->connection, "%d %s %s", REQ_KEY, myself->name, to->name);
@@ -249,7 +262,20 @@ static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, no
 		from->status.validkey = false;
 		from->status.waitingforkey = true;
 		from->last_req_key = now.tv_sec;
-		sptps_start(&from->sptps, from, false, true, myself->connection->ecdsa, from->ecdsa, label, labellen, send_sptps_data_myself, receive_sptps_record);
+
+		sptps_params_t params = {
+			.handle = from,
+			.initiator = false,
+			.datagram = true,
+			.mykey = myself->connection->ecdsa,
+			.hiskey = from->ecdsa,
+			.label = label,
+			.labellen = sizeof(label),
+			.send_data = send_sptps_data_myself,
+			.receive_record = receive_sptps_record,
+		};
+
+		sptps_start(&from->sptps, &params);
 		sptps_receive_data(&from->sptps, buf, len);
 		send_mtu_info(myself, from, MTU);
 		return true;

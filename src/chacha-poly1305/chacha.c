@@ -4,27 +4,30 @@ D. J. Bernstein
 Public domain.
 */
 
-#include "../system.h"
-
 #include "chacha.h"
-
-typedef struct chacha_ctx chacha_ctx;
 
 #define U8C(v) (v##U)
 #define U32C(v) (v##U)
 
-#define U8V(v) ((uint8_t)(v) & U8C(0xFF))
+#define U8V(v) ((unsigned char)(v) & U8C(0xFF))
 #define U32V(v) ((uint32_t)(v) & U32C(0xFFFFFFFF))
 
 #define ROTL32(v, n) \
 	(U32V((v) << (n)) | ((v) >> (32 - (n))))
 
+#if (USE_UNALIGNED == 1)
+#define U8TO32_LITTLE(p) \
+	(*((uint32_t *)(p)))
+#define U32TO8_LITTLE(p, v) \
+	do { \
+		*((uint32_t *)(p)) = v; \
+	} while (0)
+#else
 #define U8TO32_LITTLE(p) \
 	(((uint32_t)((p)[0])      ) | \
 	 ((uint32_t)((p)[1]) <<  8) | \
 	 ((uint32_t)((p)[2]) << 16) | \
 	 ((uint32_t)((p)[3]) << 24))
-
 #define U32TO8_LITTLE(p, v) \
 	do { \
 		(p)[0] = U8V((v)      ); \
@@ -32,6 +35,7 @@ typedef struct chacha_ctx chacha_ctx;
 		(p)[2] = U8V((v) >> 16); \
 		(p)[3] = U8V((v) >> 24); \
 	} while (0)
+#endif
 
 #define ROTATE(v,c) (ROTL32(v,c))
 #define XOR(v,w) ((v) ^ (w))
@@ -47,7 +51,8 @@ typedef struct chacha_ctx chacha_ctx;
 static const char sigma[16] = "expand 32-byte k";
 static const char tau[16] = "expand 16-byte k";
 
-void chacha_keysetup(chacha_ctx *x, const uint8_t *k, uint32_t kbits) {
+void
+chacha_keysetup(struct chacha_ctx *x, const unsigned char *k, uint32_t kbits) {
 	const char *constants;
 
 	x->input[4] = U8TO32_LITTLE(k + 0);
@@ -55,10 +60,10 @@ void chacha_keysetup(chacha_ctx *x, const uint8_t *k, uint32_t kbits) {
 	x->input[6] = U8TO32_LITTLE(k + 8);
 	x->input[7] = U8TO32_LITTLE(k + 12);
 
-	if(kbits == 256) {      /* recommended */
+	if(kbits == 256) {  /* recommended */
 		k += 16;
 		constants = sigma;
-	} else {                /* kbits == 128 */
+	} else { /* kbits == 128 */
 		constants = tau;
 	}
 
@@ -72,19 +77,21 @@ void chacha_keysetup(chacha_ctx *x, const uint8_t *k, uint32_t kbits) {
 	x->input[3] = U8TO32_LITTLE(constants + 12);
 }
 
-void chacha_ivsetup(chacha_ctx *x, const uint8_t *iv, const uint8_t *counter) {
+void
+chacha_ivsetup(struct chacha_ctx *x, const unsigned char *iv, const unsigned char *counter) {
 	x->input[12] = counter == NULL ? 0 : U8TO32_LITTLE(counter + 0);
-	x->input[13] = counter == NULL ? 0 : U8TO32_LITTLE(counter + 4);
-	x->input[14] = U8TO32_LITTLE(iv + 0);
-	x->input[15] = U8TO32_LITTLE(iv + 4);
+	//x->input[13] = counter == NULL ? 0 : U8TO32_LITTLE(counter + 4);
+	x->input[13] = U8TO32_LITTLE(iv + 0);
+	x->input[14] = U8TO32_LITTLE(iv + 4);
+	x->input[15] = U8TO32_LITTLE(iv + 8);
 }
 
 void
-chacha_encrypt_bytes(chacha_ctx *x, const uint8_t *m, uint8_t *c, uint32_t bytes) {
+chacha_encrypt_bytes(struct chacha_ctx *x, const unsigned char *m, unsigned char *c, uint32_t bytes) {
 	uint32_t x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15;
 	uint32_t j0, j1, j2, j3, j4, j5, j6, j7, j8, j9, j10, j11, j12, j13, j14, j15;
-	uint8_t *ctarget = NULL;
-	uint8_t tmp[64];
+	unsigned char *ctarget = NULL;
+	unsigned char tmp[64];
 	uint32_t i;
 
 	if(!bytes) {
@@ -110,10 +117,15 @@ chacha_encrypt_bytes(chacha_ctx *x, const uint8_t *m, uint8_t *c, uint32_t bytes
 
 	for(;;) {
 		if(bytes < 64) {
+#if (USE_MEMCPY == 1)
+			memcpy(tmp, m, bytes);
+#else
+
 			for(i = 0; i < bytes; ++i) {
 				tmp[i] = m[i];
 			}
 
+#endif
 			m = tmp;
 			ctarget = c;
 			c = tmp;
@@ -207,9 +219,15 @@ chacha_encrypt_bytes(chacha_ctx *x, const uint8_t *m, uint8_t *c, uint32_t bytes
 
 		if(bytes <= 64) {
 			if(bytes < 64) {
+#if (USE_MEMCPY == 1)
+				memcpy(ctarget, c, bytes);
+#else
+
 				for(i = 0; i < bytes; ++i) {
 					ctarget[i] = c[i];
 				}
+
+#endif
 			}
 
 			x->input[12] = j12;

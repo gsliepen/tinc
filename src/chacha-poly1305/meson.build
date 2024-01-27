@@ -1,5 +1,5 @@
 src_chacha_poly = files(
-  'chacha-poly1305.c',
+  'chachapoly.c',
   'chacha.c',
   'poly1305.c',
 )

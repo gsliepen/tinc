@@ -18,8 +18,8 @@ Stream record layer
 
 A record consists of these fields:
 
-- uint32_t seqno (network byte order)
-- uint16_t length (network byte order)
+- uint32_t seqno (little endian)
+- uint16_t length (little endian)
 - uint8_t type
 - opaque data[length]
 - opaque hmac[HMAC_SIZE] (HMAC over all preceding fields)
@@ -45,8 +45,8 @@ Datagram record layer
 
 A record consists of these fields:
 
-- uint16_t length (network byte order)
-- uint32_t seqno (network byte order)
+- uint16_t length (little endian)
+- uint32_t seqno (little endian)
 - uint8_t type
 - opaque data[length]
 - opaque hmac[HMAC_SIZE] (HMAC over all preceding fields)
@@ -75,7 +75,7 @@ SIG ->
 ...encrypt and HMAC using session keys from now on...
 
 App ->
-            <- App 
+            <- App
 ...
             ...
 
@@ -91,7 +91,7 @@ ACK ->
 ...encrypt and HMAC using new session keys from now on...
 
 App ->
-            <- App 
+            <- App
 ...
             ...
 ---------------------
@@ -102,7 +102,11 @@ connection.
 
 Key EXchange message:
 
-- uint8_t kex_version (always 0 in this version of SPTPS)
+- uint8_t kex_version (always 1 in this version of SPTPS)
+- uint8_t
+  - high 4 bits: public key algorithm
+  - low 4 bits: preferred cipher suite
+- uint16_t bitmask of cipher suites supported
 - opaque nonce[32] (random number)
 - opaque ecdh_key[ECDH_SIZE]
 
@@ -162,9 +166,34 @@ The expanded key is used as follows:
 Where initiator_cipher_key is the key used by session initiator to encrypt
 messages sent to the responder.
 
+Public key suites
+-----------------
+
+0: Ed25519 + SHA512
+1: Ed448 + SHAKE256?
+
+Symmetric cipher suites
+-----------------------
+
+Value in parentheses is the static priority used to break ties in cipher suite
+negotiation. We favor those algorithms that run faster without hardware
+acceleration.
+
+0: Chacha20-Poly1305 (1)
+1: AES256-GCM        (0)
+
+Cipher suite selection
+----------------------
+
+Public key suites are required to match on both sides. The symmetric suite is chosen as follows:
+
+1. AND the supported cipher suite bitmasks
+2. If both preferred cipher suites are possible, choose the one with the highest static priority.
+3. If only one is possible, choose that one.
+4. If none is possible, choose the suite from the resulting bitmask that has the highest static priority.
+
 TODO:
 -----
 
 - Document format of ECDH public key, ECDSA signature
-- Document how CTR mode is used
 - Refer to TLS RFCs where appropriate
