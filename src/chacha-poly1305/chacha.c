@@ -7,8 +7,7 @@ Public domain.
 #include "../system.h"
 
 #include "chacha.h"
-
-typedef struct chacha_ctx chacha_ctx;
+#include "../cpu.h"
 
 #define U8C(v) (v##U)
 #define U32C(v) (v##U)
@@ -79,8 +78,7 @@ void chacha_ivsetup(chacha_ctx *x, const uint8_t *iv, const uint8_t *counter) {
 	x->input[15] = U8TO32_LITTLE(iv + 4);
 }
 
-void
-chacha_encrypt_bytes(chacha_ctx *x, const uint8_t *m, uint8_t *c, uint32_t bytes) {
+static void chacha_encrypt_bytes_generic(chacha_ctx *x, const uint8_t *m, uint8_t *c, uint32_t bytes) {
 	uint32_t x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15;
 	uint32_t j0, j1, j2, j3, j4, j5, j6, j7, j8, j9, j10, j11, j12, j13, j14, j15;
 	uint8_t *ctarget = NULL;
@@ -221,4 +219,32 @@ chacha_encrypt_bytes(chacha_ctx *x, const uint8_t *m, uint8_t *c, uint32_t bytes
 		c += 64;
 		m += 64;
 	}
+}
+
+static chacha_encrypt_bytes_t *chacha_encrypt_bytes_impl;
+
+void chacha_encrypt_bytes(struct chacha_ctx *x, const uint8_t *m, uint8_t *c, uint32_t bytes) {
+	chacha_encrypt_bytes_impl(x, m, c, bytes);
+}
+
+void chacha_resolve_functions(void) {
+	cpu_detect_features();
+
+#ifdef HAVE_CPU_AVX2
+
+	if(cpu_supports(CPU_AVX2)) {
+		chacha_encrypt_bytes_impl = chacha_encrypt_bytes_avx2;
+		return;
+	}
+
+#endif
+#ifdef HAVE_CPU_SSSE3
+
+	if(cpu_supports(CPU_SSSE3)) {
+		chacha_encrypt_bytes_impl = chacha_encrypt_bytes_ssse3;
+		return;
+	}
+
+#endif
+	chacha_encrypt_bytes_impl = chacha_encrypt_bytes_generic;
 }
