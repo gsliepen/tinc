@@ -9,6 +9,7 @@ ReloadPropagatedFrom=tinc.service
 [Service]
 RemoveIPC=true
 NoNewPrivileges=true
+ReadWritePaths=%L/tinc/ %t/tinc/
 CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE
 AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE
 SystemCallArchitectures=native
@@ -16,7 +17,7 @@ SystemCallFilter=~@clock @cpu-emulation @debug @module @mount @obsolete @privile
 MemoryDenyWriteExecute=true
 RestrictSUIDSGID=true
 LockPersonality=true
-RestrictAddressFamilies=AF_INET AF_INET6 AF_NETLINK
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
 RestrictRealtime=true
 RestrictNamespaces=true
 ProtectSystem=strict
@@ -35,8 +36,10 @@ DeviceAllow=/dev/net/tun rwm
 DeviceAllow=/dev/net/tap rwm
 
 Type=notify
-WorkingDirectory=@sysconfdir@/tinc/%i
-ExecStart=@sbindir@/tincd -n %i -D
+WorkingDirectory=%E/tinc/%i
+RuntimeDirectory=tinc
+LogsDirectory=tinc
+ExecStart=@sbindir@/tincd -n %i --pidfile=%t/tinc/%i.pid --logfile=%L/tinc/%i.log -D
 ExecReload=@sbindir@/tinc -n %i reload
 KillMode=mixed
 Restart=on-failure
