@@ -7,6 +7,33 @@ PartOf=tinc.service
 ReloadPropagatedFrom=tinc.service
 
 [Service]
+RemoveIPC=true
+NoNewPrivileges=true
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE
+AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE
+SystemCallArchitectures=native
+SystemCallFilter=~@clock @cpu-emulation @debug @module @mount @obsolete @privileged @raw-io @reboot @resources @swap
+MemoryDenyWriteExecute=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_NETLINK
+RestrictRealtime=true
+RestrictNamespaces=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectClock=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+ProtectHostname=true
+ProtectKernelTunables=true
+ProtectProc=ptraceable
+ProcSubset=pid
+PrivateTmp=true
+PrivateMounts=true
+DeviceAllow=/dev/net/tun rwm
+DeviceAllow=/dev/net/tap rwm
+
 Type=notify
 WorkingDirectory=@sysconfdir@/tinc/%i
 ExecStart=@sbindir@/tincd -n %i -D
