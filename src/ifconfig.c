@@ -28,6 +28,9 @@ static long start;
 #ifndef HAVE_WINDOWS
 void ifconfig_header(FILE *out) {
 	fprintf(out, "#!/bin/sh\n");
+#ifdef HAVE_LINUX
+	fprintf(out, "ip link set \"$INTERFACE\" up\n");
+#endif
 	start = ftell(out);
 }
 
@@ -50,12 +53,17 @@ void ifconfig_slaac(FILE *out) {
 
 bool ifconfig_footer(FILE *out) {
 	if(ftell(out) == start) {
-		fprintf(out, "echo 'Unconfigured tinc-up script, please edit '$0'!'\n\n#ifconfig $INTERFACE <your vpn IP address> netmask <netmask of whole VPN>\n");
+		fprintf(out,
+#ifdef HAVE_LINUX
+		        "#ip addr add <your vpn IP address>/<prefix of whole VPN> dev $INTERFACE\n"
+#else
+		        "#ifconfig $INTERFACE <your vpn IP address>/<prefix of whole VPN>\n"
+#endif
+		        "\n"
+		        "echo \"Unconfigured tinc-up script, please edit '$0'!\" >&2\n");
 		return false;
 	} else {
-#ifdef HAVE_LINUX
-		fprintf(out, "ip link set \"$INTERFACE\" up\n");
-#else
+#ifndef HAVE_LINUX
 		fprintf(out, "ifconfig \"$INTERFACE\" up\n");
 #endif
 		return true;
