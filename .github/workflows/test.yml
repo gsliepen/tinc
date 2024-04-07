@@ -24,7 +24,7 @@ jobs:
           - mingw
 
     container:
-      image: debian:bullseye
+      image: debian:stable
       options: --privileged
 
     steps:
@@ -59,7 +59,7 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 20
     container:
-      image: debian:bullseye-slim
+      image: debian:stable-slim
       env:
         CI: 1
 
@@ -197,17 +197,16 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - alpine
+          - alpine:latest
           - alpine:edge
-          - centos:7 # aka RHEL 7
-          - almalinux:8 # aka RHEL 8
-          - almalinux:9 # aka RHEL 9
-          - fedora
-          - debian:buster
-          - debian:bullseye
+          - almalinux:latest
+          - fedora:latest
+          - fedora:rawhide
+          - debian:oldstable
+          - debian:stable
           - debian:testing
-          - ubuntu # current LTS
-          - ubuntu:rolling # latest
+          - ubuntu:latest
+          - ubuntu:rolling
     container:
       image: ${{ matrix.os }}
       options: --privileged
