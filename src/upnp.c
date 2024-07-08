@@ -122,8 +122,12 @@ static void upnp_refresh(void) {
 	struct IGDdatas data;
 
 	char myaddr[64];
-
+#if (MINIUPNPC_API_VERSION >= 18)
+	char wnaddr[64];
+	int result = UPNP_GetValidIGD(devices, &urls, &data, myaddr, sizeof(myaddr), wnaddr, sizeof(wnaddr));
+#else
 	int result = UPNP_GetValidIGD(devices, &urls, &data, myaddr, sizeof(myaddr));
+#endif
 
 	if(result <= 0) {
 		logger(DEBUG_PROTOCOL, LOG_WARNING, "[upnp] No IGD found");
