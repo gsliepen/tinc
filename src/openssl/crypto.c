@@ -23,8 +23,11 @@
 #include <openssl/engine.h>
 
 #include "../crypto.h"
+#include "../chacha-poly1305/chacha.h"
 
 void crypto_init(void) {
+	chacha_resolve_functions();
+
 #if OPENSSL_VERSION_MAJOR < 3
 	ENGINE_load_builtin_engines();
 #endif

@@ -18,7 +18,8 @@
 */
 
 #include "../crypto.h"
+#include "../chacha-poly1305/chacha.h"
 
-// No-op for those cryptographic libraries that
-// do not require any additional initialization.
-void crypto_init(void) {}
+void crypto_init(void) {
+	chacha_resolve_functions();
+}
