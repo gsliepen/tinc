@@ -73,14 +73,14 @@ with Test("foo 1.1, bar 1.1") as context:
 
 with Test("foo 1.1, bar 1.0") as context:
     foo_node, bar_node = init(context)
-    bar_node.cmd("set", "ExperimentalProtocol", "no")
+    bar_node.cmd("--force", "set", "ExperimentalProtocol", "no")
     foo_node.cmd("del", f"{bar_node}.Ed25519PublicKey")
     bar_node.cmd("del", f"{foo_node}.Ed25519PublicKey")
     run_keys_test(foo_node, bar_node, empty=True)
 
 with Test("bar 1.0 must not be allowed to connect") as context:
     foo_node, bar_node = init(context)
-    bar_node.cmd("set", "ExperimentalProtocol", "no")
+    bar_node.cmd("--force", "set", "ExperimentalProtocol", "no")
 
     bar_up = bar_node.add_script(Script.SUBNET_UP)
     bar_node.cmd("start")

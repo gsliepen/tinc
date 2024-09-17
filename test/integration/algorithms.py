@@ -23,7 +23,7 @@ def init(ctx: Test, digest: str, cipher: str) -> T.Tuple[Tinc, Tinc]:
         set Digest {digest}
         set Cipher {cipher}
     """
-    foo.cmd(stdin=stdin)
+    foo.cmd("--force", stdin=stdin)
     foo.start()
 
     stdin = f"""
@@ -35,7 +35,7 @@ def init(ctx: Test, digest: str, cipher: str) -> T.Tuple[Tinc, Tinc]:
         set Digest {digest}
         set Cipher {cipher}
     """
-    bar.cmd(stdin=stdin)
+    bar.cmd("--force", stdin=stdin)
 
     foo.add_script(bar.script_up)
     bar.add_script(foo.script_up)

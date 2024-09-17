@@ -1413,7 +1413,16 @@ next:
 	}
 
 	// Start an SPTPS session
-	if(!sptps_start(&sptps, NULL, true, false, key, hiskey, "tinc invitation", 15, invitation_send, invitation_receive)) {
+	sptps_params_t params = {
+		.initiator = true,
+		.mykey = key,
+		.hiskey = hiskey,
+		.label = "tinc invitation",
+		.send_data = invitation_send,
+		.receive_record = invitation_receive,
+	};
+
+	if(!sptps_start(&sptps, &params)) {
 		ecdsa_free(hiskey);
 		ecdsa_free(key);
 		return 1;

@@ -168,22 +168,76 @@ static int run_benchmark(int argc, char *argv[]) {
 	fprintf(stderr, "%28.2lf op/s\n", rate);
 	ecdh_free(ecdh1);
 
-	// SPTPS authentication phase
-
 	int fd[2];
+	struct pollfd pfd[2] = {{fd[0], POLLIN}, {fd[1], POLLIN}};
 
-	if(socketpair(AF_UNIX, SOCK_STREAM, 0, fd)) {
-		fprintf(stderr, "Could not create a UNIX socket pair: %s\n", sockstrerror(sockerrno));
-		return 1;
-	}
+	sptps_params_t params1 = {
+		.handle = fd + 0,
+		.initiator = true,
+		.datagram = false,
+		.mykey = key1,
+		.hiskey = key2,
+		.label = "sptps_speed",
+		.send_data = send_data,
+		.receive_record = receive_record,
+	};
 
-	struct pollfd pfd[2] = {{fd[0], POLLIN, 0}, {fd[1], POLLIN, 0}};
+	sptps_params_t params2 = {
+		.handle = fd + 1,
+		.initiator = false,
+		.datagram = false,
+		.mykey = key2,
+		.hiskey = key1,
+		.label = "sptps_speed",
+		.send_data = send_data,
+		.receive_record = receive_record,
+	};
 
-	fprintf(stderr, "SPTPS/TCP authenticate for %lg seconds: ", duration);
+	static const char *suite_names[] = {
+		"Chacha20-Poly1305",
+		"AES-256-GCM",
+	};
 
-	for(clock_start(); clock_countto(duration);) {
-		sptps_start(&sptps1, fd + 0, true, false, key1, key2, "sptps_speed", 11, send_data, receive_record);
-		sptps_start(&sptps2, fd + 1, false, false, key2, key1, "sptps_speed", 11, send_data, receive_record);
+	for(uint8_t suite = 0; suite < 2; suite++) {
+		fprintf(stderr, "\nCipher suite %u (%s):\n", suite, suite_names[suite]);
+		params1.preferred_suite = params2.preferred_suite = suite;
+
+		// SPTPS authentication phase
+
+		fprintf(stderr, "SPTPS/TCP authenticate for %lg seconds: ", duration);
+
+		if(socketpair(AF_UNIX, SOCK_STREAM, 0, fd)) {
+			fprintf(stderr, "Could not create a UNIX socket pair: %s\n", sockstrerror(sockerrno));
+			return 1;
+		}
+
+		pfd[0].fd = fd[0], pfd[1].fd = fd[1];
+		params1.datagram = params2.datagram = false;
+
+		for(clock_start(); clock_countto(duration);) {
+			sptps_start(&sptps1, &params1);
+			sptps_start(&sptps2, &params2);
+
+			while(poll(pfd, 2, 0)) {
+				if(pfd[0].revents) {
+					receive_data(&sptps1);
+				}
+
+				if(pfd[1].revents) {
+					receive_data(&sptps2);
+				}
+			}
+
+			sptps_stop(&sptps1);
+			sptps_stop(&sptps2);
+		}
+
+		fprintf(stderr, "%10.2lf op/s\n", rate * 2);
+
+		// SPTPS data
+
+		sptps_start(&sptps1, &params1);
+		sptps_start(&sptps2, &params2);
 
 		while(poll(pfd, 2, 0)) {
 			if(pfd[0].revents) {
@@ -195,65 +249,68 @@ static int run_benchmark(int argc, char *argv[]) {
 			}
 		}
 
-		sptps_stop(&sptps1);
-		sptps_stop(&sptps2);
-	}
+		fprintf(stderr, "SPTPS/TCP transmit for %lg seconds: ", duration);
 
-	fprintf(stderr, "%10.2lf op/s\n", rate * 2);
+		for(clock_start(); clock_countto(duration);) {
+			if(!sptps_send_record(&sptps1, 0, buf1, 1451)) {
+				abort();
+			}
 
-	// SPTPS data
-
-	sptps_start(&sptps1, fd + 0, true, false, key1, key2, "sptps_speed", 11, send_data, receive_record);
-	sptps_start(&sptps2, fd + 1, false, false, key2, key1, "sptps_speed", 11, send_data, receive_record);
-
-	while(poll(pfd, 2, 0)) {
-		if(pfd[0].revents) {
-			receive_data(&sptps1);
-		}
-
-		if(pfd[1].revents) {
 			receive_data(&sptps2);
 		}
-	}
 
-	fprintf(stderr, "SPTPS/TCP transmit for %lg seconds: ", duration);
+		rate *= 2 * 1451 * 8;
 
-	for(clock_start(); clock_countto(duration);) {
-		if(!sptps_send_record(&sptps1, 0, buf1, 1451)) {
-			abort();
+		if(rate > 1e9) {
+			fprintf(stderr, "%14.2lf Gbit/s\n", rate / 1e9);
+		} else if(rate > 1e6) {
+			fprintf(stderr, "%14.2lf Mbit/s\n", rate / 1e6);
+		} else if(rate > 1e3) {
+			fprintf(stderr, "%14.2lf kbit/s\n", rate / 1e3);
 		}
 
-		receive_data(&sptps2);
-	}
+		sptps_stop(&sptps1);
+		sptps_stop(&sptps2);
 
-	rate *= 2 * 1451 * 8;
+		close(fd[0]);
+		close(fd[1]);
 
-	if(rate > 1e9) {
-		fprintf(stderr, "%14.2lf Gbit/s\n", rate / 1e9);
-	} else if(rate > 1e6) {
-		fprintf(stderr, "%14.2lf Mbit/s\n", rate / 1e6);
-	} else if(rate > 1e3) {
-		fprintf(stderr, "%14.2lf kbit/s\n", rate / 1e3);
-	}
+		// SPTPS datagram authentication phase
 
-	sptps_stop(&sptps1);
-	sptps_stop(&sptps2);
+		if(socketpair(AF_UNIX, SOCK_DGRAM, 0, fd)) {
+			fprintf(stderr, "Could not create a UNIX socket pair: %s\n", sockstrerror(sockerrno));
+			return 1;
+		}
 
-	// SPTPS datagram authentication phase
+		pfd[0].fd = fd[0], pfd[1].fd = fd[1];
+		params1.datagram = params2.datagram = true;
 
-	close(fd[0]);
-	close(fd[1]);
+		fprintf(stderr, "SPTPS/UDP authenticate for %lg seconds: ", duration);
 
-	if(socketpair(AF_UNIX, SOCK_DGRAM, 0, fd)) {
-		fprintf(stderr, "Could not create a UNIX socket pair: %s\n", sockstrerror(sockerrno));
-		return 1;
-	}
+		for(clock_start(); clock_countto(duration);) {
+			sptps_start(&sptps1, &params1);
+			sptps_start(&sptps2, &params2);
 
-	fprintf(stderr, "SPTPS/UDP authenticate for %lg seconds: ", duration);
+			while(poll(pfd, 2, 0)) {
+				if(pfd[0].revents) {
+					receive_data(&sptps1);
+				}
 
-	for(clock_start(); clock_countto(duration);) {
-		sptps_start(&sptps1, fd + 0, true, true, key1, key2, "sptps_speed", 11, send_data, receive_record);
-		sptps_start(&sptps2, fd + 1, false, true, key2, key1, "sptps_speed", 11, send_data, receive_record);
+				if(pfd[1].revents) {
+					receive_data(&sptps2);
+				}
+			}
+
+			sptps_stop(&sptps1);
+			sptps_stop(&sptps2);
+		}
+
+		fprintf(stderr, "%10.2lf op/s\n", rate * 2);
+
+		// SPTPS datagram data
+
+		sptps_start(&sptps1, &params1);
+		sptps_start(&sptps2, &params2);
 
 		while(poll(pfd, 2, 0)) {
 			if(pfd[0].revents) {
@@ -265,54 +322,35 @@ static int run_benchmark(int argc, char *argv[]) {
 			}
 		}
 
-		sptps_stop(&sptps1);
-		sptps_stop(&sptps2);
-	}
+		fprintf(stderr, "SPTPS/UDP transmit for %lg seconds: ", duration);
 
-	fprintf(stderr, "%10.2lf op/s\n", rate * 2);
+		for(clock_start(); clock_countto(duration);) {
+			if(!sptps_send_record(&sptps1, 0, buf1, 1451)) {
+				abort();
+			}
 
-	// SPTPS datagram data
-
-	sptps_start(&sptps1, fd + 0, true, true, key1, key2, "sptps_speed", 11, send_data, receive_record);
-	sptps_start(&sptps2, fd + 1, false, true, key2, key1, "sptps_speed", 11, send_data, receive_record);
-
-	while(poll(pfd, 2, 0)) {
-		if(pfd[0].revents) {
-			receive_data(&sptps1);
-		}
-
-		if(pfd[1].revents) {
 			receive_data(&sptps2);
 		}
-	}
 
-	fprintf(stderr, "SPTPS/UDP transmit for %lg seconds: ", duration);
+		rate *= 2 * 1451 * 8;
 
-	for(clock_start(); clock_countto(duration);) {
-		if(!sptps_send_record(&sptps1, 0, buf1, 1451)) {
-			abort();
+		if(rate > 1e9) {
+			fprintf(stderr, "%14.2lf Gbit/s\n", rate / 1e9);
+		} else if(rate > 1e6) {
+			fprintf(stderr, "%14.2lf Mbit/s\n", rate / 1e6);
+		} else if(rate > 1e3) {
+			fprintf(stderr, "%14.2lf kbit/s\n", rate / 1e3);
 		}
 
-		receive_data(&sptps2);
+		sptps_stop(&sptps1);
+		sptps_stop(&sptps2);
+
+		close(fd[0]);
+		close(fd[1]);
 	}
-
-	rate *= 2 * 1451 * 8;
-
-	if(rate > 1e9) {
-		fprintf(stderr, "%14.2lf Gbit/s\n", rate / 1e9);
-	} else if(rate > 1e6) {
-		fprintf(stderr, "%14.2lf Mbit/s\n", rate / 1e6);
-	} else if(rate > 1e3) {
-		fprintf(stderr, "%14.2lf kbit/s\n", rate / 1e3);
-	}
-
-	sptps_stop(&sptps1);
-	sptps_stop(&sptps2);
 
 	// Clean up
 
-	close(fd[0]);
-	close(fd[1]);
 	ecdsa_free(key1);
 	ecdsa_free(key2);
 

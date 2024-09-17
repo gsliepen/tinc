@@ -119,38 +119,42 @@ static bool receive_record(void *handle, uint8_t type, const void *data, uint16_
 }
 
 typedef enum option_t {
-	OPT_BAD_OPTION    = '?',
-	OPT_LONG_OPTION   =  0,
+	OPT_BAD_OPTION      = '?',
+	OPT_LONG_OPTION     =  0,
 
 	// Short options
-	OPT_DATAGRAM      = 'd',
-	OPT_QUIT_ON_EOF   = 'q',
-	OPT_READONLY      = 'r',
-	OPT_WRITEONLY     = 'w',
-	OPT_PACKET_LOSS   = 'L',
-	OPT_REPLAY_WINDOW = 'W',
-	OPT_SPECIAL_CHAR  = 's',
-	OPT_TUN           = 't',
-	OPT_VERBOSE       = 'v',
-	OPT_IPV4          = '4',
-	OPT_IPV6          = '6',
+	OPT_DATAGRAM        = 'd',
+	OPT_QUIT_ON_EOF     = 'q',
+	OPT_READONLY        = 'r',
+	OPT_WRITEONLY       = 'w',
+	OPT_PACKET_LOSS     = 'L',
+	OPT_REPLAY_WINDOW   = 'W',
+	OPT_SPECIAL_CHAR    = 's',
+	OPT_TUN             = 't',
+	OPT_VERBOSE         = 'v',
+	OPT_CIPHER_SUITES   = 'M',
+	OPT_PREFERRED_SUITE = 'P',
+	OPT_IPV4            = '4',
+	OPT_IPV6            = '6',
 
 	// Long options
-	OPT_HELP          = 255,
+	OPT_HELP            = 255,
 } option_t;
 
 static struct option const long_options[] = {
-	{"datagram",      no_argument,       NULL, OPT_DATAGRAM},
-	{"quit",          no_argument,       NULL, OPT_QUIT_ON_EOF},
-	{"readonly",      no_argument,       NULL, OPT_READONLY},
-	{"writeonly",     no_argument,       NULL, OPT_WRITEONLY},
-	{"packet-loss",   required_argument, NULL, OPT_PACKET_LOSS},
-	{"replay-window", required_argument, NULL, OPT_REPLAY_WINDOW},
-	{"special",       no_argument,       NULL, OPT_SPECIAL_CHAR},
-	{"tun",           no_argument,       NULL, OPT_TUN},
-	{"verbose",       required_argument, NULL, OPT_VERBOSE},
-	{"help",          no_argument,       NULL, OPT_HELP},
-	{NULL,            0,                 NULL, 0}
+	{"datagram",        no_argument,       NULL, OPT_DATAGRAM},
+	{"quit",            no_argument,       NULL, OPT_QUIT_ON_EOF},
+	{"readonly",        no_argument,       NULL, OPT_READONLY},
+	{"writeonly",       no_argument,       NULL, OPT_WRITEONLY},
+	{"packet-loss",     required_argument, NULL, OPT_PACKET_LOSS},
+	{"replay-window",   required_argument, NULL, OPT_REPLAY_WINDOW},
+	{"special",         no_argument,       NULL, OPT_SPECIAL_CHAR},
+	{"tun",             no_argument,       NULL, OPT_TUN},
+	{"verbose",         required_argument, NULL, OPT_VERBOSE},
+	{"cipher-suites",   required_argument, NULL, OPT_CIPHER_SUITES},
+	{"preferred-suite", required_argument, NULL, OPT_PREFERRED_SUITE},
+	{"help",            no_argument,       NULL, OPT_HELP},
+	{NULL,              0,                 NULL, 0}
 };
 
 static void usage(void) {
@@ -158,19 +162,21 @@ static void usage(void) {
 	        "Usage: %s [options] my_ed25519_key_file his_ed25519_key_file [host] port\n"
 	        "\n"
 	        "Valid options are:\n"
-	        "  -d, --datagram          Enable datagram mode.\n"
-	        "  -q, --quit              Quit when EOF occurs on stdin.\n"
-	        "  -r, --readonly          Only send data from the socket to stdout.\n"
+	        "  -d, --datagram            Enable datagram mode.\n"
+	        "  -q, --quit                Quit when EOF occurs on stdin.\n"
+	        "  -r, --readonly            Only send data from the socket to stdout.\n"
 #ifdef HAVE_LINUX
-	        "  -t, --tun               Use a tun device instead of stdio.\n"
+	        "  -t, --tun                 Use a tun device instead of stdio.\n"
 #endif
-	        "  -w, --writeonly         Only send data from stdin to the socket.\n"
-	        "  -L, --packet-loss RATE  Fake packet loss of RATE percent.\n"
-	        "  -R, --replay-window N   Set replay window to N bytes.\n"
-	        "  -s, --special           Enable special handling of lines starting with #, ^ and $.\n"
-	        "  -v, --verbose           Display debug messages.\n"
-	        "  -4                      Use IPv4.\n"
-	        "  -6                      Use IPv6.\n"
+	        "  -w, --writeonly           Only send data from stdin to the socket.\n"
+	        "  -L, --packet-loss RATE    Fake packet loss of RATE percent.\n"
+	        "  -R, --replay-window N     Set replay window to N bytes.\n"
+	        "  -M, --cipher-suites MASK  Set the mask of allowed cipher suites.\n"
+	        "  -P, --preferred-suite N   Set the preferred cipher suite.\n"
+	        "  -s, --special             Enable special handling of lines starting with #, ^ and $.\n"
+	        "  -v, --verbose             Display debug messages.\n"
+	        "  -4                        Use IPv4.\n"
+	        "  -6                        Use IPv6.\n"
 	        "\n"
 	        "Report bugs to tinc@tinc-vpn.org.\n",
 	        program_name);
@@ -347,6 +353,8 @@ static int run_test(int argc, char *argv[]) {
 	int r;
 	int option_index = 0;
 	bool quit = false;
+	unsigned long cipher_suites = SPTPS_ALL_CIPHER_SUITES;
+	unsigned long preferred_suite = 0;
 
 	while((r = getopt_long(argc, argv, "dqrstwL:W:v46", long_options, &option_index)) != EOF) {
 		switch((option_t) r) {
@@ -389,6 +397,14 @@ static int run_test(int argc, char *argv[]) {
 
 		case OPT_REPLAY_WINDOW:
 			sptps_replaywin = atoi(optarg);
+			break;
+
+		case OPT_CIPHER_SUITES:
+			cipher_suites = strtoul(optarg, NULL, 0);
+			break;
+
+		case OPT_PREFERRED_SUITE:
+			preferred_suite = strtoul(optarg, NULL, 0);
 			break;
 
 		case OPT_VERBOSE:
@@ -583,7 +599,20 @@ static int run_test(int argc, char *argv[]) {
 
 	sptps_t s;
 
-	if(!sptps_start(&s, &sock, initiator, datagram, mykey, hiskey, "sptps_test", 10, send_data, receive_record)) {
+	sptps_params_t params = {
+		.handle = &sock,
+		.initiator = initiator,
+		.datagram = datagram,
+		.mykey = mykey,
+		.hiskey = hiskey,
+		.label = "sptps_test",
+		.send_data = send_data,
+		.receive_record = receive_record,
+		.cipher_suites = cipher_suites,
+		.preferred_suite = preferred_suite,
+	};
+
+	if(!sptps_start(&s, &params)) {
 		ecdsa_free(mykey);
 		ecdsa_free(hiskey);
 		return 1;
@@ -715,6 +744,8 @@ static int run_test(int argc, char *argv[]) {
 						ecdsa_free(mykey);
 						ecdsa_free(hiskey);
 						return 1;
+					} else {
+						break;
 					}
 				}
 
