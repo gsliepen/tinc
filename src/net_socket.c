@@ -403,7 +403,13 @@ static void retry_outgoing_handler(void *data) {
 }
 
 void retry_outgoing(outgoing_t *outgoing) {
-	outgoing->timeout += 5;
+	if(outgoing->timeout > 3) {
+		// increase timeout by 5s every time
+		outgoing->timeout += 5;
+	} else {
+		// try every second for the first 3 seconds
+		outgoing->timeout = 1;
+	}
 
 	if(outgoing->timeout > maxtimeout) {
 		outgoing->timeout = maxtimeout;

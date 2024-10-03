@@ -40,6 +40,8 @@ typedef struct address_cache_t {
 	} data;
 } address_cache_t;
 
+void resolve_init(void);
+
 void add_recent_address(address_cache_t *cache, const sockaddr_t *sa);
 const sockaddr_t *get_recent_address(address_cache_t *cache);
 
