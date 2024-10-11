@@ -49,6 +49,14 @@ int macos_vmnet_open(void) {
 	xpc_dictionary_set_uint64(if_desc, vmnet_operation_mode_key, VMNET_HOST_MODE);
 	xpc_dictionary_set_bool(if_desc, vmnet_enable_isolation_key, 0);
 	xpc_dictionary_set_bool(if_desc, vmnet_allocate_mac_address_key, false);
+    if (macos_vmnet_addr) {
+    	xpc_dictionary_set_string(if_desc, vmnet_start_address_key, macos_vmnet_addr);
+    	xpc_dictionary_set_string(if_desc, vmnet_end_address_key, macos_vmnet_addr);
+    	xpc_dictionary_set_string(if_desc, vmnet_subnet_mask_key, macos_vmnet_netmask);
+	}
+    if (macos_vmnet_nat66_prefix) {
+    	xpc_dictionary_set_string(if_desc, vmnet_nat66_prefix_key, macos_vmnet_nat66_prefix);
+    }
 
 	dispatch_semaphore_t if_started_sem = dispatch_semaphore_create(0);
 	vmnet_if = vmnet_start_interface(

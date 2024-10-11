@@ -156,6 +156,9 @@ static bool setup_device(void) {
 		else if(!strcasecmp(type, "vmnet")) {
 			device = xstrdup("vmnet");
 			device_type = DEVICE_TYPE_VMNET;
+			get_config_string(lookup_config(&config_tree, "VmnetAddr"), &macos_vmnet_addr);
+			get_config_string(lookup_config(&config_tree, "VmnetNetmask"), &macos_vmnet_netmask);
+			get_config_string(lookup_config(&config_tree, "VmnetNat66Prefix"), &macos_vmnet_nat66_prefix);
 		}
 
 #endif
