@@ -55,6 +55,7 @@ class Feature(Enum):
     READLINE = "readline"
     SANDBOX = "sandbox"
     TUNEMU = "tunemu"
+    VMNET = "vmnet"
     UML = "uml"
     VDE = "vde"
     WATCHDOG = "watchdog"

@@ -79,6 +79,11 @@ option('tunemu',
        value: 'auto',
        description: 'support for the tunemu driver')
 
+option('vmnet',
+       type: 'feature',
+       value: 'auto',
+       description: 'support for the vmnet driver')
+
 option('vde',
        type: 'feature',
        value: 'auto',
