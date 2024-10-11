@@ -1,6 +1,6 @@
 /*
  *  vmnet - Tun device emulation for Darwin
- *  Copyright (C) 2009 Friedrich Schöller <friedrich.schoeller@gmail.com>
+ *  Copyright (C) 2024 Eric Karge
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
