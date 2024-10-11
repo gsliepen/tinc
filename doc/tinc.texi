@@ -308,10 +308,16 @@ Tinc also supports the driver from @uref{http://tuntaposx.sourceforge.net/},
 which supports both tun and tap style devices,
 
 By default, tinc expects the tuntaposx driver to be installed.
-To use the utun driver, set add @samp{Device = utunX} to @file{tinc.conf},
+To use the utun driver, add @samp{Device = utunX} to @file{tinc.conf},
 where X is the desired number for the utun interface.
 You can also omit the number, in which case the first free number will be chosen.
 
+On OS X version 14 and above tinc supports the build-in "vmnet" driver.
+Use this driver if you need to run Tinc in "switch" mode on more recent Macs.
+To use the vmnet driver add @samp{DeviceType = vmnet} to @file{tinc.conf}.
+"vmnet" devices have a fixed network configuration and cannot be configured with the
+@file{tinc-up} script. Use @samp{VmnetAddr = X.X.X.X} and @samp{VmnetNetmask = X.X.X.X}
+to configure the host side of a vmnet device.
 
 @c ==================================================================
 @node       Configuration of Windows
