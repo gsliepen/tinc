@@ -1,5 +1,5 @@
 /*
- *  vmnet - Tun device emulation for Darwin
+ *  vmnet - macOS vmnet device support
  *  Copyright (C) 2024 Eric Karge
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -38,7 +38,7 @@ static void macos_vmnet_read(void);
 static const char *str_vmnet_status(vmnet_return_t status);
 
 int macos_vmnet_open(void) {
-	if (socketpair(AF_UNIX, SOCK_DGRAM, 0, read_socket)) {
+	if(socketpair(AF_UNIX, SOCK_DGRAM, 0, read_socket)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to create socket: %s", strerror(errno));
 		return -1;
 	}
@@ -55,7 +55,7 @@ int macos_vmnet_open(void) {
 		if_desc, if_queue,
 		^(vmnet_return_t status, xpc_object_t interface_param) {
 			if_status = status;
-			if (status == VMNET_SUCCESS && interface_param) {
+			if(status == VMNET_SUCCESS && interface_param) {
 				max_packet_size = xpc_dictionary_get_uint64(interface_param, vmnet_max_packet_size_key);
 			}
 			dispatch_semaphore_signal(if_started_sem);
@@ -83,7 +83,7 @@ int macos_vmnet_open(void) {
 }
 
 int macos_vmnet_close(int fd) {
-	if (vmnet_if == NULL || fd != read_socket[0]) {
+	if(vmnet_if == NULL || fd != read_socket[0]) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to close vmnet device: device not setup properly");
 		return -1;
 	}
@@ -100,7 +100,7 @@ int macos_vmnet_close(int fd) {
 	dispatch_semaphore_wait(if_stopped_sem, DISPATCH_TIME_FOREVER);
 	dispatch_release(if_stopped_sem);
 
-	if (if_status != VMNET_SUCCESS) {
+	if(if_status != VMNET_SUCCESS) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to close vmnet device: %s", str_vmnet_status(if_status));
 		return -1;
 	}
@@ -119,7 +119,7 @@ int macos_vmnet_close(int fd) {
 }
 
 void macos_vmnet_read(void) {
-    if (if_status != VMNET_SUCCESS) {
+    if(if_status != VMNET_SUCCESS) {
         return;
     }
 
@@ -132,17 +132,17 @@ void macos_vmnet_read(void) {
     };
 
     if_status = vmnet_read(vmnet_if, &packet, &pkt_count);
-    if (if_status != VMNET_SUCCESS) {
+    if(if_status != VMNET_SUCCESS) {
         logger(DEBUG_ALWAYS, LOG_ERR, "Unable to read packet: %s", str_vmnet_status(if_status));
         return;
     }
 
-    if ( pkt_count && packet.vm_pkt_iovcnt ) {
-        struct iovec iov_out = {
+    if(pkt_count && packet.vm_pkt_iovcnt) {
+        struct iovec read_iov_out = {
             .iov_base = packet.vm_pkt_iov->iov_base,
             .iov_len = packet.vm_pkt_size,
         };
-        if(writev(read_socket[1], &iov_out, 1) < 0) {
+        if(writev(read_socket[1], &read_iov_out, 1) < 0) {
             logger(DEBUG_ALWAYS, LOG_ERR, "Unable to write to read socket: %s", strerror(errno));
             return;
         }
@@ -150,7 +150,7 @@ void macos_vmnet_read(void) {
 }
 
 ssize_t macos_vmnet_write(uint8_t *buffer, size_t buflen) {
-	if (buflen > max_packet_size) {
+	if(buflen > max_packet_size) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Max packet size (%zd) exceeded: %zd", max_packet_size, buflen);
 		return -1;
 	}
@@ -168,12 +168,12 @@ ssize_t macos_vmnet_write(uint8_t *buffer, size_t buflen) {
 	int pkt_count = 1;
 
 	vmnet_return_t result = vmnet_write(vmnet_if, &packet, &pkt_count);
-	if (result != VMNET_SUCCESS) {
+	if(result != VMNET_SUCCESS) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Write failed: %s", str_vmnet_status(result));
 		return -1;
 	}
 
-	return pkt_count ? buflen : 00;
+	return pkt_count ? buflen : 0;
 }
 
 const char *str_vmnet_status(vmnet_return_t status) {

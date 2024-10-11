@@ -187,15 +187,18 @@ static bool setup_device(void) {
 			}
 	}
 
-	if(routing_mode == RMODE_SWITCH
-		&& device_type != DEVICE_TYPE_TAP
 #ifdef ENABLE_VMNET
-		&& device_type != DEVICE_TYPE_VMNET
-#endif
-	) {
+	if(routing_mode == RMODE_SWITCH
+		&& device_type != DEVICE_TYPE_TAP && device_type != DEVICE_TYPE_VMNET) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Only vmnet and tap devices support switch mode!");
+		return false;
+	}
+#else
+	if(routing_mode == RMODE_SWITCH && device_type != DEVICE_TYPE_TAP) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Only tap devices support switch mode!");
 		return false;
 	}
+#endif
 
 	// Find out which device file to open
 
@@ -557,8 +560,6 @@ static bool write_packet(vpn_packet_t *packet) {
 
 	case DEVICE_TYPE_VMNET:
 		if(macos_vmnet_write(DATA(packet), packet->len) < 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Error while writing to %s %s: %s", device_info,
-			       device, strerror(errno));
 			return false;
 		}
 
