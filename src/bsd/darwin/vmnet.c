@@ -45,23 +45,23 @@ int macos_vmnet_open(const char device[]) {
 
 	xpc_object_t if_desc = xpc_dictionary_create(NULL, NULL, 0);
 	xpc_dictionary_set_uint64(if_desc, vmnet_operation_mode_key,
-	        !strncmp(device, "vmnet-bridged", 14) ? VMNET_BRIDGED_MODE :
-	        !strncmp(device, "vmnet-shared", 13) ? VMNET_SHARED_MODE :
-	        VMNET_HOST_MODE
+			!strncmp(device, "vmnet-bridged", 14) ? VMNET_BRIDGED_MODE :
+			!strncmp(device, "vmnet-shared", 13) ? VMNET_SHARED_MODE :
+			VMNET_HOST_MODE
 	);
 	xpc_dictionary_set_bool(if_desc, vmnet_enable_isolation_key, 0);
 	xpc_dictionary_set_bool(if_desc, vmnet_allocate_mac_address_key, false);
-    if (macos_vmnet_addr) {
-    	xpc_dictionary_set_string(if_desc, vmnet_start_address_key, macos_vmnet_addr);
-    	xpc_dictionary_set_string(if_desc, vmnet_end_address_key, macos_vmnet_addr);
-    	xpc_dictionary_set_string(if_desc, vmnet_subnet_mask_key, macos_vmnet_netmask);
+	if (macos_vmnet_addr) {
+		xpc_dictionary_set_string(if_desc, vmnet_start_address_key, macos_vmnet_addr);
+		xpc_dictionary_set_string(if_desc, vmnet_end_address_key, macos_vmnet_addr);
+		xpc_dictionary_set_string(if_desc, vmnet_subnet_mask_key, macos_vmnet_netmask);
 	}
 	if (macos_vmnet_bridged_if) {
 		xpc_dictionary_set_string(if_desc, vmnet_shared_interface_name_key, macos_vmnet_bridged_if);
 	}
-    if (macos_vmnet_nat66_prefix) {
-    	xpc_dictionary_set_string(if_desc, vmnet_nat66_prefix_key, macos_vmnet_nat66_prefix);
-    }
+	if (macos_vmnet_nat66_prefix) {
+			xpc_dictionary_set_string(if_desc, vmnet_nat66_prefix_key, macos_vmnet_nat66_prefix);
+	}
 
 	if_queue = dispatch_queue_create("org.tinc-vpn.vmnet.if_queue", DISPATCH_QUEUE_SERIAL);
 
@@ -135,9 +135,9 @@ int macos_vmnet_close(int fd) {
 	if_status = VMNET_SETUP_INCOMPLETE;
 	dispatch_release(if_queue);
 
-    read_iov_in.iov_len = 0;
-    free(read_iov_in.iov_base);
-    read_iov_in.iov_base = NULL;
+	read_iov_in.iov_len = 0;
+	free(read_iov_in.iov_base);
+	read_iov_in.iov_base = NULL;
 
 	close(read_socket[0]);
 	close(read_socket[1]);
@@ -146,34 +146,34 @@ int macos_vmnet_close(int fd) {
 }
 
 void macos_vmnet_read(void) {
-    if(if_status != VMNET_SUCCESS) {
-        return;
-    }
+	if(if_status != VMNET_SUCCESS) {
+		return;
+	}
 
-    int pkt_count = 1;
-    struct vmpktdesc packet = {
-        .vm_flags = 0,
-        .vm_pkt_size = max_packet_size,
-        .vm_pkt_iov = &read_iov_in,
-        .vm_pkt_iovcnt = 1,
-    };
+	int pkt_count = 1;
+	struct vmpktdesc packet = {
+		.vm_flags = 0,
+		.vm_pkt_size = max_packet_size,
+		.vm_pkt_iov = &read_iov_in,
+		.vm_pkt_iovcnt = 1,
+	};
 
-    if_status = vmnet_read(vmnet_if, &packet, &pkt_count);
-    if(if_status != VMNET_SUCCESS) {
-        logger(DEBUG_ALWAYS, LOG_ERR, "Unable to read packet: %s", str_vmnet_status(if_status));
-        return;
-    }
+	if_status = vmnet_read(vmnet_if, &packet, &pkt_count);
+	if(if_status != VMNET_SUCCESS) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to read packet: %s", str_vmnet_status(if_status));
+		return;
+	}
 
-    if(pkt_count && packet.vm_pkt_iovcnt) {
-        struct iovec read_iov_out = {
-            .iov_base = packet.vm_pkt_iov->iov_base,
-            .iov_len = packet.vm_pkt_size,
-        };
-        if(writev(read_socket[1], &read_iov_out, 1) < 0) {
-            logger(DEBUG_ALWAYS, LOG_ERR, "Unable to write to read socket: %s", strerror(errno));
-            return;
-        }
-    }
+	if(pkt_count && packet.vm_pkt_iovcnt) {
+		struct iovec read_iov_out = {
+			.iov_base = packet.vm_pkt_iov->iov_base,
+			.iov_len = packet.vm_pkt_size,
+		};
+		if(writev(read_socket[1], &read_iov_out, 1) < 0) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Unable to write to read socket: %s", strerror(errno));
+			return;
+		}
+	}
 }
 
 ssize_t macos_vmnet_write(uint8_t *buffer, size_t buflen) {
@@ -204,28 +204,28 @@ ssize_t macos_vmnet_write(uint8_t *buffer, size_t buflen) {
 }
 
 const char *str_vmnet_status(vmnet_return_t status) {
-    switch (status) {
-    case VMNET_SUCCESS:
-        return "success";
-    case VMNET_FAILURE:
-        return "general failure (possibly not enough privileges)";
-    case VMNET_MEM_FAILURE:
-        return "memory allocation failure";
-    case VMNET_INVALID_ARGUMENT:
-        return "invalid argument specified";
-    case VMNET_SETUP_INCOMPLETE:
-        return "interface setup is not complete";
-    case VMNET_INVALID_ACCESS:
-        return "invalid access, permission denied";
-    case VMNET_PACKET_TOO_BIG:
-        return "packet size is larger than MTU";
-    case VMNET_BUFFER_EXHAUSTED:
-        return "buffers exhausted in kernel";
-    case VMNET_TOO_MANY_PACKETS:
-        return "packet count exceeds limit";
-    case VMNET_SHARING_SERVICE_BUSY:
-        return "conflict, sharing service is in use";
-    default:
-    	return "unknown vmnet error";
-    }
+	switch (status) {
+	case VMNET_SUCCESS:
+		return "success";
+	case VMNET_FAILURE:
+		return "general failure (possibly not enough privileges)";
+	case VMNET_MEM_FAILURE:
+		return "memory allocation failure";
+	case VMNET_INVALID_ARGUMENT:
+		return "invalid argument specified";
+	case VMNET_SETUP_INCOMPLETE:
+		return "interface setup is not complete";
+	case VMNET_INVALID_ACCESS:
+		return "invalid access, permission denied";
+	case VMNET_PACKET_TOO_BIG:
+		return "packet size is larger than MTU";
+	case VMNET_BUFFER_EXHAUSTED:
+		return "buffers exhausted in kernel";
+	case VMNET_TOO_MANY_PACKETS:
+		return "packet count exceeds limit";
+	case VMNET_SHARING_SERVICE_BUSY:
+		return "conflict, sharing service is in use";
+	default:
+		return "unknown vmnet error";
+	}
 }
