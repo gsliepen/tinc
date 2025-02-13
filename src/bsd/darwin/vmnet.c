@@ -37,16 +37,18 @@ static int read_socket[2];
 static void macos_vmnet_read(void);
 static const char *str_vmnet_status(vmnet_return_t status);
 
-int macos_vmnet_open(void) {
+int macos_vmnet_open(const char device[]) {
 	if(socketpair(AF_UNIX, SOCK_DGRAM, 0, read_socket)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to create socket: %s", strerror(errno));
 		return -1;
 	}
 
-	if_queue = dispatch_queue_create("org.tinc-vpn.vmnet.if_queue", DISPATCH_QUEUE_SERIAL);
-
 	xpc_object_t if_desc = xpc_dictionary_create(NULL, NULL, 0);
-	xpc_dictionary_set_uint64(if_desc, vmnet_operation_mode_key, VMNET_HOST_MODE);
+	xpc_dictionary_set_uint64(if_desc, vmnet_operation_mode_key,
+	        !strncmp(device, "vmnet-bridged", 14) ? VMNET_BRIDGED_MODE :
+	        !strncmp(device, "vmnet-shared", 13) ? VMNET_SHARED_MODE :
+	        VMNET_HOST_MODE
+	);
 	xpc_dictionary_set_bool(if_desc, vmnet_enable_isolation_key, 0);
 	xpc_dictionary_set_bool(if_desc, vmnet_allocate_mac_address_key, false);
     if (macos_vmnet_addr) {
@@ -54,9 +56,14 @@ int macos_vmnet_open(void) {
     	xpc_dictionary_set_string(if_desc, vmnet_end_address_key, macos_vmnet_addr);
     	xpc_dictionary_set_string(if_desc, vmnet_subnet_mask_key, macos_vmnet_netmask);
 	}
+	if (macos_vmnet_bridged_if) {
+		xpc_dictionary_set_string(if_desc, vmnet_shared_interface_name_key, macos_vmnet_bridged_if);
+	}
     if (macos_vmnet_nat66_prefix) {
     	xpc_dictionary_set_string(if_desc, vmnet_nat66_prefix_key, macos_vmnet_nat66_prefix);
     }
+
+	if_queue = dispatch_queue_create("org.tinc-vpn.vmnet.if_queue", DISPATCH_QUEUE_SERIAL);
 
 	dispatch_semaphore_t if_started_sem = dispatch_semaphore_create(0);
 	vmnet_if = vmnet_start_interface(
@@ -68,24 +75,36 @@ int macos_vmnet_open(void) {
 			}
 			dispatch_semaphore_signal(if_started_sem);
 		});
-	dispatch_semaphore_wait(if_started_sem, DISPATCH_TIME_FOREVER);
+	if (vmnet_if) {
+		dispatch_semaphore_wait(if_started_sem, DISPATCH_TIME_FOREVER);
+	}
 	dispatch_release(if_started_sem);
+
+	if (if_status == VMNET_SUCCESS) {
+		read_iov_in.iov_base = malloc(max_packet_size);
+		read_iov_in.iov_len = max_packet_size;
+
+		if_status = vmnet_interface_set_event_callback(
+			vmnet_if, VMNET_INTERFACE_PACKETS_AVAILABLE, if_queue,
+			^(interface_event_t event_type, xpc_object_t event) {
+				macos_vmnet_read();
+			});
+	}
 
 	xpc_release(if_desc);
 
 	if(if_status != VMNET_SUCCESS) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to create vmnet device: %s", str_vmnet_status(if_status));
+		if (vmnet_if) {
+			vmnet_stop_interface(vmnet_if, if_queue, ^(vmnet_return_t result) {});
+			vmnet_if = NULL;
+		}
+		if_status = VMNET_SETUP_INCOMPLETE;
+		dispatch_release(if_queue);
+		close(read_socket[0]);
+		close(read_socket[1]);
 		return -1;
 	}
-
-    read_iov_in.iov_base = malloc(max_packet_size);
-    read_iov_in.iov_len = max_packet_size;
-
-	vmnet_interface_set_event_callback(
-		vmnet_if, VMNET_INTERFACE_PACKETS_AVAILABLE, if_queue,
-		^(interface_event_t event_type, xpc_object_t event) {
-	    	macos_vmnet_read();
-    	});
 
 	return read_socket[0];
 }
@@ -96,24 +115,24 @@ int macos_vmnet_close(int fd) {
 		return -1;
 	}
 
-	vmnet_interface_set_event_callback(vmnet_if, VMNET_INTERFACE_PACKETS_AVAILABLE, NULL, NULL);
-
 	dispatch_semaphore_t if_stopped_sem = dispatch_semaphore_create(0);
-	vmnet_stop_interface(
+	if_status = vmnet_stop_interface(
 		vmnet_if, if_queue,
 		^(vmnet_return_t status) {
 			if_status = status;
 			dispatch_semaphore_signal(if_stopped_sem);
 		});
-	dispatch_semaphore_wait(if_stopped_sem, DISPATCH_TIME_FOREVER);
+	if (if_status == VMNET_SUCCESS) {
+		dispatch_semaphore_wait(if_stopped_sem, DISPATCH_TIME_FOREVER);
+	}
 	dispatch_release(if_stopped_sem);
 
 	if(if_status != VMNET_SUCCESS) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to close vmnet device: %s", str_vmnet_status(if_status));
 		return -1;
 	}
-	if_status = VMNET_SETUP_INCOMPLETE;
 
+	if_status = VMNET_SETUP_INCOMPLETE;
 	dispatch_release(if_queue);
 
     read_iov_in.iov_len = 0;

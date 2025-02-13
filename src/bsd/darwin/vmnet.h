@@ -23,10 +23,11 @@
 #include <sys/types.h>
 
 char * macos_vmnet_addr;
+char * macos_vmnet_bridged_if;
 char * macos_vmnet_netmask;
 char * macos_vmnet_nat66_prefix;
 
-int macos_vmnet_open(void);
+int macos_vmnet_open(const char device[]);
 int macos_vmnet_close(int fd);
 ssize_t macos_vmnet_write(uint8_t *buffer, size_t buflen);
 

@@ -153,11 +153,14 @@ static bool setup_device(void) {
 
 #endif
 #ifdef ENABLE_VMNET
-		else if(!strcasecmp(type, "vmnet")) {
-			device = xstrdup("vmnet");
+		else if(!strcasecmp(type, "vmnet-host")
+		                || !strcasecmp(type, "vmnet-shared")
+		                || !strcasecmp(type, "vmnet-bridged")) {
+			device = xstrdup(type);
 			device_type = DEVICE_TYPE_VMNET;
 			get_config_string(lookup_config(&config_tree, "VmnetAddr"), &macos_vmnet_addr);
 			get_config_string(lookup_config(&config_tree, "VmnetNetmask"), &macos_vmnet_netmask);
+			get_config_string(lookup_config(&config_tree, "VmnetBridgedIf"), &macos_vmnet_bridged_if);
 			get_config_string(lookup_config(&config_tree, "VmnetNat66Prefix"), &macos_vmnet_nat66_prefix);
 		}
 
@@ -227,7 +230,7 @@ static bool setup_device(void) {
 #ifdef ENABLE_VMNET
 
 	case DEVICE_TYPE_VMNET: {
-		device_fd = macos_vmnet_open();
+		device_fd = macos_vmnet_open(device);
 	}
 	break;
 #endif
