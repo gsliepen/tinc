@@ -21,6 +21,7 @@
 #define VMNET_H
 
 #include <sys/types.h>
+#include <stdint.h>
 
 char * macos_vmnet_addr;
 char * macos_vmnet_bridged_if;
