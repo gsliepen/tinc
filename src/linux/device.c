@@ -1,5 +1,5 @@
 /*
-    device.c -- Interaction with Linux ethertap and tun/tap device
+    device.c -- Interaction with Linux tun/tap device
     Copyright (C) 2001-2005 Ivo Timmermans,
                   2001-2014 Guus Sliepen <guus@tinc-vpn.org>
 
@@ -20,12 +20,8 @@
 
 #include "../system.h"
 
-#ifdef HAVE_LINUX_IF_TUN_H
 #include <linux/if_tun.h>
 #define DEFAULT_DEVICE "/dev/net/tun"
-#else
-#define DEFAULT_DEVICE "/dev/tap0"
-#endif
 
 #include "../conf.h"
 #include "../device.h"
@@ -36,7 +32,6 @@
 #include "../xalloc.h"
 
 typedef enum device_type_t {
-	DEVICE_TYPE_ETHERTAP,
 	DEVICE_TYPE_TUN,
 	DEVICE_TYPE_TAP,
 } device_type_t;
@@ -61,14 +56,10 @@ static bool setup_device(void) {
 	}
 
 	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
-#ifdef HAVE_LINUX_IF_TUN_H
 		if(netname != NULL) {
 			iface = xstrdup(netname);
 		}
 
-#else
-		iface = xstrdup(strrchr(device, '/') ? strrchr(device, '/') + 1 : device);
-#endif
 	device_fd = open(device, O_RDWR | O_NONBLOCK);
 
 	if(device_fd < 0) {
@@ -79,9 +70,6 @@ static bool setup_device(void) {
 #ifdef FD_CLOEXEC
 	fcntl(device_fd, F_SETFD, FD_CLOEXEC);
 #endif
-
-#ifdef HAVE_LINUX_IF_TUN_H
-	/* Ok now check if this is an old ethertap or a new tun/tap thingie */
 
 	memset(&ifr, 0, sizeof(ifr));
 
@@ -134,17 +122,9 @@ static bool setup_device(void) {
 		ifrname[IFNAMSIZ - 1] = 0;
 		free(iface);
 		iface = xstrdup(ifrname);
-	} else
-#endif
-	{
-		if(routing_mode == RMODE_ROUTER) {
-			overwrite_mac = true;
-		}
-
-		device_info = "Linux ethertap device";
-		device_type = DEVICE_TYPE_ETHERTAP;
-		free(iface);
-		iface = xstrdup(strrchr(device, '/') ? strrchr(device, '/') + 1 : device);
+	} else {
+		logger(LOG_ERR, "%s is not a TUN/TAP device", device);
+		return false;
 	}
 
 	if(overwrite_mac && !ioctl(device_fd, SIOCGIFHWADDR, &ifr)) {
@@ -192,18 +172,6 @@ static bool read_packet(vpn_packet_t *packet) {
 
 		packet->len = lenin;
 		break;
-
-	case DEVICE_TYPE_ETHERTAP:
-		lenin = read(device_fd, packet->data - 2, MTU + 2);
-
-		if(lenin <= 0) {
-			logger(LOG_ERR, "Error while reading from %s %s: %s",
-			       device_info, device, strerror(errno));
-			return false;
-		}
-
-		packet->len = lenin - 2;
-		break;
 	}
 
 	device_total_in += packet->len;
@@ -232,17 +200,6 @@ static bool write_packet(vpn_packet_t *packet) {
 
 	case DEVICE_TYPE_TAP:
 		if(write(device_fd, packet->data, packet->len) < 0) {
-			logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device,
-			       strerror(errno));
-			return false;
-		}
-
-		break;
-
-	case DEVICE_TYPE_ETHERTAP:
-		memcpy(packet->data - 2, &packet->len, 2);
-
-		if(write(device_fd, packet->data - 2, packet->len + 2) < 0) {
 			logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device,
 			       strerror(errno));
 			return false;

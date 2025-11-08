@@ -1878,13 +1878,6 @@ What follows is a list of the most common error messages you might find in the l
 Some of them will only be visible if the debug level is high enough.
 
 @table @samp
-@item Could not open /dev/tap0: No such device
-
-@itemize
-@item You forgot to `modprobe netlink_dev' or `modprobe ethertap'.
-@item You forgot to compile `Netlink device emulation' in the kernel.
-@end itemize
-
 @item Can't write to /dev/net/tun: No such device
 
 @itemize

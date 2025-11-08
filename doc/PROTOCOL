@@ -21,8 +21,7 @@ makes TCP connections to other tinc daemons.  It uses the "meta
 protocol" for these connections.  To exchange packets on the virtual
 network, UDP connections are made and the "packet protocol" is used.
 Tinc also needs to exchange network packets with the kernel.  This is
-done using the ethertap device or the universal TUN/TAP device that
-can be found in various UNIX flavours.
+done using the TUN/TAP device that can be found in various UNIX flavours.
 
 2.  Packet protocol
 ------------------

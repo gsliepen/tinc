@@ -30,7 +30,7 @@ When started,
 .Nm
 will read it's configuration file to determine what virtual subnets it has to serve
 and to what other tinc daemons it should connect.
-It will connect to the ethertap or tun/tap device
+It will connect to the tun/tap device
 and set up a socket for incoming connections.
 Optionally a script will be executed to further configure the virtual device.
 If that succeeds,
