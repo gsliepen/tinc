@@ -401,7 +401,7 @@ static void check_network_activity(fd_set *readset, fd_set *writeset) {
 
 		if(FD_ISSET(c->socket, readset)) {
 			if(!receive_meta(c)) {
-				c->status.tarpit = true;
+				c->status.tarpit = !c->status.active;
 				terminate_connection(c, c->status.active);
 				continue;
 			}
