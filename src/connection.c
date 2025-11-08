@@ -108,7 +108,7 @@ void free_connection_partially(connection_t *c) {
 	}
 
 	if(c->rsa_key) {
-		RSA_free(c->rsa_key);
+		EVP_PKEY_free(c->rsa_key);
 		c->rsa_key = NULL;
 	}
 }

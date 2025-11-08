@@ -21,7 +21,6 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include <openssl/rsa.h>
 #include <openssl/evp.h>
 
 #include "avl_tree.h"
@@ -67,7 +66,7 @@ typedef struct connection_t {
 	struct node_t *node;            /* node associated with the other end */
 	struct edge_t *edge;            /* edge associated with this connection */
 
-	RSA *rsa_key;                   /* his public/private key */
+	EVP_PKEY *rsa_key;              /* his public/private key */
 	const EVP_CIPHER *incipher;     /* Cipher he will use to send data to us */
 	const EVP_CIPHER *outcipher;    /* Cipher we will use to send data to him */
 	EVP_CIPHER_CTX *inctx;          /* Context of encrypted meta data that will come from him to us */

@@ -379,9 +379,6 @@ and the others will be notified of this.
 .It Va PriorityInheritance Li = yes | no Po no Pc Bq experimental
 When this option is enabled the value of the TOS field of tunneled IPv4 packets
 will be inherited by the UDP packets that are sent out.
-.It Va PrivateKey Li = Ar key Bq obsolete
-The private RSA key of this tinc daemon.
-It will allow this tinc daemon to authenticate itself to other daemons.
 .It Va PrivateKeyFile Li = Ar filename Po Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /rsa_key.priv Pc
 The file in which the private RSA key of this tinc daemon resides.
 .It Va ProcessPriority Li = low | normal | high
@@ -508,9 +505,6 @@ The port number on which this tinc daemon is listening for incoming connections,
 which is used if no port number is specified in an
 .Va Address
 statement.
-.It Va PublicKey Li = Ar key Bq obsolete
-The public RSA key of this tinc daemon.
-It will be used to cryptographically verify it's identity and to set up a secure connection.
 .It Va PublicKeyFile Li = Ar filename Bq obsolete
 The file in which the public RSA key of this tinc daemon resides.
 .Pp

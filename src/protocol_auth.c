@@ -24,6 +24,7 @@
 #include <openssl/rand.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/rsa.h>
 
 #include "avl_tree.h"
 #include "conf.h"
@@ -144,8 +145,10 @@ static uint64_t byte_budget(const EVP_CIPHER *cipher) {
 
 bool send_metakey(connection_t *c) {
 	bool x;
+	int result;
 
-	int len = RSA_size(c->rsa_key);
+	int len = EVP_PKEY_get_size(c->rsa_key);
+	size_t outlen = len;
 
 	/* Allocate buffers for the meta key */
 
@@ -196,7 +199,20 @@ bool send_metakey(connection_t *c) {
 	   with a length equal to that of the modulus of the RSA key.
 	 */
 
-	if(RSA_public_encrypt(len, (unsigned char *)c->outkey, (unsigned char *)buffer, c->rsa_key, RSA_NO_PADDING) != len) {
+	EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new(c->rsa_key, NULL);
+
+	if(!ctx) {
+		logger(LOG_ERR, "Error during encryption of meta key for %s (%s): %s",
+		       c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
+		return false;
+	}
+
+	EVP_PKEY_encrypt_init(ctx);
+	EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_NO_PADDING);
+	result = EVP_PKEY_encrypt(ctx, (unsigned char *)buffer, &outlen, (const unsigned char *)c->outkey, len);
+	EVP_PKEY_CTX_free(ctx);
+
+	if(result <= 0 || outlen != len) {
 		logger(LOG_ERR, "Error during encryption of meta key for %s (%s): %s",
 		       c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
 		return false;
@@ -237,6 +253,8 @@ bool metakey_h(connection_t *c) {
 	char buffer[MAX_STRING_SIZE];
 	int cipher, digest, maclength, compression;
 	int len;
+	size_t outlen;
+	int result;
 
 	if(sscanf(c->buffer, "%*d %d %d %d %d " MAX_STRING, &cipher, &digest, &maclength, &compression, buffer) != 5) {
 		logger(LOG_ERR, "Got bad %s from %s (%s)", "METAKEY", c->name,
@@ -244,7 +262,8 @@ bool metakey_h(connection_t *c) {
 		return false;
 	}
 
-	len = RSA_size(myself->connection->rsa_key);
+	len = EVP_PKEY_get_size(myself->connection->rsa_key);
+	outlen = len;
 
 	/* Check if the length of the meta key is all right */
 
@@ -274,7 +293,20 @@ bool metakey_h(connection_t *c) {
 
 	/* Decrypt the meta key */
 
-	if(RSA_private_decrypt(len, (unsigned char *)buffer, (unsigned char *)c->inkey, myself->connection->rsa_key, RSA_NO_PADDING) != len) {  /* See challenge() */
+	EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new(myself->connection->rsa_key, NULL);
+
+	if(!ctx) {
+		logger(LOG_ERR, "Error during decryption of meta key for %s (%s): %s",
+		       c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
+		return false;
+	}
+
+	EVP_PKEY_decrypt_init(ctx);
+	EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_NO_PADDING);
+	result = EVP_PKEY_decrypt(ctx, (unsigned char *)c->inkey, &outlen, (const unsigned char *)buffer, len);
+	EVP_PKEY_CTX_free(ctx);
+
+	if(result <= 0 || outlen != len) {  /* See challenge() */
 		logger(LOG_ERR, "Error during decryption of meta key for %s (%s): %s",
 		       c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
 		return false;
@@ -343,7 +375,7 @@ bool metakey_h(connection_t *c) {
 bool send_challenge(connection_t *c) {
 	/* CHECKME: what is most reasonable value for len? */
 
-	int len = RSA_size(c->rsa_key);
+	int len = EVP_PKEY_get_size(c->rsa_key);
 
 	/* Allocate buffers for the challenge */
 
@@ -379,7 +411,7 @@ bool challenge_h(connection_t *c) {
 		return false;
 	}
 
-	len = RSA_size(myself->connection->rsa_key);
+	len = EVP_PKEY_get_size(myself->connection->rsa_key);
 
 	/* Check if the length of the challenge is all right */
 
@@ -424,7 +456,7 @@ bool send_chal_reply(connection_t *c) {
 	}
 
 	if(!EVP_DigestInit(ctx, c->indigest)
-	                || !EVP_DigestUpdate(ctx, c->mychallenge, RSA_size(myself->connection->rsa_key))
+	                || !EVP_DigestUpdate(ctx, c->mychallenge, EVP_PKEY_get_size(myself->connection->rsa_key))
 	                || !EVP_DigestFinal(ctx, (unsigned char *)hash, NULL)) {
 		EVP_MD_CTX_destroy(ctx);
 		logger(LOG_ERR, "Error during calculation of response for %s (%s): %s",
@@ -479,7 +511,7 @@ bool chal_reply_h(connection_t *c) {
 	}
 
 	if(!EVP_DigestInit(ctx, c->outdigest)
-	                || !EVP_DigestUpdate(ctx, c->hischallenge, RSA_size(c->rsa_key))
+	                || !EVP_DigestUpdate(ctx, c->hischallenge, EVP_PKEY_get_size(c->rsa_key))
 	                || !EVP_DigestFinal(ctx, (unsigned char *)myhash, NULL)) {
 		EVP_MD_CTX_destroy(ctx);
 		logger(LOG_ERR, "Error during calculation of response from %s (%s): %s",

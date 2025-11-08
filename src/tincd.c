@@ -34,11 +34,8 @@
 #endif
 
 #include <openssl/rand.h>
-#include <openssl/rsa.h>
 #include <openssl/pem.h>
 #include <openssl/evp.h>
-#include <openssl/engine.h>
-#include <openssl/bn.h>
 
 #ifdef HAVE_LZO
 #include LZO1X_H
@@ -361,97 +358,29 @@ static bool parse_options(int argc, char **argv) {
 	return true;
 }
 
-/* This function prettyprints the key generation process */
-
-static int indicator(int a, int b, BN_GENCB *cb) {
-	(void)cb;
-
-	switch(a) {
-	case 0:
-		fprintf(stderr, ".");
-		break;
-
-	case 1:
-		fprintf(stderr, "+");
-		break;
-
-	case 2:
-		fprintf(stderr, "-");
-		break;
-
-	case 3:
-		switch(b) {
-		case 0:
-			fprintf(stderr, " p\n");
-			break;
-
-		case 1:
-			fprintf(stderr, " q\n");
-			break;
-
-		default:
-			fprintf(stderr, "?");
-		}
-
-		break;
-
-	default:
-		fprintf(stderr, "?");
-	}
-
-	return 1;
-}
-
 /*
   Generate a public/private RSA keypair, and ask for a file to store
   them in.
 */
 static bool keygen(int bits) {
-	BIGNUM *e = NULL;
-	RSA *rsa_key;
+	EVP_PKEY *rsa_key;
 	FILE *f;
 	char filename[PATH_MAX];
-	BN_GENCB *cb;
-	int result;
 
-	fprintf(stderr, "Generating %d bits keys:\n", bits);
+	fprintf(stderr, "Generating %d bits keys...\n", bits);
 
-	cb = BN_GENCB_new();
+	rsa_key = EVP_RSA_gen(bits);
 
-	if(!cb) {
-		abort();
-	}
-
-	BN_GENCB_set(cb, indicator, NULL);
-
-	rsa_key = RSA_new();
-
-	if(BN_hex2bn(&e, "10001") == 0) {
-		abort();
-	}
-
-	if(!rsa_key || !e) {
-		abort();
-	}
-
-	result = RSA_generate_key_ex(rsa_key, bits, e, cb);
-
-	BN_free(e);
-	BN_GENCB_free(cb);
-
-	if(!result) {
+	if(!rsa_key) {
 		fprintf(stderr, "Error during key generation!\n");
-		RSA_free(rsa_key);
 		return false;
-	} else {
-		fprintf(stderr, "Done.\n");
 	}
 
 	snprintf(filename, sizeof(filename), "%s/rsa_key.priv", confbase);
 	f = ask_and_open(filename, "private RSA key");
 
 	if(!f) {
-		RSA_free(rsa_key);
+		EVP_PKEY_free(rsa_key);
 		return false;
 	}
 
@@ -461,7 +390,7 @@ static bool keygen(int bits) {
 #endif
 
 	fputc('\n', f);
-	PEM_write_RSAPrivateKey(f, rsa_key, NULL, NULL, 0, NULL, NULL);
+	PEM_write_PrivateKey(f, rsa_key, NULL, NULL, 0, NULL, NULL);
 	fclose(f);
 
 	char *name = get_name();
@@ -476,15 +405,15 @@ static bool keygen(int bits) {
 	f = ask_and_open(filename, "public RSA key");
 
 	if(!f) {
-		RSA_free(rsa_key);
+		EVP_PKEY_free(rsa_key);
 		return false;
 	}
 
 	fputc('\n', f);
-	PEM_write_RSAPublicKey(f, rsa_key);
+	PEM_write_PUBKEY(f, rsa_key);
 	fclose(f);
 
-	RSA_free(rsa_key);
+	EVP_PKEY_free(rsa_key);
 
 	return true;
 }
@@ -675,8 +604,6 @@ int main(int argc, char **argv) {
 #endif
 
 	init_configuration(&config_tree);
-
-	ENGINE_load_builtin_engines();
 
 	if(generate_keys) {
 		read_server_config();

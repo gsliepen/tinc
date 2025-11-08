@@ -1045,12 +1045,6 @@ the connection is terminated, and the others will be notified of this.
 When this option is enabled the value of the TOS field of tunneled IPv4 packets
 will be inherited by the UDP packets that are sent out.
 
-@cindex PrivateKey
-@item PrivateKey = <@var{key}> [obsolete]
-This is the RSA private key for tinc. However, for safety reasons it is
-advised to store private keys of any kind in separate files. This prevents
-accidental eavesdropping if you are editing the configuration file.
-
 @cindex PrivateKeyFile
 @item PrivateKeyFile = <@var{path}> (@file{@value{sysconfdir}/tinc/@var{netname}/rsa_key.priv})
 This is the full path name of the RSA private key file that was
@@ -1194,10 +1188,6 @@ After the path MTU has been discovered, it will be enforced on the VPN.
 @item Port = <@var{port}> (655)
 This is the port this tinc daemon listens on.
 You can use decimal portnumbers or symbolic names (as listed in @file{/etc/services}).
-
-@cindex PublicKey
-@item PublicKey = <@var{key}> [obsolete]
-This is the RSA public key for this host.
 
 @cindex PublicKeyFile
 @item PublicKeyFile = <@var{path}> [obsolete]

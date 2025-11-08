@@ -22,12 +22,11 @@
 
 #include "system.h"
 
-#include <openssl/pem.h>
-#include <openssl/rsa.h>
-#include <openssl/rand.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/bn.h>
+#include <openssl/param_build.h>
+#include <openssl/pem.h>
+#include <openssl/rand.h>
 
 #include "avl_tree.h"
 #include "conf.h"
@@ -54,17 +53,24 @@ bool read_rsa_public_key(connection_t *c) {
 	char *pubname;
 	char *hcfname;
 	char *key;
-	BIGNUM *n = NULL;
-	BIGNUM *e = NULL;
 
 	if(!c->rsa_key) {
-		c->rsa_key = RSA_new();
-//		RSA_blinding_on(c->rsa_key, NULL);
+		EVP_PKEY_free(c->rsa_key);
+		c->rsa_key = NULL;
 	}
 
 	/* First, check for simple PublicKey statement */
 
 	if(get_config_string(lookup_config(c->config_tree, "PublicKey"), &key)) {
+		BIGNUM *n = NULL;
+		BIGNUM *e = NULL;
+		OSSL_PARAM_BLD *bld = NULL;
+		OSSL_PARAM *param = NULL;
+		EVP_PKEY_CTX *ctx = NULL;
+		int result;
+
+		logger(LOG_WARNING, "Obsolete PublicKey statement for %s!", c->name);
+
 		if((size_t)BN_hex2bn(&n, key) != strlen(key)) {
 			free(key);
 			logger(LOG_ERR, "Invalid PublicKey for %s!", c->name);
@@ -74,10 +80,29 @@ bool read_rsa_public_key(connection_t *c) {
 		free(key);
 		BN_hex2bn(&e, "FFFF");
 
-		if(!n || !e || RSA_set0_key(c->rsa_key, n, e, NULL) != 1) {
-			BN_free(e);
-			BN_free(n);
-			logger(LOG_ERR, "RSA_set0_key() failed with PublicKey for %s!", c->name);
+		bld = OSSL_PARAM_BLD_new();
+
+		if(!bld) {
+			abort();
+		}
+
+		OSSL_PARAM_BLD_push_BN(bld, "n", n);
+		OSSL_PARAM_BLD_push_BN(bld, "e", e);
+		param = OSSL_PARAM_BLD_to_param(bld);
+		OSSL_PARAM_BLD_free(bld);
+
+		ctx = EVP_PKEY_CTX_new_from_name(NULL, "RSA", NULL);
+
+		if(!ctx) {
+			abort();
+		}
+
+		EVP_PKEY_fromdata_init(ctx);
+		result = EVP_PKEY_fromdata(ctx, &c->rsa_key, EVP_PKEY_PUBLIC_KEY, param);
+		EVP_PKEY_CTX_free(ctx);
+
+		if(result <= 0) {
+			logger(LOG_ERR, "Failed to parse PublicKey for %s!", c->name);
 			return false;
 		}
 
@@ -95,30 +120,12 @@ bool read_rsa_public_key(connection_t *c) {
 			return false;
 		}
 
-		c->rsa_key = PEM_read_RSAPublicKey(fp, &c->rsa_key, NULL, NULL);
+		c->rsa_key = PEM_read_PUBKEY(fp, &c->rsa_key, NULL, NULL);
 		fclose(fp);
 
 		if(c->rsa_key) {
 			free(pubname);
 			return true;            /* Woohoo. */
-		}
-
-		/* If it fails, try PEM_read_RSA_PUBKEY. */
-		fp = fopen(pubname, "r");
-
-		if(!fp) {
-			logger(LOG_ERR, "Error reading RSA public key file `%s': %s", pubname, strerror(errno));
-			free(pubname);
-			return false;
-		}
-
-		c->rsa_key = PEM_read_RSA_PUBKEY(fp, &c->rsa_key, NULL, NULL);
-		fclose(fp);
-
-		if(c->rsa_key) {
-//				RSA_blinding_on(c->rsa_key, NULL);
-			free(pubname);
-			return true;
 		}
 
 		logger(LOG_ERR, "Reading RSA public key file `%s' failed: %s", pubname, strerror(errno));
@@ -137,30 +144,11 @@ bool read_rsa_public_key(connection_t *c) {
 		return false;
 	}
 
-	c->rsa_key = PEM_read_RSAPublicKey(fp, &c->rsa_key, NULL, NULL);
+	c->rsa_key = PEM_read_PUBKEY(fp, &c->rsa_key, NULL, NULL);
 	fclose(fp);
 
 	if(c->rsa_key) {
 		free(hcfname);
-		return true;
-	}
-
-	/* Try again with PEM_read_RSA_PUBKEY. */
-
-	fp = fopen(hcfname, "r");
-
-	if(!fp) {
-		logger(LOG_ERR, "Error reading RSA public key file `%s': %s", hcfname, strerror(errno));
-		free(hcfname);
-		return false;
-	}
-
-	free(hcfname);
-	c->rsa_key = PEM_read_RSA_PUBKEY(fp, &c->rsa_key, NULL, NULL);
-//	RSA_blinding_on(c->rsa_key, NULL);
-	fclose(fp);
-
-	if(c->rsa_key) {
 		return true;
 	}
 
@@ -171,44 +159,67 @@ bool read_rsa_public_key(connection_t *c) {
 
 static bool read_rsa_private_key(void) {
 	FILE *fp;
-	char *fname, *key, *pubkey;
-	BIGNUM *n = NULL;
-	BIGNUM *e = NULL;
-	BIGNUM *d = NULL;
+	char *fname, *key;
 
 	if(get_config_string(lookup_config(config_tree, "PrivateKey"), &key)) {
-		myself->connection->rsa_key = RSA_new();
+		char *pubkey;
+		BIGNUM *n = NULL;
+		BIGNUM *e = NULL;
+		BIGNUM *d = NULL;
+		OSSL_PARAM_BLD *bld = NULL;
+		OSSL_PARAM *param = NULL;
+		EVP_PKEY_CTX *ctx = NULL;
+		int result;
 
-//		RSA_blinding_on(myself->connection->rsa_key, NULL);
-		if((size_t)BN_hex2bn(&d, key) != strlen(key)) {
-			logger(LOG_ERR, "Invalid PrivateKey for myself!");
-			free(key);
+		logger(LOG_WARNING, "Obsolete PrivateKey statement for myself!");
+
+		if(!get_config_string(lookup_config(config_tree, "PublicKey"), &pubkey)) {
+			logger(LOG_ERR, "PrivateKey used but no PublicKey found!");
 			return false;
 		}
 
-		free(key);
-
-		if(!get_config_string(lookup_config(config_tree, "PublicKey"), &pubkey)) {
-			BN_free(d);
-			logger(LOG_ERR, "PrivateKey used but no PublicKey found!");
+		if((size_t)BN_hex2bn(&d, key) != strlen(key)) {
+			free(pubkey);
+			free(key);
+			logger(LOG_ERR, "Invalid PrivateKey for myself!");
 			return false;
 		}
 
 		if((size_t)BN_hex2bn(&n, pubkey) != strlen(pubkey)) {
 			free(pubkey);
-			BN_free(d);
+			free(key);
 			logger(LOG_ERR, "Invalid PublicKey for myself!");
 			return false;
 		}
 
 		free(pubkey);
+		free(key);
 		BN_hex2bn(&e, "FFFF");
 
-		if(!n || !e || !d || RSA_set0_key(myself->connection->rsa_key, n, e, d) != 1) {
-			BN_free(d);
-			BN_free(e);
-			BN_free(n);
-			logger(LOG_ERR, "RSA_set0_key() failed with PrivateKey for myself!");
+		bld = OSSL_PARAM_BLD_new();
+
+		if(!bld) {
+			abort();
+		}
+
+		OSSL_PARAM_BLD_push_BN(bld, "n", n);
+		OSSL_PARAM_BLD_push_BN(bld, "e", e);
+		OSSL_PARAM_BLD_push_BN(bld, "d", d);
+		param = OSSL_PARAM_BLD_to_param(bld);
+		OSSL_PARAM_BLD_free(bld);
+
+		ctx = EVP_PKEY_CTX_new_from_name(NULL, "RSA", NULL);
+
+		if(!ctx) {
+			abort();
+		}
+
+		EVP_PKEY_fromdata_init(ctx);
+		result = EVP_PKEY_fromdata(ctx, &myself->connection->rsa_key, EVP_PKEY_KEYPAIR, param);
+		EVP_PKEY_CTX_free(ctx);
+
+		if(result <= 0) {
+			logger(LOG_ERR, "Failed to parse PrivateKey for myself!");
 			return false;
 		}
 
@@ -241,7 +252,7 @@ static bool read_rsa_private_key(void) {
 
 #endif
 
-	myself->connection->rsa_key = PEM_read_RSAPrivateKey(fp, NULL, NULL, NULL);
+	myself->connection->rsa_key = PEM_read_PrivateKey(fp, NULL, NULL, NULL);
 	fclose(fp);
 
 	if(!myself->connection->rsa_key) {
