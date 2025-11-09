@@ -107,7 +107,7 @@ def extract_pem(config: str) -> T.List[str]:
             return result
         if key:
             result.append(line)
-    raise Exception("key not found")
+    raise RuntimeError("key not found")
 
 
 def replace_line(file_path: str, prefix: str, replace: str = "") -> None:

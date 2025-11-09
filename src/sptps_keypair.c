@@ -40,8 +40,8 @@ void logger(debug_t level, int priority, const char *format, ...) {
 static void usage(void) {
 	fprintf(stderr, "Usage: %s [options] private_key_file public_key_file\n\n", program_name);
 	fprintf(stderr, "Valid options are:\n"
-	        "  --help  Display this help and exit.\n"
-	        "\n");
+	                "  --help  Display this help and exit.\n"
+	                "\n");
 	fprintf(stderr, "Report bugs to tinc@tinc-vpn.org.\n");
 }
 

@@ -402,7 +402,7 @@ def test_proxy(ctx: Test, handler: T.Type[ProxyServer], user="", passw="") -> No
     foo.cmd("set", f"{bar}.Port", str(bar.port))
 
     with ThreadingTCPServer(("127.0.0.1", 0), handler) as server:
-        _, port = server.server_address
+        _, port, *_ = server.server_address
 
         worker = Thread(target=server.serve_forever)
         worker.start()

@@ -4,6 +4,7 @@
 """Test key management commands."""
 
 import os
+import typing
 
 from testlib import check, util
 from testlib.log import log
@@ -23,6 +24,10 @@ def try_rsa_keys(priv_path: str, pub_path: str) -> None:
         import cryptography  # type: ignore
         from cryptography.hazmat.primitives import hashes, serialization  # type: ignore
         from cryptography.hazmat.primitives.asymmetric import padding  # type: ignore
+        from cryptography.hazmat.primitives.asymmetric.rsa import (
+            RSAPrivateKey,
+            RSAPublicKey,
+        )  # type: ignore
     except ImportError:
         log.info("cryptography module missing or broken, skipping key checks")
         return
@@ -35,8 +40,11 @@ def try_rsa_keys(priv_path: str, pub_path: str) -> None:
     log.info("loading keys from (%s, %s)", priv_path, pub_path)
     with open(priv_path, "rb") as priv, open(pub_path, "rb") as pub:
         key_pair = (
-            serialization.load_pem_private_key(priv.read(), password=None),
-            serialization.load_pem_public_key(pub.read()),
+            typing.cast(
+                RSAPrivateKey,
+                serialization.load_pem_private_key(priv.read(), password=None),
+            ),
+            typing.cast(RSAPublicKey, serialization.load_pem_public_key(pub.read())),
         )
 
     s_pad = padding.PSS(

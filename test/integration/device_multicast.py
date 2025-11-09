@@ -19,6 +19,8 @@ PORT = 38245
 
 
 class MulticastSupport(enum.Enum):
+    """Enum describing level of support for multicast."""
+
     NO = 0
     BLOCKED = 1
     YES = 2
@@ -104,7 +106,6 @@ def test_device_multicast(ctx: Test) -> None:
         test_rx_tx(foo)
     elif multicast_support == MulticastSupport.BLOCKED:
         log.info("multicast blocked")
-        pass
     else:
         log.info("multicast not supported")
         test_no_mcast_support(foo)

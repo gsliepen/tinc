@@ -240,7 +240,7 @@ class Tinc:
         self,
         *args: str,
         code: T.Optional[int] = 0,
-        stdin: T.Optional[T.AnyStr] = None,
+        stdin: T.Optional[str | bytes] = None,
         timeout: T.Optional[int] = None,
     ) -> T.Tuple[str, str]:
         """Run command through tinc, writes `stdin` to it (if the argument is not None),

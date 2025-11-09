@@ -8,9 +8,10 @@ from .log import log
 
 Val = T.TypeVar("Val")
 Num = T.TypeVar("Num", int, float)
+AnyStr = T.TypeVar("AnyStr", str, bytes)
 
 
-def blank(value: T.AnyStr) -> None:
+def blank(value: AnyStr) -> None:
     """Check that value is an empty or blank string."""
     if not isinstance(value, str) or value.strip():
         raise ValueError(f'expected "{value!r}" to be a blank string')
@@ -52,7 +53,7 @@ def equals(expected: Val, actual: Val) -> None:
         raise ValueError(f'expected "{expected}", got "{actual}"')
 
 
-def has_prefix(text: T.AnyStr, prefix: T.AnyStr) -> None:
+def has_prefix(text: AnyStr, prefix: AnyStr) -> None:
     """Check that text has prefix."""
     if not text.startswith(prefix):
         raise ValueError(f"expected {text!r} to start with {prefix!r}")
@@ -70,7 +71,7 @@ def in_range(value: Num, gte: Num, lte: Num) -> None:
         raise ValueError(f"value {value} must be between {gte} and {lte}")
 
 
-def lines(text: T.AnyStr, num: int) -> None:
+def lines(text: AnyStr, num: int) -> None:
     """Check that text splits into `num` lines."""
     rows = text.splitlines()
     if len(rows) != num:
@@ -92,7 +93,7 @@ def not_in(needle: Val, *haystacks: T.Container[Val]) -> None:
             raise ValueError(f'expected all "{haystacks}" NOT to include "{needle}"')
 
 
-def _read_content(path: T.Union[str, os.PathLike], search: T.AnyStr) -> T.AnyStr:
+def _read_content(path: T.Union[str, os.PathLike], search: AnyStr) -> AnyStr:
     """Read text or binary content, depending on the type of search argument."""
     if isinstance(search, str):
         mode, enc = "r", "utf-8"
@@ -102,12 +103,12 @@ def _read_content(path: T.Union[str, os.PathLike], search: T.AnyStr) -> T.AnyStr
         return f.read()
 
 
-def in_file(path: T.Union[str, os.PathLike], text: T.AnyStr) -> None:
+def in_file(path: T.Union[str, os.PathLike], text: AnyStr) -> None:
     """Check that file contains a string."""
     is_in(text, _read_content(path, text))
 
 
-def not_in_file(path: T.Union[str, os.PathLike], text: T.AnyStr) -> None:
+def not_in_file(path: T.Union[str, os.PathLike], text: AnyStr) -> None:
     """Check that file does not contain a string."""
     not_in(text, _read_content(path, text))
 

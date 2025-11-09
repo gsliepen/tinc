@@ -132,11 +132,11 @@ void ge_double_scalarmult_vartime(ge_p2 *r, const unsigned char *a, const ge_p3 
 
 static const fe d = {
 	-10913610, 13857413, -15372611, 6949391, 114729, -8787816, -6275908, -3247719, -18696448, -12055116
-        };
+};
 
 static const fe sqrtm1 = {
 	-32595792, -7943725, 9377950, 3500415, 12389472, -272473, -25146209, -2005654, 326686, 11406482
-        };
+};
 
 int ge_frombytes_negate_vartime(ge_p3 *h, const unsigned char *s) {
 	fe u;
@@ -297,7 +297,7 @@ r = p
 
 static const fe d2 = {
 	-21827239, -5839606, -30745221, 13898782, 229458, 15978800, -12551817, -6495438, 29715968, 9444199
-        };
+};
 
 void ge_p3_to_cached(ge_cached *r, const ge_p3 *p) {
 	fe_add(r->YplusX, p->Y, p->X);

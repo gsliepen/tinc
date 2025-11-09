@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# pylint: disable=unreachable
 
 """Test binding to ports on localhost."""
 

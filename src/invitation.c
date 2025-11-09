@@ -1326,6 +1326,7 @@ int cmd_join(int argc, char *argv[]) {
 	struct addrinfo *aip = NULL;
 
 next:
+
 	if(!aip) {
 		aip = ai;
 	} else {

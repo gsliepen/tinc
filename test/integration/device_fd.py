@@ -13,7 +13,7 @@ from testlib.log import log
 from testlib.test import Test
 from testlib.proc import Script
 
-JUNK_FRAME = b"\xFF" * 80
+JUNK_FRAME = b"\xff" * 80
 
 
 def start_fd_server(unix: socket.socket, payload: bytes, file_desc: int) -> None:

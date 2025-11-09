@@ -30,8 +30,10 @@ def make_up(node: str, address: str) -> str:
     return f"""
     import subprocess as subp
     subp.run(['ip', 'link', 'set', 'dev', '{node}', 'netns', '{node}'], check=True)
-    subp.run(['ip', 'netns', 'exec', '{node}', 'ip', 'addr', 'add', 'dev', '{node}', '{address}/24'], check=True)
-    subp.run(['ip', 'netns', 'exec', '{node}', 'ip', 'link', 'set', '{node}', 'up'], check=True)
+    subp.run(['ip', 'netns', 'exec', '{node}', 'ip', 'addr', 'add', 'dev', '{node}',
+             '{address}/24'], check=True)
+    subp.run(['ip', 'netns', 'exec', '{node}', 'ip', 'link', 'set', '{node}', 'up'],
+             check=True)
     """
 
 
