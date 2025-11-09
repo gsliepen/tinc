@@ -49,7 +49,7 @@ jobs:
         if: always()
 
       - name: Upload test results
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: tests_cross_${{ matrix.arch }}
           path: /tmp/logs/tests.*.tar.gz
@@ -139,7 +139,7 @@ jobs:
         if: always()
 
       - name: Upload test results
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: tests_compat
           path: tests.tar.gz
@@ -184,7 +184,7 @@ jobs:
         if: always()
 
       - name: Upload test results
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: tests_sanitizer_${{ matrix.sanitizer }}
           path: /tmp/logs/tests.*.tar.gz
@@ -241,7 +241,7 @@ jobs:
         if: always()
 
       - name: Upload test results
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: tests_${{ env.ARTIFACT }}
           path: /tmp/logs/tests.*.tar.gz
@@ -253,7 +253,7 @@ jobs:
         continue-on-error: true
 
       - name: Upload package
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: pkg-${{ env.ARTIFACT }}
           path: |
@@ -320,7 +320,7 @@ jobs:
         if: always()
 
       - name: Upload test results
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: tests_macos
           path: /tmp/logs/tests.*.tar.gz
@@ -367,7 +367,7 @@ jobs:
         continue-on-error: true
 
       - name: Upload package
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: pkg-windows
           path: .ci/package/win/tinc-*.exe
@@ -384,7 +384,7 @@ jobs:
         if: always()
 
       - name: Upload test results
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: tests_windows
           path: /tmp/logs/tests.*.tar.gz
