@@ -13,7 +13,7 @@ on:
 
 jobs:
   cross:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -56,7 +56,7 @@ jobs:
         if: always()
 
   muon:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     container:
       image: debian:stable-slim
@@ -74,7 +74,7 @@ jobs:
         run: ./.ci/muon/run.sh
 
   analysis:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - name: Checkout tinc
@@ -91,20 +91,14 @@ jobs:
 
       - name: Install tools
         run: |
-          sudo apt-get install -y astyle clang-tidy-$CLANG
+          sudo apt-get install -y astyle clang-tidy-$CLANG shellcheck shfmt black pylint mypy
           sudo update-alternatives --install /usr/bin/clang-tidy     clang-tidy     /usr/bin/clang-tidy-$CLANG     100
           sudo update-alternatives --install /usr/bin/run-clang-tidy run-clang-tidy /usr/bin/run-clang-tidy-$CLANG 100
-          curl -OL "https://github.com/koalaman/shellcheck/releases/download/v$SHELLCHECK/shellcheck-v${SHELLCHECK}.linux.x86_64.tar.xz"
-          tar -C ~ --strip-components=1 --wildcards -xf ./shellcheck-*.tar.xz 'shellcheck-*/shellcheck'
-          curl -o ~/shfmt -L "https://github.com/mvdan/sh/releases/download/v$SHFMT/shfmt_v${SHFMT}_linux_amd64"
-          chmod 755 ~/shfmt ~/shellcheck
           python3 -m venv /tmp/venv
           . /tmp/venv/bin/activate
-          pip3 install black pylint mypy markflow
+          pip3 install markflow
         env:
-          CLANG: 11
-          SHELLCHECK: 0.8.0
-          SHFMT: 3.5.0
+          CLANG: 19
         if: always()
 
       - name: Lint/typecheck/check formatting on C/shell/Python code
@@ -116,13 +110,13 @@ jobs:
       - name: Check warnings (clang)
         run: bash .ci/warn/run.sh
         env:
-          CC: clang-12
+          CC: clang-19
         if: always()
 
       - name: Check warnings (gcc)
         run: bash .ci/warn/run.sh
         env:
-          CC: gcc-11
+          CC: gcc-14
         if: always()
 
       - name: Check that very long paths work
@@ -146,7 +140,7 @@ jobs:
         if: always()
 
   sanitizer:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -191,7 +185,7 @@ jobs:
         if: always()
 
   linux:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -263,7 +257,7 @@ jobs:
 
   pkg-publish:
     if: always() && (github.ref == 'refs/heads/1.1' || startsWith(github.ref, 'refs/tags/release-'))
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     continue-on-error: true
     needs:
       - linux
@@ -298,7 +292,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
 
   macos:
-    runs-on: macos-12
+    runs-on: macos-15
     timeout-minutes: 20
 
     steps:
