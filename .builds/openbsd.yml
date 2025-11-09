@@ -1,4 +1,4 @@
-image: openbsd/7.3
+image: openbsd/7.7
 
 packages:
   - cmocka
