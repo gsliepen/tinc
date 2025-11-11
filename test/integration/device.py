@@ -28,6 +28,9 @@ def unknown_device_types(
     if Feature.TUNEMU not in features:
         yield "tunemu"
 
+    if Feature.VMNET not in features:
+        yield "vmnet"
+
     if system != "Darwin":
         if not system.endswith("BSD"):
             yield "tunnohead"

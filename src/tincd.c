@@ -492,6 +492,9 @@ int main(int argc, char **argv) {
 #ifdef ENABLE_TUNEMU
 		        " tunemu"
 #endif
+#ifdef ENABLE_VMNET
+		        " vmnet"
+#endif
 #ifdef HAVE_MINIUPNPC
 		        " miniupnpc"
 #endif
