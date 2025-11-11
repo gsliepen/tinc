@@ -13,7 +13,6 @@ if dir_systemd == ''
 endif
 
 systemd_conf = configuration_data()
-systemd_conf.set('sysconfdir', dir_sysconf)
 systemd_conf.set('sbindir', dir_sbin)
 
 configure_file(input: 'tinc.service.in',
