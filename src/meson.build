@@ -18,6 +18,27 @@ foreach attr : ['malloc', 'nonnull', 'warn_unused_result', 'packed', 'format']
   endif
 endforeach
 
+src_cpuid = '''
+  int main(void) {
+    unsigned int cpu_info[4];
+    __asm__ __volatile__ ("xchgl %%ebx, %k1; cpuid; xchgl %%ebx, %k1" :
+                          "=a" (cpu_info[0]), "=&r" (cpu_info[1]),
+                          "=c" (cpu_info[2]), "=d" (cpu_info[3]) :
+                          "0" (0U), "2" (0U));
+    return 0;
+  }
+'''
+
+if cpu_family in ['x86', 'x86_64'] and cc.compiles(src_cpuid)
+  cdata.set('HAVE_CPUID', 1, description: 'have cpuid instruction support')
+  if cc.has_header_symbol('immintrin.h', '_mm_shuffle_epi8')
+    cdata.set('HAVE_CPU_SSSE3', 1, description: 'have SSSE3 headers')
+    if cc.has_header_symbol('immintrin.h', '_mm256_set1_epi32')
+      cdata.set('HAVE_CPU_AVX2', 1, description: 'have AVX2 headers')
+    endif
+  endif
+endif
+
 if cc.compiles('''
     #include <stdlib.h>
     extern void *make() __attribute__((malloc(free)));
@@ -111,6 +132,14 @@ check_types = [
   'struct nd_neighbor_solicit',
   'struct nd_opt_hdr',
 ]
+
+lib_cpu_features = static_library(
+  'cpu_features',
+  sources: 'cpu.c',
+  implicit_include_directories: false,
+  include_directories: inc_conf,
+  build_by_default: false,
+)
 
 subdir('ed25519')
 subdir('chacha-poly1305')
@@ -368,6 +397,10 @@ subdir(opt_crypto)
 
 if opt_crypto != 'nolegacy'
   src_lib_crypto += ['cipher.c', 'digest.c']
+endif
+
+if meson_version.version_compare('>=0.53')
+  summary({ 'library': opt_crypto }, section: 'Cryptography')
 endif
 
 subdir('include')

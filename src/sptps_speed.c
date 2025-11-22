@@ -22,6 +22,7 @@
 
 #include <poll.h>
 
+#include "benchmark.h"
 #include "crypto.h"
 #include "ecdh.h"
 #include "ecdsa.h"
@@ -79,30 +80,6 @@ static void receive_data(sptps_t *sptps) {
 		bufp += done;
 		len -= done;
 	}
-}
-
-struct timespec start;
-struct timespec end;
-double elapsed;
-double rate;
-unsigned int count;
-
-static void clock_start(void) {
-	count = 0;
-	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
-}
-
-static bool clock_countto(double seconds) {
-	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
-	elapsed = (double) end.tv_sec + (double) end.tv_nsec * 1e-9
-	          - (double) start.tv_sec - (double) start.tv_nsec * 1e-9;
-
-	if(elapsed < seconds) {
-		return ++count;
-	}
-
-	rate = count / elapsed;
-	return false;
 }
 
 static int run_benchmark(int argc, char *argv[]) {
