@@ -359,7 +359,17 @@ bool id_h(connection_t *c, const char *request) {
 
 		c->protocol_minor = 2;
 
-		return sptps_start(&c->sptps, c, false, false, invitation_key, c->ecdsa, "tinc invitation", 15, send_meta_sptps, receive_invitation_sptps);
+		sptps_params_t params = {
+			.handle = c,
+			.initiator = false,
+			.mykey = invitation_key,
+			.hiskey = c->ecdsa,
+			.label = "tinc invitation",
+			.send_data = send_meta_sptps,
+			.receive_record = receive_invitation_sptps,
+		};
+
+		return sptps_start(&c->sptps, &params);
 	}
 
 	/* Check if identity is a valid name */
@@ -454,7 +464,18 @@ bool id_h(connection_t *c, const char *request) {
 			snprintf(label, labellen, "tinc TCP key expansion %s %s", c->name, myself->name);
 		}
 
-		return sptps_start(&c->sptps, c, c->outgoing, false, myself->connection->ecdsa, c->ecdsa, label, labellen, send_meta_sptps, receive_meta_sptps);
+		sptps_params_t params = {
+			.handle = c,
+			.initiator = c->outgoing,
+			.mykey = myself->connection->ecdsa,
+			.hiskey = c->ecdsa,
+			.label = label,
+			.labellen = sizeof(label),
+			.send_data = send_meta_sptps,
+			.receive_record = receive_meta_sptps,
+		};
+
+		return sptps_start(&c->sptps, &params);
 	} else {
 		return send_metakey(c);
 	}
