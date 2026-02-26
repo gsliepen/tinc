@@ -504,7 +504,7 @@ bool execute_script(const char *name, char **envp) {
 */
 
 #ifndef HAVE_MINGW
-static RETSIGTYPE sigterm_handler(int a) {
+static void sigterm_handler(int a) {
 	(void)a;
 	logger(LOG_NOTICE, "Got %s signal", "TERM");
 
@@ -515,7 +515,7 @@ static RETSIGTYPE sigterm_handler(int a) {
 	}
 }
 
-static RETSIGTYPE sigquit_handler(int a) {
+static void sigquit_handler(int a) {
 	(void)a;
 	logger(LOG_NOTICE, "Got %s signal", "QUIT");
 
@@ -526,13 +526,13 @@ static RETSIGTYPE sigquit_handler(int a) {
 	}
 }
 
-static RETSIGTYPE fatal_signal_square(int a) {
+static void fatal_signal_square(int a) {
 	logger(LOG_ERR, "Got another fatal signal %d (%s): not restarting.", a,
 	       strsignal(a));
 	exit(1);
 }
 
-static RETSIGTYPE fatal_signal_handler(int a) {
+static void fatal_signal_handler(int a) {
 	struct sigaction act;
 	logger(LOG_ERR, "Got fatal signal %d (%s)", a, strsignal(a));
 
@@ -554,13 +554,13 @@ static RETSIGTYPE fatal_signal_handler(int a) {
 	}
 }
 
-static RETSIGTYPE sighup_handler(int a) {
+static void sighup_handler(int a) {
 	(void)a;
 	logger(LOG_NOTICE, "Got %s signal", "HUP");
 	sighup = true;
 }
 
-static RETSIGTYPE sigint_handler(int a) {
+static void sigint_handler(int a) {
 	(void)a;
 	static int saved_debug_level = -1;
 
@@ -580,18 +580,18 @@ static RETSIGTYPE sigint_handler(int a) {
 	}
 }
 
-static RETSIGTYPE sigalrm_handler(int a) {
+static void sigalrm_handler(int a) {
 	(void)a;
 	logger(LOG_NOTICE, "Got %s signal", "ALRM");
 	sigalrm = true;
 }
 
-static RETSIGTYPE sigusr1_handler(int a) {
+static void sigusr1_handler(int a) {
 	(void)a;
 	dump_connections();
 }
 
-static RETSIGTYPE sigusr2_handler(int a) {
+static void sigusr2_handler(int a) {
 	(void)a;
 	devops.dump_stats();
 	dump_nodes();
@@ -599,17 +599,17 @@ static RETSIGTYPE sigusr2_handler(int a) {
 	dump_subnets();
 }
 
-static RETSIGTYPE sigwinch_handler(int a) {
+static void sigwinch_handler(int a) {
 	(void)a;
 	do_purge = true;
 }
 
-static RETSIGTYPE unexpected_signal_handler(int a) {
+static void unexpected_signal_handler(int a) {
 	(void)a;
 	logger(LOG_WARNING, "Got unexpected signal %d (%s)", a, strsignal(a));
 }
 
-static RETSIGTYPE ignore_signal_handler(int a) {
+static void ignore_signal_handler(int a) {
 	(void)a;
 	ifdebug(SCARY_THINGS) logger(LOG_DEBUG, "Ignored signal %d (%s)", a, strsignal(a));
 }

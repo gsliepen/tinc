@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.61)
+AC_PREREQ([2.72])
 AC_INIT([tinc], [1.0.36])
 AC_CONFIG_SRCDIR([src/tincd.c])
 AM_INIT_AUTOMAKE([1.11 check-news std-options subdir-objects nostdinc silent-rules -Wall])
@@ -11,14 +11,12 @@ AM_SILENT_RULES([yes])
 # Enable GNU extensions.
 # Define this here, not in acconfig's @TOP@ section, since definitions
 # in the latter don't make it into the configure-time tests.
-AC_GNU_SOURCE
+AC_USE_SYSTEM_EXTENSIONS
 AC_DEFINE([__USE_BSD], 1, [Enable BSD extensions])
 
 dnl Checks for programs.
-AC_PROG_CC_C99
-AC_PROG_CPP
+AC_PROG_CC
 AC_PROG_INSTALL
-
 AM_PROG_CC_C_O
 
 dnl Check and set OS
@@ -195,7 +193,7 @@ AC_CHECK_TYPES([socklen_t, struct ether_header, struct arphdr, struct ether_arp,
 )
 
 dnl Checks for library functions.
-AC_TYPE_SIGNAL
+
 AC_CHECK_FUNCS([asprintf daemon fchmod flock fork gettimeofday mlockall pselect putenv strsignal system unsetenv usleep vsyslog devname fdevname],
   [], [], [#include "$srcdir/src/have.h"]
 )
