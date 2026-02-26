@@ -1,3 +1,11 @@
+Version 1.0.37               March 1 2026
+
+ * Minor fixes.
+ * Drop support for Linux ethertap devices.
+ * Ensure tinc compiles cleanly on modern systems.
+
+This will most likely be the last version of tinc 1.0.
+
 Version 1.0.36               August 26 2019
 
  * Fix compiling tinc with certain versions of the OpenSSL library.

@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.72])
-AC_INIT([tinc], [1.0.36])
+AC_INIT([tinc], [1.0.37])
 AC_CONFIG_SRCDIR([src/tincd.c])
 AM_INIT_AUTOMAKE([1.11 check-news std-options subdir-objects nostdinc silent-rules -Wall])
 AC_CONFIG_HEADERS([config.h])
