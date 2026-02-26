@@ -607,7 +607,7 @@ int main_loop(void) {
 			init_configuration(&config_tree);
 
 			if(!read_server_config()) {
-				logger(LOG_ERR, "Unable to reread configuration file, exitting.");
+				logger(LOG_ERR, "Unable to reread configuration file, exiting.");
 				return 1;
 			}
 

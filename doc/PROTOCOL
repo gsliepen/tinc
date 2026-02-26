@@ -127,7 +127,7 @@ chances are that not every tinc daemon will ever send a packet to every
 other daemon. Instead, if a daemon needs a key it sends a request for it
 via the meta connection of the nearest hop in the direction of the
 destination. If any hop on the way has already learned the key, it will
-act as a proxy and forward its copy back to the requestor.
+act as a proxy and forward its copy back to the requester.
 
 daemon	message
 --------------------------------------------------------------------------

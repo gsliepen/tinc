@@ -168,7 +168,7 @@ int sockaddrcmp_noport(const sockaddr_t *a, const sockaddr_t *b) {
 		return memcmp(&a->in6.sin6_addr, &b->in6.sin6_addr, sizeof(a->in6.sin6_addr));
 
 	default:
-		logger(LOG_ERR, "sockaddrcmp() was called with unknown address family %d, exitting!",
+		logger(LOG_ERR, "sockaddrcmp() was called with unknown address family %d, exiting!",
 		       a->sa.sa_family);
 		abort();
 	}
@@ -215,7 +215,7 @@ int sockaddrcmp(const sockaddr_t *a, const sockaddr_t *b) {
 		return memcmp(&a->in6.sin6_port, &b->in6.sin6_port, sizeof(a->in6.sin6_port));
 
 	default:
-		logger(LOG_ERR, "sockaddrcmp() was called with unknown address family %d, exitting!",
+		logger(LOG_ERR, "sockaddrcmp() was called with unknown address family %d, exiting!",
 		       a->sa.sa_family);
 		abort();
 	}

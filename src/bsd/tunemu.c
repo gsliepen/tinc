@@ -154,7 +154,7 @@ static int ppp_new_instance() {
 		}
 	}
 
-	// connect to ppp procotol
+	// connect to ppp protocol
 	struct sockaddr_ppp pppaddr;
 	pppaddr.ppp_len = sizeof(struct sockaddr_ppp);
 	pppaddr.ppp_family = AF_PPP;
