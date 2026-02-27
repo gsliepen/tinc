@@ -35,15 +35,19 @@ AC_DEFUN([tinc_OPENSSL],
      LDFLAGS="$LDFLAGS -L$withval"]
   )
 
-  AC_CHECK_HEADERS([openssl/evp.h openssl/rsa.h openssl/rand.h openssl/err.h openssl/sha.h openssl/pem.h openssl/param_build.h],
+  AC_CHECK_HEADERS([openssl/evp.h openssl/rsa.h openssl/rand.h openssl/err.h openssl/sha.h openssl/pem.h],
     [],
     [AC_MSG_ERROR([LibreSSL/OpenSSL header files not found.]); break]
   )
+
+  AC_CHECK_HEADERS([openssl/param_build.h])
 
   AC_CHECK_LIB(crypto, OPENSSL_init_crypto,
     [LIBS="-lcrypto $LIBS"],
     [AC_MSG_ERROR([LibreSSL/OpenSSL libraries not found.])]
   )
+
+  AC_CHECK_DECLS([EVP_RSA_gen], [], [], [#include <openssl/rsa.h>])
 
   AC_DEFINE(HAVE_OPENSSL, 1, [enable OpenSSL support])
 ])

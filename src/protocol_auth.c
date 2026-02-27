@@ -147,7 +147,7 @@ bool send_metakey(connection_t *c) {
 	bool x;
 	int result;
 
-	int len = EVP_PKEY_get_size(c->rsa_key);
+	int len = EVP_PKEY_size(c->rsa_key);
 	size_t outlen = len;
 
 	/* Allocate buffers for the meta key */
@@ -262,7 +262,7 @@ bool metakey_h(connection_t *c) {
 		return false;
 	}
 
-	len = EVP_PKEY_get_size(myself->connection->rsa_key);
+	len = EVP_PKEY_size(myself->connection->rsa_key);
 	outlen = len;
 
 	/* Check if the length of the meta key is all right */
@@ -375,7 +375,7 @@ bool metakey_h(connection_t *c) {
 bool send_challenge(connection_t *c) {
 	/* CHECKME: what is most reasonable value for len? */
 
-	int len = EVP_PKEY_get_size(c->rsa_key);
+	int len = EVP_PKEY_size(c->rsa_key);
 
 	/* Allocate buffers for the challenge */
 
@@ -411,7 +411,7 @@ bool challenge_h(connection_t *c) {
 		return false;
 	}
 
-	len = EVP_PKEY_get_size(myself->connection->rsa_key);
+	len = EVP_PKEY_size(myself->connection->rsa_key);
 
 	/* Check if the length of the challenge is all right */
 
@@ -456,7 +456,7 @@ bool send_chal_reply(connection_t *c) {
 	}
 
 	if(!EVP_DigestInit(ctx, c->indigest)
-	                || !EVP_DigestUpdate(ctx, c->mychallenge, EVP_PKEY_get_size(myself->connection->rsa_key))
+	                || !EVP_DigestUpdate(ctx, c->mychallenge, EVP_PKEY_size(myself->connection->rsa_key))
 	                || !EVP_DigestFinal(ctx, (unsigned char *)hash, NULL)) {
 		EVP_MD_CTX_destroy(ctx);
 		logger(LOG_ERR, "Error during calculation of response for %s (%s): %s",
@@ -511,7 +511,7 @@ bool chal_reply_h(connection_t *c) {
 	}
 
 	if(!EVP_DigestInit(ctx, c->outdigest)
-	                || !EVP_DigestUpdate(ctx, c->hischallenge, EVP_PKEY_get_size(c->rsa_key))
+	                || !EVP_DigestUpdate(ctx, c->hischallenge, EVP_PKEY_size(c->rsa_key))
 	                || !EVP_DigestFinal(ctx, (unsigned char *)myhash, NULL)) {
 		EVP_MD_CTX_destroy(ctx);
 		logger(LOG_ERR, "Error during calculation of response from %s (%s): %s",

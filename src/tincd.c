@@ -369,7 +369,31 @@ static bool keygen(int bits) {
 
 	fprintf(stderr, "Generating %d bits keys...\n", bits);
 
+#if HAVE_DECL_EVP_RSA_GEN
 	rsa_key = EVP_RSA_gen(bits);
+#else
+	BIGNUM *e = NULL;
+
+	if(BN_hex2bn(&e, "10001") == 0 || !e) {
+		abort();
+	}
+
+	rsa_key = EVP_PKEY_new();
+	RSA *tmp_key = RSA_new();
+
+	if(!rsa_key || !tmp_key) {
+		abort();
+	}
+
+	int result = RSA_generate_key_ex(tmp_key, bits, e, NULL);
+
+	if(!result) {
+		fprintf(stderr, "Error during key generation!\n");
+		return false;
+	}
+
+	EVP_PKEY_set1_RSA(rsa_key, tmp_key);
+#endif
 
 	if(!rsa_key) {
 		fprintf(stderr, "Error during key generation!\n");
