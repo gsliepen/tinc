@@ -178,7 +178,7 @@ void ifconfig_address(FILE *out, const char *value) {
 #endif
 }
 
-void ifconfig_route(FILE *out, const char *value) {
+void ifconfig_route(FILE *out, char *value) {
 	subnet_t subnet = {0}, gateway = {0};
 	char subnet_str[MAXNETSTR] = "", gateway_str[MAXNETSTR] = "";
 	char *sep = strchr(value, ' ');

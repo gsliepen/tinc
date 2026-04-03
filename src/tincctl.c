@@ -3098,7 +3098,7 @@ static char *complete_config(const char *text, int state) {
 	}
 
 	while(variables[i].name) {
-		char *dot = strchr(text, '.');
+		const char *dot = strchr(text, '.');
 
 		if(dot) {
 			if((variables[i].type & VAR_HOST) && !strncasecmp(variables[i].name, dot + 1, strlen(dot + 1))) {
