@@ -104,6 +104,10 @@ static uint32_t hash_function_mac_t(const mac_t *p) {
 	return hash;
 }
 
+#define hash_cmp_ipv4_t memcmp
+#define hash_cmp_ipv6_t memcmp
+#define hash_cmp_mac_t memcmp
+
 hash_define(ipv4_t, SUBNET_HASH_SIZE)
 hash_define(ipv6_t, SUBNET_HASH_SIZE)
 hash_define(mac_t, SUBNET_HASH_SIZE)

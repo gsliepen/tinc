@@ -19,13 +19,167 @@
 
 #include "system.h"
 
+#include <pthread.h>
+
 #include "address_cache.h"
 #include "conf.h"
+#include "hash.h"
 #include "names.h"
 #include "netutl.h"
 #include "xalloc.h"
 
 static const unsigned int NOT_CACHED = UINT_MAX;
+#define resolving_SIZE 0x10
+typedef struct addrinfo_key_t {
+	char *address;
+	char *service;
+	int socktype;
+} addrinfo_key_t;
+
+static inline bool hash_cmp_addrinfo_key_t(const addrinfo_key_t *a, const addrinfo_key_t *b, size_t size) {
+	return a->socktype != b->socktype || strcmp(a->address, b->address) != 0 || strcmp(a->service, b->service) != 0;
+}
+
+
+typedef struct addrinfo_result_t {
+	addrinfo_key_t key;
+    pthread_t tid;
+    struct addrinfo *ai;
+    int error;
+} addrinfo_result_t;
+
+
+static uint32_t hash_function_addrinfo_key_t(const addrinfo_key_t* key) {
+	uint32_t hash = 0;
+    const char* address = key->address;
+    const char* service = key->service;
+    int socktype = key->socktype;
+
+    // Perform a simple hash calculation using XOR operations
+    while (*address != '\0') {
+        hash ^= *address;
+        address++;
+    }
+
+    while (*service != '\0') {
+        hash ^= *service;
+        service++;
+    }
+
+    hash ^= socktype;
+
+    return hash;
+}
+
+hash_define(addrinfo_key_t, resolving_SIZE)
+hash_new(addrinfo_key_t, resolving);
+
+static void *getaddrinfo_thread(void *arg) {
+    struct addrinfo_result_t *result = (struct addrinfo_result_t *)arg;
+    
+    struct addrinfo *ai, hint = {0};
+    int err;
+    
+	hint.ai_family = addressfamily;
+    hint.ai_socktype = result->key.socktype;
+    
+#if HAVE_DECL_RES_INIT
+    res_init();
+#endif
+    err = getaddrinfo(result->key.address, result->key.service, &hint, &ai);
+    
+    result->error = err;
+    result->ai = ai;
+    
+    return result;
+}
+
+void resolve_init(void){
+	hash_clear(addrinfo_key_t, &resolving);
+}
+
+/*
+  Turn a string into a struct addrinfo.
+  Return NULL on failure.
+*/
+struct addrinfo *resolve_str2addrinfo(const char *address, const char *service, int socktype) {
+    struct timespec timeout;
+	int join_result;
+	addrinfo_key_t key;
+	struct addrinfo *ai = NULL;
+	struct addrinfo_result_t *r;
+    
+	// we will resolve this
+	key.address = xstrdup(address);
+	key.service = xstrdup(service);
+	key.socktype = socktype;
+
+	// check if we already have it
+	r = hash_search(addrinfo_key_t, &resolving, &key);
+	if(r != NULL) {
+		if(r->ai || r->error){
+			// just wait for the thread to finish
+			pthread_join(r->tid, &r);
+
+			// check if we got an error
+			if(r->error) {
+				logger(DEBUG_ALWAYS, LOG_WARNING, "Error looking up %s port %s: %s", address, service, r->error == EAI_SYSTEM ? strerror(errno) : gai_strerror(r->error));
+				freeaddrinfo(r->ai);
+			}
+
+			hash_delete(addrinfo_key_t, &resolving, &key);
+			ai = r->ai;
+			goto free;
+		}
+		return NULL;
+	}
+
+	// the job
+    r = malloc(sizeof(struct addrinfo_result_t));
+    if (r == NULL) {
+        fprintf(stderr, "Failed to allocate memory for result\n");
+        exit(EXIT_FAILURE);
+    }
+
+	// init result
+	r->key = key;
+	r->error = 0;
+	r->ai = NULL;
+    
+	// the thread
+    if (pthread_create(&r->tid, NULL, getaddrinfo_thread, (void *)r) != 0) {
+        fprintf(stderr, "Failed to create pthread\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // wait 20ms (only)
+    timeout.tv_sec = 0;
+    timeout.tv_nsec = 20000000;
+	join_result = pthread_timedjoin_np(r->tid, (void **)&r, &timeout);
+
+	if (join_result == ETIMEDOUT || join_result == EBUSY) {
+		hash_insert(addrinfo_key_t, &resolving, &key, r);
+		return NULL;
+    }
+	
+	if (join_result != 0) {
+        freeaddrinfo(r->ai);
+		goto free;
+    }
+    
+    if (r->error) {
+        logger(DEBUG_ALWAYS, LOG_WARNING, "Error looking up %s port %s: %s", address, service, r->error == EAI_SYSTEM ? strerror(errno) : gai_strerror(r->error));
+        freeaddrinfo(r->ai);
+		goto free;
+    }
+	
+	ai = r->ai;
+free:
+	free(r->key.address);
+	free(r->key.service);
+    free(r);
+    return ai;
+}
 
 // Find edges pointing to this node, and use them to build a list of unique, known addresses.
 static struct addrinfo *get_known_addresses(node_t *n) {
@@ -117,6 +271,8 @@ void add_recent_address(address_cache_t *cache, const sockaddr_t *sa) {
 }
 
 const sockaddr_t *get_recent_address(address_cache_t *cache) {
+	struct addrinfo *aip;
+
 	// Check if there is an address in our cache of recently seen addresses
 	if(cache->tried < cache->data.used) {
 		return &cache->data.address[cache->tried++];
@@ -170,11 +326,13 @@ const sockaddr_t *get_recent_address(address_cache_t *cache) {
 			}
 		}
 
-		if(cache->ai) {
+		aip = resolve_str2addrinfo(address, port, SOCK_STREAM);
+
+		if(aip != NULL) {
 			free_known_addresses(cache->ai);
 		}
 
-		cache->aip = cache->ai = str2addrinfo(address, port, SOCK_STREAM);
+		cache->aip = cache->ai = aip;
 
 		if(cache->ai) {
 			struct addrinfo *ai = NULL;
