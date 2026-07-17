@@ -14,7 +14,7 @@ Type=oneshot
 RemainAfterExit=yes
 ExecStart=/bin/true
 ExecReload=/bin/true
-WorkingDirectory=@sysconfdir@/tinc
+WorkingDirectory=%E/tinc
 
 [Install]
 WantedBy=multi-user.target
