@@ -130,6 +130,7 @@ static bool bind_to_interface(int sd) {
 	if(status) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Can't bind to interface %s: %s", iface,
 		       sockstrerror(sockerrno));
+		free(iface);
 		return false;
 	}
 
@@ -138,6 +139,7 @@ static bool bind_to_interface(int sd) {
 	logger(DEBUG_ALWAYS, LOG_WARNING, "%s not supported on this platform", "BindToInterface");
 #endif
 
+	free(iface);
 	return true;
 }
 
@@ -240,12 +242,14 @@ int setup_listen_socket(const sockaddr_t *sa) {
 			closesocket(nfd);
 			logger(DEBUG_ALWAYS, LOG_ERR, "Can't bind to interface %s: %s", iface,
 			       sockstrerror(sockerrno));
+			free(iface);
 			return -1;
 		}
 
 #else
 		logger(DEBUG_ALWAYS, LOG_WARNING, "%s not supported on this platform", "BindToInterface");
 #endif
+		free(iface);
 	}
 
 	if(!try_bind(nfd, sa, "tcp")) {
