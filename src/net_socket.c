@@ -32,6 +32,7 @@
 #include "net.h"
 #include "netutl.h"
 #include "protocol.h"
+#include "resolver.h"
 #include "utils.h"
 #include "xalloc.h"
 
@@ -51,8 +52,21 @@ int listen_sockets;
 io_t unix_socket;
 #endif
 
+static void free_proxy_address(outgoing_t *outgoing) {
+	if(outgoing->proxy_ai) {
+		freeaddrinfo(outgoing->proxy_ai);
+		outgoing->proxy_ai = NULL;
+	}
+}
+
 static void free_outgoing(outgoing_t *outgoing) {
 	timeout_del(&outgoing->ev);
+
+	if(outgoing->proxy_lookup) {
+		resolve_cancel(outgoing->proxy_lookup);
+	}
+
+	free_proxy_address(outgoing);
 	free(outgoing);
 }
 
@@ -416,6 +430,16 @@ void retry_outgoing(outgoing_t *outgoing) {
 	logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Trying to re-establish outgoing connection in %d seconds", outgoing->timeout);
 }
 
+void retry_outgoing_now(const node_t *n) {
+	for list_each(outgoing_t, outgoing, &outgoing_list) {
+		if(outgoing->node == n) {
+			timeout_add(&outgoing->ev, retry_outgoing_handler, outgoing, &(struct timeval) {
+				0, 0
+			});
+		}
+	}
+}
+
 void finish_connecting(connection_t *c) {
 	logger(DEBUG_CONNECTIONS, LOG_INFO, "Connected to %s (%s)", c->name, c->hostname);
 
@@ -561,15 +585,80 @@ static void handle_meta_io(void *data, int flags) {
 	}
 }
 
+static void proxy_resolved(void *data, struct addrinfo *ai) {
+	outgoing_t *outgoing = data;
+	outgoing->proxy_lookup = NULL;
+
+	if(!ai) {
+		// Every address would go through the same proxy, so there is no point in trying them.
+		logger(DEBUG_CONNECTIONS, LOG_ERR, "Could not set up a meta connection to %s", outgoing->node->name);
+		retry_outgoing(outgoing);
+		return;
+	}
+
+	outgoing->proxy_ai = ai;
+	timeout_add(&outgoing->ev, retry_outgoing_handler, outgoing, &(struct timeval) {
+		0, 0
+	});
+}
+
+/*
+  The proxy address is looked up anew for each connection attempt, and only kept
+  until the next one, so that it follows changes to DNS and to the Proxy setting.
+  Returns false if the connection attempt has to wait for it.
+*/
+static bool resolve_proxy(outgoing_t *outgoing) {
+	if(proxytype == PROXY_NONE || proxytype == PROXY_EXEC) {
+		free_proxy_address(outgoing);
+		return true;
+	}
+
+	if(outgoing->proxy_ai) {
+		return true;
+	}
+
+	if(!outgoing->proxy_lookup) {
+		outgoing->proxy_ai = resolve_numeric(proxyhost, proxyport, SOCK_STREAM);
+
+		if(outgoing->proxy_ai) {
+			return true;
+		}
+
+		outgoing->proxy_lookup = resolve_start(proxyhost, proxyport, SOCK_STREAM, proxy_resolved, outgoing);
+
+		if(!outgoing->proxy_lookup) {
+			logger(DEBUG_CONNECTIONS, LOG_ERR, "Could not set up a meta connection to %s", outgoing->node->name);
+			retry_outgoing(outgoing);
+			return false;
+		}
+	}
+
+	logger(DEBUG_CONNECTIONS, LOG_INFO, "Waiting for the address of proxy %s to be resolved", proxyhost);
+	return false;
+}
+
 bool do_outgoing_connection(outgoing_t *outgoing) {
 	const sockaddr_t *sa;
-	struct addrinfo *proxyai = NULL;
+	struct addrinfo *proxyai;
 	int result;
 
 begin:
+	proxyai = NULL;
+
+	if(!resolve_proxy(outgoing)) {
+		return false;
+	}
+
 	sa = get_recent_address(outgoing->node->address_cache);
 
 	if(!sa) {
+		free_proxy_address(outgoing);
+
+		if(outgoing->node->address_cache->waiting) {
+			logger(DEBUG_CONNECTIONS, LOG_INFO, "Waiting for the addresses of %s to be resolved", outgoing->node->name);
+			return false;
+		}
+
 		logger(DEBUG_CONNECTIONS, LOG_ERR, "Could not set up a meta connection to %s", outgoing->node->name);
 		retry_outgoing(outgoing);
 		return false;
@@ -588,12 +677,8 @@ begin:
 	} else if(proxytype == PROXY_EXEC) {
 		do_outgoing_pipe(c, proxyhost);
 	} else {
-		proxyai = str2addrinfo(proxyhost, proxyport, SOCK_STREAM);
-
-		if(!proxyai) {
-			free_connection(c);
-			goto begin;
-		}
+		proxyai = outgoing->proxy_ai;
+		outgoing->proxy_ai = NULL;
 
 		logger(DEBUG_CONNECTIONS, LOG_INFO, "Using proxy at %s port %s", proxyhost, proxyport);
 		c->socket = socket(proxyai->ai_family, SOCK_STREAM, IPPROTO_TCP);
@@ -603,6 +688,11 @@ begin:
 	if(c->socket == -1) {
 		logger(DEBUG_CONNECTIONS, LOG_ERR, "Creating socket for %s failed: %s", c->hostname, sockstrerror(sockerrno));
 		free_connection(c);
+
+		if(proxyai) {
+			freeaddrinfo(proxyai);
+		}
+
 		goto begin;
 	}
 
@@ -673,6 +763,7 @@ void setup_outgoing_connection(outgoing_t *outgoing, bool verbose) {
 
 	if(n->connection) {
 		logger(DEBUG_CONNECTIONS, LOG_INFO, "Already connected to %s", n->name);
+		free_proxy_address(outgoing);
 	} else {
 		do_outgoing_connection(outgoing);
 	}

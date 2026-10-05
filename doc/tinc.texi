@@ -1072,12 +1072,13 @@ This option is currently only supported on Linux.
 @cindex Hostnames
 @item Hostnames = <yes|no> (no)
 This option selects whether IP addresses (both real and on the VPN)
-should be resolved.  Since DNS lookups are blocking, it might affect
+should be resolved.  Since these reverse DNS lookups are blocking, it might affect
 tinc's efficiency, even stopping the daemon for a few seconds every time
 it does a lookup if your DNS server is not responding.
 
 This does not affect resolving hostnames to IP addresses from the
-configuration file, but whether hostnames should be resolved while logging.
+configuration file, which is done in the background,
+but whether hostnames should be resolved while logging.
 
 @cindex Interface
 @item Interface = <@var{interface}>
@@ -1235,6 +1236,10 @@ Executes the given command which should set up the outgoing connection.
 The environment variables @env{NAME}, @env{NODE}, @env{REMOTEADDRES} and @env{REMOTEPORT} are available.
 @end table
 
+The @var{address} of a proxy can be a hostname.
+It is resolved in the background for each connection attempt,
+and only its first IP address is used.
+
 @cindex ReplayWindow
 @item ReplayWindow = <bytes> (32)
 This is the size of the replay tracking window for each remote node, in bytes.
@@ -1331,7 +1336,9 @@ must resolve to the external IP address where the host can be reached,
 not the one that is internal to the VPN.
 If no port is specified, the default Port is used.
 Multiple Address variables can be specified, in which case each address will be
-tried until a working connection has been established.
+tried, in the order of the Address variables, until a working connection has been established.
+Hostnames are resolved in the background, all at the same time,
+so that a slow or unresponsive DNS server does not hold up tinc.
 
 @cindex Cipher
 @item Cipher = <@var{cipher}> (blowfish)

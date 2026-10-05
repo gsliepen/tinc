@@ -331,12 +331,13 @@ This can be used for mark-based routing or for packet filtering.
 This option is currently only supported on Linux.
 .It Va Hostnames Li = yes | no Pq no
 This option selects whether IP addresses (both real and on the VPN) should
-be resolved. Since DNS lookups are blocking, it might affect tinc's
+be resolved. Since these reverse DNS lookups are blocking, it might affect tinc's
 efficiency, even stopping the daemon for a few seconds every time it does
 a lookup if your DNS server is not responding.
 .Pp
 This does not affect resolving hostnames to IP addresses from the
-host configuration files, but whether hostnames should be resolved while logging.
+host configuration files, which is done in the background,
+but whether hostnames should be resolved while logging.
 .It Va IffOneQueue Li = yes | no Po no Pc Bq experimental
 (Linux only) Set IFF_ONE_QUEUE flag on TUN/TAP devices.
 .It Va Interface Li = Ar interface
@@ -495,6 +496,12 @@ and
 .Ev REMOTEPORT
 are available.
 .El
+.Pp
+The
+.Ar address
+of a proxy can be a hostname.
+It is resolved in the background for each connection attempt,
+and only its first IP address is used.
 .It Va ReplayWindow Li = Ar bytes Pq 32
 This is the size of the replay tracking window for each remote node, in bytes.
 The window is a bitfield which tracks 1 packet per bit, so for example
@@ -613,8 +620,12 @@ This will only be used when trying to make an outgoing connection to this tinc d
 Optionally, a port can be specified to use for this address.
 Multiple
 .Va Address
-variables can be specified, in which case each address will be tried until a working
-connection has been established.
+variables can be specified, in which case each address will be tried,
+in the order of the
+.Va Address
+variables, until a working connection has been established.
+Hostnames are resolved in the background, all at the same time,
+so that a slow or unresponsive DNS server does not hold up tinc.
 .It Va Cipher Li = Ar cipher Pq blowfish
 The symmetric cipher algorithm used to encrypt UDP packets.
 Any cipher supported by LibreSSL or OpenSSL is recognised.

@@ -25,12 +25,23 @@
 #define MAX_CACHED_ADDRESSES 8
 #define ADDRESS_CACHE_VERSION 1
 
+struct address_cache_t;
+
+// The resolution of one Address statement.
+typedef struct address_lookup_t {
+	struct address_cache_t *cache;
+	struct resolve_t *request;      // While pending
+	struct addrinfo *ai;            // Once resolved, NULL if that failed
+} address_lookup_t;
+
 typedef struct address_cache_t {
 	struct node_t *node;
-	struct splay_tree_t *config_tree;
-	struct config_t *cfg;
 	struct addrinfo *ai;
 	struct addrinfo *aip;
+	address_lookup_t *lookups;      // One per Address statement, in order
+	unsigned int lookup_count;
+	unsigned int next_lookup;
+	bool waiting;                   // For lookups[next_lookup] to complete
 	unsigned int tried;
 
 	struct {

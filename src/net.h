@@ -122,6 +122,8 @@ typedef struct outgoing_t {
 	struct node_t *node;
 	int timeout;
 	timeout_t ev;
+	struct resolve_t *proxy_lookup;
+	struct addrinfo *proxy_ai;      // For the next connection attempt
 } outgoing_t;
 
 typedef struct ports_t {
@@ -186,6 +188,7 @@ extern char *scriptextension;
 #include "node.h"
 
 extern void retry_outgoing(outgoing_t *outgoing);
+extern void retry_outgoing_now(const struct node_t *n);
 extern void handle_incoming_vpn_data(void *data, int flags);
 extern void finish_connecting(struct connection_t *c);
 extern bool do_outgoing_connection(struct outgoing_t *outgoing);

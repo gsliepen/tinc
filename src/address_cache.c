@@ -23,6 +23,7 @@
 #include "conf.h"
 #include "names.h"
 #include "netutl.h"
+#include "resolver.h"
 #include "xalloc.h"
 
 static const unsigned int NOT_CACHED = UINT_MAX;
@@ -116,6 +117,107 @@ void add_recent_address(address_cache_t *cache, const sockaddr_t *sa) {
 	}
 }
 
+// Turn the result of getaddrinfo() into a list that free_known_addresses() can free.
+static struct addrinfo *copy_addrinfo(struct addrinfo *result) {
+	struct addrinfo *ai = NULL;
+
+	for(struct addrinfo *aip = result; aip; aip = aip->ai_next) {
+		struct addrinfo *oai = ai;
+
+		ai = xzalloc(sizeof(*ai));
+		ai->ai_family = aip->ai_family;
+		ai->ai_socktype = aip->ai_socktype;
+		ai->ai_protocol = aip->ai_protocol;
+		ai->ai_addrlen = aip->ai_addrlen;
+		ai->ai_addr = xmalloc(ai->ai_addrlen);
+		memcpy(ai->ai_addr, aip->ai_addr, ai->ai_addrlen);
+		ai->ai_next = oai;
+	}
+
+	freeaddrinfo(result);
+	return ai;
+}
+
+static void address_resolved(void *data, struct addrinfo *ai) {
+	address_lookup_t *lookup = data;
+	address_cache_t *cache = lookup->cache;
+
+	lookup->request = NULL;
+	lookup->ai = ai ? copy_addrinfo(ai) : NULL;
+
+	// Addresses are tried in the order of the Address statements, so only the next one can unblock a connection attempt.
+	if(cache->waiting && lookup == &cache->lookups[cache->next_lookup]) {
+		cache->waiting = false;
+		retry_outgoing_now(cache->node);
+	}
+}
+
+static void split_address(splay_tree_t *config_tree, const config_t *cfg, char **address, char **port) {
+	get_config_string(cfg, address);
+
+	char *space = strchr(*address, ' ');
+
+	if(space) {
+		*port = xstrdup(space + 1);
+		*space = 0;
+	} else if(!get_config_string(lookup_config(config_tree, "Port"), port)) {
+		*port = xstrdup("655");
+	}
+}
+
+// Resolve all Address statements at once, so that the total delay is that of the slowest one rather than their sum.
+static void start_lookups(address_cache_t *cache) {
+	splay_tree_t *config_tree = create_configuration();
+	read_host_config(config_tree, cache->node->name, false);
+
+	for(config_t *cfg = lookup_config(config_tree, "Address"); cfg; cfg = lookup_config_next(config_tree, cfg)) {
+		cache->lookup_count++;
+	}
+
+	// One spare entry, since calloc() may fail for zero bytes.
+	cache->lookups = xzalloc((cache->lookup_count + 1) * sizeof(*cache->lookups));
+	address_lookup_t *lookup = cache->lookups;
+
+	for(config_t *cfg = lookup_config(config_tree, "Address"); cfg; cfg = lookup_config_next(config_tree, cfg), lookup++) {
+		char *address, *port;
+		split_address(config_tree, cfg, &address, &port);
+
+		lookup->cache = cache;
+		struct addrinfo *ai = resolve_numeric(address, port, SOCK_STREAM);
+
+		if(ai) {
+			lookup->ai = copy_addrinfo(ai);
+		} else {
+			lookup->request = resolve_start(address, port, SOCK_STREAM, address_resolved, lookup);
+		}
+
+		free(address);
+		free(port);
+	}
+
+	exit_configuration(config_tree);
+}
+
+static void stop_lookups(address_cache_t *cache) {
+	for(unsigned int i = 0; i < cache->lookup_count; i++) {
+		address_lookup_t *lookup = &cache->lookups[i];
+
+		if(lookup->request) {
+			resolve_cancel(lookup->request);
+		}
+
+		if(lookup->ai) {
+			free_known_addresses(lookup->ai);
+		}
+	}
+
+	free(cache->lookups);
+	cache->lookups = NULL;
+	cache->lookup_count = 0;
+	cache->next_lookup = 0;
+	cache->waiting = false;
+}
+
 const sockaddr_t *get_recent_address(address_cache_t *cache) {
 	// Check if there is an address in our cache of recently seen addresses
 	if(cache->tried < cache->data.used) {
@@ -148,77 +250,37 @@ const sockaddr_t *get_recent_address(address_cache_t *cache) {
 	}
 
 	// Otherwise, check if there are any known Address statements
-	if(!cache->config_tree) {
-		cache->config_tree = create_configuration();
-		read_host_config(cache->config_tree, cache->node->name, false);
-		cache->cfg = lookup_config(cache->config_tree, "Address");
+	if(!cache->lookups) {
+		start_lookups(cache);
 	}
 
-	while(cache->cfg && !cache->aip) {
-		char *address, *port;
-
-		get_config_string(cache->cfg, &address);
-
-		char *space = strchr(address, ' ');
-
-		if(space) {
-			port = xstrdup(space + 1);
-			*space = 0;
-		} else {
-			if(!get_config_string(lookup_config(cache->config_tree, "Port"), &port)) {
-				port = xstrdup("655");
-			}
-		}
-
+	while(!cache->aip) {
 		if(cache->ai) {
-			free_known_addresses(cache->ai);
-		}
-
-		cache->aip = cache->ai = str2addrinfo(address, port, SOCK_STREAM);
-
-		if(cache->ai) {
-			struct addrinfo *ai = NULL;
-
-			for(; cache->aip; cache->aip = cache->aip->ai_next) {
-				struct addrinfo *oai = ai;
-
-				ai = xzalloc(sizeof(*ai));
-				ai->ai_family = cache->aip->ai_family;
-				ai->ai_socktype = cache->aip->ai_socktype;
-				ai->ai_protocol = cache->aip->ai_protocol;
-				ai->ai_addrlen = cache->aip->ai_addrlen;
-				ai->ai_addr = xmalloc(ai->ai_addrlen);
-				memcpy(ai->ai_addr, cache->aip->ai_addr, ai->ai_addrlen);
-				ai->ai_next = oai;
-			}
-
-			freeaddrinfo(cache->ai);
-			cache->aip = cache->ai = ai;
-		}
-
-		free(address);
-		free(port);
-
-		cache->cfg = lookup_config_next(cache->config_tree, cache->cfg);
-	}
-
-	if(cache->ai) {
-		if(cache->aip) {
-			sockaddr_t *sa = (sockaddr_t *)cache->aip->ai_addr;
-
-			cache->aip = cache->aip->ai_next;
-			return sa;
-		} else {
 			free_known_addresses(cache->ai);
 			cache->ai = NULL;
 		}
+
+		if(cache->next_lookup == cache->lookup_count) {
+			// We're all out of addresses.
+			stop_lookups(cache);
+			return NULL;
+		}
+
+		address_lookup_t *lookup = &cache->lookups[cache->next_lookup];
+
+		if(lookup->request) {
+			cache->waiting = true;
+			return NULL;
+		}
+
+		cache->aip = cache->ai = lookup->ai;
+		lookup->ai = NULL;
+		cache->next_lookup++;
 	}
 
-	// We're all out of addresses.
-	exit_configuration(cache->config_tree);
-	cache->config_tree = NULL;
-
-	return NULL;
+	sockaddr_t *sa = (sockaddr_t *)cache->aip->ai_addr;
+	cache->aip = cache->aip->ai_next;
+	return sa;
 }
 
 address_cache_t *open_address_cache(node_t *node) {
@@ -239,10 +301,12 @@ address_cache_t *open_address_cache(node_t *node) {
 	}
 
 	// Ensure we have a valid state
-	cache->config_tree = NULL;
-	cache->cfg = NULL;
 	cache->ai = NULL;
 	cache->aip = NULL;
+	cache->lookups = NULL;
+	cache->lookup_count = 0;
+	cache->next_lookup = 0;
+	cache->waiting = false;
 	cache->tried = 0;
 	cache->data.version = ADDRESS_CACHE_VERSION;
 
@@ -254,27 +318,19 @@ address_cache_t *open_address_cache(node_t *node) {
 }
 
 void reset_address_cache(address_cache_t *cache) {
-	if(cache->config_tree) {
-		exit_configuration(cache->config_tree);
-		cache->config_tree = NULL;
-	}
+	stop_lookups(cache);
 
 	if(cache->ai) {
 		free_known_addresses(cache->ai);
 	}
 
-	cache->config_tree = NULL;
-	cache->cfg = NULL;
 	cache->ai = NULL;
 	cache->aip = NULL;
 	cache->tried = 0;
 }
 
 void close_address_cache(address_cache_t *cache) {
-	if(cache->config_tree) {
-		exit_configuration(cache->config_tree);
-		cache->config_tree = NULL;
-	}
+	stop_lookups(cache);
 
 	if(cache->ai) {
 		free_known_addresses(cache->ai);

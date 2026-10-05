@@ -386,10 +386,20 @@ with mp.Client(("127.0.0.1", {port}), family="AF_INET") as client:
     return util.temp_file(code)
 
 
-def test_proxy(ctx: Test, handler: T.Type[ProxyServer], user="", passw="") -> None:
+def test_proxy(
+    ctx: Test,
+    handler: T.Type[ProxyServer],
+    user="",
+    passw="",
+    host="127.0.0.1",
+) -> None:
     """Test socks proxy support."""
 
     foo, bar = init(ctx)
+
+    if host == "localhost":
+        # Only the first address of the proxy is used, and the proxy listens on IPv4.
+        foo.cmd("set", "AddressFamily", "ipv4")
 
     if HAVE_SANDBOX:
         for node in foo, bar:
@@ -407,7 +417,7 @@ def test_proxy(ctx: Test, handler: T.Type[ProxyServer], user="", passw="") -> No
         worker = Thread(target=server.serve_forever)
         worker.start()
 
-        foo.cmd("set", "Proxy", handler.name, f"127.0.0.1 {port} {user} {passw}")
+        foo.cmd("set", "Proxy", handler.name, f"{host} {port} {user} {passw}")
 
         foo.add_script(Script.TINC_UP)
         foo.cmd("start")
@@ -461,6 +471,11 @@ if os.name != "nt":
 with Test("HTTP CONNECT proxy") as context:
     proxy_stats["tx"] = 0
     test_proxy(context, HttpProxy)
+    check.greater(proxy_stats["tx"], 0)
+
+with Test("HTTP CONNECT proxy given by host name") as context:
+    proxy_stats["tx"] = 0
+    test_proxy(context, HttpProxy, host="localhost")
     check.greater(proxy_stats["tx"], 0)
 
 with Test("socks4 proxy with username") as context:

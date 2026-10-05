@@ -171,6 +171,7 @@ src_tincd = [
   'protocol_subnet.c',
   'proxy.c',
   'raw_socket_device.c',
+  'resolver.c',
   'route.c',
   'subnet.c',
 ]
@@ -186,7 +187,10 @@ cc_flags_tincd = cc_flags
 
 deps_common = []
 deps_tinc = []
-deps_tincd = [cc.find_library('m', required: false)]
+deps_tincd = [
+  cc.find_library('m', required: false),
+  dependency('threads', static: static),
+]
 
 if os_name != 'windows'
   src_lib_common += 'random.c'

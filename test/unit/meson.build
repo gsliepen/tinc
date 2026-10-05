@@ -18,6 +18,7 @@ link_tincd = { 'lib': lib_tincd, 'dep': deps_tincd }
 #   'mock': ['foo', 'bar'], // list of functions to mock (default: empty)
 #   'link': link_tinc,      // which binary to link with (default: tincd)
 #   'fail': true,           // whether the test should fail (default: false)
+#   'cases': ['foo'],       // run once per case, passing it as argument (default: once)
 # }
 
 tests = {
@@ -69,6 +70,36 @@ tests = {
   },
 }
 
+if can_wrap
+  tests += {
+    'address_cache': {
+      'code': ['test_address_cache.c', 'fake_getaddrinfo.c'],
+      'mock': ['getaddrinfo', 'retry_outgoing_now'],
+      'cases': [
+        'test_numeric_addresses_need_no_waiting',
+        'test_lookups_run_in_parallel',
+        'test_order_of_address_statements_is_kept',
+        'test_failed_lookups_are_skipped',
+        'test_lookup_completing_during_connection_attempt_does_not_wake',
+        'test_reset_cancels_pending_lookups',
+        'test_any_address_statements',
+      ],
+    },
+    'resolver': {
+      'code': ['test_resolver.c', 'fake_getaddrinfo.c'],
+      'mock': ['getaddrinfo'],
+      'cases': [
+        'test_resolve_numeric',
+        'test_resolve_calls_back_later',
+        'test_resolve_failure',
+        'test_slow_lookup_does_not_block_event_loop',
+        'test_cancelled_lookup_does_not_call_back',
+        'test_concurrent_lookups',
+      ],
+    },
+  }
+endif
+
 env = ['CMOCKA_MESSAGE_OUTPUT=TAP']
 
 foreach test, data : tests
@@ -94,12 +125,15 @@ foreach test, data : tests
 
   must_fail = data.get('fail', false)
 
-  test(test,
-       exe,
-       suite: 'unit',
-       timeout: 60,
-       protocol: must_fail ? 'exitcode' : 'tap',
-       env: env,
-       should_fail: must_fail)
+  foreach case : data.get('cases', [''])
+    test(case == '' ? test : test + ':' + case,
+         exe,
+         args: case == '' ? [] : [case],
+         suite: 'unit',
+         timeout: 60,
+         protocol: must_fail ? 'exitcode' : 'tap',
+         env: env,
+         should_fail: must_fail)
+  endforeach
 endforeach
 
