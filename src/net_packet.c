@@ -1742,6 +1742,18 @@ static void handle_incoming_vpn_packet(listen_socket_t *ls, vpn_packet_t *pkt, s
 				if(sptps_verify_datagram(&from->sptps, DATA(pkt), pkt->len - 2 * sizeof(node_id_t))) {
 					n = from;
 				} else {
+					/* The sender is known by its ID, but its datagram does not verify
+					   against our SPTPS state. After a long enough UDP outage its
+					   sequence numbers have run past our replay window, and since
+					   verification does not update any state, nothing on this path
+					   would ever resynchronise: the node stays on TCP forever.
+					   Restart SPTPS, as receive_udppacket() does for confirmed
+					   nodes, but not too often. */
+					if(from->last_req_key < now.tv_sec - 10) {
+						logger(DEBUG_PROTOCOL, LOG_ERR, "Failed to verify UDP packet from %s (%s), restarting SPTPS", from->name, from->hostname);
+						send_req_key(from);
+					}
+
 					goto skip_harder;
 				}
 			}
