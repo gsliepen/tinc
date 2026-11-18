@@ -188,7 +188,7 @@ static bool send_kex(sptps_t *s) {
 	// Create a new ECDH public key.
 	s->ecdh = ecdh_generate_public(s->mykex->pubkey);
 
-	if(!s) {
+	if(!s->ecdh) {
 		return error(s, EINVAL, "Failed to generate ECDH public key");
 	}
 
