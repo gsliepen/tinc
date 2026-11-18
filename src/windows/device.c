@@ -38,10 +38,18 @@ int device_fd = -1;
 static HANDLE device_handle = INVALID_HANDLE_VALUE;
 static io_t device_read_io;
 static OVERLAPPED device_read_overlapped;
-static OVERLAPPED device_write_overlapped;
 static vpn_packet_t device_read_packet;
-static vpn_packet_t device_write_packet;
 char *device = NULL;
+
+#define WRITE_RING_SIZE 256
+
+typedef struct {
+	OVERLAPPED overlapped;
+	vpn_packet_t packet;
+} write_slot_t;
+
+static write_slot_t write_ring[WRITE_RING_SIZE];
+static size_t write_ring_idx = 0;
 char *iface = NULL;
 static const char *device_info = "Windows tap device";
 
@@ -208,13 +216,6 @@ static bool setup_device(void) {
 			logger(DEBUG_ALWAYS, LOG_WARNING, "Could not get version information from Windows tap device %s (%s): %s", device, iface, winerror(GetLastError()));
 		} else {
 			logger(DEBUG_ALWAYS, LOG_INFO, "TAP-Windows driver version: %lu.%lu%s", info[0], info[1], info[2] ? " (DEBUG)" : "");
-
-			/* Warn if using >=9.21. This is because starting from 9.21, TAP-Win32 seems to use a different, less efficient write path. */
-			if(info[0] == 9 && info[1] >= 21)
-				logger(DEBUG_ALWAYS, LOG_WARNING,
-				       "You are using the newer (>= 9.0.0.21, NDIS6) series of TAP-Win32 drivers. "
-				       "Using these drivers with tinc is not recommended as it can result in poor performance. "
-				       "You might want to revert back to 9.0.0.9 instead.");
 		}
 	}
 
@@ -234,7 +235,10 @@ static bool setup_device(void) {
 	logger(DEBUG_ALWAYS, LOG_INFO, "%s (%s) is a %s", device, iface, device_info);
 
 	device_read_overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-	device_write_overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	for(size_t i = 0; i < WRITE_RING_SIZE; i++) {
+		memset(&write_ring[i], 0, sizeof(write_ring[i]));
+		write_ring[i].overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	}
 
 	return true;
 }
@@ -281,14 +285,18 @@ static void close_device(void) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not wait for %s %s read to cancel: %s", device_info, device, winerror(GetLastError()));
 	}
 
-	if(device_write_packet.len > 0 && !GetOverlappedResult(device_handle, &device_write_overlapped, &len, TRUE) && GetLastError() != ERROR_OPERATION_ABORTED) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not wait for %s %s write to cancel: %s", device_info, device, winerror(GetLastError()));
+	for(size_t i = 0; i < WRITE_RING_SIZE; i++) {
+		if(write_ring[i].packet.len > 0 && !GetOverlappedResult(device_handle, &write_ring[i].overlapped, &len, TRUE) && GetLastError() != ERROR_OPERATION_ABORTED) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Could not wait for %s %s write to cancel: %s", device_info, device, winerror(GetLastError()));
+		}
+		write_ring[i].packet.len = 0;
+		if(write_ring[i].overlapped.hEvent) {
+			CloseHandle(write_ring[i].overlapped.hEvent);
+			write_ring[i].overlapped.hEvent = NULL;
+		}
 	}
 
-	device_write_packet.len = 0;
-
 	CloseHandle(device_read_overlapped.hEvent);
-	CloseHandle(device_write_overlapped.hEvent);
 
 	CloseHandle(device_handle);
 	device_handle = INVALID_HANDLE_VALUE;
@@ -307,38 +315,56 @@ static bool read_packet(vpn_packet_t *packet) {
 
 static bool write_packet(vpn_packet_t *packet) {
 	DWORD outlen;
+	write_slot_t *slot = NULL;
 
 	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Writing packet of %d bytes to %s",
 	       packet->len, device_info);
 
-	if(device_write_packet.len > 0) {
-		/* Make sure the previous write operation is finished before we start the next one;
-		   otherwise we end up with multiple write ops referencing the same OVERLAPPED structure,
-		   which according to MSDN is a no-no. */
+	for(size_t i = 0; i < WRITE_RING_SIZE; i++) {
+		size_t idx = (write_ring_idx + i) % WRITE_RING_SIZE;
+		write_slot_t *candidate = &write_ring[idx];
 
-		if(!GetOverlappedResult(device_handle, &device_write_overlapped, &outlen, FALSE)) {
-			if(GetLastError() != ERROR_IO_INCOMPLETE) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "Error completing previously queued write to %s %s: %s", device_info, device, winerror(GetLastError()));
-			} else {
-				logger(DEBUG_TRAFFIC, LOG_ERR, "Previous overlapped write to %s %s still in progress", device_info, device);
-				// drop this packet
-				return true;
-			}
+		if(candidate->packet.len == 0) {
+			slot = candidate;
+			write_ring_idx = (idx + 1) % WRITE_RING_SIZE;
+			break;
 		}
+
+		if(GetOverlappedResult(device_handle, &candidate->overlapped, &outlen, FALSE)) {
+			candidate->packet.len = 0;
+			slot = candidate;
+			write_ring_idx = (idx + 1) % WRITE_RING_SIZE;
+			break;
+		}
+
+		if(GetLastError() != ERROR_IO_INCOMPLETE) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Error completing previously queued write to %s %s: %s",
+			       device_info, device, winerror(GetLastError()));
+			candidate->packet.len = 0;
+			slot = candidate;
+			write_ring_idx = (idx + 1) % WRITE_RING_SIZE;
+			break;
+		}
+	}
+
+	if(!slot) {
+		logger(DEBUG_TRAFFIC, LOG_ERR, "All %d overlapped writes to %s %s still in progress",
+		       WRITE_RING_SIZE, device_info, device);
+		return true;
 	}
 
 	/* Copy the packet, since the write operation might still be ongoing after we return. */
 
-	memcpy(&device_write_packet, packet, sizeof(*packet));
+	memcpy(&slot->packet, packet, sizeof(*packet));
 
-	ResetEvent(device_write_overlapped.hEvent);
+	ResetEvent(slot->overlapped.hEvent);
 
-	if(WriteFile(device_handle, DATA(&device_write_packet), device_write_packet.len, &outlen, &device_write_overlapped)) {
+	if(WriteFile(device_handle, DATA(&slot->packet), slot->packet.len, &outlen, &slot->overlapped)) {
 		// Write was completed immediately.
-		device_write_packet.len = 0;
+		slot->packet.len = 0;
 	} else if(GetLastError() != ERROR_IO_PENDING) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while writing to %s %s: %s", device_info, device, winerror(GetLastError()));
-		device_write_packet.len = 0;
+		slot->packet.len = 0;
 		return false;
 	}
 
